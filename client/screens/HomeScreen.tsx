@@ -67,9 +67,9 @@ export default function HomeScreen() {
     <View style={styles.container}>
       <View style={styles.heroSection}>
         <LinearGradient
-          colors={["#4B6CB7", "#182848"]}
+          colors={["rgba(42, 58, 230, 0.69)", "rgba(23, 32, 128, 0.69)"]}
           start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
+          end={{ x: 0, y: 1 }}
           style={[styles.header, { paddingTop: insets.top + Spacing.lg }]}
         >
           <View style={styles.headerTextContainer}>
