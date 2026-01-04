@@ -6,6 +6,7 @@ import {
   ScrollView,
   Pressable,
   Dimensions,
+  Modal,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -92,6 +93,7 @@ export default function InsightsScreen() {
   const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<"ausgaben" | "einnahmen">("ausgaben");
   const [activeFilter, setActiveFilter] = useState<"kategorien" | "income" | "trend">("kategorien");
+  const [filterModalVisible, setFilterModalVisible] = useState(false);
 
   return (
     <View style={styles.container}>
@@ -149,7 +151,7 @@ export default function InsightsScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.filterRow}>
-          <Pressable style={styles.filterButton}>
+          <Pressable style={styles.filterButton} onPress={() => setFilterModalVisible(true)}>
             <Feather name="sliders" size={16} color="#6B7280" />
             <Text style={styles.filterButtonText}>Filter</Text>
             <Feather name="chevron-down" size={16} color="#6B7280" />
@@ -233,6 +235,32 @@ export default function InsightsScreen() {
           </View>
         </View>
       </ScrollView>
+
+      <Modal
+        visible={filterModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setFilterModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <Pressable style={styles.modalBackdrop} onPress={() => setFilterModalVisible(false)} />
+          <View style={[styles.modalContent, { paddingBottom: insets.bottom + 24 }]}>
+            <View style={styles.modalHandle} />
+            <Text style={styles.modalTitle}>Filter</Text>
+
+            <Text style={styles.modalSectionTitle}>Zeitspanne</Text>
+
+            <Text style={styles.modalSectionTitle}>Kosten</Text>
+
+            <Pressable
+              style={styles.modalDoneButton}
+              onPress={() => setFilterModalVisible(false)}
+            >
+              <Text style={styles.modalDoneButtonText}>Done</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -399,5 +427,53 @@ const styles = StyleSheet.create({
   },
   pageDotActive: {
     backgroundColor: "#3B5BDB",
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+  },
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.3)",
+  },
+  modalContent: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    minHeight: 350,
+  },
+  modalHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: "#D1D5DB",
+    borderRadius: 2,
+    alignSelf: "center",
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#000000",
+    marginBottom: 32,
+  },
+  modalSectionTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#000000",
+    marginBottom: 40,
+  },
+  modalDoneButton: {
+    backgroundColor: "#7340fd",
+    borderRadius: 28,
+    paddingVertical: 16,
+    alignItems: "center",
+    marginTop: "auto",
+  },
+  modalDoneButtonText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#FFFFFF",
   },
 });
