@@ -183,20 +183,22 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: Spacing.xl,
     paddingBottom: 60,
-    zIndex: 5,
+    zIndex: 10,
+    overflow: "visible",
   },
   headerContent: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
+    overflow: "visible",
   },
   businessmanFigure: {
-    width: 90,
-    height: 110,
+    width: 71,
+    height: 112,
     position: "absolute",
-    right: 0,
-    top: 10,
-    zIndex: 10,
+    right: 10,
+    bottom: -50,
+    zIndex: 100,
   },
   welcomeText: {
     fontSize: 28,
