@@ -37,6 +37,7 @@ export default function WelcomeScreen() {
         source={require("@assets/images/glow-oval.png")}
         style={styles.glowOval}
         contentFit="fill"
+        priority="high"
       />
 
       <View style={styles.textContainer}>
@@ -72,7 +73,7 @@ const styles = StyleSheet.create({
   glowOval: {
     position: "absolute",
     top: 155,
-    left: (screenWidth - 195) / 2,
+    left: 99,
     width: 195,
     height: 436,
   },
