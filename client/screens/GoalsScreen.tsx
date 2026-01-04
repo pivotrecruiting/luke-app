@@ -41,14 +41,16 @@ const MOCK_DATA = {
     {
       id: "1",
       name: "Lebensmittel",
-      icon: "🛒",
+      icon: "shopping-cart",
+      iconColor: "#F59E0B",
       current: 92.40,
       limit: 400,
     },
     {
       id: "2",
       name: "Shopping",
-      icon: "🛍️",
+      icon: "shopping-bag",
+      iconColor: "#8B5CF6",
       current: 40.37,
       limit: 200,
     },
@@ -124,18 +126,27 @@ function GoalItem({ goal }: { goal: typeof MOCK_DATA.goals[0] }) {
 }
 
 function BudgetItem({ budget }: { budget: typeof MOCK_DATA.budgets[0] }) {
+  const percentage = (budget.current / budget.limit) * 100;
+
   return (
     <View style={styles.budgetItem}>
-      <View style={styles.budgetLeft}>
-        <Text style={styles.budgetIcon}>{budget.icon}</Text>
-        <View>
-          <Text style={styles.budgetName}>{budget.name}</Text>
-          <Text style={styles.budgetProgress}>
-            € {formatCurrency(budget.current)} / € {budget.limit}
-          </Text>
+      <View style={styles.budgetHeader}>
+        <View style={styles.budgetLeft}>
+          <View style={[styles.budgetIconContainer, { backgroundColor: `${budget.iconColor}20` }]}>
+            <Feather name={budget.icon as any} size={20} color={budget.iconColor} />
+          </View>
+          <View>
+            <Text style={styles.budgetName}>{budget.name}</Text>
+            <Text style={styles.budgetProgress}>
+              € {formatCurrency(budget.current)} / € {budget.limit}
+            </Text>
+          </View>
         </View>
+        <Text style={styles.budgetLimit}>€ {budget.limit}</Text>
       </View>
-      <Text style={styles.budgetLimit}>€ {budget.limit}</Text>
+      <View style={styles.budgetProgressBarContainer}>
+        <View style={[styles.budgetProgressBar, { width: `${percentage}%` }]} />
+      </View>
     </View>
   );
 }
@@ -333,17 +344,17 @@ const styles = StyleSheet.create({
   goalPercentage: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#22C55E",
+    color: "#2E47F9",
   },
   goalProgressBarContainer: {
     height: 6,
-    backgroundColor: "#FEF3C7",
+    backgroundColor: "#AFAFAF",
     borderRadius: 3,
     overflow: "hidden",
   },
   goalProgressBar: {
     height: "100%",
-    backgroundColor: "#F59E0B",
+    backgroundColor: "rgba(42, 58, 230, 0.69)",
     borderRadius: 3,
   },
   goalFooter: {
@@ -366,22 +377,29 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 3,
   },
+  budgetHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
   budgetLeft: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
   },
-  budgetIcon: {
-    fontSize: 28,
+  budgetIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
   },
   budgetName: {
     fontSize: 16,
@@ -397,5 +415,16 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "700",
     color: "#3B5BDB",
+  },
+  budgetProgressBarContainer: {
+    height: 6,
+    backgroundColor: "#AFAFAF",
+    borderRadius: 3,
+    overflow: "hidden",
+  },
+  budgetProgressBar: {
+    height: "100%",
+    backgroundColor: "rgba(42, 58, 230, 0.69)",
+    borderRadius: 3,
   },
 });
