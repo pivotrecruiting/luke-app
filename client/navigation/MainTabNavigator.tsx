@@ -5,21 +5,23 @@ import { Feather } from "@expo/vector-icons";
 import HomeScreen from "@/screens/HomeScreen";
 import InsightsScreen from "@/screens/InsightsScreen";
 
-function InsightsTabButton({ children, onPress, accessibilityState }: any) {
+function InsightsTabButton({ onPress, accessibilityState }: any) {
   const focused = accessibilityState?.selected;
   return (
-    <Pressable
-      onPress={onPress}
-      style={[
-        styles.insightsTabButton,
-        focused && styles.insightsTabButtonActive,
-      ]}
-    >
-      <View style={[styles.insightsCircle, focused && styles.insightsCircleActive]} />
-      <Text style={[styles.insightsLabel, focused && styles.insightsLabelActive]}>
-        Insights
-      </Text>
-    </Pressable>
+    <View style={styles.insightsTabWrapper}>
+      <Pressable
+        onPress={onPress}
+        style={[
+          styles.insightsTabButton,
+          focused ? styles.insightsTabButtonActive : null,
+        ]}
+      >
+        <View style={[styles.insightsCircle, focused ? styles.insightsCircleActive : null]} />
+        <Text style={[styles.insightsLabel, focused ? styles.insightsLabelActive : null]}>
+          Insights
+        </Text>
+      </Pressable>
+    </View>
   );
 }
 
@@ -157,19 +159,21 @@ const styles = StyleSheet.create({
   iconRotateBack: {
     transform: [{ rotate: "-45deg" }],
   },
-  insightsTabButton: {
+  insightsTabWrapper: {
     flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  insightsTabButton: {
     alignItems: "center",
     justifyContent: "center",
     paddingTop: 6,
     paddingBottom: 7,
-    paddingHorizontal: 8,
-    marginVertical: 4,
+    paddingHorizontal: 16,
+    borderRadius: 100,
   },
   insightsTabButtonActive: {
     backgroundColor: "#E1D4F6",
-    borderRadius: 100,
-    marginHorizontal: 4,
   },
   insightsCircle: {
     width: 28,
