@@ -1,10 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   Pressable,
+  Modal,
+  TextInput,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -45,7 +47,16 @@ export default function GoalDetailScreen() {
     remaining: 4275.27,
   };
 
+  const [goalName, setGoalName] = useState(goal.name);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [tempName, setTempName] = useState(goal.name);
+
   const percentage = (goal.current / goal.target) * 100;
+
+  const handleEditSave = () => {
+    setGoalName(tempName);
+    setEditModalVisible(false);
+  };
 
   return (
     <View style={styles.container}>
@@ -71,8 +82,10 @@ export default function GoalDetailScreen() {
               <Text style={styles.goalIcon}>{goal.icon}</Text>
               <View>
                 <View style={styles.goalNameRow}>
-                  <Text style={styles.goalName}>{goal.name}</Text>
-                  <Feather name="edit-2" size={14} color="#9CA3AF" style={styles.editIcon} />
+                  <Text style={styles.goalName}>{goalName}</Text>
+                  <Pressable onPress={() => { setTempName(goalName); setEditModalVisible(true); }}>
+                    <Feather name="edit-2" size={14} color="#7340FE" style={styles.editIcon} />
+                  </Pressable>
                 </View>
                 <Text style={styles.goalProgress}>
                   € {formatCurrency(goal.current)} / € {formatCurrency(goal.target)}
@@ -119,6 +132,34 @@ export default function GoalDetailScreen() {
           </View>
         ))}
       </ScrollView>
+
+      <Modal
+        visible={editModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setEditModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <Pressable style={styles.modalBackdrop} onPress={() => setEditModalVisible(false)} />
+          <View style={[styles.modalContent, { paddingBottom: insets.bottom + 24 }]}>
+            <View style={styles.modalHandle} />
+            <Text style={styles.modalTitle}>Goal bearbeiten</Text>
+
+            <Text style={styles.modalLabel}>Name</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={tempName}
+              onChangeText={setTempName}
+              placeholder="Goal Name"
+              placeholderTextColor="#9CA3AF"
+            />
+
+            <Pressable style={styles.modalSaveButton} onPress={handleEditSave}>
+              <Text style={styles.modalSaveButtonText}>Speichern</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -271,5 +312,60 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     color: "#30B71E",
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+  },
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.3)",
+  },
+  modalContent: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 24,
+    paddingTop: 12,
+  },
+  modalHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: "#D1D5DB",
+    borderRadius: 2,
+    alignSelf: "center",
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#000000",
+    marginBottom: 24,
+  },
+  modalLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#6B7280",
+    marginBottom: 8,
+  },
+  modalInput: {
+    backgroundColor: "#F3F4F6",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: "#000000",
+    marginBottom: 24,
+  },
+  modalSaveButton: {
+    backgroundColor: "#7340FE",
+    borderRadius: 28,
+    paddingVertical: 16,
+    alignItems: "center",
+  },
+  modalSaveButtonText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#FFFFFF",
   },
 });
