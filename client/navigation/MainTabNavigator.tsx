@@ -5,26 +5,6 @@ import { Feather } from "@expo/vector-icons";
 import HomeScreen from "@/screens/HomeScreen";
 import InsightsScreen from "@/screens/InsightsScreen";
 
-function InsightsTabButton({ onPress, accessibilityState }: any) {
-  const focused = accessibilityState?.selected;
-  return (
-    <View style={styles.insightsTabWrapper}>
-      <Pressable
-        onPress={onPress}
-        style={[
-          styles.insightsTabButton,
-          focused ? styles.insightsTabButtonActive : null,
-        ]}
-      >
-        <View style={[styles.insightsCircle, focused ? styles.insightsCircleActive : null]} />
-        <Text style={[styles.insightsLabel, focused ? styles.insightsLabelActive : null]}>
-          Insights
-        </Text>
-      </Pressable>
-    </View>
-  );
-}
-
 function PlaceholderScreen() {
   return <View style={styles.placeholder} />;
 }
@@ -94,7 +74,15 @@ export default function MainTabNavigator() {
         name="Insights"
         component={InsightsScreen}
         options={{
-          tabBarButton: (props) => <InsightsTabButton {...props} />,
+          tabBarLabel: () => null,
+          tabBarIcon: ({ focused }) => (
+            <View style={[styles.insightsTabButton, focused && styles.insightsTabButtonActive]}>
+              <View style={[styles.insightsCircle, focused && styles.insightsCircleActive]} />
+              <Text style={[styles.insightsLabel, focused && styles.insightsLabelActive]}>
+                Insights
+              </Text>
+            </View>
+          ),
         }}
       />
       <Tab.Screen
@@ -158,11 +146,6 @@ const styles = StyleSheet.create({
   },
   iconRotateBack: {
     transform: [{ rotate: "-45deg" }],
-  },
-  insightsTabWrapper: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
   },
   insightsTabButton: {
     alignItems: "center",
