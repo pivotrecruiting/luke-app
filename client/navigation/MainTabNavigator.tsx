@@ -3,6 +3,7 @@ import { View, StyleSheet } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Feather } from "@expo/vector-icons";
 import HomeScreen from "@/screens/HomeScreen";
+import InsightsScreen from "@/screens/InsightsScreen";
 
 function PlaceholderScreen() {
   return <View style={styles.placeholder} />;
@@ -10,10 +11,10 @@ function PlaceholderScreen() {
 
 export type MainTabParamList = {
   Home: undefined;
-  Tab2: undefined;
-  Tab3: undefined;
-  Tab4: undefined;
-  Tab5: undefined;
+  Insights: undefined;
+  Add: undefined;
+  Goals: undefined;
+  Profile: undefined;
 };
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -70,40 +71,39 @@ export default function MainTabNavigator() {
         }}
       />
       <Tab.Screen
-        name="Tab2"
-        component={PlaceholderScreen}
+        name="Insights"
+        component={InsightsScreen}
         options={{
-          tabBarLabel: "Label",
-          tabBarIcon: ({ color }) => (
-            <Feather name="circle" size={24} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <View style={focused ? styles.insightsIconActive : undefined}>
+              <Feather name="circle" size={24} color={focused ? "#FFFFFF" : color} />
+            </View>
           ),
         }}
       />
       <Tab.Screen
-        name="Tab3"
+        name="Add"
         component={PlaceholderScreen}
         options={{
-          tabBarLabel: "Label",
+          tabBarLabel: "",
+          tabBarIcon: ({ color }) => (
+            <Feather name="plus" size={28} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Goals"
+        component={PlaceholderScreen}
+        options={{
           tabBarIcon: ({ color }) => (
             <Feather name="star" size={24} color={color} />
           ),
         }}
       />
       <Tab.Screen
-        name="Tab4"
+        name="Profile"
         component={PlaceholderScreen}
         options={{
-          tabBarLabel: "Label",
-          tabBarIcon: ({ color }) => (
-            <Feather name="square" size={24} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Tab5"
-        component={PlaceholderScreen}
-        options={{
-          tabBarLabel: "Label",
           tabBarIcon: ({ color }) => (
             <Feather name="square" size={24} color={color} />
           ),
@@ -142,5 +142,13 @@ const styles = StyleSheet.create({
   },
   iconRotateBack: {
     transform: [{ rotate: "-45deg" }],
+  },
+  insightsIconActive: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#3B82F6",
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
