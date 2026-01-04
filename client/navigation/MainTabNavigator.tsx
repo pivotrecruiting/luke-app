@@ -156,12 +156,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   insightsCircle: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: "#9CA3AF",
   },
   insightsCircleActive: {
-    backgroundColor: "#3B5BDB",
+    backgroundColor: "#6155F5",
   },
 });
