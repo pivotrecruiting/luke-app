@@ -57,7 +57,7 @@ export default function PaywallScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#8E7DFF",
+    backgroundColor: "rgba(157, 113, 245, 0.5)",
   },
   content: {
     flex: 1,
