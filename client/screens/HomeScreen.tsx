@@ -7,8 +7,10 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
+import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
 import { Spacing, BorderRadius } from "@/constants/theme";
+const businessmanFigure = require("../../assets/images/businessman-figure.png");
 
 const MOCK_DATA = {
   userName: "Deni",
@@ -66,8 +68,17 @@ export default function HomeScreen() {
         end={{ x: 1, y: 1 }}
         style={[styles.header, { paddingTop: insets.top + Spacing.lg }]}
       >
-        <Text style={styles.welcomeText}>Willkommen, {MOCK_DATA.userName}!</Text>
-        <Text style={styles.subtitleText}>hier der aktuelle Monat</Text>
+        <View style={styles.headerContent}>
+          <View>
+            <Text style={styles.welcomeText}>Willkommen, {MOCK_DATA.userName}!</Text>
+            <Text style={styles.subtitleText}>hier der aktuelle Monat</Text>
+          </View>
+          <Image
+            source={businessmanFigure}
+            style={styles.businessmanFigure}
+            contentFit="contain"
+          />
+        </View>
       </LinearGradient>
 
       <ScrollView
@@ -172,6 +183,18 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: Spacing.xl,
     paddingBottom: 60,
+  },
+  headerContent: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+  },
+  businessmanFigure: {
+    width: 80,
+    height: 100,
+    position: "absolute",
+    right: 0,
+    top: -10,
   },
   welcomeText: {
     fontSize: 28,
