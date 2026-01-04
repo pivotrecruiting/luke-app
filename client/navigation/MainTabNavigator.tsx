@@ -75,8 +75,8 @@ export default function MainTabNavigator() {
         component={InsightsScreen}
         options={{
           tabBarIcon: ({ color, focused }) => (
-            <View style={focused ? styles.insightsIconActive : undefined}>
-              <Feather name="circle" size={24} color={focused ? "#FFFFFF" : color} />
+            <View style={focused ? styles.insightsTabActive : undefined}>
+              <View style={[styles.insightsCircle, focused && styles.insightsCircleActive]} />
             </View>
           ),
         }}
@@ -143,12 +143,21 @@ const styles = StyleSheet.create({
   iconRotateBack: {
     transform: [{ rotate: "-45deg" }],
   },
-  insightsIconActive: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#3B82F6",
+  insightsTabActive: {
+    backgroundColor: "rgba(123, 140, 222, 0.2)",
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",
+  },
+  insightsCircle: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: "#9CA3AF",
+  },
+  insightsCircleActive: {
+    backgroundColor: "#3B5BDB",
   },
 });
