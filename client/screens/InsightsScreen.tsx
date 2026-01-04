@@ -34,18 +34,20 @@ const formatCurrency = (value: number) => {
 };
 
 function DonutChart() {
-  const size = 220;
-  const strokeWidth = 28;
+  const size = 215;
+  const strokeWidth = 26;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const center = size / 2;
+  const gap = 4;
 
   const total = MOCK_DATA.kategorien.reduce((sum, k) => sum + k.betrag, 0);
   let currentAngle = -90;
 
   const segments = MOCK_DATA.kategorien.map((kategorie) => {
     const percentage = kategorie.betrag / total;
-    const strokeDasharray = `${circumference * percentage} ${circumference * (1 - percentage)}`;
+    const segmentLength = circumference * percentage - gap;
+    const strokeDasharray = `${segmentLength} ${circumference - segmentLength}`;
     const rotation = currentAngle;
     currentAngle += percentage * 360;
 
@@ -73,7 +75,7 @@ function DonutChart() {
               strokeDashoffset={0}
               rotation={segment.rotation}
               origin={`${center}, ${center}`}
-              strokeLinecap="round"
+              strokeLinecap="butt"
             />
           ))}
         </G>
