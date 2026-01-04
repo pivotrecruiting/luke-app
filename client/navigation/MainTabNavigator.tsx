@@ -5,6 +5,7 @@ import { Feather } from "@expo/vector-icons";
 import HomeScreen from "@/screens/HomeScreen";
 import InsightsScreen from "@/screens/InsightsScreen";
 import AddScreen from "@/screens/AddScreen";
+import GoalsScreen from "@/screens/GoalsScreen";
 
 function PlaceholderScreen() {
   return <View style={styles.placeholder} />;
@@ -94,10 +95,16 @@ export default function MainTabNavigator() {
       />
       <Tab.Screen
         name="Goals"
-        component={PlaceholderScreen}
+        component={GoalsScreen}
         options={{
-          tabBarIcon: ({ color }) => (
-            <Feather name="star" size={24} color={color} />
+          tabBarLabel: () => null,
+          tabBarIcon: ({ focused }) => (
+            <View style={[styles.tabButton, focused && styles.tabButtonActive]}>
+              <Feather name="star" size={22} color={focused ? "#6155F5" : "#9CA3AF"} />
+              <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>
+                Goals
+              </Text>
+            </View>
           ),
         }}
       />
