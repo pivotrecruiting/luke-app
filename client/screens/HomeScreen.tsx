@@ -4,13 +4,16 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  Dimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
-import { Spacing, BorderRadius } from "@/constants/theme";
+import { Spacing } from "@/constants/theme";
 const businessmanFigure = require("../../assets/images/businessman-figure.png");
+
+const screenWidth = Dimensions.get("window").width;
 
 const MOCK_DATA = {
   userName: "Deni",
@@ -62,24 +65,32 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={["#4B6CB7", "#182848"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={[styles.header, { paddingTop: insets.top + Spacing.lg }]}
-      >
-        <View style={styles.headerContent}>
-          <View>
+      <View style={styles.heroSection}>
+        <LinearGradient
+          colors={["#4B6CB7", "#182848"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.header, { paddingTop: insets.top + Spacing.lg }]}
+        >
+          <View style={styles.headerTextContainer}>
             <Text style={styles.welcomeText}>Willkommen, {MOCK_DATA.userName}!</Text>
             <Text style={styles.subtitleText}>hier der aktuelle Monat</Text>
           </View>
-          <Image
-            source={businessmanFigure}
-            style={styles.businessmanFigure}
-            contentFit="contain"
-          />
+        </LinearGradient>
+
+        <View style={styles.balanceCard}>
+          <Text style={styles.balanceLabel}>Balance</Text>
+          <Text style={styles.balanceAmount}>
+            € {MOCK_DATA.balance.toLocaleString("de-DE", { minimumFractionDigits: 2 })}
+          </Text>
         </View>
-      </LinearGradient>
+
+        <Image
+          source={businessmanFigure}
+          style={styles.businessmanFigure}
+          contentFit="contain"
+        />
+      </View>
 
       <ScrollView
         style={styles.scrollView}
@@ -89,13 +100,6 @@ export default function HomeScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.balanceCard}>
-          <Text style={styles.balanceLabel}>Balance</Text>
-          <Text style={styles.balanceAmount}>
-            € {MOCK_DATA.balance.toLocaleString("de-DE", { minimumFractionDigits: 2 })}
-          </Text>
-        </View>
-
         <View style={styles.incomeExpenseRow}>
           <View style={styles.incomeCard}>
             <View style={styles.incomeIconContainer}>
@@ -121,7 +125,7 @@ export default function HomeScreen() {
         <View style={styles.chartCard}>
           <Text style={styles.chartTitle}>Wochenausgaben</Text>
           <View style={styles.chartContainer}>
-            {MOCK_DATA.wochenausgaben.map((item, index) => (
+            {MOCK_DATA.wochenausgaben.map((item) => (
               <View key={item.day} style={styles.barContainer}>
                 <View style={styles.barWrapper}>
                   <LinearGradient
@@ -180,25 +184,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F5F5F5",
   },
-  header: {
-    paddingHorizontal: Spacing.xl,
-    paddingBottom: 60,
+  heroSection: {
     zIndex: 10,
     overflow: "visible",
   },
-  headerContent: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    overflow: "visible",
+  header: {
+    paddingHorizontal: 20,
+    paddingBottom: 70,
   },
-  businessmanFigure: {
-    width: 71,
-    height: 112,
-    position: "absolute",
-    right: 10,
-    bottom: -50,
-    zIndex: 100,
+  headerTextContainer: {
+    zIndex: 1,
   },
   welcomeText: {
     fontSize: 28,
@@ -210,22 +205,22 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.7)",
     marginTop: 4,
   },
-  scrollView: {
-    flex: 1,
-    marginTop: -40,
-  },
-  scrollContent: {
-    paddingHorizontal: Spacing.xl,
-  },
   balanceCard: {
+    position: "absolute",
+    top: 109,
+    left: 20,
+    width: screenWidth - 40,
+    height: 96,
     backgroundColor: "#FFFFFF",
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.lg,
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 3,
+    zIndex: 5,
   },
   balanceLabel: {
     fontSize: 14,
@@ -237,15 +232,30 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#22C55E",
   },
+  businessmanFigure: {
+    width: 71,
+    height: 112,
+    position: "absolute",
+    right: 30,
+    top: 60,
+    zIndex: 20,
+  },
+  scrollView: {
+    flex: 1,
+    marginTop: 60,
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingTop: Spacing.md,
+  },
   incomeExpenseRow: {
     flexDirection: "row",
     gap: Spacing.md,
-    marginTop: Spacing.md,
   },
   incomeCard: {
     flex: 1,
     backgroundColor: "#FFFFFF",
-    borderRadius: BorderRadius.lg,
+    borderRadius: 16,
     padding: Spacing.lg,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -256,7 +266,7 @@ const styles = StyleSheet.create({
   expenseCard: {
     flex: 1,
     backgroundColor: "#FFFFFF",
-    borderRadius: BorderRadius.lg,
+    borderRadius: 16,
     padding: Spacing.lg,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -299,7 +309,7 @@ const styles = StyleSheet.create({
   },
   chartCard: {
     backgroundColor: "#FFFFFF",
-    borderRadius: BorderRadius.lg,
+    borderRadius: 16,
     padding: Spacing.lg,
     marginTop: Spacing.md,
     shadowColor: "#000",
@@ -361,7 +371,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#FFFFFF",
-    borderRadius: BorderRadius.md,
+    borderRadius: 12,
     padding: Spacing.md,
     marginBottom: Spacing.sm,
     shadowColor: "#000",
