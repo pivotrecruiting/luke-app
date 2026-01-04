@@ -66,10 +66,11 @@ const styles = StyleSheet.create({
   blurCircle: {
     position: "absolute",
     top: 155,
+    left: 99,
     width: 195,
     height: 436,
-    borderRadius: 218,
-    backgroundColor: "rgba(97, 106, 201, 0.3)",
+    borderRadius: 97.5,
+    backgroundColor: "rgba(97, 106, 201, 0.30)",
   },
   textContainer: {
     position: "absolute",
