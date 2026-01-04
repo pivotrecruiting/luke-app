@@ -72,7 +72,7 @@ export default function GoalDetailScreen() {
               <View>
                 <View style={styles.goalNameRow}>
                   <Text style={styles.goalName}>{goal.name}</Text>
-                  <Text style={styles.goalEmoji}>🛵</Text>
+                  <Feather name="edit-2" size={14} color="#9CA3AF" style={styles.editIcon} />
                 </View>
                 <Text style={styles.goalProgress}>
                   € {formatCurrency(goal.current)} / € {formatCurrency(goal.target)}
@@ -178,15 +178,15 @@ const styles = StyleSheet.create({
   goalNameRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 8,
   },
   goalName: {
     fontSize: 18,
     fontWeight: "600",
     color: "#000000",
   },
-  goalEmoji: {
-    fontSize: 16,
+  editIcon: {
+    marginLeft: 2,
   },
   goalProgress: {
     fontSize: 14,
@@ -270,6 +270,6 @@ const styles = StyleSheet.create({
   transactionAmount: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#2E47F9",
+    color: "#30B71E",
   },
 });
