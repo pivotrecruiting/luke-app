@@ -4,15 +4,18 @@ import {
   Text,
   StyleSheet,
   Pressable,
-  ImageBackground,
+  Dimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
+import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { OnboardingStackParamList } from "@/navigation/OnboardingNavigator";
 import { Spacing, BorderRadius, Typography } from "@/constants/theme";
+
+const { width: screenWidth } = Dimensions.get("window");
 
 type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
 
@@ -31,11 +34,9 @@ export default function WelcomeScreen() {
         contentFit="cover"
       />
 
-      <Image
-        source={require("@assets/images/soft_lamp_glow_light_cone.png")}
-        style={styles.glowImage}
-        contentFit="fill"
-      />
+      <View style={styles.glowContainer}>
+        <View style={styles.glowOval} />
+      </View>
 
       <View style={styles.textContainer}>
         <Text style={styles.headline}>Bring Licht in deine Finanzen</Text>
@@ -67,13 +68,19 @@ const styles = StyleSheet.create({
     height: 208,
     marginTop: 0,
   },
-  glowImage: {
+  glowContainer: {
     position: "absolute",
     top: 155,
-    left: 99,
+    left: (screenWidth - 195) / 2,
     width: 195,
     height: 436,
-    opacity: 0.3,
+    overflow: "visible",
+  },
+  glowOval: {
+    width: 195,
+    height: 436,
+    borderRadius: 97.5,
+    backgroundColor: "rgba(97, 106, 201, 0.30)",
   },
   textContainer: {
     position: "absolute",
