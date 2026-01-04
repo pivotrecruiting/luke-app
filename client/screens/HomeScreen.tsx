@@ -183,6 +183,7 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: Spacing.xl,
     paddingBottom: 60,
+    zIndex: 5,
   },
   headerContent: {
     flexDirection: "row",
@@ -190,11 +191,12 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
   },
   businessmanFigure: {
-    width: 80,
-    height: 100,
+    width: 90,
+    height: 110,
     position: "absolute",
     right: 0,
-    top: -10,
+    top: 10,
+    zIndex: 10,
   },
   welcomeText: {
     fontSize: 28,
