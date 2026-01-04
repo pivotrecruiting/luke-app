@@ -1,6 +1,9 @@
 import React from "react";
-import { View, Text, StyleSheet, Pressable, Alert } from "react-native";
+import { View, Text, StyleSheet, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { OnboardingStackParamList } from "@/navigation/OnboardingNavigator";
 import ProgressDots from "@/components/ProgressDots";
 import { Spacing, BorderRadius, Typography, Colors } from "@/constants/theme";
 
@@ -9,8 +12,11 @@ const MOCK_DATA = {
   fixkosten: 500.0,
 };
 
+type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
+
 export default function Onboarding6Screen() {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<NavigationProp>();
   const verfuegbar = MOCK_DATA.einkommen - MOCK_DATA.fixkosten;
 
   const formatCurrency = (value: number, showPlus: boolean = false) => {
@@ -25,11 +31,7 @@ export default function Onboarding6Screen() {
   };
 
   const handleContinue = () => {
-    Alert.alert(
-      "Onboarding abgeschlossen!",
-      "Du hast das Onboarding erfolgreich beendet. Die Hauptapp würde jetzt starten.",
-      [{ text: "OK" }]
-    );
+    navigation.navigate("Onboarding7");
   };
 
   return (

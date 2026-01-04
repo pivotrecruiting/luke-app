@@ -8,6 +8,7 @@ import Onboarding3Screen from "@/screens/Onboarding3Screen";
 import Onboarding4Screen from "@/screens/Onboarding4Screen";
 import Onboarding5Screen from "@/screens/Onboarding5Screen";
 import Onboarding6Screen from "@/screens/Onboarding6Screen";
+import Onboarding7Screen from "@/screens/Onboarding7Screen";
 
 export type OnboardingStackParamList = {
   Welcome: undefined;
@@ -18,6 +19,7 @@ export type OnboardingStackParamList = {
   Onboarding4: undefined;
   Onboarding5: undefined;
   Onboarding6: undefined;
+  Onboarding7: undefined;
 };
 
 const Stack = createNativeStackNavigator<OnboardingStackParamList>();
@@ -38,6 +40,7 @@ export default function OnboardingNavigator() {
       <Stack.Screen name="Onboarding4" component={Onboarding4Screen} />
       <Stack.Screen name="Onboarding5" component={Onboarding5Screen} />
       <Stack.Screen name="Onboarding6" component={Onboarding6Screen} />
+      <Stack.Screen name="Onboarding7" component={Onboarding7Screen} />
     </Stack.Navigator>
   );
 }
