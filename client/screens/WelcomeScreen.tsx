@@ -31,7 +31,11 @@ export default function WelcomeScreen() {
         contentFit="cover"
       />
 
-      <View style={styles.blurCircle} />
+      <Image
+        source={require("@assets/generated_images/soft_lamp_glow_light_cone.png")}
+        style={styles.glowImage}
+        contentFit="fill"
+      />
 
       <View style={styles.textContainer}>
         <Text style={styles.headline}>Bring Licht in deine Finanzen</Text>
@@ -63,14 +67,13 @@ const styles = StyleSheet.create({
     height: 208,
     marginTop: 0,
   },
-  blurCircle: {
+  glowImage: {
     position: "absolute",
     top: 155,
     left: 99,
     width: 195,
     height: 436,
-    borderRadius: 97.5,
-    backgroundColor: "rgba(97, 106, 201, 0.30)",
+    opacity: 0.3,
   },
   textContainer: {
     position: "absolute",
