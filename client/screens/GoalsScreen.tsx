@@ -9,6 +9,9 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { Spacing } from "@/constants/theme";
 
 const MOCK_DATA = {
@@ -92,11 +95,11 @@ function LevelCard() {
   );
 }
 
-function GoalItem({ goal }: { goal: typeof MOCK_DATA.goals[0] }) {
+function GoalItem({ goal, onPress }: { goal: typeof MOCK_DATA.goals[0]; onPress: () => void }) {
   const percentage = (goal.current / goal.target) * 100;
 
   return (
-    <View style={styles.goalItem}>
+    <Pressable style={styles.goalItem} onPress={onPress}>
       <View style={styles.goalHeader}>
         <View style={styles.goalLeft}>
           <Text style={styles.goalIcon}>{goal.icon}</Text>
@@ -121,7 +124,7 @@ function GoalItem({ goal }: { goal: typeof MOCK_DATA.goals[0] }) {
           <Feather name="more-vertical" size={20} color="#9CA3AF" />
         </Pressable>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -153,6 +156,11 @@ function BudgetItem({ budget }: { budget: typeof MOCK_DATA.budgets[0] }) {
 
 export default function GoalsScreen() {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
+  const handleGoalPress = (goal: typeof MOCK_DATA.goals[0]) => {
+    navigation.navigate("GoalDetail", { goal });
+  };
 
   return (
     <View style={styles.container}>
@@ -184,7 +192,7 @@ export default function GoalsScreen() {
         </View>
 
         {MOCK_DATA.goals.map((goal) => (
-          <GoalItem key={goal.id} goal={goal} />
+          <GoalItem key={goal.id} goal={goal} onPress={() => handleGoalPress(goal)} />
         ))}
 
         <View style={styles.sectionHeader}>
