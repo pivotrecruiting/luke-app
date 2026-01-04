@@ -1,9 +1,10 @@
 import React from "react";
-import { View, StyleSheet, Pressable, Text } from "react-native";
+import { View, StyleSheet, Text } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Feather } from "@expo/vector-icons";
 import HomeScreen from "@/screens/HomeScreen";
 import InsightsScreen from "@/screens/InsightsScreen";
+import AddScreen from "@/screens/AddScreen";
 
 function PlaceholderScreen() {
   return <View style={styles.placeholder} />;
@@ -76,11 +77,18 @@ export default function MainTabNavigator() {
       />
       <Tab.Screen
         name="Add"
-        component={PlaceholderScreen}
+        component={AddScreen}
         options={{
-          tabBarLabel: "",
-          tabBarIcon: ({ color }) => (
-            <Feather name="plus" size={28} color={color} />
+          tabBarLabel: () => null,
+          tabBarIcon: ({ focused }) => (
+            <View style={[styles.tabButton, focused && styles.tabButtonActive]}>
+              <View style={[styles.addCircle, focused && styles.addCircleActive]}>
+                <Feather name="plus" size={18} color={focused ? "#FFFFFF" : "#9CA3AF"} />
+              </View>
+              <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>
+                Add
+              </Text>
+            </View>
           ),
         }}
       />
@@ -139,6 +147,17 @@ const styles = StyleSheet.create({
     transform: [{ rotate: "45deg" }],
   },
   homeCircleActive: {
+    backgroundColor: "#6155F5",
+  },
+  addCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#E5E7EB",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  addCircleActive: {
     backgroundColor: "#6155F5",
   },
   tabLabel: {
