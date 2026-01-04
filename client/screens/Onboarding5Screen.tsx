@@ -1,6 +1,9 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, Pressable, Alert } from "react-native";
+import { View, Text, StyleSheet, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { OnboardingStackParamList } from "@/navigation/OnboardingNavigator";
 import ProgressDots from "@/components/ProgressDots";
 import Chip from "@/components/Chip";
 import CurrencyInput from "@/components/CurrencyInput";
@@ -20,17 +23,16 @@ const expenseTypes = [
   "Auswärts essen",
 ];
 
+type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
+
 export default function Onboarding5Screen() {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<NavigationProp>();
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [amount, setAmount] = useState("0,00");
 
-  const handleComplete = () => {
-    Alert.alert(
-      "Onboarding Complete",
-      "Welcome to Luke! Your financial journey begins now.",
-      [{ text: "OK" }]
-    );
+  const handleContinue = () => {
+    navigation.navigate("Onboarding6");
   };
 
   return (
@@ -75,7 +77,7 @@ export default function Onboarding5Screen() {
         ]}
       >
         <Pressable
-          onPress={handleComplete}
+          onPress={handleContinue}
           style={({ pressed }) => [
             styles.button,
             pressed && styles.buttonPressed,
