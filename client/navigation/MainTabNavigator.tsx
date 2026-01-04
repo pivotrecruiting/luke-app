@@ -48,24 +48,13 @@ export default function MainTabNavigator() {
         name="Home"
         component={HomeScreen}
         options={{
-          tabBarIcon: ({ color, focused }) => (
-            <View
-              style={[
-                styles.homeIconContainer,
-                focused && styles.homeIconContainerActive,
-              ]}
-            >
-              {focused ? (
-                <View style={styles.diamondActive}>
-                  <View style={styles.iconRotateBack}>
-                    <Feather name="home" size={20} color="#FFFFFF" />
-                  </View>
-                </View>
-              ) : (
-                <View style={styles.diamond}>
-                  <Feather name="home" size={20} color={color} />
-                </View>
-              )}
+          tabBarLabel: () => null,
+          tabBarIcon: ({ focused }) => (
+            <View style={[styles.tabButton, focused && styles.tabButtonActive]}>
+              <View style={[styles.homeCircle, focused && styles.homeCircleActive]} />
+              <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>
+                Home
+              </Text>
             </View>
           ),
         }}
@@ -76,9 +65,9 @@ export default function MainTabNavigator() {
         options={{
           tabBarLabel: () => null,
           tabBarIcon: ({ focused }) => (
-            <View style={[styles.insightsTabButton, focused && styles.insightsTabButtonActive]}>
+            <View style={[styles.tabButton, focused && styles.tabButtonActive]}>
               <View style={[styles.insightsCircle, focused && styles.insightsCircleActive]} />
-              <Text style={[styles.insightsLabel, focused && styles.insightsLabelActive]}>
+              <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>
                 Insights
               </Text>
             </View>
@@ -122,32 +111,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F5F5F5",
   },
-  homeIconContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  homeIconContainerActive: {
-    marginBottom: 4,
-  },
-  diamond: {
-    width: 40,
-    height: 40,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  diamondActive: {
-    width: 44,
-    height: 44,
-    backgroundColor: "#3B82F6",
-    borderRadius: 12,
-    transform: [{ rotate: "45deg" }],
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  iconRotateBack: {
-    transform: [{ rotate: "-45deg" }],
-  },
-  insightsTabButton: {
+  tabButton: {
     alignItems: "center",
     justifyContent: "center",
     paddingTop: 6,
@@ -155,7 +119,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 100,
   },
-  insightsTabButtonActive: {
+  tabButtonActive: {
     backgroundColor: "#E1D4F6",
   },
   insightsCircle: {
@@ -167,13 +131,23 @@ const styles = StyleSheet.create({
   insightsCircleActive: {
     backgroundColor: "#6155F5",
   },
-  insightsLabel: {
+  homeCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: "#9CA3AF",
+    transform: [{ rotate: "45deg" }],
+  },
+  homeCircleActive: {
+    backgroundColor: "#6155F5",
+  },
+  tabLabel: {
     fontSize: 12,
     fontWeight: "500",
     color: "#9CA3AF",
     marginTop: 2,
   },
-  insightsLabelActive: {
+  tabLabelActive: {
     color: "#3B82F6",
   },
 });
