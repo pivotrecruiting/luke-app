@@ -7,9 +7,11 @@ import {
   ScrollView,
   NativeSyntheticEvent,
   NativeScrollEvent,
-  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { OnboardingStackParamList } from "@/navigation/OnboardingNavigator";
 import ProgressDots from "@/components/ProgressDots";
 import Chip from "@/components/Chip";
 import { Spacing, BorderRadius, Colors } from "@/constants/theme";
@@ -32,8 +34,11 @@ const amounts = [10, 20, 30, 50, 100, 150, 200, 250, 300, 400, 500];
 const ITEM_HEIGHT = 40;
 const VISIBLE_ITEMS = 5;
 
+type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
+
 export default function Onboarding7Screen() {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<NavigationProp>();
   const [selectedCategory, setSelectedCategory] = useState<string>("Shoppen");
   const [selectedAmount, setSelectedAmount] = useState<number>(50);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -59,11 +64,7 @@ export default function Onboarding7Screen() {
   };
 
   const handleContinue = () => {
-    Alert.alert(
-      "Budget festgelegt!",
-      `Dein monatliches Limit für ${selectedCategory}: €${selectedAmount}`,
-      [{ text: "OK" }]
-    );
+    navigation.navigate("Paywall");
   };
 
   const initialScrollIndex = amounts.indexOf(50);
