@@ -32,7 +32,7 @@ export default function WelcomeScreen() {
       />
 
       <Image
-        source={require("@assets/generated_images/soft_lamp_glow_light_cone.png")}
+        source={require("@assets/images/soft_lamp_glow_light_cone.png")}
         style={styles.glowImage}
         contentFit="fill"
       />
