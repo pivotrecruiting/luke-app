@@ -1,9 +1,27 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, Pressable, Text } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Feather } from "@expo/vector-icons";
 import HomeScreen from "@/screens/HomeScreen";
 import InsightsScreen from "@/screens/InsightsScreen";
+
+function InsightsTabButton({ children, onPress, accessibilityState }: any) {
+  const focused = accessibilityState?.selected;
+  return (
+    <Pressable
+      onPress={onPress}
+      style={[
+        styles.insightsTabButton,
+        focused && styles.insightsTabButtonActive,
+      ]}
+    >
+      <View style={[styles.insightsCircle, focused && styles.insightsCircleActive]} />
+      <Text style={[styles.insightsLabel, focused && styles.insightsLabelActive]}>
+        Insights
+      </Text>
+    </Pressable>
+  );
+}
 
 function PlaceholderScreen() {
   return <View style={styles.placeholder} />;
@@ -74,11 +92,7 @@ export default function MainTabNavigator() {
         name="Insights"
         component={InsightsScreen}
         options={{
-          tabBarIcon: ({ color, focused }) => (
-            <View style={focused ? styles.insightsTabActive : undefined}>
-              <View style={[styles.insightsCircle, focused && styles.insightsCircleActive]} />
-            </View>
-          ),
+          tabBarButton: (props) => <InsightsTabButton {...props} />,
         }}
       />
       <Tab.Screen
@@ -143,17 +157,19 @@ const styles = StyleSheet.create({
   iconRotateBack: {
     transform: [{ rotate: "-45deg" }],
   },
-  insightsTabActive: {
-    width: 72.8,
-    height: 54,
-    backgroundColor: "#E1D4F6",
-    paddingTop: 6,
-    paddingRight: 8,
-    paddingBottom: 7,
-    paddingLeft: 8,
-    borderRadius: 100,
-    justifyContent: "center",
+  insightsTabButton: {
+    flex: 1,
     alignItems: "center",
+    justifyContent: "center",
+    paddingTop: 6,
+    paddingBottom: 7,
+    paddingHorizontal: 8,
+    marginVertical: 4,
+  },
+  insightsTabButtonActive: {
+    backgroundColor: "#E1D4F6",
+    borderRadius: 100,
+    marginHorizontal: 4,
   },
   insightsCircle: {
     width: 28,
@@ -163,5 +179,14 @@ const styles = StyleSheet.create({
   },
   insightsCircleActive: {
     backgroundColor: "#6155F5",
+  },
+  insightsLabel: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: "#9CA3AF",
+    marginTop: 2,
+  },
+  insightsLabelActive: {
+    color: "#3B82F6",
   },
 });
