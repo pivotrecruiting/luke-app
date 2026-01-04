@@ -1,17 +1,20 @@
 import React from "react";
-import { View, Text, StyleSheet, Pressable, Alert } from "react-native";
+import { View, Text, StyleSheet, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
+import { CommonActions, useNavigation } from "@react-navigation/native";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
 export default function PaywallScreen() {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
 
   const handleContinue = () => {
-    Alert.alert(
-      "Subscription",
-      "Hier würde die Zahlung verarbeitet werden.",
-      [{ text: "OK" }]
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: "Main" }],
+      })
     );
   };
 
