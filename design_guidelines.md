@@ -1,134 +1,154 @@
-# Design Guidelines: Welcome & Onboarding Flow
+# Design Guidelines: Luke Finance App
 
-**Note:** Unable to access wireframe files from the zip. These guidelines should be refined once wireframes are viewable. The implementation should match the provided wireframes exactly.
+## App Overview
+Luke is a German-language personal finance app that helps users gain control over their finances through onboarding questionnaires about savings goals, income, and expenses.
 
-## Architecture
+## Color Palette
 
-### Authentication
-- Determine from wireframes if authentication is required
-- If login/signup screens are present, implement SSO (Apple Sign-In for iOS, Google for Android)
-- If no auth screens shown, implement as local-first app
+### Primary Colors
+- **Primary Purple**: #7340fd - Main CTA buttons, selections, highlights
+- **Accent Lavender**: #7B8CDE - Progress indicators, input borders, secondary elements
+- **Button Purple**: #8E97FD - Continue buttons, action buttons
 
-### Navigation Structure
-**Onboarding Flow (Stack-Only Navigation):**
-- Welcome Screen → Onboarding Screens → Main App Entry
-- Linear progression with "Next" buttons
-- Include "Skip" option if shown in wireframes
-- Final screen transitions to main app navigation
+### Background Colors
+- **White**: #FFFFFF - Main screen backgrounds
+- **Dark Gradient**: #0a0a15 to #000000 - Welcome screen background
+- **Chip Background**: #E9E1FF - Light purple for chip/pill backgrounds
 
-## Screen Specifications
+### Card Colors (Goal Selection)
+- **Overview**: #7B8CDE (Lavender)
+- **Klarna**: #F07B6E (Coral)
+- **Subscriptions**: #F5C5A8 (Peach)
+- **Savings**: #F5D76E (Yellow)
+- **Goals**: #7ECBA1 (Mint)
+- **Peace**: #D4B5C7 (Mauve)
+
+### Text Colors
+- **Primary Text**: #000000
+- **Secondary Text**: #9CA3AF (Gray)
+- **Button Text**: #FFFFFF
+
+### Accent Colors
+- **Teal**: #2d9a8c - Decorative blur circles
+- **Divider**: #E5E7EB
+
+## Typography
+
+### Font Family
+- Primary: System font (Inter-inspired)
+
+### Font Sizes & Weights
+- **h1**: 28px, Bold (700) - Screen titles
+- **h2**: 25px, ExtraBold (800) - Welcome headline
+- **h3**: 20px, Bold (700) - Section headings
+- **h4**: 18px, SemiBold (600) - Card labels, subheadings
+- **body**: 16px, Regular (400) - Body text, descriptions
+- **small**: 14px, Regular (400) - Subtitles, hints
+- **tiny**: 12px, Regular (400) - Legal text
+- **button**: 14px, ExtraBold (800) - Button text (uppercase)
+- **chip**: 14px, Medium (500) - Chip/pill labels
+
+## Spacing System
+- **xs**: 4px
+- **sm**: 8px
+- **md**: 12px
+- **lg**: 16px
+- **xl**: 20px
+- **2xl**: 24px
+- **3xl**: 32px
+- **4xl**: 40px
+- **5xl**: 48px
+- **inputHeight**: 56px
+- **buttonHeight**: 56px
+
+## Border Radius
+- **xs**: 8px - Small inputs
+- **sm**: 12px - Inputs, chips
+- **md**: 16px - Cards, buttons
+- **lg**: 24px - Large cards
+- **xl**: 32px - Primary buttons
+- **full**: 9999px - Pills, chips
+
+## Components
+
+### Primary Button
+- Background: #8E97FD or #7340fd
+- Height: 56px
+- Border Radius: 16px
+- Text: Uppercase, bold, white
+- Press state: Opacity 0.8
+
+### Skip/Secondary Button
+- Background: #E8E4F3
+- Border: 1px #7B8CDE
+- Height: 56px
+- Border Radius: 16px
+- Text: #7B8CDE, semibold
+
+### Currency Input
+- Height: 56px
+- Border: 2px #7B8CDE (highlighted) or 1px #E5E7EB (normal)
+- Border Radius: 12px
+- € prefix left-aligned
+
+### Chips/Pills
+- Background: #E9E1FF
+- Border: 2px (gray unselected, black selected)
+- Border Radius: full (9999px)
+- Padding: 8px vertical, 16px horizontal
+
+### Goal Cards
+- Height: 160px
+- Width: 48% (2-column grid)
+- Border Radius: 16px
+- Padding: 16px
+- Selection: 4px border ring in #7340fd
+
+### Progress Dots
+- Active: 32px wide × 8px tall, #7B8CDE
+- Inactive: 8px × 8px, #D1D5DB
+- Gap: 8px between dots
+
+## Screen Patterns
+
+### Safe Area Handling
+- Top padding: insets.top + 20px (no header screens)
+- Bottom padding: insets.bottom + 20px
+
+### Floating Button Container
+- Position: absolute bottom
+- Background: white
+- Padding: 16px top, varies bottom
+
+### Content Layout
+- Horizontal padding: 20px
+- Gap between sections: 24-32px
+
+## Animation & Interaction
+
+### Button Press
+- Opacity change to 0.8
+
+### Card Selection
+- 4px border ring appears with spring animation
+
+### Screen Transitions
+- Slide from right (React Navigation default)
+
+## Assets
 
 ### Welcome Screen
-**Layout:**
-- Full-screen immersive experience
-- Content should respect safe area insets (top: insets.top + Spacing.xl, bottom: insets.bottom + Spacing.xl)
-- Primary CTA button at bottom
-- Logo/branding at top or center
-- Tagline/value proposition copy
+- Lamp image: nordic-style-colorful-metal-pendant-light-fixture-dining-room-ta.png
+- Purple blur circle for depth effect
 
-**Components:**
-- Brand logo/app icon
-- Headline text
-- Subheadline/description text
-- Primary button ("Get Started" or equivalent)
-- Secondary button/link (if "Already have account" is shown)
+### Onboarding2 Screen
+- Coins illustration: image_1767541830063.png
+- Ellipse background: image_1767542218268.png
 
-### Onboarding Screens
-**Layout:**
-- Swipeable carousel OR step-by-step with Next buttons (match wireframes)
-- Progress indicators (dots or step counter)
-- Consistent header spacing
-- Bottom action area for navigation buttons
-
-**Components per screen:**
-- Hero image/illustration
-- Title text
-- Description text
-- Next/Continue button
-- Skip button (top-right corner)
-- Page indicators
-
-**Content Pattern:**
-- Screen 1: Primary feature/benefit
-- Screen 2: Secondary feature/benefit
-- Screen 3: Call-to-action/permissions (if applicable)
-
-## Visual Design
-
-### Color Palette
-Extract from wireframes:
-- Primary color (CTAs, key elements)
-- Background color
-- Text colors (primary, secondary)
-- Accent colors (if any)
-
-### Typography
-- Welcome headline: Large, bold (match wireframe sizing)
-- Onboarding titles: Medium-large, semibold
-- Body text: Regular weight, readable size
-- Button text: Medium weight
-
-### Component Styling
-
-**Buttons:**
-- Primary CTA: Solid fill with primary color
-- Rounded corners (follow wireframe radius)
-- Minimum height: 48px for accessibility
-- Press state: Reduce opacity to 0.8
-
-**Progress Indicators:**
-- Active: Primary color
-- Inactive: Gray/muted
-- Size and spacing: Match wireframes exactly
-
-**Images/Illustrations:**
-- Maintain aspect ratios from wireframes
-- Use provided assets if included in zip
-- If generating placeholders, match style shown
-
-### Spacing System
-- Screen padding: Horizontal 20-24px (match wireframes)
-- Vertical rhythm between elements: Match wireframe gaps
-- Bottom button spacing: Safe area + 20-24px
-
-## Interaction Design
-
-**Welcome Screen:**
-- Fade-in animation on mount (optional, if not specified)
-- Button press feedback (opacity change)
-- Smooth transition to onboarding
-
-**Onboarding Carousel (if applicable):**
-- Horizontal swipe gesture enabled
-- Snap to page boundaries
-- Update progress indicators on page change
-- "Next" button triggers same page transition as swipe
-
-**Navigation Flow:**
-- "Skip" jumps to final screen or main app
-- "Next" advances one screen
-- Final screen "Get Started" → main app or signup
-- No back navigation during onboarding (one-way flow)
-
-## Accessibility
-
-- All touchable areas minimum 44x44pt
-- Sufficient color contrast ratios (4.5:1 for text)
-- Meaningful button labels
-- Support dynamic text sizing
-- Screen reader support for all text content
-
-## Assets Required
-
-Extract from wireframes:
-- App logo/icon
-- Onboarding illustrations (3-4 images typically)
-- Any decorative graphics
-- Icon set for features (if shown)
-
-**Implementation Priority:**
-1. Match wireframe layouts pixel-perfect
-2. Extract exact colors, fonts, spacing
-3. Replicate component styles precisely
-4. Implement animations only if specified
-5. Ensure navigation flow matches wireframes exactly
+### Goal Card Images (Onboarding1)
+- Overview: image_1767540420128.png
+- Klarna: image_1767540689248.png
+- Subscriptions: image_1767540704833.png
+- Savings: image_1767540547771.png
+- Goals: image_1767540578781.png
+- Peace: image_1767540595139.png
