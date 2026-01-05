@@ -1,10 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   Pressable,
+  Modal,
+  TextInput,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -154,12 +156,59 @@ function BudgetItem({ budget }: { budget: typeof MOCK_DATA.budgets[0] }) {
   );
 }
 
+const EMOJI_LIST = ["😀", "🛵", "💳", "🏠", "🚗", "✈️", "💻", "📱", "🎮", "👗", "💍", "🎓"];
+
 export default function GoalsScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
+  const [createModalVisible, setCreateModalVisible] = useState(false);
+  const [goalName, setGoalName] = useState("");
+  const [goalAmount, setGoalAmount] = useState("");
+  const [monthlyContribution, setMonthlyContribution] = useState("");
+  const [selectedEmoji, setSelectedEmoji] = useState("😀");
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [goals, setGoals] = useState(MOCK_DATA.goals);
+
   const handleGoalPress = (goal: typeof MOCK_DATA.goals[0]) => {
     navigation.navigate("GoalDetail", { goal });
+  };
+
+  const calculateMonths = () => {
+    const amount = parseFloat(goalAmount.replace(",", ".")) || 0;
+    const monthly = parseFloat(monthlyContribution.replace(",", ".")) || 0;
+    if (monthly <= 0 || amount <= 0) return 0;
+    return Math.ceil(amount / monthly);
+  };
+
+  const handleCreateGoal = () => {
+    const amount = parseFloat(goalAmount.replace(",", ".")) || 0;
+    if (!goalName || amount <= 0) return;
+
+    const newGoal = {
+      id: String(Date.now()),
+      name: goalName,
+      icon: selectedEmoji,
+      current: 0,
+      target: amount,
+      remaining: amount,
+    };
+
+    setGoals([...goals, newGoal]);
+    setCreateModalVisible(false);
+    setGoalName("");
+    setGoalAmount("");
+    setMonthlyContribution("");
+    setSelectedEmoji("😀");
+  };
+
+  const resetAndCloseModal = () => {
+    setCreateModalVisible(false);
+    setGoalName("");
+    setGoalAmount("");
+    setMonthlyContribution("");
+    setSelectedEmoji("😀");
+    setShowEmojiPicker(false);
   };
 
   return (
@@ -186,12 +235,12 @@ export default function GoalsScreen() {
 
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Goals</Text>
-          <Pressable style={styles.addButton}>
+          <Pressable style={styles.addButton} onPress={() => setCreateModalVisible(true)}>
             <Feather name="plus" size={20} color="#FFFFFF" />
           </Pressable>
         </View>
 
-        {MOCK_DATA.goals.map((goal) => (
+        {goals.map((goal) => (
           <GoalItem key={goal.id} goal={goal} onPress={() => handleGoalPress(goal)} />
         ))}
 
@@ -206,6 +255,88 @@ export default function GoalsScreen() {
           <BudgetItem key={budget.id} budget={budget} />
         ))}
       </ScrollView>
+
+      <Modal
+        visible={createModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={resetAndCloseModal}
+      >
+        <View style={styles.modalOverlay}>
+          <Pressable style={styles.modalBackdrop} onPress={resetAndCloseModal} />
+          <View style={[styles.modalContent, { paddingBottom: insets.bottom + 24 }]}>
+            <View style={styles.modalHandle} />
+            <Text style={styles.modalTitle}>Ziel erstellen</Text>
+
+            <Text style={styles.modalLabel}>Name</Text>
+            <View style={styles.nameInputRow}>
+              <Pressable
+                style={styles.emojiButton}
+                onPress={() => setShowEmojiPicker(!showEmojiPicker)}
+              >
+                <Text style={styles.emojiButtonText}>{selectedEmoji}</Text>
+              </Pressable>
+              <TextInput
+                style={styles.nameInput}
+                value={goalName}
+                onChangeText={setGoalName}
+                placeholder="z.B. neues IPhone"
+                placeholderTextColor="#9CA3AF"
+              />
+            </View>
+
+            {showEmojiPicker ? (
+              <View style={styles.emojiPicker}>
+                {EMOJI_LIST.map((emoji) => (
+                  <Pressable
+                    key={emoji}
+                    style={styles.emojiOption}
+                    onPress={() => {
+                      setSelectedEmoji(emoji);
+                      setShowEmojiPicker(false);
+                    }}
+                  >
+                    <Text style={styles.emojiOptionText}>{emoji}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            ) : null}
+
+            <Text style={styles.modalLabel}>Summe</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={goalAmount}
+              onChangeText={setGoalAmount}
+              placeholder="€ 1000,00"
+              placeholderTextColor="#9CA3AF"
+              keyboardType="decimal-pad"
+            />
+
+            <Text style={styles.modalLabel}>Monatlicher Beitrag</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={monthlyContribution}
+              onChangeText={setMonthlyContribution}
+              placeholder="€ 200,00"
+              placeholderTextColor="#9CA3AF"
+              keyboardType="decimal-pad"
+            />
+
+            <Text style={styles.calculationText}>
+              Erreichbar in: <Text style={styles.calculationBold}>{calculateMonths()} Monaten</Text>
+            </Text>
+
+            <View style={styles.modalButtons}>
+              <Pressable style={styles.cancelButton} onPress={resetAndCloseModal}>
+                <Text style={styles.cancelButtonText}>abbrechen</Text>
+              </Pressable>
+              <Pressable style={styles.createButton} onPress={handleCreateGoal}>
+                <Text style={styles.createButtonText}>Hinzufügen</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -434,5 +565,128 @@ const styles = StyleSheet.create({
     height: "100%",
     backgroundColor: "rgba(42, 58, 230, 0.69)",
     borderRadius: 3,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+  },
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.3)",
+  },
+  modalContent: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 24,
+    paddingTop: 12,
+  },
+  modalHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: "#D1D5DB",
+    borderRadius: 2,
+    alignSelf: "center",
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#000000",
+    marginBottom: 24,
+  },
+  modalLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#6B7280",
+    marginBottom: 8,
+  },
+  nameInputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F3F4F6",
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  emojiButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRightWidth: 1,
+    borderRightColor: "#E5E7EB",
+  },
+  emojiButtonText: {
+    fontSize: 24,
+  },
+  nameInput: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: "#000000",
+  },
+  emojiPicker: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    backgroundColor: "#F3F4F6",
+    borderRadius: 12,
+    padding: 8,
+    marginBottom: 16,
+    gap: 8,
+  },
+  emojiOption: {
+    width: 44,
+    height: 44,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 8,
+    backgroundColor: "#FFFFFF",
+  },
+  emojiOptionText: {
+    fontSize: 24,
+  },
+  modalInput: {
+    backgroundColor: "#F3F4F6",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: "#000000",
+    marginBottom: 16,
+  },
+  calculationText: {
+    fontSize: 14,
+    color: "#6B7280",
+    marginBottom: 24,
+  },
+  calculationBold: {
+    fontWeight: "700",
+    color: "#000000",
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 12,
+  },
+  cancelButton: {
+    backgroundColor: "#9CA3AF",
+    borderRadius: 24,
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FFFFFF",
+  },
+  createButton: {
+    backgroundColor: "#7340FE",
+    borderRadius: 24,
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+  },
+  createButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FFFFFF",
   },
 });
