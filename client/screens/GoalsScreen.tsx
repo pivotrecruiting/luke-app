@@ -274,21 +274,20 @@ export default function GoalsScreen() {
         end={{ x: 0, y: 1 }}
         style={[styles.header, { paddingTop: insets.top + Spacing.lg }]}
       >
-        <View style={styles.headerRow}>
-          <View>
-            <Text style={styles.headerTitle}>Goals</Text>
-            <Text style={styles.headerSubtitle}>bleib dran!</Text>
-          </View>
-          {successToast ? (
-            <View style={styles.successToast}>
-              <Feather name="check-circle" size={16} color="#7340FE" />
-              <Text style={styles.successToastText}>
-                {successToast === "goal" ? "Goal created!" : "Budget set!"}
-              </Text>
-            </View>
-          ) : null}
-        </View>
+        <Text style={styles.headerTitle}>Goals</Text>
+        <Text style={styles.headerSubtitle}>bleib dran!</Text>
       </LinearGradient>
+
+      {successToast ? (
+        <View style={styles.toastOverlay}>
+          <View style={styles.successToast}>
+            <Feather name="check-circle" size={18} color="#7340FE" />
+            <Text style={styles.successToastText}>
+              {successToast === "goal" ? "Goal created!" : "Budget set!"}
+            </Text>
+          </View>
+        </View>
+      ) : null}
 
       <ScrollView
         style={styles.scrollView}
@@ -488,24 +487,35 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.8)",
     marginTop: 4,
   },
-  headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  toastOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: "center",
     alignItems: "center",
+    zIndex: 1000,
+    pointerEvents: "none",
   },
   successToast: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#FFFFFF",
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    gap: 6,
+    borderRadius: 24,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    gap: 8,
     borderWidth: 2,
     borderColor: "#7340FE",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
   },
   successToastText: {
-    fontSize: 12,
+    fontSize: 16,
     fontWeight: "600",
     color: "#7340FE",
   },
