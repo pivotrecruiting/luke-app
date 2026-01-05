@@ -236,7 +236,7 @@ interface AppProviderProps {
 }
 
 export function AppProvider({ children }: AppProviderProps) {
-  const [isOnboardingComplete, setIsOnboardingComplete] = useState(true);
+  const [isOnboardingComplete, setIsOnboardingComplete] = useState(false);
   const [userName] = useState("Deni");
   const [incomeEntries, setIncomeEntries] = useState<IncomeEntry[]>(INITIAL_INCOME_ENTRIES);
   const [expenseEntries, setExpenseEntries] = useState<ExpenseEntry[]>(INITIAL_EXPENSE_ENTRIES);
