@@ -506,7 +506,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
-    marginTop: -10,
+    paddingTop: 24,
   },
   levelCard: {
     backgroundColor: "#FFFFFF",
