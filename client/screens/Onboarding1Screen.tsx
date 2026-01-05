@@ -103,6 +103,7 @@ export default function Onboarding1Screen() {
                   source={goal.image}
                   style={styles.goalImageFull}
                   contentFit="cover"
+                  cachePolicy="none"
                 />
               ) : (
                 <>
