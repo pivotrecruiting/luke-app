@@ -6,6 +6,7 @@ import HomeScreen from "@/screens/HomeScreen";
 import InsightsScreen from "@/screens/InsightsScreen";
 import AddScreen from "@/screens/AddScreen";
 import GoalsScreen from "@/screens/GoalsScreen";
+import ProfileScreen from "@/screens/ProfileScreen";
 
 function PlaceholderScreen() {
   return <View style={styles.placeholder} />;
@@ -110,10 +111,16 @@ export default function MainTabNavigator() {
       />
       <Tab.Screen
         name="Profile"
-        component={PlaceholderScreen}
+        component={ProfileScreen}
         options={{
-          tabBarIcon: ({ color }) => (
-            <Feather name="square" size={24} color={color} />
+          tabBarLabel: () => null,
+          tabBarIcon: ({ focused }) => (
+            <View style={[styles.tabButton, focused && styles.tabButtonActive]}>
+              <Feather name="user" size={22} color={focused ? "#6155F5" : "#9CA3AF"} />
+              <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>
+                Profil
+              </Text>
+            </View>
           ),
         }}
       />
