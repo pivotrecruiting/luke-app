@@ -113,11 +113,11 @@ export default function Onboarding1Screen() {
                   />
                 </View>
               ) : goal.id === "subscriptions" ? (
-                <View style={styles.subscriptionContainer}>
+                <View style={styles.layeredImageContainer}>
                   <Image
                     source={goal.image}
                     style={styles.subscriptionBlob}
-                    contentFit="cover"
+                    contentFit="contain"
                   />
                   <Image
                     source={goal.overlayImage}
@@ -214,13 +214,6 @@ const styles = StyleSheet.create({
     height: 80,
     position: "relative",
   },
-  subscriptionContainer: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
   goalImageCloud: {
     position: "absolute",
     width: "100%",
@@ -235,18 +228,15 @@ const styles = StyleSheet.create({
   },
   subscriptionBlob: {
     position: "absolute",
-    top: 0,
+    width: "100%",
+    height: 95,
     left: 0,
-    right: 0,
     bottom: 0,
-    transform: [{ scale: 1.15 }],
   },
   subscriptionFigure: {
     position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    width: "100%",
+    height: "100%",
   },
   goalLabel: {
     ...Typography.h4,
