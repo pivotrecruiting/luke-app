@@ -25,9 +25,10 @@ const goals = [
   },
   {
     id: "klarna",
-    label: "Klarna & Raten\nim Griff haben",
+    label: "",
     color: Colors.light.cardKlarna,
     image: require("@assets/images/image_1767626579964.png"),
+    fullImage: true,
   },
   {
     id: "subscriptions",
@@ -97,12 +98,22 @@ export default function Onboarding1Screen() {
                 pressed && styles.goalCardPressed,
               ]}
             >
-              <Image
-                source={goal.image}
-                style={styles.goalImage}
-                contentFit="contain"
-              />
-              <Text style={styles.goalLabel}>{goal.label}</Text>
+              {"fullImage" in goal && goal.fullImage ? (
+                <Image
+                  source={goal.image}
+                  style={styles.goalImageFull}
+                  contentFit="cover"
+                />
+              ) : (
+                <>
+                  <Image
+                    source={goal.image}
+                    style={styles.goalImage}
+                    contentFit="contain"
+                  />
+                  <Text style={styles.goalLabel}>{goal.label}</Text>
+                </>
+              )}
             </Pressable>
           ))}
         </View>
@@ -178,6 +189,16 @@ const styles = StyleSheet.create({
   goalImage: {
     width: "100%",
     height: 80,
+  },
+  goalImageFull: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: "100%",
+    height: "100%",
+    borderRadius: BorderRadius.md,
   },
   goalLabel: {
     ...Typography.h4,
