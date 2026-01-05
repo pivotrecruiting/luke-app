@@ -28,6 +28,7 @@ const goals = [
     label: "Klarna\nabbezahlen",
     color: Colors.light.cardKlarna,
     image: require("@assets/images/image_1767540791135.png"),
+    overlayImage: require("@assets/images/woman-laptop.png"),
   },
   {
     id: "subscriptions",
@@ -97,12 +98,27 @@ export default function Onboarding1Screen() {
                 pressed && styles.goalCardPressed,
               ]}
             >
-              <Image
+              {"overlayImage" in goal ? (
+                <View style={styles.layeredImageContainer}>
+                  <Image
+                    source={goal.image}
+                    style={styles.goalImageCloud}
+                    contentFit="contain"
+                  />
+                  <Image
+                    source={goal.overlayImage}
+                    style={styles.goalImageOverlay}
+                    contentFit="contain"
+                  />
+                </View>
+              ) : (
+                <Image
                   source={goal.image}
                   style={styles.goalImage}
                   contentFit="contain"
                 />
-                <Text style={styles.goalLabel}>{goal.label}</Text>
+              )}
+              <Text style={styles.goalLabel}>{goal.label}</Text>
             </Pressable>
           ))}
         </View>
@@ -178,6 +194,23 @@ const styles = StyleSheet.create({
   goalImage: {
     width: "100%",
     height: 80,
+  },
+  layeredImageContainer: {
+    width: "100%",
+    height: 80,
+    position: "relative",
+  },
+  goalImageCloud: {
+    position: "absolute",
+    width: "100%",
+    height: "100%",
+  },
+  goalImageOverlay: {
+    position: "absolute",
+    width: "80%",
+    height: "90%",
+    left: "10%",
+    bottom: 0,
   },
   goalLabel: {
     ...Typography.h4,
