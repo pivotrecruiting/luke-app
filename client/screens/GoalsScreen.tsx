@@ -15,6 +15,7 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { Spacing } from "@/constants/theme";
+import { useApp } from "@/context/AppContext";
 
 const MOCK_DATA = {
   level: {
@@ -24,42 +25,6 @@ const MOCK_DATA = {
     xpToNextLevel: 550,
     nextLevel: 2,
   },
-  goals: [
-    {
-      id: "1",
-      name: "Vespa 2026",
-      icon: "🛵",
-      current: 924.73,
-      target: 5200,
-      remaining: 4275.27,
-    },
-    {
-      id: "2",
-      name: "Klarna abbezahlen",
-      icon: "💳",
-      current: 260.67,
-      target: 443.12,
-      remaining: 182.45,
-    },
-  ],
-  budgets: [
-    {
-      id: "1",
-      name: "Lebensmittel",
-      icon: "shopping-cart",
-      iconColor: "#F59E0B",
-      current: 92.40,
-      limit: 400,
-    },
-    {
-      id: "2",
-      name: "Shopping",
-      icon: "shopping-bag",
-      iconColor: "#8B5CF6",
-      current: 40.37,
-      limit: 200,
-    },
-  ],
 };
 
 const formatCurrency = (value: number) => {
@@ -172,6 +137,7 @@ const BUDGET_CATEGORIES = [
 export default function GoalsScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { goals: contextGoals, budgets: contextBudgets } = useApp();
 
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [goalName, setGoalName] = useState("");
@@ -179,14 +145,22 @@ export default function GoalsScreen() {
   const [monthlyContribution, setMonthlyContribution] = useState("");
   const [selectedEmoji, setSelectedEmoji] = useState("😀");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [goals, setGoals] = useState(MOCK_DATA.goals);
+  const [goals, setGoals] = useState(contextGoals);
 
   const [budgetModalVisible, setBudgetModalVisible] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [budgetLimit, setBudgetLimit] = useState("");
-  const [budgets, setBudgets] = useState(MOCK_DATA.budgets);
+  const [budgets, setBudgets] = useState(contextBudgets);
 
   const [successToast, setSuccessToast] = useState<"goal" | "budget" | null>(null);
+
+  useEffect(() => {
+    setGoals(contextGoals);
+  }, [contextGoals]);
+
+  useEffect(() => {
+    setBudgets(contextBudgets);
+  }, [contextBudgets]);
 
   useEffect(() => {
     if (successToast) {
@@ -197,8 +171,8 @@ export default function GoalsScreen() {
     }
   }, [successToast]);
 
-  const handleGoalPress = (goal: typeof MOCK_DATA.goals[0]) => {
-    navigation.navigate("GoalDetail", { goal });
+  const handleGoalPress = (goalId: string) => {
+    navigation.navigate("GoalDetail", { goalId });
   };
 
   const calculateMonths = () => {
@@ -308,7 +282,7 @@ export default function GoalsScreen() {
         </View>
 
         {goals.map((goal) => (
-          <GoalItem key={goal.id} goal={goal} onPress={() => handleGoalPress(goal)} />
+          <GoalItem key={goal.id} goal={goal} onPress={() => handleGoalPress(goal.id)} />
         ))}
 
         <View style={styles.sectionHeader}>
