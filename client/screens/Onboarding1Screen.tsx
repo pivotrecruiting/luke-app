@@ -117,7 +117,7 @@ export default function Onboarding1Screen() {
                   <Image
                     source={goal.image}
                     style={styles.subscriptionBlob}
-                    contentFit="fill"
+                    contentFit="contain"
                   />
                   <Image
                     source={goal.overlayImage}
@@ -229,9 +229,9 @@ const styles = StyleSheet.create({
   subscriptionBlob: {
     position: "absolute",
     width: "100%",
-    height: 55,
+    height: 70,
     left: 0,
-    bottom: -5,
+    bottom: -10,
   },
   subscriptionFigure: {
     position: "absolute",
