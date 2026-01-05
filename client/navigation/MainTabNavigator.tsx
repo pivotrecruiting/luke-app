@@ -71,7 +71,7 @@ export default function MainTabNavigator() {
             <View style={[styles.tabButton, focused && styles.tabButtonActive]}>
               <View style={[styles.insightsCircle, focused && styles.insightsCircleActive]} />
               <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>
-                Insights
+                Insight
               </Text>
             </View>
           ),

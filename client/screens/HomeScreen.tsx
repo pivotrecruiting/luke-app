@@ -55,7 +55,7 @@ export default function HomeScreen() {
           </View>
         </LinearGradient>
 
-        <View style={[styles.balanceCard, { top: insets.top + 70 }]}>
+        <View style={[styles.balanceCard, { top: insets.top + 95 }]}>
           <Text style={styles.balanceLabel}>Balance</Text>
           <Text style={styles.balanceAmount}>
             € {balance.toLocaleString("de-DE", { minimumFractionDigits: 2 })}
@@ -64,7 +64,7 @@ export default function HomeScreen() {
 
         <Image
           source={businessmanFigure}
-          style={[styles.businessmanFigure, { top: insets.top + 20 }]}
+          style={[styles.businessmanFigure, { top: insets.top + 45 }]}
           contentFit="contain"
         />
       </View>
