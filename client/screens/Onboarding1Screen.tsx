@@ -228,10 +228,10 @@ const styles = StyleSheet.create({
   },
   subscriptionBlob: {
     position: "absolute",
-    width: "70%",
-    height: 45,
-    left: "15%",
-    bottom: 0,
+    width: "100%",
+    height: 55,
+    left: 0,
+    bottom: -5,
   },
   subscriptionFigure: {
     position: "absolute",
