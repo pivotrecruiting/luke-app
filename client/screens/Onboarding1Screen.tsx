@@ -27,7 +27,7 @@ const goals = [
     id: "klarna",
     label: "",
     color: Colors.light.cardKlarna,
-    image: require("@assets/images/image_1767626579964.png"),
+    image: require("@assets/images/klarna-card.png"),
     fullImage: true,
   },
   {
