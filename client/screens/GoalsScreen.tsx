@@ -158,6 +158,17 @@ function BudgetItem({ budget }: { budget: typeof MOCK_DATA.budgets[0] }) {
 
 const EMOJI_LIST = ["😀", "🛵", "💳", "🏠", "🚗", "✈️", "💻", "📱", "🎮", "👗", "💍", "🎓"];
 
+const BUDGET_CATEGORIES = [
+  { id: "essen", name: "Essen", icon: "shopping-cart", color: "#F59E0B" },
+  { id: "transport", name: "Transport", icon: "truck", color: "#3B82F6" },
+  { id: "miete", name: "Miete", icon: "home", color: "#3B82F6" },
+  { id: "bills", name: "Bills", icon: "dollar-sign", color: "#3B82F6" },
+  { id: "mitgliedschaften", name: "Mitgliedschaften", icon: "briefcase", color: "#8B5CF6" },
+  { id: "unterhaltung", name: "Unterhaltung", icon: "smile", color: "#8B5CF6" },
+  { id: "shoppen", name: "Shoppen", icon: "shopping-bag", color: "#8B5CF6" },
+  { id: "gifts", name: "Gifts", icon: "gift", color: "#EC4899" },
+];
+
 export default function GoalsScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -169,6 +180,11 @@ export default function GoalsScreen() {
   const [selectedEmoji, setSelectedEmoji] = useState("😀");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [goals, setGoals] = useState(MOCK_DATA.goals);
+
+  const [budgetModalVisible, setBudgetModalVisible] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [budgetLimit, setBudgetLimit] = useState("");
+  const [budgets, setBudgets] = useState(MOCK_DATA.budgets);
 
   const handleGoalPress = (goal: typeof MOCK_DATA.goals[0]) => {
     navigation.navigate("GoalDetail", { goal });
@@ -211,6 +227,32 @@ export default function GoalsScreen() {
     setShowEmojiPicker(false);
   };
 
+  const handleCreateBudget = () => {
+    const limit = parseFloat(budgetLimit.replace(",", ".")) || 0;
+    if (!selectedCategory || limit <= 0) return;
+
+    const category = BUDGET_CATEGORIES.find((c) => c.id === selectedCategory);
+    if (!category) return;
+
+    const newBudget = {
+      id: String(Date.now()),
+      name: category.name,
+      icon: category.icon,
+      iconColor: category.color,
+      current: 0,
+      limit: limit,
+    };
+
+    setBudgets([...budgets, newBudget]);
+    resetAndCloseBudgetModal();
+  };
+
+  const resetAndCloseBudgetModal = () => {
+    setBudgetModalVisible(false);
+    setSelectedCategory(null);
+    setBudgetLimit("");
+  };
+
   return (
     <View style={styles.container}>
       <LinearGradient
@@ -246,12 +288,12 @@ export default function GoalsScreen() {
 
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Budgets</Text>
-          <Pressable style={styles.addButton}>
+          <Pressable style={styles.addButton} onPress={() => setBudgetModalVisible(true)}>
             <Feather name="plus" size={20} color="#FFFFFF" />
           </Pressable>
         </View>
 
-        {MOCK_DATA.budgets.map((budget) => (
+        {budgets.map((budget) => (
           <BudgetItem key={budget.id} budget={budget} />
         ))}
       </ScrollView>
@@ -331,6 +373,67 @@ export default function GoalsScreen() {
                 <Text style={styles.cancelButtonText}>abbrechen</Text>
               </Pressable>
               <Pressable style={styles.createButton} onPress={handleCreateGoal}>
+                <Text style={styles.createButtonText}>Hinzufügen</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={budgetModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={resetAndCloseBudgetModal}
+      >
+        <View style={styles.modalOverlay}>
+          <Pressable style={styles.modalBackdrop} onPress={resetAndCloseBudgetModal} />
+          <View style={[styles.modalContent, { paddingBottom: insets.bottom + 24 }]}>
+            <View style={styles.modalHandle} />
+            <Text style={styles.modalTitle}>Budget erstellen</Text>
+
+            <Text style={styles.categoryLabel}>Kategorie auswählen</Text>
+            <View style={styles.categoryGrid}>
+              {BUDGET_CATEGORIES.map((category) => {
+                const isSelected = selectedCategory === category.id;
+                return (
+                  <Pressable
+                    key={category.id}
+                    style={[
+                      styles.categoryItem,
+                      isSelected && styles.categoryItemSelected,
+                    ]}
+                    onPress={() => setSelectedCategory(category.id)}
+                  >
+                    <View
+                      style={[
+                        styles.categoryIconContainer,
+                        { backgroundColor: `${category.color}20` },
+                      ]}
+                    >
+                      <Feather name={category.icon as any} size={24} color={category.color} />
+                    </View>
+                    <Text style={styles.categoryName}>{category.name}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            <Text style={styles.modalLabel}>Limit</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={budgetLimit}
+              onChangeText={setBudgetLimit}
+              placeholder="€ 200,00"
+              placeholderTextColor="#9CA3AF"
+              keyboardType="decimal-pad"
+            />
+
+            <View style={styles.modalButtons}>
+              <Pressable style={styles.cancelButton} onPress={resetAndCloseBudgetModal}>
+                <Text style={styles.cancelButtonText}>abbrechen</Text>
+              </Pressable>
+              <Pressable style={styles.createButton} onPress={handleCreateBudget}>
                 <Text style={styles.createButtonText}>Hinzufügen</Text>
               </Pressable>
             </View>
@@ -688,5 +791,43 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#FFFFFF",
+  },
+  categoryLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#6B7280",
+    marginBottom: 12,
+  },
+  categoryGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 12,
+    padding: 8,
+    marginBottom: 16,
+    gap: 8,
+  },
+  categoryItem: {
+    width: "22%",
+    alignItems: "center",
+    paddingVertical: 8,
+    borderRadius: 12,
+  },
+  categoryItemSelected: {
+    backgroundColor: "#E0C6FD",
+  },
+  categoryIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  categoryName: {
+    fontSize: 10,
+    color: "#374151",
+    textAlign: "center",
   },
 });
