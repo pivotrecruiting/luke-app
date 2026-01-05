@@ -16,8 +16,6 @@ import { Spacing, BorderRadius, Typography, Colors } from "@/constants/theme";
 
 type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
 
-const cloudBackground = require("@assets/images/cloud-background.png");
-
 const goals = [
   {
     id: "overview",
@@ -29,8 +27,7 @@ const goals = [
     id: "klarna",
     label: "Klarna & Raten\nim Griff haben",
     color: Colors.light.cardKlarna,
-    image: require("@assets/images/image_1767540689248.png"),
-    backgroundImage: cloudBackground,
+    image: require("@assets/images/image_1767626579964.png"),
   },
   {
     id: "subscriptions",
@@ -100,13 +97,6 @@ export default function Onboarding1Screen() {
                 pressed && styles.goalCardPressed,
               ]}
             >
-              {"backgroundImage" in goal && goal.backgroundImage ? (
-                <Image
-                  source={goal.backgroundImage}
-                  style={styles.cloudBackground}
-                  contentFit="contain"
-                />
-              ) : null}
               <Image
                 source={goal.image}
                 style={styles.goalImage}
@@ -188,13 +178,6 @@ const styles = StyleSheet.create({
   goalImage: {
     width: "100%",
     height: 80,
-  },
-  cloudBackground: {
-    position: "absolute",
-    width: 118,
-    height: 67,
-    bottom: 40,
-    right: -5,
   },
   goalLabel: {
     ...Typography.h4,
