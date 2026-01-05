@@ -99,7 +99,7 @@ export default function Onboarding1Screen() {
                 pressed && styles.goalCardPressed,
               ]}
             >
-              {"overlayImage" in goal ? (
+              {goal.id === "klarna" ? (
                 <View style={styles.layeredImageContainer}>
                   <Image
                     source={goal.image}
@@ -109,6 +109,19 @@ export default function Onboarding1Screen() {
                   <Image
                     source={goal.overlayImage}
                     style={styles.goalImageOverlay}
+                    contentFit="contain"
+                  />
+                </View>
+              ) : goal.id === "subscriptions" ? (
+                <View style={styles.layeredImageContainer}>
+                  <Image
+                    source={goal.image}
+                    style={styles.subscriptionBlob}
+                    contentFit="contain"
+                  />
+                  <Image
+                    source={goal.overlayImage}
+                    style={styles.subscriptionFigure}
                     contentFit="contain"
                   />
                 </View>
@@ -212,6 +225,18 @@ const styles = StyleSheet.create({
     height: "90%",
     left: "10%",
     bottom: 0,
+  },
+  subscriptionBlob: {
+    position: "absolute",
+    width: "70%",
+    height: 45,
+    left: "15%",
+    bottom: 0,
+  },
+  subscriptionFigure: {
+    position: "absolute",
+    width: "100%",
+    height: "100%",
   },
   goalLabel: {
     ...Typography.h4,
