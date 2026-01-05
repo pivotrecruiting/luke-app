@@ -7,6 +7,8 @@ import {
   Pressable,
   Modal,
   TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -303,7 +305,10 @@ export default function GoalsScreen() {
         animationType="slide"
         onRequestClose={resetAndCloseModal}
       >
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalOverlay}
+        >
           <Pressable style={styles.modalBackdrop} onPress={resetAndCloseModal} />
           <View style={[styles.modalContent, { paddingBottom: insets.bottom + 24 }]}>
             <View style={styles.modalHandle} />
@@ -376,7 +381,7 @@ export default function GoalsScreen() {
               </Pressable>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       <Modal
@@ -385,7 +390,10 @@ export default function GoalsScreen() {
         animationType="slide"
         onRequestClose={resetAndCloseBudgetModal}
       >
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalOverlay}
+        >
           <Pressable style={styles.modalBackdrop} onPress={resetAndCloseBudgetModal} />
           <View style={[styles.modalContent, { paddingBottom: insets.bottom + 24 }]}>
             <View style={styles.modalHandle} />
@@ -437,7 +445,7 @@ export default function GoalsScreen() {
               </Pressable>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );

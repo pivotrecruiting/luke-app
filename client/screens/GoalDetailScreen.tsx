@@ -9,6 +9,7 @@ import {
   TextInput,
   Platform,
   Alert,
+  KeyboardAvoidingView,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -347,7 +348,10 @@ export default function GoalDetailScreen() {
         animationType="slide"
         onRequestClose={() => setEditModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalOverlay}
+        >
           <Pressable style={styles.modalBackdrop} onPress={() => setEditModalVisible(false)} />
           <View style={[styles.modalContent, { paddingBottom: insets.bottom + 24 }]}>
             <View style={styles.modalHandle} />
@@ -366,7 +370,7 @@ export default function GoalDetailScreen() {
               <Text style={styles.modalSaveButtonText}>Speichern</Text>
             </Pressable>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       <Modal
@@ -375,7 +379,10 @@ export default function GoalDetailScreen() {
         animationType="slide"
         onRequestClose={handleDepositCancel}
       >
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalOverlay}
+        >
           <Pressable style={styles.modalBackdrop} onPress={handleDepositCancel} />
           <ScrollView 
             style={[styles.modalContent, { maxHeight: '80%' }]}
@@ -437,7 +444,7 @@ export default function GoalDetailScreen() {
               <Text style={styles.modalCancelButtonText}>Abbrechen</Text>
             </Pressable>
           </ScrollView>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       <Modal
@@ -446,7 +453,10 @@ export default function GoalDetailScreen() {
         animationType="slide"
         onRequestClose={handleEditDepositCancel}
       >
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalOverlay}
+        >
           <Pressable style={styles.modalBackdrop} onPress={handleEditDepositCancel} />
           <ScrollView 
             style={[styles.modalContent, { maxHeight: '80%' }]}
@@ -508,7 +518,7 @@ export default function GoalDetailScreen() {
               <Text style={styles.modalCancelButtonText}>Abbrechen</Text>
             </Pressable>
           </ScrollView>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </GestureHandlerRootView>
   );
