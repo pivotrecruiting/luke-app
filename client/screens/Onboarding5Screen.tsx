@@ -35,7 +35,7 @@ type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
 export default function Onboarding5Screen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
-  const { addExpenseEntry } = useApp();
+  const { setExpenseEntries } = useApp();
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [amount, setAmount] = useState("0,00");
   const [entries, setEntries] = useState<Entry[]>([]);
@@ -53,10 +53,13 @@ export default function Onboarding5Screen() {
   };
 
   const handleContinue = () => {
-    entries.forEach((entry) => {
-      const numericAmount = parseFloat(entry.amount.replace(",", "."));
-      addExpenseEntry(entry.type, numericAmount);
-    });
+    if (entries.length > 0) {
+      const parsedEntries = entries.map((entry) => ({
+        type: entry.type,
+        amount: parseFloat(entry.amount.replace(",", ".")),
+      }));
+      setExpenseEntries(parsedEntries);
+    }
     navigation.navigate("Onboarding6");
   };
 

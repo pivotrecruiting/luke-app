@@ -33,7 +33,7 @@ const incomeTypes = [
 export default function Onboarding4Screen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
-  const { addIncomeEntry } = useApp();
+  const { setIncomeEntries } = useApp();
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [amount, setAmount] = useState("0,00");
   const [entries, setEntries] = useState<Entry[]>([]);
@@ -51,10 +51,13 @@ export default function Onboarding4Screen() {
   };
 
   const handleContinue = () => {
-    entries.forEach((entry) => {
-      const numericAmount = parseFloat(entry.amount.replace(",", "."));
-      addIncomeEntry(entry.type, numericAmount);
-    });
+    if (entries.length > 0) {
+      const parsedEntries = entries.map((entry) => ({
+        type: entry.type,
+        amount: parseFloat(entry.amount.replace(",", ".")),
+      }));
+      setIncomeEntries(parsedEntries);
+    }
     navigation.navigate("Onboarding5");
   };
 

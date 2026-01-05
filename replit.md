@@ -14,14 +14,41 @@ Preferred communication style: Simple, everyday language.
 - **Framework**: React Native with Expo SDK 54
 - **Language**: TypeScript with strict mode enabled
 - **Navigation**: React Navigation v7 with native stack navigators
-- **State Management**: TanStack React Query for server state caching
+- **State Management**: 
+  - TanStack React Query for server state caching
+  - React Context API (`AppContext`) for global app state (no database - mock data only)
 - **Animations**: React Native Reanimated for smooth, performant animations
 - **Styling**: StyleSheet-based approach with a centralized theme system (`client/constants/theme.ts`)
 - **Image Handling**: expo-image for optimized image loading
 
 The frontend uses a layered navigation structure:
-- `RootStackNavigator` serves as the top-level navigator
+- `RootStackNavigator` serves as the top-level navigator (skips to Main if onboarding complete)
 - `OnboardingNavigator` handles the multi-step onboarding flow (Welcome → SignUp → 5 onboarding screens)
+- `MainTabNavigator` contains Home, Goals, and Insights tabs
+
+### Global State (AppContext)
+Located at `client/context/AppContext.tsx`, manages all app data without database:
+
+**Data Types:**
+- `incomeEntries` - User income sources (type, amount)
+- `expenseEntries` - Fixed monthly expenses (type, amount)
+- `goals` - Savings goals with deposits array (Vespa, Klarna)
+- `budgets` - Budget categories with expense tracking
+- `weeklySpending` - Daily spending visualization data
+- `transactions` - All transaction history
+- `insightCategories` - Donut chart category data
+
+**Calculated Values:**
+- `totalIncome` - Sum of income entries
+- `totalFixedExpenses` - Sum of fixed expenses
+- `monthlyBudget` - totalIncome - totalFixedExpenses
+- `balance` - monthlyBudget - variable spending
+
+**Key Functions:**
+- `setIncomeEntries()`, `setExpenseEntries()` - Replace entries (for onboarding)
+- `addGoalDeposit()` - Add deposit to goal, updates current/remaining
+- `addBudgetExpense()` - Track expense against budget
+- `completeOnboarding()` - Mark onboarding as complete
 
 Path aliases are configured via babel module-resolver:
 - `@/` → `./client`

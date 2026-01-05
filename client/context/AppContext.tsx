@@ -86,6 +86,8 @@ export interface AppState {
 export interface AppContextType extends AppState {
   addIncomeEntry: (type: string, amount: number) => void;
   addExpenseEntry: (type: string, amount: number) => void;
+  setIncomeEntries: (entries: Array<{type: string, amount: number}>) => void;
+  setExpenseEntries: (entries: Array<{type: string, amount: number}>) => void;
   addGoalDeposit: (goalId: string, amount: number) => void;
   addBudgetExpense: (budgetId: string, amount: number, name: string) => void;
   addTransaction: (transaction: Omit<Transaction, "id">) => void;
@@ -264,6 +266,24 @@ export function AppProvider({ children }: AppProviderProps) {
     setExpenseEntries((prev) => [...prev, newEntry]);
   };
 
+  const setIncomeEntriesFromOnboarding = (entries: Array<{type: string, amount: number}>) => {
+    const newEntries: IncomeEntry[] = entries.map((entry) => ({
+      id: generateId(),
+      type: entry.type,
+      amount: entry.amount,
+    }));
+    setIncomeEntries(newEntries);
+  };
+
+  const setExpenseEntriesFromOnboarding = (entries: Array<{type: string, amount: number}>) => {
+    const newEntries: ExpenseEntry[] = entries.map((entry) => ({
+      id: generateId(),
+      type: entry.type,
+      amount: entry.amount,
+    }));
+    setExpenseEntries(newEntries);
+  };
+
   const addGoalDeposit = (goalId: string, amount: number) => {
     setGoals((prev) =>
       prev.map((goal) => {
@@ -400,6 +420,8 @@ export function AppProvider({ children }: AppProviderProps) {
     balance,
     addIncomeEntry,
     addExpenseEntry,
+    setIncomeEntries: setIncomeEntriesFromOnboarding,
+    setExpenseEntries: setExpenseEntriesFromOnboarding,
     addGoalDeposit,
     addBudgetExpense,
     addTransaction,
