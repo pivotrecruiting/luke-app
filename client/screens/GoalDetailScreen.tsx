@@ -377,7 +377,12 @@ export default function GoalDetailScreen() {
       >
         <View style={styles.modalOverlay}>
           <Pressable style={styles.modalBackdrop} onPress={handleDepositCancel} />
-          <View style={[styles.modalContent, { paddingBottom: insets.bottom + 24 }]}>
+          <ScrollView 
+            style={[styles.modalContent, { maxHeight: '80%' }]}
+            contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
             <View style={styles.modalHandle} />
             <Text style={styles.modalTitle}>{depositTitle}</Text>
 
@@ -431,7 +436,7 @@ export default function GoalDetailScreen() {
             <Pressable style={styles.modalCancelButton} onPress={handleDepositCancel}>
               <Text style={styles.modalCancelButtonText}>Abbrechen</Text>
             </Pressable>
-          </View>
+          </ScrollView>
         </View>
       </Modal>
 
@@ -443,7 +448,12 @@ export default function GoalDetailScreen() {
       >
         <View style={styles.modalOverlay}>
           <Pressable style={styles.modalBackdrop} onPress={handleEditDepositCancel} />
-          <View style={[styles.modalContent, { paddingBottom: insets.bottom + 24 }]}>
+          <ScrollView 
+            style={[styles.modalContent, { maxHeight: '80%' }]}
+            contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
             <View style={styles.modalHandle} />
             <Text style={styles.modalTitle}>{depositTitle} bearbeiten</Text>
 
@@ -497,7 +507,7 @@ export default function GoalDetailScreen() {
             <Pressable style={styles.modalCancelButton} onPress={handleEditDepositCancel}>
               <Text style={styles.modalCancelButtonText}>Abbrechen</Text>
             </Pressable>
-          </View>
+          </ScrollView>
         </View>
       </Modal>
     </GestureHandlerRootView>
