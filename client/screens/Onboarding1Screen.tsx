@@ -193,9 +193,8 @@ const styles = StyleSheet.create({
     position: "absolute",
     width: 118,
     height: 67,
-    top: 10,
-    right: -15,
-    zIndex: -1,
+    bottom: 40,
+    right: -5,
   },
   goalLabel: {
     ...Typography.h4,
