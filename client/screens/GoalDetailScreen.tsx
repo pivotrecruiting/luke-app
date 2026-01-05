@@ -408,19 +408,19 @@ export default function GoalDetailScreen() {
                 <DateTimePicker
                   value={selectedDate}
                   mode="date"
-                  display={Platform.OS === "ios" ? "spinner" : "default"}
+                  display="spinner"
                   onChange={onDateChange}
                   maximumDate={new Date()}
                   locale="de-DE"
+                  textColor="#000000"
+                  themeVariant="light"
                 />
-                {Platform.OS === "ios" ? (
-                  <Pressable
-                    style={styles.datePickerDoneButton}
-                    onPress={() => setShowDatePicker(false)}
-                  >
-                    <Text style={styles.datePickerDoneText}>Fertig</Text>
-                  </Pressable>
-                ) : null}
+                <Pressable
+                  style={styles.datePickerDoneButton}
+                  onPress={() => setShowDatePicker(false)}
+                >
+                  <Text style={styles.datePickerDoneText}>Fertig</Text>
+                </Pressable>
               </View>
             ) : null}
 
@@ -474,19 +474,19 @@ export default function GoalDetailScreen() {
                 <DateTimePicker
                   value={editDepositDate}
                   mode="date"
-                  display={Platform.OS === "ios" ? "spinner" : "default"}
+                  display="spinner"
                   onChange={onEditDateChange}
                   maximumDate={new Date()}
                   locale="de-DE"
+                  textColor="#000000"
+                  themeVariant="light"
                 />
-                {Platform.OS === "ios" ? (
-                  <Pressable
-                    style={styles.datePickerDoneButton}
-                    onPress={() => setShowEditDatePicker(false)}
-                  >
-                    <Text style={styles.datePickerDoneText}>Fertig</Text>
-                  </Pressable>
-                ) : null}
+                <Pressable
+                  style={styles.datePickerDoneButton}
+                  onPress={() => setShowEditDatePicker(false)}
+                >
+                  <Text style={styles.datePickerDoneText}>Fertig</Text>
+                </Pressable>
               </View>
             ) : null}
 
