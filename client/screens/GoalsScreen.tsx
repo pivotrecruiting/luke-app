@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -186,6 +186,17 @@ export default function GoalsScreen() {
   const [budgetLimit, setBudgetLimit] = useState("");
   const [budgets, setBudgets] = useState(MOCK_DATA.budgets);
 
+  const [successToast, setSuccessToast] = useState<"goal" | "budget" | null>(null);
+
+  useEffect(() => {
+    if (successToast) {
+      const timer = setTimeout(() => {
+        setSuccessToast(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [successToast]);
+
   const handleGoalPress = (goal: typeof MOCK_DATA.goals[0]) => {
     navigation.navigate("GoalDetail", { goal });
   };
@@ -216,6 +227,7 @@ export default function GoalsScreen() {
     setGoalAmount("");
     setMonthlyContribution("");
     setSelectedEmoji("😀");
+    setSuccessToast("goal");
   };
 
   const resetAndCloseModal = () => {
@@ -245,6 +257,7 @@ export default function GoalsScreen() {
 
     setBudgets([...budgets, newBudget]);
     resetAndCloseBudgetModal();
+    setSuccessToast("budget");
   };
 
   const resetAndCloseBudgetModal = () => {
@@ -261,8 +274,20 @@ export default function GoalsScreen() {
         end={{ x: 0, y: 1 }}
         style={[styles.header, { paddingTop: insets.top + Spacing.lg }]}
       >
-        <Text style={styles.headerTitle}>Goals</Text>
-        <Text style={styles.headerSubtitle}>bleib dran!</Text>
+        <View style={styles.headerRow}>
+          <View>
+            <Text style={styles.headerTitle}>Goals</Text>
+            <Text style={styles.headerSubtitle}>bleib dran!</Text>
+          </View>
+          {successToast ? (
+            <View style={styles.successToast}>
+              <Feather name="check-circle" size={16} color="#7340FE" />
+              <Text style={styles.successToastText}>
+                {successToast === "goal" ? "Goal created!" : "Budget set!"}
+              </Text>
+            </View>
+          ) : null}
+        </View>
       </LinearGradient>
 
       <ScrollView
@@ -462,6 +487,27 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "rgba(255,255,255,0.8)",
     marginTop: 4,
+  },
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  successToast: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    gap: 6,
+    borderWidth: 2,
+    borderColor: "#7340FE",
+  },
+  successToastText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#7340FE",
   },
   scrollView: {
     flex: 1,
