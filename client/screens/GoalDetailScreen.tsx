@@ -7,11 +7,25 @@ import {
   Pressable,
   Modal,
   TextInput,
+  Platform,
+  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+  runOnJS,
+} from "react-native-reanimated";
+import {
+  Gesture,
+  GestureDetector,
+  GestureHandlerRootView,
+} from "react-native-gesture-handler";
 import { Spacing } from "@/constants/theme";
 import { useApp, GoalDeposit } from "@/context/AppContext";
 
@@ -27,14 +41,20 @@ const formatCurrency = (value: number) => {
   });
 };
 
-const parseDepositDate = (dateStr: string): { month: number; year: number } | null => {
-  if (dateStr.startsWith("Heute") || dateStr === "Gestern") {
-    const now = new Date();
-    return { month: now.getMonth(), year: now.getFullYear() };
+const parseDepositDate = (dateStr: string): { month: number; year: number; date: Date } | null => {
+  const now = new Date();
+  if (dateStr.startsWith("Heute")) {
+    return { month: now.getMonth(), year: now.getFullYear(), date: now };
+  }
+  if (dateStr === "Gestern") {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    return { month: yesterday.getMonth(), year: yesterday.getFullYear(), date: yesterday };
   }
   const match = dateStr.match(/(\d{2})\/(\d{2})\/(\d{4})/);
   if (match) {
-    return { month: parseInt(match[2], 10) - 1, year: parseInt(match[3], 10) };
+    const date = new Date(parseInt(match[3], 10), parseInt(match[2], 10) - 1, parseInt(match[1], 10));
+    return { month: date.getMonth(), year: date.getFullYear(), date };
   }
   return null;
 };
@@ -42,7 +62,13 @@ const parseDepositDate = (dateStr: string): { month: number; year: number } | nu
 const groupDepositsByMonth = (deposits: GoalDeposit[]): Record<string, GoalDeposit[]> => {
   const grouped: Record<string, GoalDeposit[]> = {};
   
-  deposits.forEach((deposit) => {
+  const sortedDeposits = [...deposits].sort((a, b) => {
+    const dateA = parseDepositDate(a.date)?.date || new Date();
+    const dateB = parseDepositDate(b.date)?.date || new Date();
+    return dateB.getTime() - dateA.getTime();
+  });
+  
+  sortedDeposits.forEach((deposit) => {
     const parsed = parseDepositDate(deposit.date);
     if (parsed) {
       const key = `${GERMAN_MONTHS[parsed.month]} ${parsed.year}`;
@@ -56,11 +82,106 @@ const groupDepositsByMonth = (deposits: GoalDeposit[]): Record<string, GoalDepos
   return grouped;
 };
 
+interface SwipeableDepositProps {
+  deposit: GoalDeposit;
+  goalIcon: string;
+  onDelete: () => void;
+  onEdit: () => void;
+}
+
+function SwipeableDeposit({ deposit, goalIcon, onDelete, onEdit }: SwipeableDepositProps) {
+  const translateX = useSharedValue(0);
+  const contextX = useSharedValue(0);
+  const DELETE_THRESHOLD = -80;
+
+  const resetPosition = () => {
+    translateX.value = withTiming(0);
+  };
+
+  const handleDelete = () => {
+    Alert.alert(
+      "Eintrag löschen",
+      `Möchtest du diesen Eintrag über € ${formatCurrency(deposit.amount)} wirklich löschen?`,
+      [
+        { 
+          text: "Abbrechen", 
+          style: "cancel",
+          onPress: () => {
+            translateX.value = withTiming(0);
+          }
+        },
+        {
+          text: "Löschen",
+          style: "destructive",
+          onPress: () => {
+            onDelete();
+          },
+        },
+      ]
+    );
+  };
+
+  const panGesture = Gesture.Pan()
+    .activeOffsetX([-10, 10])
+    .onStart(() => {
+      contextX.value = translateX.value;
+    })
+    .onUpdate((event) => {
+      const newValue = contextX.value + event.translationX;
+      translateX.value = Math.max(Math.min(newValue, 0), -120);
+    })
+    .onEnd(() => {
+      if (translateX.value < DELETE_THRESHOLD) {
+        translateX.value = withTiming(-80);
+      } else {
+        translateX.value = withTiming(0);
+      }
+    });
+
+  const tapGesture = Gesture.Tap().onEnd(() => {
+    if (translateX.value < -30) {
+      translateX.value = withTiming(0);
+    } else {
+      runOnJS(onEdit)();
+    }
+  });
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value }],
+  }));
+
+  const deleteButtonStyle = useAnimatedStyle(() => ({
+    opacity: translateX.value < -20 ? 1 : 0,
+  }));
+
+  return (
+    <View style={styles.swipeableContainer}>
+      <Animated.View style={[styles.deleteButton, deleteButtonStyle]}>
+        <Pressable style={styles.deleteButtonInner} onPress={handleDelete}>
+          <Feather name="trash-2" size={20} color="#FFFFFF" />
+        </Pressable>
+      </Animated.View>
+      <GestureDetector gesture={Gesture.Simultaneous(panGesture, tapGesture)}>
+        <Animated.View style={[styles.transactionItem, animatedStyle]}>
+          <View style={styles.transactionLeft}>
+            <Text style={styles.transactionIcon}>{goalIcon}</Text>
+            <View>
+              <Text style={styles.transactionType}>{deposit.type}</Text>
+              <Text style={styles.transactionDate}>{deposit.date}</Text>
+            </View>
+          </View>
+          <Text style={styles.transactionAmount}>€ {formatCurrency(deposit.amount)}</Text>
+        </Animated.View>
+      </GestureDetector>
+    </View>
+  );
+}
+
 export default function GoalDetailScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const route = useRoute<any>();
-  const { goals, addGoalDeposit, updateGoal } = useApp();
+  const { goals, addGoalDeposit, updateGoalDeposit, deleteGoalDeposit, updateGoal } = useApp();
 
   const goalId = route.params?.goalId || route.params?.goal?.id;
   const goal = useMemo(() => {
@@ -73,6 +194,14 @@ export default function GoalDetailScreen() {
   
   const [depositModalVisible, setDepositModalVisible] = useState(false);
   const [depositAmount, setDepositAmount] = useState("");
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  
+  const [editingDeposit, setEditingDeposit] = useState<GoalDeposit | null>(null);
+  const [editDepositModalVisible, setEditDepositModalVisible] = useState(false);
+  const [editDepositAmount, setEditDepositAmount] = useState("");
+  const [editDepositDate, setEditDepositDate] = useState(new Date());
+  const [showEditDatePicker, setShowEditDatePicker] = useState(false);
 
   const percentage = goal ? (goal.current / goal.target) * 100 : 0;
   const remaining = goal ? goal.target - goal.current : 0;
@@ -96,15 +225,72 @@ export default function GoalDetailScreen() {
   const handleDepositSave = () => {
     const amount = parseFloat(depositAmount.replace(",", "."));
     if (!isNaN(amount) && amount > 0 && goal) {
-      addGoalDeposit(goal.id, amount);
+      addGoalDeposit(goal.id, amount, selectedDate);
       setDepositModalVisible(false);
       setDepositAmount("");
+      setSelectedDate(new Date());
     }
   };
 
   const handleDepositCancel = () => {
     setDepositModalVisible(false);
     setDepositAmount("");
+    setSelectedDate(new Date());
+  };
+
+  const handleEditDeposit = (deposit: GoalDeposit) => {
+    setEditingDeposit(deposit);
+    setEditDepositAmount(deposit.amount.toString().replace(".", ","));
+    const parsed = parseDepositDate(deposit.date);
+    setEditDepositDate(parsed?.date || new Date());
+    setEditDepositModalVisible(true);
+  };
+
+  const handleEditDepositSave = () => {
+    const amount = parseFloat(editDepositAmount.replace(",", "."));
+    if (!isNaN(amount) && amount > 0 && goal && editingDeposit) {
+      updateGoalDeposit(goal.id, editingDeposit.id, amount, editDepositDate);
+      setEditDepositModalVisible(false);
+      setEditingDeposit(null);
+      setEditDepositAmount("");
+    }
+  };
+
+  const handleEditDepositCancel = () => {
+    setEditDepositModalVisible(false);
+    setEditingDeposit(null);
+    setEditDepositAmount("");
+  };
+
+  const handleDeleteDeposit = (depositId: string) => {
+    if (goal) {
+      deleteGoalDeposit(goal.id, depositId);
+    }
+  };
+
+  const onDateChange = (event: any, date?: Date) => {
+    if (Platform.OS === "android") {
+      setShowDatePicker(false);
+    }
+    if (date) {
+      setSelectedDate(date);
+    }
+  };
+
+  const onEditDateChange = (event: any, date?: Date) => {
+    if (Platform.OS === "android") {
+      setShowEditDatePicker(false);
+    }
+    if (date) {
+      setEditDepositDate(date);
+    }
+  };
+
+  const formatDisplayDate = (date: Date): string => {
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}.${month}.${year}`;
   };
 
   if (!goal) {
@@ -116,7 +302,7 @@ export default function GoalDetailScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <GestureHandlerRootView style={styles.container}>
       <LinearGradient
         colors={["rgba(42, 58, 230, 0.69)", "rgba(23, 32, 128, 0.69)"]}
         start={{ x: 0, y: 0 }}
@@ -169,21 +355,19 @@ export default function GoalDetailScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
+        <Text style={styles.swipeHint}>Wische nach links zum Löschen, tippe zum Bearbeiten</Text>
         {Object.entries(groupedTransactions).map(([month, transactions]) => (
           <View key={month} style={styles.monthSection}>
             <Text style={styles.monthTitle}>{month}</Text>
             <View style={styles.transactionsList}>
               {transactions.map((transaction) => (
-                <View key={transaction.id} style={styles.transactionItem}>
-                  <View style={styles.transactionLeft}>
-                    <Text style={styles.transactionIcon}>{goal.icon}</Text>
-                    <View>
-                      <Text style={styles.transactionType}>{transaction.type}</Text>
-                      <Text style={styles.transactionDate}>{transaction.date}</Text>
-                    </View>
-                  </View>
-                  <Text style={styles.transactionAmount}>€ {formatCurrency(transaction.amount)}</Text>
-                </View>
+                <SwipeableDeposit
+                  key={transaction.id}
+                  deposit={transaction}
+                  goalIcon={goal.icon}
+                  onDelete={() => handleDeleteDeposit(transaction.id)}
+                  onEdit={() => handleEditDeposit(transaction)}
+                />
               ))}
             </View>
           </View>
@@ -255,6 +439,36 @@ export default function GoalDetailScreen() {
               />
             </View>
 
+            <Text style={styles.modalLabel}>Datum</Text>
+            <Pressable
+              style={styles.datePickerButton}
+              onPress={() => setShowDatePicker(true)}
+            >
+              <Feather name="calendar" size={20} color="#7340FE" />
+              <Text style={styles.datePickerText}>{formatDisplayDate(selectedDate)}</Text>
+            </Pressable>
+
+            {showDatePicker ? (
+              <View style={styles.datePickerContainer}>
+                <DateTimePicker
+                  value={selectedDate}
+                  mode="date"
+                  display={Platform.OS === "ios" ? "spinner" : "default"}
+                  onChange={onDateChange}
+                  maximumDate={new Date()}
+                  locale="de-DE"
+                />
+                {Platform.OS === "ios" ? (
+                  <Pressable
+                    style={styles.datePickerDoneButton}
+                    onPress={() => setShowDatePicker(false)}
+                  >
+                    <Text style={styles.datePickerDoneText}>Fertig</Text>
+                  </Pressable>
+                ) : null}
+              </View>
+            ) : null}
+
             <Pressable style={styles.modalSaveButton} onPress={handleDepositSave}>
               <Text style={styles.modalSaveButtonText}>Hinzufügen</Text>
             </Pressable>
@@ -265,7 +479,73 @@ export default function GoalDetailScreen() {
           </View>
         </View>
       </Modal>
-    </View>
+
+      <Modal
+        visible={editDepositModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={handleEditDepositCancel}
+      >
+        <View style={styles.modalOverlay}>
+          <Pressable style={styles.modalBackdrop} onPress={handleEditDepositCancel} />
+          <View style={[styles.modalContent, { paddingBottom: insets.bottom + 24 }]}>
+            <View style={styles.modalHandle} />
+            <Text style={styles.modalTitle}>{depositTitle} bearbeiten</Text>
+
+            <Text style={styles.modalLabel}>Betrag</Text>
+            <View style={styles.currencyInputContainer}>
+              <Text style={styles.currencyPrefix}>€</Text>
+              <TextInput
+                style={styles.currencyInput}
+                value={editDepositAmount}
+                onChangeText={setEditDepositAmount}
+                placeholder="0,00"
+                placeholderTextColor="#9CA3AF"
+                keyboardType="decimal-pad"
+              />
+            </View>
+
+            <Text style={styles.modalLabel}>Datum</Text>
+            <Pressable
+              style={styles.datePickerButton}
+              onPress={() => setShowEditDatePicker(true)}
+            >
+              <Feather name="calendar" size={20} color="#7340FE" />
+              <Text style={styles.datePickerText}>{formatDisplayDate(editDepositDate)}</Text>
+            </Pressable>
+
+            {showEditDatePicker ? (
+              <View style={styles.datePickerContainer}>
+                <DateTimePicker
+                  value={editDepositDate}
+                  mode="date"
+                  display={Platform.OS === "ios" ? "spinner" : "default"}
+                  onChange={onEditDateChange}
+                  maximumDate={new Date()}
+                  locale="de-DE"
+                />
+                {Platform.OS === "ios" ? (
+                  <Pressable
+                    style={styles.datePickerDoneButton}
+                    onPress={() => setShowEditDatePicker(false)}
+                  >
+                    <Text style={styles.datePickerDoneText}>Fertig</Text>
+                  </Pressable>
+                ) : null}
+              </View>
+            ) : null}
+
+            <Pressable style={styles.modalSaveButton} onPress={handleEditDepositSave}>
+              <Text style={styles.modalSaveButtonText}>Speichern</Text>
+            </Pressable>
+            
+            <Pressable style={styles.modalCancelButton} onPress={handleEditDepositCancel}>
+              <Text style={styles.modalCancelButtonText}>Abbrechen</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+    </GestureHandlerRootView>
   );
 }
 
@@ -373,6 +653,12 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 20,
   },
+  swipeHint: {
+    fontSize: 12,
+    color: "#9CA3AF",
+    textAlign: "center",
+    marginBottom: 16,
+  },
   monthSection: {
     marginBottom: 24,
   },
@@ -387,6 +673,26 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: "hidden",
   },
+  swipeableContainer: {
+    position: "relative",
+    overflow: "hidden",
+  },
+  deleteButton: {
+    position: "absolute",
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: 80,
+    backgroundColor: "#EF4444",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  deleteButtonInner: {
+    width: "100%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
   transactionItem: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -394,6 +700,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: "#F3F4F6",
+    backgroundColor: "#FFFFFF",
   },
   transactionLeft: {
     flexDirection: "row",
@@ -491,7 +798,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F3F4F6",
     borderRadius: 12,
     paddingHorizontal: 16,
-    marginBottom: 24,
+    marginBottom: 16,
   },
   currencyPrefix: {
     fontSize: 18,
@@ -504,6 +811,37 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     fontSize: 18,
     color: "#000000",
+  },
+  datePickerButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F3F4F6",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginBottom: 16,
+    gap: 12,
+  },
+  datePickerText: {
+    fontSize: 16,
+    color: "#000000",
+  },
+  datePickerContainer: {
+    backgroundColor: "#F3F4F6",
+    borderRadius: 12,
+    marginBottom: 16,
+    overflow: "hidden",
+  },
+  datePickerDoneButton: {
+    alignItems: "center",
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: "#E5E7EB",
+  },
+  datePickerDoneText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#7340FE",
   },
   modalSaveButton: {
     backgroundColor: "#7340FE",

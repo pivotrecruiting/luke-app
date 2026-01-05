@@ -88,7 +88,9 @@ export interface AppContextType extends AppState {
   addExpenseEntry: (type: string, amount: number) => void;
   setIncomeEntries: (entries: Array<{type: string, amount: number}>) => void;
   setExpenseEntries: (entries: Array<{type: string, amount: number}>) => void;
-  addGoalDeposit: (goalId: string, amount: number) => void;
+  addGoalDeposit: (goalId: string, amount: number, customDate?: Date) => void;
+  updateGoalDeposit: (goalId: string, depositId: string, amount: number, date?: Date) => void;
+  deleteGoalDeposit: (goalId: string, depositId: string) => void;
   addBudgetExpense: (budgetId: string, amount: number, name: string) => void;
   addTransaction: (transaction: Omit<Transaction, "id">) => void;
   completeOnboarding: () => void;
@@ -97,6 +99,22 @@ export interface AppContextType extends AppState {
 }
 
 const generateId = () => Math.random().toString(36).substring(2, 9);
+
+const parseFormattedDate = (dateStr: string): Date => {
+  if (dateStr.startsWith("Heute")) {
+    return new Date();
+  }
+  if (dateStr === "Gestern") {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    return yesterday;
+  }
+  const match = dateStr.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  if (match) {
+    return new Date(parseInt(match[3], 10), parseInt(match[2], 10) - 1, parseInt(match[1], 10));
+  }
+  return new Date();
+};
 
 const formatDate = (date: Date): string => {
   const today = new Date();
@@ -284,23 +302,29 @@ export function AppProvider({ children }: AppProviderProps) {
     setExpenseEntries(newEntries);
   };
 
-  const addGoalDeposit = (goalId: string, amount: number) => {
+  const addGoalDeposit = (goalId: string, amount: number, customDate?: Date) => {
     setGoals((prev) =>
       prev.map((goal) => {
         if (goal.id === goalId) {
+          const depositDate = customDate || new Date();
           const newDeposit: GoalDeposit = {
             id: generateId(),
-            date: formatDate(new Date()),
+            date: formatDate(depositDate),
             amount,
             type: goal.name.toLowerCase().includes("klarna") ? "Rückzahlung" : "Einzahlung",
           };
           const newCurrent = goal.current + amount;
           const newRemaining = Math.max(0, goal.target - newCurrent);
+          const updatedDeposits = [newDeposit, ...goal.deposits].sort((a, b) => {
+            const dateA = parseFormattedDate(a.date);
+            const dateB = parseFormattedDate(b.date);
+            return dateB.getTime() - dateA.getTime();
+          });
           return {
             ...goal,
             current: newCurrent,
             remaining: newRemaining,
-            deposits: [newDeposit, ...goal.deposits],
+            deposits: updatedDeposits,
           };
         }
         return goal;
@@ -319,6 +343,66 @@ export function AppProvider({ children }: AppProviderProps) {
       };
       setTransactions((prev) => [newTransaction, ...prev]);
     }
+  };
+
+  const updateGoalDeposit = (goalId: string, depositId: string, amount: number, date?: Date) => {
+    setGoals((prev) =>
+      prev.map((goal) => {
+        if (goal.id === goalId) {
+          const oldDeposit = goal.deposits.find((d) => d.id === depositId);
+          if (!oldDeposit) return goal;
+          
+          const amountDiff = amount - oldDeposit.amount;
+          const updatedDeposits = goal.deposits.map((d) => {
+            if (d.id === depositId) {
+              return {
+                ...d,
+                amount,
+                date: date ? formatDate(date) : d.date,
+              };
+            }
+            return d;
+          }).sort((a, b) => {
+            const dateA = parseFormattedDate(a.date);
+            const dateB = parseFormattedDate(b.date);
+            return dateB.getTime() - dateA.getTime();
+          });
+          
+          const newCurrent = goal.current + amountDiff;
+          const newRemaining = Math.max(0, goal.target - newCurrent);
+          
+          return {
+            ...goal,
+            current: newCurrent,
+            remaining: newRemaining,
+            deposits: updatedDeposits,
+          };
+        }
+        return goal;
+      })
+    );
+  };
+
+  const deleteGoalDeposit = (goalId: string, depositId: string) => {
+    setGoals((prev) =>
+      prev.map((goal) => {
+        if (goal.id === goalId) {
+          const depositToDelete = goal.deposits.find((d) => d.id === depositId);
+          if (!depositToDelete) return goal;
+          
+          const newCurrent = goal.current - depositToDelete.amount;
+          const newRemaining = Math.max(0, goal.target - newCurrent);
+          
+          return {
+            ...goal,
+            current: Math.max(0, newCurrent),
+            remaining: newRemaining,
+            deposits: goal.deposits.filter((d) => d.id !== depositId),
+          };
+        }
+        return goal;
+      })
+    );
   };
 
   const addBudgetExpense = (budgetId: string, amount: number, name: string) => {
@@ -423,6 +507,8 @@ export function AppProvider({ children }: AppProviderProps) {
     setIncomeEntries: setIncomeEntriesFromOnboarding,
     setExpenseEntries: setExpenseEntriesFromOnboarding,
     addGoalDeposit,
+    updateGoalDeposit,
+    deleteGoalDeposit,
     addBudgetExpense,
     addTransaction,
     completeOnboarding,
