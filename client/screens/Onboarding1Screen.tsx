@@ -229,9 +229,9 @@ const styles = StyleSheet.create({
   subscriptionBlob: {
     position: "absolute",
     width: "100%",
-    height: 70,
+    height: 95,
     left: 0,
-    bottom: -10,
+    bottom: 0,
   },
   subscriptionFigure: {
     position: "absolute",
