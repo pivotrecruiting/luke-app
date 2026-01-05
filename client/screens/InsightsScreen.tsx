@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -13,19 +13,9 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import Svg, { Circle, G } from "react-native-svg";
 import { Spacing } from "@/constants/theme";
+import { useApp } from "@/context/AppContext";
 
 const screenWidth = Dimensions.get("window").width;
-
-const MOCK_DATA = {
-  gesamtAusgaben: 1308.41,
-  kategorien: [
-    { name: "Lebensmittel", betrag: 410.12, color: "#3B5BDB" },
-    { name: "Hygiene", betrag: 160.48, color: "#B8C4E9" },
-    { name: "Wohnen", betrag: 600.23, color: "#C77DFF" },
-    { name: "Abonnements", betrag: 160.48, color: "#7B8CDE" },
-    { name: "Shopping", betrag: 160.48, color: "#9D4EDD" },
-  ],
-};
 
 const formatCurrency = (value: number) => {
   return value.toLocaleString("de-DE", {
@@ -34,7 +24,14 @@ const formatCurrency = (value: number) => {
   });
 };
 
-function DonutChart() {
+interface DonutChartProps {
+  categories: { name: string; amount: number; color: string }[];
+  total: number;
+  selectedCategory: string | null;
+  onSelectCategory: (name: string | null) => void;
+}
+
+function DonutChart({ categories, total, selectedCategory, onSelectCategory }: DonutChartProps) {
   const size = 215;
   const strokeWidth = 26;
   const radius = (size - strokeWidth) / 2;
@@ -42,11 +39,10 @@ function DonutChart() {
   const center = size / 2;
   const gap = 4;
 
-  const total = MOCK_DATA.kategorien.reduce((sum, k) => sum + k.betrag, 0);
   let currentAngle = -90;
 
-  const segments = MOCK_DATA.kategorien.map((kategorie) => {
-    const percentage = kategorie.betrag / total;
+  const segments = categories.map((kategorie) => {
+    const percentage = kategorie.amount / total;
     const segmentLength = circumference * percentage - gap;
     const strokeDasharray = `${segmentLength} ${circumference - segmentLength}`;
     const rotation = currentAngle;
@@ -56,44 +52,78 @@ function DonutChart() {
       ...kategorie,
       strokeDasharray,
       rotation,
+      percentage,
     };
   });
 
+  const selectedCategoryData = selectedCategory
+    ? categories.find((c) => c.name === selectedCategory)
+    : null;
+
+  const displayAmount = selectedCategoryData ? selectedCategoryData.amount : total;
+  const displayLabel = selectedCategoryData ? selectedCategoryData.name : "Gesamt";
+
   return (
-    <View style={styles.chartWrapper}>
+    <Pressable 
+      style={styles.chartWrapper}
+      onPress={() => onSelectCategory(null)}
+    >
       <Svg width={size} height={size}>
         <G rotation={0} origin={`${center}, ${center}`}>
-          {segments.map((segment, index) => (
-            <Circle
-              key={index}
-              cx={center}
-              cy={center}
-              r={radius}
-              stroke={segment.color}
-              strokeWidth={strokeWidth}
-              fill="transparent"
-              strokeDasharray={segment.strokeDasharray}
-              strokeDashoffset={0}
-              rotation={segment.rotation}
-              origin={`${center}, ${center}`}
-              strokeLinecap="butt"
-            />
-          ))}
+          {segments.map((segment, index) => {
+            const isSelected = selectedCategory === segment.name;
+            const hasSelection = selectedCategory !== null;
+            const segmentOpacity = hasSelection ? (isSelected ? 1 : 0.4) : 1;
+            const segmentStrokeWidth = isSelected ? strokeWidth + 4 : strokeWidth;
+            
+            return (
+              <Circle
+                key={index}
+                cx={center}
+                cy={center}
+                r={radius}
+                stroke={segment.color}
+                strokeWidth={segmentStrokeWidth}
+                fill="transparent"
+                strokeDasharray={segment.strokeDasharray}
+                strokeDashoffset={0}
+                rotation={segment.rotation}
+                origin={`${center}, ${center}`}
+                strokeLinecap="butt"
+                opacity={segmentOpacity}
+              />
+            );
+          })}
         </G>
       </Svg>
       <View style={styles.chartCenter}>
-        <Text style={styles.chartAmount}>€ {formatCurrency(MOCK_DATA.gesamtAusgaben)}</Text>
-        <Text style={styles.chartLabel}>Gesamt</Text>
+        <Text style={styles.chartAmount}>€ {formatCurrency(displayAmount)}</Text>
+        <Text style={styles.chartLabel}>{displayLabel}</Text>
+        {selectedCategoryData ? (
+          <Text style={styles.chartPercentage}>
+            {((selectedCategoryData.amount / total) * 100).toFixed(1)}%
+          </Text>
+        ) : null}
       </View>
-    </View>
+    </Pressable>
   );
 }
 
 export default function InsightsScreen() {
   const insets = useSafeAreaInsets();
+  const { insightCategories } = useApp();
   const [activeTab, setActiveTab] = useState<"ausgaben" | "einnahmen">("ausgaben");
   const [activeFilter, setActiveFilter] = useState<"kategorien" | "income" | "trend">("kategorien");
   const [filterModalVisible, setFilterModalVisible] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  const gesamtAusgaben = useMemo(() => {
+    return insightCategories.reduce((sum, cat) => sum + cat.amount, 0);
+  }, [insightCategories]);
+
+  const handleCategoryPress = (categoryName: string) => {
+    setSelectedCategory((prev) => (prev === categoryName ? null : categoryName));
+  };
 
   return (
     <View style={styles.container}>
@@ -210,22 +240,37 @@ export default function InsightsScreen() {
         </View>
 
         <View style={styles.chartCard}>
-          <DonutChart />
+          <DonutChart
+            categories={insightCategories}
+            total={gesamtAusgaben}
+            selectedCategory={selectedCategory}
+            onSelectCategory={setSelectedCategory}
+          />
 
           <View style={styles.kategorienGrid}>
-            {MOCK_DATA.kategorien.map((kategorie, index) => (
-              <View key={index} style={styles.kategorieItem}>
-                <View
-                  style={[styles.kategorieDot, { backgroundColor: kategorie.color }]}
-                />
-                <View>
-                  <Text style={styles.kategorieName}>{kategorie.name}</Text>
-                  <Text style={styles.kategorieBetrag}>
-                    € {formatCurrency(kategorie.betrag)}
-                  </Text>
-                </View>
-              </View>
-            ))}
+            {insightCategories.map((kategorie, index) => {
+              const isSelected = selectedCategory === kategorie.name;
+              return (
+                <Pressable
+                  key={index}
+                  style={[
+                    styles.kategorieItem,
+                    isSelected && styles.kategorieItemSelected,
+                  ]}
+                  onPress={() => handleCategoryPress(kategorie.name)}
+                >
+                  <View
+                    style={[styles.kategorieDot, { backgroundColor: kategorie.color }]}
+                  />
+                  <View>
+                    <Text style={styles.kategorieName}>{kategorie.name}</Text>
+                    <Text style={styles.kategorieBetrag}>
+                      € {formatCurrency(kategorie.amount)}
+                    </Text>
+                  </View>
+                </Pressable>
+              );
+            })}
           </View>
 
           <View style={styles.pageIndicator}>
@@ -385,6 +430,12 @@ const styles = StyleSheet.create({
     color: "#9CA3AF",
     marginTop: 4,
   },
+  chartPercentage: {
+    fontSize: 12,
+    color: "#3B5BDB",
+    fontWeight: "600",
+    marginTop: 2,
+  },
   kategorienGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -397,6 +448,15 @@ const styles = StyleSheet.create({
     width: "50%",
     marginBottom: 16,
     gap: 10,
+    padding: 8,
+    margin: -8,
+    borderRadius: 8,
+  },
+  kategorieItemSelected: {
+    backgroundColor: "rgba(59, 91, 219, 0.1)",
+    margin: 0,
+    marginBottom: 8,
+    width: "50%",
   },
   kategorieDot: {
     width: 12,

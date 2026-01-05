@@ -1,53 +1,22 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   Dimensions,
+  Pressable,
+  Modal,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
 import { Spacing } from "@/constants/theme";
+import { useApp } from "@/context/AppContext";
 const businessmanFigure = require("../../assets/images/businessman-figure.png");
 
 const screenWidth = Dimensions.get("window").width;
-
-const MOCK_DATA = {
-  userName: "Deni",
-  balance: 2504.16,
-  einnahmen: 3812.57,
-  ausgaben: 1308.41,
-  wochenausgaben: [
-    { day: "Mon", amount: 45, maxAmount: 120 },
-    { day: "Tue", amount: 85, maxAmount: 120 },
-    { day: "Wed", amount: 65, maxAmount: 120 },
-    { day: "Thu", amount: 50, maxAmount: 120 },
-    { day: "Fri", amount: 95, maxAmount: 120 },
-    { day: "Sat", amount: 120, maxAmount: 120 },
-    { day: "Sun", amount: 75, maxAmount: 120 },
-  ],
-  transaktionen: [
-    {
-      id: "1",
-      name: "Starbucks",
-      kategorie: "Lebensmittel",
-      datum: "Heute, 11:32",
-      betrag: -4.5,
-      icon: "coffee",
-    },
-    {
-      id: "2",
-      name: "Amazon",
-      kategorie: "Shopping",
-      datum: "28.11. 20:14",
-      betrag: -29.9,
-      icon: "shopping-cart",
-    },
-  ],
-};
 
 const formatCurrency = (value: number) => {
   const formatted = Math.abs(value).toLocaleString("de-DE", {
@@ -62,6 +31,14 @@ const formatCurrency = (value: number) => {
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
+  const { userName, balance, totalIncome, totalFixedExpenses, weeklySpending, transactions } = useApp();
+  
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [allTransactionsVisible, setAllTransactionsVisible] = useState(false);
+
+  const handleBarPress = (day: string) => {
+    setSelectedDay(selectedDay === day ? null : day);
+  };
 
   return (
     <View style={styles.container}>
@@ -73,7 +50,7 @@ export default function HomeScreen() {
           style={[styles.header, { paddingTop: insets.top + Spacing.lg }]}
         >
           <View style={styles.headerTextContainer}>
-            <Text style={styles.welcomeText}>Willkommen, {MOCK_DATA.userName}!</Text>
+            <Text style={styles.welcomeText}>Willkommen, {userName}!</Text>
             <Text style={styles.subtitleText}>hier der aktuelle Monat</Text>
           </View>
         </LinearGradient>
@@ -81,7 +58,7 @@ export default function HomeScreen() {
         <View style={styles.balanceCard}>
           <Text style={styles.balanceLabel}>Balance</Text>
           <Text style={styles.balanceAmount}>
-            € {MOCK_DATA.balance.toLocaleString("de-DE", { minimumFractionDigits: 2 })}
+            € {balance.toLocaleString("de-DE", { minimumFractionDigits: 2 })}
           </Text>
         </View>
 
@@ -107,7 +84,7 @@ export default function HomeScreen() {
             </View>
             <Text style={styles.cardLabel}>Einnahmen</Text>
             <Text style={styles.incomeAmount}>
-              € {MOCK_DATA.einnahmen.toLocaleString("de-DE", { minimumFractionDigits: 2 })}
+              € {totalIncome.toLocaleString("de-DE", { minimumFractionDigits: 2 })}
             </Text>
           </View>
 
@@ -117,7 +94,7 @@ export default function HomeScreen() {
             </View>
             <Text style={styles.cardLabel}>Ausgaben</Text>
             <Text style={styles.expenseAmount}>
-              € {MOCK_DATA.ausgaben.toLocaleString("de-DE", { minimumFractionDigits: 2 })}
+              € {totalFixedExpenses.toLocaleString("de-DE", { minimumFractionDigits: 2 })}
             </Text>
           </View>
         </View>
@@ -125,9 +102,21 @@ export default function HomeScreen() {
         <View style={styles.chartCard}>
           <Text style={styles.chartTitle}>Wochenausgaben</Text>
           <View style={styles.chartContainer}>
-            {MOCK_DATA.wochenausgaben.map((item) => (
-              <View key={item.day} style={styles.barContainer}>
+            {weeklySpending.map((item) => (
+              <Pressable 
+                key={item.day} 
+                style={styles.barContainer}
+                onPress={() => handleBarPress(item.day)}
+              >
                 <View style={styles.barWrapper}>
+                  {selectedDay === item.day ? (
+                    <View style={styles.tooltipContainer}>
+                      <View style={styles.tooltip}>
+                        <Text style={styles.tooltipText}>€ {item.amount}</Text>
+                      </View>
+                      <View style={styles.tooltipArrow} />
+                    </View>
+                  ) : null}
                   <LinearGradient
                     colors={["#7B8CDE", "#5B6BBE"]}
                     start={{ x: 0, y: 0 }}
@@ -141,7 +130,7 @@ export default function HomeScreen() {
                   />
                 </View>
                 <Text style={styles.barLabel}>{item.day}</Text>
-              </View>
+              </Pressable>
             ))}
           </View>
         </View>
@@ -149,10 +138,12 @@ export default function HomeScreen() {
         <View style={styles.transactionsSection}>
           <View style={styles.transactionsHeader}>
             <Text style={styles.transactionsTitle}>Letzte Transaktionen</Text>
-            <Text style={styles.transactionsAll}>All</Text>
+            <Pressable onPress={() => setAllTransactionsVisible(true)}>
+              <Text style={styles.transactionsAll}>All</Text>
+            </Pressable>
           </View>
 
-          {MOCK_DATA.transaktionen.map((transaction) => (
+          {transactions.slice(0, 2).map((transaction) => (
             <View key={transaction.id} style={styles.transactionItem}>
               <View style={styles.transactionIconContainer}>
                 <Feather
@@ -164,17 +155,69 @@ export default function HomeScreen() {
               <View style={styles.transactionDetails}>
                 <Text style={styles.transactionName}>{transaction.name}</Text>
                 <Text style={styles.transactionCategory}>
-                  {transaction.kategorie}
+                  {transaction.category}
                 </Text>
-                <Text style={styles.transactionDate}>{transaction.datum}</Text>
+                <Text style={styles.transactionDate}>{transaction.date}</Text>
               </View>
               <Text style={styles.transactionAmount}>
-                {formatCurrency(transaction.betrag)}
+                {formatCurrency(transaction.amount)}
               </Text>
             </View>
           ))}
         </View>
       </ScrollView>
+
+      <Modal
+        visible={allTransactionsVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setAllTransactionsVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <Pressable 
+            style={styles.modalBackdrop} 
+            onPress={() => setAllTransactionsVisible(false)} 
+          />
+          <View style={[styles.modalContent, { paddingBottom: insets.bottom + 24 }]}>
+            <View style={styles.modalHandle} />
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Alle Transaktionen</Text>
+              <Pressable 
+                onPress={() => setAllTransactionsVisible(false)}
+                style={styles.closeButton}
+              >
+                <Feather name="x" size={24} color="#000000" />
+              </Pressable>
+            </View>
+            <ScrollView 
+              style={styles.modalScrollView}
+              showsVerticalScrollIndicator={false}
+            >
+              {transactions.map((transaction) => (
+                <View key={transaction.id} style={styles.transactionItem}>
+                  <View style={styles.transactionIconContainer}>
+                    <Feather
+                      name={transaction.icon as any}
+                      size={20}
+                      color="#7B8CDE"
+                    />
+                  </View>
+                  <View style={styles.transactionDetails}>
+                    <Text style={styles.transactionName}>{transaction.name}</Text>
+                    <Text style={styles.transactionCategory}>
+                      {transaction.category}
+                    </Text>
+                    <Text style={styles.transactionDate}>{transaction.date}</Text>
+                  </View>
+                  <Text style={styles.transactionAmount}>
+                    {formatCurrency(transaction.amount)}
+                  </Text>
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -338,6 +381,7 @@ const styles = StyleSheet.create({
   barWrapper: {
     height: 120,
     justifyContent: "flex-end",
+    position: "relative",
   },
   bar: {
     width: 24,
@@ -347,6 +391,34 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#9CA3AF",
     marginTop: Spacing.sm,
+  },
+  tooltipContainer: {
+    position: "absolute",
+    top: -30,
+    left: -8,
+    alignItems: "center",
+    zIndex: 100,
+  },
+  tooltip: {
+    backgroundColor: "#3B5BDB",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  tooltipText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  tooltipArrow: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: 6,
+    borderRightWidth: 6,
+    borderTopWidth: 6,
+    borderLeftColor: "transparent",
+    borderRightColor: "transparent",
+    borderTopColor: "#3B5BDB",
   },
   transactionsSection: {
     marginTop: Spacing.lg,
@@ -411,5 +483,46 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#000000",
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+  },
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    maxHeight: "80%",
+  },
+  modalHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: "#D1D5DB",
+    borderRadius: 2,
+    alignSelf: "center",
+    marginBottom: 16,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#000000",
+  },
+  closeButton: {
+    padding: 4,
+  },
+  modalScrollView: {
+    flexGrow: 0,
   },
 });

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -13,19 +13,12 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Spacing } from "@/constants/theme";
+import { useApp, GoalDeposit } from "@/context/AppContext";
 
-const MOCK_TRANSACTIONS = {
-  "November 2025": [
-    { id: "1", type: "Einzahlung", date: "Heute, 11:32", amount: 4.50 },
-    { id: "2", type: "Einzahlung", date: "Gestern", amount: 4.50 },
-    { id: "3", type: "Einzahlung", date: "12/11/2025", amount: 4.50 },
-  ],
-  "Oktober 2025": [
-    { id: "4", type: "Einzahlung", date: "Heute, 11:32", amount: 4.50 },
-    { id: "5", type: "Einzahlung", date: "Gestern", amount: 4.50 },
-    { id: "6", type: "Einzahlung", date: "12/10/2025", amount: 4.50 },
-  ],
-};
+const GERMAN_MONTHS = [
+  "Januar", "Februar", "März", "April", "Mai", "Juni",
+  "Juli", "August", "September", "Oktober", "November", "Dezember"
+];
 
 const formatCurrency = (value: number) => {
   return value.toLocaleString("de-DE", {
@@ -34,29 +27,93 @@ const formatCurrency = (value: number) => {
   });
 };
 
+const parseDepositDate = (dateStr: string): { month: number; year: number } | null => {
+  if (dateStr.startsWith("Heute") || dateStr === "Gestern") {
+    const now = new Date();
+    return { month: now.getMonth(), year: now.getFullYear() };
+  }
+  const match = dateStr.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  if (match) {
+    return { month: parseInt(match[2], 10) - 1, year: parseInt(match[3], 10) };
+  }
+  return null;
+};
+
+const groupDepositsByMonth = (deposits: GoalDeposit[]): Record<string, GoalDeposit[]> => {
+  const grouped: Record<string, GoalDeposit[]> = {};
+  
+  deposits.forEach((deposit) => {
+    const parsed = parseDepositDate(deposit.date);
+    if (parsed) {
+      const key = `${GERMAN_MONTHS[parsed.month]} ${parsed.year}`;
+      if (!grouped[key]) {
+        grouped[key] = [];
+      }
+      grouped[key].push(deposit);
+    }
+  });
+  
+  return grouped;
+};
+
 export default function GoalDetailScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const route = useRoute<any>();
+  const { goals, addGoalDeposit, updateGoal } = useApp();
 
-  const goal = route.params?.goal || {
-    name: "Vespa 2026",
-    icon: "🛵",
-    current: 924.73,
-    target: 5200,
-    remaining: 4275.27,
-  };
+  const goalId = route.params?.goalId || route.params?.goal?.id;
+  const goal = useMemo(() => {
+    return goals.find((g) => g.id === goalId) || goals.find((g) => g.name === route.params?.goal?.name) || goals[0];
+  }, [goals, goalId, route.params?.goal?.name]);
 
-  const [goalName, setGoalName] = useState(goal.name);
+  const [goalName, setGoalName] = useState(goal?.name || "");
   const [editModalVisible, setEditModalVisible] = useState(false);
-  const [tempName, setTempName] = useState(goal.name);
+  const [tempName, setTempName] = useState(goal?.name || "");
+  
+  const [depositModalVisible, setDepositModalVisible] = useState(false);
+  const [depositAmount, setDepositAmount] = useState("");
 
-  const percentage = (goal.current / goal.target) * 100;
+  const percentage = goal ? (goal.current / goal.target) * 100 : 0;
+  const remaining = goal ? goal.target - goal.current : 0;
+  
+  const isKlarna = goal?.name.toLowerCase().includes("klarna");
+  const depositTitle = isKlarna ? "Rückzahlung" : "Einzahlung";
+
+  const groupedTransactions = useMemo(() => {
+    if (!goal?.deposits) return {};
+    return groupDepositsByMonth(goal.deposits);
+  }, [goal?.deposits]);
 
   const handleEditSave = () => {
-    setGoalName(tempName);
+    if (goal) {
+      updateGoal(goal.id, { name: tempName });
+      setGoalName(tempName);
+    }
     setEditModalVisible(false);
   };
+
+  const handleDepositSave = () => {
+    const amount = parseFloat(depositAmount.replace(",", "."));
+    if (!isNaN(amount) && amount > 0 && goal) {
+      addGoalDeposit(goal.id, amount);
+      setDepositModalVisible(false);
+      setDepositAmount("");
+    }
+  };
+
+  const handleDepositCancel = () => {
+    setDepositModalVisible(false);
+    setDepositAmount("");
+  };
+
+  if (!goal) {
+    return (
+      <View style={styles.container}>
+        <Text>Goal not found</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -82,8 +139,8 @@ export default function GoalDetailScreen() {
               <Text style={styles.goalIcon}>{goal.icon}</Text>
               <View>
                 <View style={styles.goalNameRow}>
-                  <Text style={styles.goalName}>{goalName}</Text>
-                  <Pressable onPress={() => { setTempName(goalName); setEditModalVisible(true); }}>
+                  <Text style={styles.goalName}>{goal.name}</Text>
+                  <Pressable onPress={() => { setTempName(goal.name); setEditModalVisible(true); }}>
                     <Feather name="edit-2" size={14} color="#7340FE" style={styles.editIcon} />
                   </Pressable>
                 </View>
@@ -95,11 +152,11 @@ export default function GoalDetailScreen() {
             <Text style={styles.goalPercentage}>{percentage.toFixed(2).replace(".", ",")}%</Text>
           </View>
           <View style={styles.progressBarContainer}>
-            <View style={[styles.progressBar, { width: `${percentage}%` }]} />
+            <View style={[styles.progressBar, { width: `${Math.min(percentage, 100)}%` }]} />
           </View>
           <View style={styles.goalFooter}>
             <Text style={styles.remainingLabel}>Übrig</Text>
-            <Text style={styles.remainingValue}>€ {formatCurrency(goal.remaining)}</Text>
+            <Text style={styles.remainingValue}>€ {formatCurrency(Math.max(0, remaining))}</Text>
           </View>
         </View>
       </LinearGradient>
@@ -108,18 +165,18 @@ export default function GoalDetailScreen() {
         style={styles.scrollView}
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingBottom: insets.bottom + 100 },
+          { paddingBottom: insets.bottom + 180 },
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {Object.entries(MOCK_TRANSACTIONS).map(([month, transactions]) => (
+        {Object.entries(groupedTransactions).map(([month, transactions]) => (
           <View key={month} style={styles.monthSection}>
             <Text style={styles.monthTitle}>{month}</Text>
             <View style={styles.transactionsList}>
               {transactions.map((transaction) => (
                 <View key={transaction.id} style={styles.transactionItem}>
                   <View style={styles.transactionLeft}>
-                    <Text style={styles.transactionIcon}>🛵</Text>
+                    <Text style={styles.transactionIcon}>{goal.icon}</Text>
                     <View>
                       <Text style={styles.transactionType}>{transaction.type}</Text>
                       <Text style={styles.transactionDate}>{transaction.date}</Text>
@@ -131,7 +188,19 @@ export default function GoalDetailScreen() {
             </View>
           </View>
         ))}
+        {Object.keys(groupedTransactions).length === 0 ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>Noch keine {depositTitle}en</Text>
+          </View>
+        ) : null}
       </ScrollView>
+
+      <Pressable
+        style={[styles.fab, { bottom: insets.bottom + 100 }]}
+        onPress={() => setDepositModalVisible(true)}
+      >
+        <Feather name="plus" size={24} color="#FFFFFF" />
+      </Pressable>
 
       <Modal
         visible={editModalVisible}
@@ -156,6 +225,42 @@ export default function GoalDetailScreen() {
 
             <Pressable style={styles.modalSaveButton} onPress={handleEditSave}>
               <Text style={styles.modalSaveButtonText}>Speichern</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={depositModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={handleDepositCancel}
+      >
+        <View style={styles.modalOverlay}>
+          <Pressable style={styles.modalBackdrop} onPress={handleDepositCancel} />
+          <View style={[styles.modalContent, { paddingBottom: insets.bottom + 24 }]}>
+            <View style={styles.modalHandle} />
+            <Text style={styles.modalTitle}>{depositTitle}</Text>
+
+            <Text style={styles.modalLabel}>Betrag</Text>
+            <View style={styles.currencyInputContainer}>
+              <Text style={styles.currencyPrefix}>€</Text>
+              <TextInput
+                style={styles.currencyInput}
+                value={depositAmount}
+                onChangeText={setDepositAmount}
+                placeholder="0,00"
+                placeholderTextColor="#9CA3AF"
+                keyboardType="decimal-pad"
+              />
+            </View>
+
+            <Pressable style={styles.modalSaveButton} onPress={handleDepositSave}>
+              <Text style={styles.modalSaveButtonText}>Hinzufügen</Text>
+            </Pressable>
+            
+            <Pressable style={styles.modalCancelButton} onPress={handleDepositCancel}>
+              <Text style={styles.modalCancelButtonText}>Abbrechen</Text>
             </Pressable>
           </View>
         </View>
@@ -313,6 +418,29 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#30B71E",
   },
+  emptyState: {
+    alignItems: "center",
+    paddingVertical: 40,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    color: "#9CA3AF",
+  },
+  fab: {
+    position: "absolute",
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#7340FE",
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
   modalOverlay: {
     flex: 1,
     justifyContent: "flex-end",
@@ -357,15 +485,47 @@ const styles = StyleSheet.create({
     color: "#000000",
     marginBottom: 24,
   },
+  currencyInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F3F4F6",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    marginBottom: 24,
+  },
+  currencyPrefix: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#000000",
+    marginRight: 8,
+  },
+  currencyInput: {
+    flex: 1,
+    paddingVertical: 14,
+    fontSize: 18,
+    color: "#000000",
+  },
   modalSaveButton: {
     backgroundColor: "#7340FE",
     borderRadius: 28,
     paddingVertical: 16,
     alignItems: "center",
+    marginBottom: 12,
   },
   modalSaveButtonText: {
     fontSize: 18,
     fontWeight: "600",
     color: "#FFFFFF",
+  },
+  modalCancelButton: {
+    backgroundColor: "#F3F4F6",
+    borderRadius: 28,
+    paddingVertical: 16,
+    alignItems: "center",
+  },
+  modalCancelButtonText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#6B7280",
   },
 });

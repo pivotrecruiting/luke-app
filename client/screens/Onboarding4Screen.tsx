@@ -4,13 +4,20 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { OnboardingStackParamList } from "@/navigation/OnboardingNavigator";
+import { Feather } from "@expo/vector-icons";
 import ProgressDots from "@/components/ProgressDots";
 import Chip from "@/components/Chip";
 import CurrencyInput from "@/components/CurrencyInput";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { Spacing, BorderRadius, Typography, Colors } from "@/constants/theme";
+import { useApp } from "@/context/AppContext";
 
 type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
+
+interface Entry {
+  type: string;
+  amount: string;
+}
 
 const incomeTypes = [
   "Gehalt/Lohn",
@@ -26,8 +33,30 @@ const incomeTypes = [
 export default function Onboarding4Screen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
+  const { addIncomeEntry } = useApp();
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [amount, setAmount] = useState("0,00");
+  const [entries, setEntries] = useState<Entry[]>([]);
+
+  const handleAddEntry = () => {
+    if (selectedType && amount !== "0,00") {
+      setEntries((prev) => [...prev, { type: selectedType, amount }]);
+      setSelectedType(null);
+      setAmount("0,00");
+    }
+  };
+
+  const handleDeleteEntry = (index: number) => {
+    setEntries((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleContinue = () => {
+    entries.forEach((entry) => {
+      const numericAmount = parseFloat(entry.amount.replace(",", "."));
+      addIncomeEntry(entry.type, numericAmount);
+    });
+    navigation.navigate("Onboarding5");
+  };
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + Spacing.xl }]}>
@@ -62,6 +91,32 @@ export default function Onboarding4Screen() {
         <View style={styles.inputContainer}>
           <CurrencyInput value={amount} onChangeText={setAmount} />
         </View>
+
+        <Pressable
+          onPress={handleAddEntry}
+          style={({ pressed }) => [
+            styles.addButton,
+            pressed && styles.addButtonPressed,
+          ]}
+        >
+          <Text style={styles.addButtonText}>Hinzufügen</Text>
+        </Pressable>
+
+        {entries.length > 0 ? (
+          <View style={styles.entriesContainer}>
+            {entries.map((entry, index) => (
+              <View key={index} style={styles.entryRow}>
+                <View style={styles.entryInfo}>
+                  <Text style={styles.entryType}>{entry.type}</Text>
+                  <Text style={styles.entryAmount}>{entry.amount} €</Text>
+                </View>
+                <Pressable onPress={() => handleDeleteEntry(index)}>
+                  <Feather name="x" size={20} color="#9CA3AF" />
+                </Pressable>
+              </View>
+            ))}
+          </View>
+        ) : null}
       </KeyboardAwareScrollViewCompat>
 
       <View
@@ -71,7 +126,7 @@ export default function Onboarding4Screen() {
         ]}
       >
         <Pressable
-          onPress={() => navigation.navigate("Onboarding5")}
+          onPress={handleContinue}
           style={({ pressed }) => [
             styles.button,
             pressed && styles.buttonPressed,
@@ -112,8 +167,51 @@ const styles = StyleSheet.create({
     marginTop: Spacing["3xl"],
   },
   inputContainer: {
-    marginTop: "auto",
-    paddingTop: Spacing["4xl"],
+    marginTop: Spacing["3xl"],
+  },
+  addButton: {
+    backgroundColor: "transparent",
+    borderWidth: 1,
+    borderColor: "#7340FE",
+    borderRadius: 12,
+    height: Spacing.buttonHeight,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: Spacing.lg,
+  },
+  addButtonPressed: {
+    opacity: 0.8,
+  },
+  addButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#7340FE",
+  },
+  entriesContainer: {
+    marginTop: Spacing.xl,
+  },
+  entryRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#F3F4F6",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 8,
+  },
+  entryInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.md,
+  },
+  entryType: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#000",
+  },
+  entryAmount: {
+    fontSize: 16,
+    color: "#6B7280",
   },
   buttonContainer: {
     position: "absolute",
