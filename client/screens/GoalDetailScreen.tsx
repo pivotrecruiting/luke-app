@@ -15,17 +15,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-  runOnJS,
-} from "react-native-reanimated";
-import {
-  Gesture,
-  GestureDetector,
-  GestureHandlerRootView,
-} from "react-native-gesture-handler";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Spacing } from "@/constants/theme";
 import { useApp, GoalDeposit } from "@/context/AppContext";
 
@@ -90,13 +80,7 @@ interface SwipeableDepositProps {
 }
 
 function SwipeableDeposit({ deposit, goalIcon, onDelete, onEdit }: SwipeableDepositProps) {
-  const translateX = useSharedValue(0);
-  const contextX = useSharedValue(0);
-  const DELETE_THRESHOLD = -80;
-
-  const resetPosition = () => {
-    translateX.value = withTiming(0);
-  };
+  const [isSwipedOpen, setIsSwipedOpen] = useState(false);
 
   const handleDelete = () => {
     Alert.alert(
@@ -106,73 +90,44 @@ function SwipeableDeposit({ deposit, goalIcon, onDelete, onEdit }: SwipeableDepo
         { 
           text: "Abbrechen", 
           style: "cancel",
-          onPress: () => {
-            translateX.value = withTiming(0);
-          }
+          onPress: () => setIsSwipedOpen(false)
         },
         {
           text: "Löschen",
           style: "destructive",
-          onPress: () => {
-            onDelete();
-          },
+          onPress: () => onDelete(),
         },
       ]
     );
   };
 
-  const panGesture = Gesture.Pan()
-    .activeOffsetX([-10, 10])
-    .onStart(() => {
-      contextX.value = translateX.value;
-    })
-    .onUpdate((event) => {
-      const newValue = contextX.value + event.translationX;
-      translateX.value = Math.max(Math.min(newValue, 0), -120);
-    })
-    .onEnd(() => {
-      if (translateX.value < DELETE_THRESHOLD) {
-        translateX.value = withTiming(-80);
-      } else {
-        translateX.value = withTiming(0);
-      }
-    });
-
-  const tapGesture = Gesture.Tap().onEnd(() => {
-    if (translateX.value < -30) {
-      translateX.value = withTiming(0);
-    } else {
-      runOnJS(onEdit)();
-    }
-  });
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value }],
-  }));
-
-  const deleteButtonStyle = useAnimatedStyle(() => ({
-    opacity: translateX.value < -20 ? 1 : 0,
-  }));
-
   return (
     <View style={styles.swipeableContainer}>
-      <Animated.View style={[styles.deleteButton, deleteButtonStyle]}>
-        <Pressable style={styles.deleteButtonInner} onPress={handleDelete}>
+      {isSwipedOpen ? (
+        <Pressable style={styles.deleteButton} onPress={handleDelete}>
           <Feather name="trash-2" size={20} color="#FFFFFF" />
         </Pressable>
-      </Animated.View>
-      <GestureDetector gesture={Gesture.Simultaneous(panGesture, tapGesture)}>
-        <Animated.View style={[styles.transactionItem, animatedStyle]}>
-          <View style={styles.transactionLeft}>
-            <Text style={styles.transactionIcon}>{goalIcon}</Text>
-            <View>
-              <Text style={styles.transactionType}>{deposit.type}</Text>
-              <Text style={styles.transactionDate}>{deposit.date}</Text>
-            </View>
+      ) : null}
+      <Pressable
+        style={[styles.transactionItem, isSwipedOpen && { marginRight: 80 }]}
+        onPress={() => {
+          if (isSwipedOpen) {
+            setIsSwipedOpen(false);
+          } else {
+            onEdit();
+          }
+        }}
+        onLongPress={() => setIsSwipedOpen(true)}
+      >
+        <View style={styles.transactionLeft}>
+          <Text style={styles.transactionIcon}>{goalIcon}</Text>
+          <View>
+            <Text style={styles.transactionType}>{deposit.type}</Text>
+            <Text style={styles.transactionDate}>{deposit.date}</Text>
           </View>
-          <Text style={styles.transactionAmount}>€ {formatCurrency(deposit.amount)}</Text>
-        </Animated.View>
-      </GestureDetector>
+        </View>
+        <Text style={styles.transactionAmount}>€ {formatCurrency(deposit.amount)}</Text>
+      </Pressable>
     </View>
   );
 }
@@ -355,7 +310,7 @@ export default function GoalDetailScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.swipeHint}>Wische nach links zum Löschen, tippe zum Bearbeiten</Text>
+        <Text style={styles.swipeHint}>Lang drücken zum Löschen, tippen zum Bearbeiten</Text>
         {Object.entries(groupedTransactions).map(([month, transactions]) => (
           <View key={month} style={styles.monthSection}>
             <Text style={styles.monthTitle}>{month}</Text>
