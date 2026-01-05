@@ -36,22 +36,49 @@ const savingsGoals = [
   "Klarna",
 ];
 
-const goalIcons: Record<string, string> = {
-  Urlaub: "sun",
-  Führerschein: "truck",
-  Wohnung: "home",
-  Hochzeit: "heart",
-  Schuldenfrei: "credit-card",
-  Notgroschen: "dollar-sign",
-  Uhr: "clock",
-  Auto: "truck",
-  Weihnachten: "gift",
-  Vespa: "navigation",
-  Handy: "smartphone",
-  Bildschirm: "monitor",
-  Laptop: "laptop",
-  Klarna: "dollar-sign",
-};
+const iconKeywords: Array<{ keywords: string[]; icon: string }> = [
+  { keywords: ["iphone", "handy", "smartphone", "telefon", "phone", "samsung", "pixel", "xiaomi"], icon: "smartphone" },
+  { keywords: ["laptop", "macbook", "notebook", "computer", "pc", "imac", "mac"], icon: "laptop" },
+  { keywords: ["bildschirm", "monitor", "tv", "fernseher", "display", "screen"], icon: "monitor" },
+  { keywords: ["auto", "car", "fahrzeug", "wagen", "tesla", "bmw", "mercedes", "audi", "vw"], icon: "truck" },
+  { keywords: ["vespa", "roller", "motorrad", "moped", "bike", "fahrrad", "ebike", "e-bike"], icon: "navigation" },
+  { keywords: ["urlaub", "reise", "ferien", "travel", "trip", "strand", "meer", "vacation"], icon: "sun" },
+  { keywords: ["führerschein", "lizenz", "license", "prüfung"], icon: "award" },
+  { keywords: ["wohnung", "haus", "home", "apartment", "immobilie", "miete", "eigentum", "zimmer"], icon: "home" },
+  { keywords: ["hochzeit", "heirat", "wedding", "ring", "verlobung", "ehe"], icon: "heart" },
+  { keywords: ["schulden", "kredit", "loan", "abbezahlen", "tilgung", "raten"], icon: "credit-card" },
+  { keywords: ["notgroschen", "reserve", "emergency", "rücklage", "sicherheit"], icon: "shield" },
+  { keywords: ["uhr", "watch", "armbanduhr", "rolex", "smartwatch", "apple watch"], icon: "clock" },
+  { keywords: ["weihnachten", "christmas", "geschenk", "gift", "geburtstag", "birthday", "present"], icon: "gift" },
+  { keywords: ["klarna", "paypal", "zahlung", "payment", "rechnung", "bill"], icon: "dollar-sign" },
+  { keywords: ["kamera", "camera", "foto", "photo", "gopro", "dslr"], icon: "camera" },
+  { keywords: ["musik", "music", "kopfhörer", "headphones", "airpods", "spotify", "instrument", "gitarre"], icon: "headphones" },
+  { keywords: ["fitness", "gym", "sport", "training", "workout", "mitgliedschaft"], icon: "activity" },
+  { keywords: ["buch", "book", "bücher", "kindle", "lesen", "reading"], icon: "book" },
+  { keywords: ["kurs", "course", "ausbildung", "studium", "uni", "schule", "lernen", "education"], icon: "book-open" },
+  { keywords: ["flug", "flight", "flugzeug", "plane", "airline", "fliegen"], icon: "send" },
+  { keywords: ["möbel", "furniture", "sofa", "couch", "tisch", "stuhl", "bett", "schrank"], icon: "box" },
+  { keywords: ["kleidung", "clothes", "mode", "fashion", "schuhe", "shoes", "jacke", "anzug"], icon: "shopping-bag" },
+  { keywords: ["spiel", "game", "playstation", "xbox", "nintendo", "switch", "ps5", "gaming", "konsole"], icon: "play" },
+  { keywords: ["tablet", "ipad", "surface"], icon: "tablet" },
+  { keywords: ["schmuck", "jewelry", "kette", "armband", "ohrringe", "gold", "silber"], icon: "star" },
+  { keywords: ["baby", "kind", "child", "familie", "family"], icon: "users" },
+  { keywords: ["hund", "katze", "haustier", "pet", "tier", "animal"], icon: "heart" },
+  { keywords: ["garten", "garden", "pflanzen", "plants", "balkon"], icon: "sun" },
+  { keywords: ["küche", "kitchen", "kochen", "cooking", "thermomix", "kaffeemaschine"], icon: "coffee" },
+];
+
+function getIconForText(text: string): string {
+  const lowerText = text.toLowerCase();
+  for (const entry of iconKeywords) {
+    for (const keyword of entry.keywords) {
+      if (lowerText.includes(keyword)) {
+        return entry.icon;
+      }
+    }
+  }
+  return "target";
+}
 
 export default function Onboarding3Screen() {
   const insets = useSafeAreaInsets();
@@ -93,7 +120,7 @@ export default function Onboarding3Screen() {
             <Text style={styles.label}>Name</Text>
             <View style={styles.nameInputContainer}>
               <Feather
-                name={goalIcons[selectedGoal] as any || "target"}
+                name={getIconForText(selectedGoal) as any}
                 size={20}
                 color="#6B7280"
                 style={styles.inputIcon}
