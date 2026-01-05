@@ -159,14 +159,14 @@ function BudgetItem({ budget }: { budget: typeof MOCK_DATA.budgets[0] }) {
 const EMOJI_LIST = ["😀", "🛵", "💳", "🏠", "🚗", "✈️", "💻", "📱", "🎮", "👗", "💍", "🎓"];
 
 const BUDGET_CATEGORIES = [
-  { id: "essen", name: "Essen", icon: "shopping-cart", color: "#F59E0B" },
-  { id: "transport", name: "Transport", icon: "truck", color: "#3B82F6" },
-  { id: "miete", name: "Miete", icon: "home", color: "#3B82F6" },
-  { id: "bills", name: "Bills", icon: "dollar-sign", color: "#3B82F6" },
-  { id: "mitgliedschaften", name: "Mitgliedschaften", icon: "briefcase", color: "#8B5CF6" },
-  { id: "unterhaltung", name: "Unterhaltung", icon: "smile", color: "#8B5CF6" },
-  { id: "shoppen", name: "Shoppen", icon: "shopping-bag", color: "#8B5CF6" },
-  { id: "gifts", name: "Gifts", icon: "gift", color: "#EC4899" },
+  { id: "essen", name: "Essen", icon: "shopping-cart", color: "#F97316" },
+  { id: "transport", name: "Transport", icon: "truck", color: "#6366F1" },
+  { id: "miete", name: "Miete", icon: "home", color: "#14B8A6" },
+  { id: "bills", name: "Bills", icon: "dollar-sign", color: "#F59E0B" },
+  { id: "mitgliedschaften", name: "Mitgliedschaften", icon: "briefcase", color: "#A855F7" },
+  { id: "unterhaltung", name: "Unterhaltung", icon: "smile", color: "#FBBF24" },
+  { id: "shoppen", name: "Shoppen", icon: "shopping-bag", color: "#EC4899" },
+  { id: "gifts", name: "Gifts", icon: "gift", color: "#8B5CF6" },
 ];
 
 export default function GoalsScreen() {
@@ -408,7 +408,7 @@ export default function GoalsScreen() {
                     <View
                       style={[
                         styles.categoryIconContainer,
-                        { backgroundColor: `${category.color}20` },
+                        { backgroundColor: "#FFFFFF" },
                       ]}
                     >
                       <Feather name={category.icon as any} size={24} color={category.color} />
@@ -824,6 +824,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 4,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
   },
   categoryName: {
     fontSize: 10,
