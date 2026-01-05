@@ -117,7 +117,7 @@ export default function Onboarding1Screen() {
                   <Image
                     source={goal.image}
                     style={styles.subscriptionBlob}
-                    contentFit="contain"
+                    contentFit="fill"
                   />
                   <Image
                     source={goal.overlayImage}
