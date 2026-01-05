@@ -34,7 +34,8 @@ const goals = [
     id: "subscriptions",
     label: "Abos\noptimieren",
     color: Colors.light.cardSubscriptions,
-    image: require("@assets/images/image_1767540704833.png"),
+    image: require("@assets/images/blob-subscriptions.png"),
+    overlayImage: require("@assets/images/image_1767540704833.png"),
   },
   {
     id: "savings",
