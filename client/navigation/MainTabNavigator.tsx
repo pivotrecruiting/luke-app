@@ -143,7 +143,6 @@ const styles = StyleSheet.create({
     minWidth: 44,
   },
   tabButtonActive: {
-    backgroundColor: "#E1D4F6",
   },
   insightsCircle: {
     width: 22,
