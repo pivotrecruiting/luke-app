@@ -274,12 +274,10 @@ export default function GoalsScreen() {
         end={{ x: 0, y: 1 }}
         style={[styles.header, { paddingTop: insets.top + Spacing.lg }]}
       >
-        <View style={styles.headerRow}>
-          <View>
-            <Text style={styles.headerTitle}>Goals</Text>
-            <Text style={styles.headerSubtitle}>bleib dran!</Text>
-          </View>
-          {successToast ? (
+        <Text style={styles.headerTitle}>Goals</Text>
+        <Text style={styles.headerSubtitle}>bleib dran!</Text>
+        {successToast ? (
+          <View style={styles.toastContainer}>
             <View style={styles.successToast}>
               <View style={styles.checkCircle}>
                 <Feather name="check" size={14} color="#FFFFFF" />
@@ -288,8 +286,8 @@ export default function GoalsScreen() {
                 {successToast === "goal" ? "Goal created!" : "Budget set!"}
               </Text>
             </View>
-          ) : null}
-        </View>
+          </View>
+        ) : null}
       </LinearGradient>
 
       <ScrollView
@@ -490,10 +488,14 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.8)",
     marginTop: 4,
   },
-  headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
+  toastContainer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: "center",
+    alignItems: "center",
   },
   successToast: {
     flexDirection: "row",
