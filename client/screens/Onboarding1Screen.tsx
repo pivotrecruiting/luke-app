@@ -98,7 +98,7 @@ export default function Onboarding1Screen() {
                 pressed && styles.goalCardPressed,
               ]}
             >
-              {"fullImage" in goal && goal.fullImage ? (
+              {goal.id === "klarna" ? (
                 <Image
                   source={goal.image}
                   style={styles.goalImageFull}
