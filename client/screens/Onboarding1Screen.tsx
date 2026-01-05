@@ -192,9 +192,10 @@ const styles = StyleSheet.create({
   cloudBackground: {
     position: "absolute",
     width: 118,
-    height: 70,
-    top: 69,
-    right: -10,
+    height: 67,
+    top: 10,
+    right: -15,
+    zIndex: -1,
   },
   goalLabel: {
     ...Typography.h4,
