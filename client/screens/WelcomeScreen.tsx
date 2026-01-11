@@ -33,17 +33,7 @@ export default function WelcomeScreen() {
         contentFit="cover"
       />
 
-      <LinearGradient
-        colors={[
-          "transparent",
-          "rgba(97, 106, 201, 0.08)",
-          "rgba(97, 106, 201, 0.15)",
-          "rgba(97, 106, 201, 0.08)",
-          "transparent",
-        ]}
-        locations={[0, 0.2, 0.5, 0.8, 1]}
-        style={styles.glowOval}
-      />
+      <View style={styles.glowOval} />
 
       <View style={styles.textContainer}>
         <Text style={styles.headline}>Bring Licht in deine Finanzen</Text>
@@ -80,9 +70,14 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 155,
     alignSelf: "center",
-    width: 250,
-    height: 500,
-    borderRadius: 125,
+    width: 195,
+    height: 436,
+    borderRadius: 97.5,
+    backgroundColor: "rgba(97, 106, 201, 0.12)",
+    shadowColor: "#616AC9",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.4,
+    shadowRadius: 150,
   },
   textContainer: {
     position: "absolute",
