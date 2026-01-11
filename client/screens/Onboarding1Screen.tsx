@@ -159,6 +159,8 @@ export default function Onboarding1Screen() {
         <View style={styles.bottomSection}>
           {bottomGoals.map((goal) => renderGoalCard(goal, true))}
         </View>
+
+        <View style={{ height: 100 }} />
       </ScrollView>
 
       <View
