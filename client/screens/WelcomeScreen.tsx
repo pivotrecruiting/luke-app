@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
+import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -33,12 +34,13 @@ export default function WelcomeScreen() {
         contentFit="cover"
       />
 
-      <Image
-        source={require("@assets/images/glow-oval.png")}
-        style={styles.glowOval}
-        contentFit="fill"
-        priority="high"
-      />
+      <View style={styles.glowOval}>
+        <BlurView
+          intensity={100}
+          tint="dark"
+          style={styles.glowBlur}
+        />
+      </View>
 
       <View style={styles.textContainer}>
         <Text style={styles.headline}>Bring Licht in deine Finanzen</Text>
@@ -77,6 +79,14 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     width: 195,
     height: 436,
+    borderRadius: 97.5,
+    backgroundColor: "#616AC94D",
+    overflow: "hidden",
+  },
+  glowBlur: {
+    flex: 1,
+    width: "100%",
+    height: "100%",
   },
   textContainer: {
     position: "absolute",
