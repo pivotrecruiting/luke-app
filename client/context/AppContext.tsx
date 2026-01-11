@@ -106,6 +106,8 @@ export interface AppContextType extends AppState {
   completeOnboarding: () => void;
   updateGoal: (goalId: string, updates: Partial<Goal>) => void;
   updateBudget: (budgetId: string, updates: Partial<Budget>) => void;
+  addGoal: (name: string, icon: string, target: number) => void;
+  addBudget: (name: string, icon: string, iconColor: string, limit: number) => void;
 }
 
 const generateId = () => Math.random().toString(36).substring(2, 9);
@@ -574,6 +576,32 @@ export function AppProvider({ children }: AppProviderProps) {
     );
   };
 
+  const addGoal = (name: string, icon: string, target: number) => {
+    const newGoal: Goal = {
+      id: generateId(),
+      name,
+      icon,
+      target,
+      current: 0,
+      remaining: target,
+      deposits: [],
+    };
+    setGoals((prev) => [...prev, newGoal]);
+  };
+
+  const addBudget = (name: string, icon: string, iconColor: string, limit: number) => {
+    const newBudget: Budget = {
+      id: generateId(),
+      name,
+      icon,
+      iconColor,
+      limit,
+      current: 0,
+      expenses: [],
+    };
+    setBudgets((prev) => [...prev, newBudget]);
+  };
+
   const value: AppContextType = {
     isOnboardingComplete,
     userName,
@@ -604,6 +632,8 @@ export function AppProvider({ children }: AppProviderProps) {
     completeOnboarding,
     updateGoal,
     updateBudget,
+    addGoal,
+    addBudget,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

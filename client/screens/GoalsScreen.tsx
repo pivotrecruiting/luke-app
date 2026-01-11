@@ -17,7 +17,7 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { Spacing } from "@/constants/theme";
-import { useApp } from "@/context/AppContext";
+import { useApp, Goal, Budget } from "@/context/AppContext";
 
 const MOCK_DATA = {
   level: {
@@ -64,7 +64,7 @@ function LevelCard() {
   );
 }
 
-function GoalItem({ goal, onPress }: { goal: typeof MOCK_DATA.goals[0]; onPress: () => void }) {
+function GoalItem({ goal, onPress }: { goal: Goal; onPress: () => void }) {
   const percentage = (goal.current / goal.target) * 100;
 
   return (
@@ -97,7 +97,7 @@ function GoalItem({ goal, onPress }: { goal: typeof MOCK_DATA.goals[0]; onPress:
   );
 }
 
-function BudgetItem({ budget }: { budget: typeof MOCK_DATA.budgets[0] }) {
+function BudgetItem({ budget }: { budget: Budget }) {
   const percentage = (budget.current / budget.limit) * 100;
 
   return (
@@ -139,7 +139,7 @@ const BUDGET_CATEGORIES = [
 export default function GoalsScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { goals: contextGoals, budgets: contextBudgets } = useApp();
+  const { goals, budgets, addGoal, addBudget } = useApp();
 
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [goalName, setGoalName] = useState("");
@@ -147,22 +147,12 @@ export default function GoalsScreen() {
   const [monthlyContribution, setMonthlyContribution] = useState("");
   const [selectedEmoji, setSelectedEmoji] = useState("😀");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [goals, setGoals] = useState(contextGoals);
 
   const [budgetModalVisible, setBudgetModalVisible] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [budgetLimit, setBudgetLimit] = useState("");
-  const [budgets, setBudgets] = useState(contextBudgets);
 
   const [successToast, setSuccessToast] = useState<"goal" | "budget" | null>(null);
-
-  useEffect(() => {
-    setGoals(contextGoals);
-  }, [contextGoals]);
-
-  useEffect(() => {
-    setBudgets(contextBudgets);
-  }, [contextBudgets]);
 
   useEffect(() => {
     if (successToast) {
@@ -188,16 +178,7 @@ export default function GoalsScreen() {
     const amount = parseFloat(goalAmount.replace(",", ".")) || 0;
     if (!goalName || amount <= 0) return;
 
-    const newGoal = {
-      id: String(Date.now()),
-      name: goalName,
-      icon: selectedEmoji,
-      current: 0,
-      target: amount,
-      remaining: amount,
-    };
-
-    setGoals([...goals, newGoal]);
+    addGoal(goalName, selectedEmoji, amount);
     setCreateModalVisible(false);
     setGoalName("");
     setGoalAmount("");
@@ -222,16 +203,7 @@ export default function GoalsScreen() {
     const category = BUDGET_CATEGORIES.find((c) => c.id === selectedCategory);
     if (!category) return;
 
-    const newBudget = {
-      id: String(Date.now()),
-      name: category.name,
-      icon: category.icon,
-      iconColor: category.color,
-      current: 0,
-      limit: limit,
-    };
-
-    setBudgets([...budgets, newBudget]);
+    addBudget(category.name, category.icon, category.color, limit);
     resetAndCloseBudgetModal();
     setSuccessToast("budget");
   };
