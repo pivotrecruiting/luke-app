@@ -133,7 +133,7 @@ export default function Onboarding1Screen() {
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingBottom: insets.bottom + 100 },
+          { paddingBottom: insets.bottom + 140 },
         ]}
         showsVerticalScrollIndicator={false}
       >
@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
   },
   rightColumn: {
     flex: 1,
-    gap: Spacing.md,
+    gap: 40,
   },
   bottomSection: {
     flexDirection: "row",
