@@ -218,6 +218,8 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
     justifyContent: "space-between",
     overflow: "hidden",
+    borderWidth: 4,
+    borderColor: "transparent",
   },
   bottomCard: {
     flex: 1,
@@ -225,9 +227,10 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
     justifyContent: "space-between",
     overflow: "hidden",
+    borderWidth: 4,
+    borderColor: "transparent",
   },
   goalCardSelected: {
-    borderWidth: 4,
     borderColor: Colors.light.primary,
   },
   goalCardPressed: {
