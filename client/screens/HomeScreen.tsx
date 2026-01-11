@@ -173,13 +173,18 @@ export default function HomeScreen() {
         animationType="slide"
         onRequestClose={() => setAllTransactionsVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <Pressable 
-            style={styles.modalBackdrop} 
-            onPress={() => setAllTransactionsVisible(false)} 
+        <Pressable 
+          style={styles.modalOverlay}
+          onPress={() => setAllTransactionsVisible(false)}
+        >
+          <LinearGradient
+            colors={["transparent", "rgba(0,0,0,0.3)", "rgba(0,0,0,0.5)"]}
+            locations={[0, 0.5, 1]}
+            style={styles.modalGradient}
           />
-          <View style={[styles.modalContent, { paddingBottom: insets.bottom + 24 }]}>
-            <View style={styles.modalHandle} />
+        </Pressable>
+        <View style={[styles.modalContent, { paddingBottom: insets.bottom + 24 }]}>
+          <View style={styles.modalHandle} />
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Alle Transaktionen</Text>
               <Pressable 
@@ -216,7 +221,6 @@ export default function HomeScreen() {
               ))}
             </ScrollView>
           </View>
-        </View>
       </Modal>
     </View>
   );
@@ -483,14 +487,20 @@ const styles = StyleSheet.create({
     color: "#000000",
   },
   modalOverlay: {
-    flex: 1,
-    justifyContent: "flex-end",
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
-  modalBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  modalGradient: {
+    flex: 1,
   },
   modalContent: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
     backgroundColor: "#FFFFFF",
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
