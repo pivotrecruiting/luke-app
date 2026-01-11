@@ -33,12 +33,7 @@ export default function WelcomeScreen() {
         contentFit="cover"
       />
 
-      <Image
-        source={require("@assets/images/glow-oval.png")}
-        style={styles.glowOval}
-        contentFit="fill"
-        priority="high"
-      />
+      <View style={styles.glowOval} />
 
       <View style={styles.textContainer}>
         <Text style={styles.headline}>Bring Licht in deine Finanzen</Text>
@@ -77,6 +72,12 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     width: 195,
     height: 436,
+    borderRadius: 97.5,
+    backgroundColor: "rgba(97, 106, 201, 0.3)",
+    shadowColor: "#616AC9",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 100,
   },
   textContainer: {
     position: "absolute",
