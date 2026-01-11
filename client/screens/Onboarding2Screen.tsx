@@ -15,7 +15,7 @@ type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
 export default function Onboarding2Screen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
-  const [amount, setAmount] = useState("0,00");
+  const [amount, setAmount] = useState("");
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + Spacing.xl }]}>

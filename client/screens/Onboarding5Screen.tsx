@@ -37,14 +37,14 @@ export default function Onboarding5Screen() {
   const navigation = useNavigation<NavigationProp>();
   const { setExpenseEntries } = useApp();
   const [selectedType, setSelectedType] = useState<string | null>(null);
-  const [amount, setAmount] = useState("0,00");
+  const [amount, setAmount] = useState("");
   const [entries, setEntries] = useState<Entry[]>([]);
 
   const handleAddEntry = () => {
-    if (selectedType && amount !== "0,00") {
+    if (selectedType && amount !== "") {
       setEntries((prev) => [...prev, { type: selectedType, amount }]);
       setSelectedType(null);
-      setAmount("0,00");
+      setAmount("");
     }
   };
 

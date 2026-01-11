@@ -84,8 +84,8 @@ export default function Onboarding3Screen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
   const [selectedGoal, setSelectedGoal] = useState("Wohnung");
-  const [amount, setAmount] = useState("1000,00");
-  const [monthlyAmount, setMonthlyAmount] = useState("200,00");
+  const [amount, setAmount] = useState("");
+  const [monthlyAmount, setMonthlyAmount] = useState("");
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + Spacing.xl }]}>
