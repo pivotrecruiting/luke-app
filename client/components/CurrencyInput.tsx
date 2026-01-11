@@ -35,7 +35,6 @@ export default function CurrencyInput({
         placeholder={placeholder}
         placeholderTextColor="#9CA3AF"
         keyboardType="numeric"
-        selectTextOnFocus
       />
     </View>
   );
