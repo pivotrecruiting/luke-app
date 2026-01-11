@@ -230,7 +230,8 @@ const styles = StyleSheet.create({
     ...Typography.body,
     color: Colors.light.text,
     padding: 0,
-  },
+    outlineStyle: "none",
+  } as any,
   buttonContainer: {
     position: "absolute",
     bottom: 0,

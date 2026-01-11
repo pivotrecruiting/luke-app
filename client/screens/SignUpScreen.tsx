@@ -188,7 +188,8 @@ const styles = StyleSheet.create({
     marginTop: Spacing["3xl"],
     ...Typography.body,
     color: Colors.light.text,
-  },
+    outlineStyle: "none",
+  } as any,
   continueButton: {
     width: "100%",
     height: 48,

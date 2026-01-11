@@ -263,12 +263,14 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: "700",
     color: "#000000",
-  },
+    outlineStyle: "none",
+  } as any,
   descriptionInput: {
     fontSize: 16,
     color: "#000000",
     paddingVertical: 8,
-  },
+    outlineStyle: "none",
+  } as any,
   categoriesGrid: {
     flexDirection: "row",
     flexWrap: "wrap",

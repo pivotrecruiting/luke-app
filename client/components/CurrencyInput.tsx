@@ -66,5 +66,6 @@ const styles = StyleSheet.create({
     ...Typography.body,
     color: "#374151",
     padding: 0,
-  },
+    outlineStyle: "none",
+  } as any,
 });

@@ -764,7 +764,8 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     fontSize: 16,
     color: "#000000",
-  },
+    outlineStyle: "none",
+  } as any,
   emojiPicker: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -793,7 +794,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#000000",
     marginBottom: 16,
-  },
+    outlineStyle: "none",
+  } as any,
   calculationText: {
     fontSize: 14,
     color: "#6B7280",
