@@ -22,7 +22,7 @@ const topLeftGoals = [
     label: "Überblick\ngewinnen",
     color: "#8E97FD",
     image: require("@assets/images/image_1767540420128.png"),
-    height: 210,
+    height: 140,
   },
   {
     id: "subscriptions",
@@ -30,7 +30,7 @@ const topLeftGoals = [
     color: "#FEB18F",
     image: require("@assets/images/blob-subscriptions.png"),
     overlayImage: require("@assets/images/image_1767540704833.png"),
-    height: 195,
+    height: 140,
   },
 ];
 
@@ -41,14 +41,14 @@ const topRightGoals = [
     color: "#FA6E5A",
     image: require("@assets/images/image_1767540791135.png"),
     overlayImage: require("@assets/images/woman-laptop.png"),
-    height: 195,
+    height: 140,
   },
   {
     id: "savings",
     label: "Notgroschen\naufbauen",
     color: "#FFCF86",
     image: require("@assets/images/image_1767540547771.png"),
-    height: 210,
+    height: 140,
   },
 ];
 
@@ -58,14 +58,14 @@ const bottomGoals = [
     label: "Sparziel\nerreichen",
     color: "#6CB38E",
     image: require("@assets/images/image_1767540578781.png"),
-    height: 176,
+    height: 120,
   },
   {
     id: "peace",
     label: "Finanzielle Ruhe",
     color: "#D9A5B5",
     image: require("@assets/images/image_1767540595139.png"),
-    height: 176,
+    height: 120,
   },
 ];
 
@@ -159,8 +159,6 @@ export default function Onboarding1Screen() {
         <View style={styles.bottomSection}>
           {bottomGoals.map((goal) => renderGoalCard(goal, true))}
         </View>
-
-        <View style={{ height: 100 }} />
       </ScrollView>
 
       <View
