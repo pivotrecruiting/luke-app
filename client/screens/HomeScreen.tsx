@@ -12,6 +12,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { Spacing } from "@/constants/theme";
 import { useApp } from "@/context/AppContext";
 const businessmanFigure = require("../../assets/images/businessman-figure.png");
@@ -31,6 +34,7 @@ const formatCurrency = (value: number) => {
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { userName, balance, totalIncome, totalExpenses, weeklySpending, transactions } = useApp();
   
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
@@ -79,7 +83,10 @@ export default function HomeScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.incomeExpenseRow}>
-          <View style={styles.incomeCard}>
+          <Pressable 
+            style={styles.incomeCard}
+            onPress={() => navigation.navigate("Income")}
+          >
             <View style={styles.incomeIconContainer}>
               <Feather name="arrow-up" size={20} color="#22C55E" />
             </View>
@@ -87,7 +94,7 @@ export default function HomeScreen() {
             <Text style={styles.incomeAmount}>
               € {totalIncome.toLocaleString("de-DE", { minimumFractionDigits: 2 })}
             </Text>
-          </View>
+          </Pressable>
 
           <View style={styles.expenseCard}>
             <View style={styles.expenseIconContainer}>

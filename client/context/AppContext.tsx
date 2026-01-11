@@ -108,6 +108,8 @@ export interface AppContextType extends AppState {
   updateBudget: (budgetId: string, updates: Partial<Budget>) => void;
   addGoal: (name: string, icon: string, target: number) => void;
   addBudget: (name: string, icon: string, iconColor: string, limit: number) => void;
+  updateIncomeEntry: (id: string, type: string, amount: number) => void;
+  deleteIncomeEntry: (id: string) => void;
 }
 
 const generateId = () => Math.random().toString(36).substring(2, 9);
@@ -602,6 +604,21 @@ export function AppProvider({ children }: AppProviderProps) {
     setBudgets((prev) => [...prev, newBudget]);
   };
 
+  const updateIncomeEntry = (id: string, type: string, amount: number) => {
+    setIncomeEntries((prev) =>
+      prev.map((entry) => {
+        if (entry.id === id) {
+          return { ...entry, type, amount };
+        }
+        return entry;
+      })
+    );
+  };
+
+  const deleteIncomeEntry = (id: string) => {
+    setIncomeEntries((prev) => prev.filter((entry) => entry.id !== id));
+  };
+
   const value: AppContextType = {
     isOnboardingComplete,
     userName,
@@ -634,6 +651,8 @@ export function AppProvider({ children }: AppProviderProps) {
     updateBudget,
     addGoal,
     addBudget,
+    updateIncomeEntry,
+    deleteIncomeEntry,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

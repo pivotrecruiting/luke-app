@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import OnboardingNavigator from "@/navigation/OnboardingNavigator";
 import MainTabNavigator from "@/navigation/MainTabNavigator";
 import GoalDetailScreen from "@/screens/GoalDetailScreen";
+import IncomeScreen from "@/screens/IncomeScreen";
 import { useApp } from "@/context/AppContext";
 
 export type RootStackParamList = {
@@ -11,6 +12,7 @@ export type RootStackParamList = {
   GoalDetail: {
     goalId: string;
   };
+  Income: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -35,6 +37,14 @@ export default function RootStackNavigator() {
           animation: "fade_from_bottom",
           animationDuration: 200,
           contentStyle: { backgroundColor: "transparent" },
+        }}
+      />
+      <Stack.Screen 
+        name="Income" 
+        component={IncomeScreen}
+        options={{ 
+          headerShown: false,
+          animation: "slide_from_right",
         }}
       />
     </Stack.Navigator>
