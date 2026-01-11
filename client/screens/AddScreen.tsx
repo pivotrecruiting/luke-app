@@ -99,6 +99,7 @@ export default function AddScreen() {
           { paddingBottom: insets.bottom + 100 },
         ]}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         <View style={styles.inputCard}>
           <Text style={styles.inputLabel}>Betrag</Text>

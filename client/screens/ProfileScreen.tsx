@@ -26,6 +26,7 @@ export default function ProfileScreen() {
           { paddingBottom: insets.bottom + 100 },
         ]}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         <View style={styles.profileCard}>
           <Text style={styles.foxEmoji}>🦊</Text>

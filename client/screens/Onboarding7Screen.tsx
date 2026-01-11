@@ -87,6 +87,7 @@ export default function Onboarding7Screen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.chipsContainer}
           style={styles.chipsScroll}
+          keyboardShouldPersistTaps="handled"
         >
           {categories.map((category) => (
             <Chip
@@ -118,6 +119,7 @@ export default function Onboarding7Screen() {
                 paddingVertical: ITEM_HEIGHT * Math.floor(VISIBLE_ITEMS / 2),
               }}
               contentOffset={{ x: 0, y: initialScrollIndex * ITEM_HEIGHT }}
+              keyboardShouldPersistTaps="handled"
             >
               {amounts.map((amount) => (
                 <View key={amount} style={styles.pickerItem}>

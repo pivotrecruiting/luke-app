@@ -310,6 +310,7 @@ export default function GoalDetailScreen() {
           { paddingBottom: insets.bottom + 180 },
         ]}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         <Text style={styles.swipeHint}>Lang drücken zum Löschen, tippen zum Bearbeiten</Text>
         {Object.entries(groupedTransactions).map(([month, transactions]) => (

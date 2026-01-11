@@ -179,6 +179,7 @@ export default function InsightsScreen() {
           { paddingBottom: insets.bottom + 100 },
         ]}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         <View style={styles.filterRow}>
           <Pressable style={styles.filterButton} onPress={() => setFilterModalVisible(true)}>

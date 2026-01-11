@@ -76,6 +76,7 @@ export default function HomeScreen() {
           { paddingBottom: insets.bottom + 100 },
         ]}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         <View style={styles.incomeExpenseRow}>
           <View style={styles.incomeCard}>
@@ -197,6 +198,7 @@ export default function HomeScreen() {
             <ScrollView 
               style={styles.modalScrollView}
               showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
             >
               {transactions.map((transaction) => (
                 <View key={transaction.id} style={styles.transactionItem}>
