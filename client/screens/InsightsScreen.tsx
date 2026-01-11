@@ -248,39 +248,62 @@ function TrendView({ monthlyData, selectedMonth, onSelectMonth }: TrendViewProps
         </View>
 
         <View style={styles.chartContainer}>
-          <Svg width={chartWidth} height={chartHeight + 30}>
-            <Line
-              x1={0}
-              y1={chartHeight - (average / maxAmount) * chartHeight}
-              x2={chartWidth}
-              y2={chartHeight - (average / maxAmount) * chartHeight}
-              stroke="#9CA3AF"
-              strokeWidth={1}
-              strokeDasharray="5,5"
-            />
-            {monthlyData.map((data, index) => {
-              const barHeight = (data.amount / maxAmount) * chartHeight;
-              const x = index * (chartWidth / monthlyData.length) + 6;
-              const y = chartHeight - barHeight;
-              const isCurrentMonth = index === monthlyData.length - 1;
-              const isSelected = selectedMonth === index;
-              const hasSelection = selectedMonth !== null;
-              
-              return (
-                <G key={index}>
-                  <Rect
-                    x={x}
-                    y={y}
-                    width={barWidth}
-                    height={barHeight}
-                    rx={6}
-                    fill={isSelected ? "#3B5BDB" : isCurrentMonth && !hasSelection ? "#3B5BDB" : "#E5E7EB"}
-                    opacity={hasSelection && !isSelected ? 0.5 : 1}
+          <View style={{ position: "relative", width: chartWidth, height: chartHeight + 30 }}>
+            <Svg width={chartWidth} height={chartHeight + 30} style={{ position: "absolute", top: 0, left: 0 }}>
+              <Line
+                x1={0}
+                y1={chartHeight - (average / maxAmount) * chartHeight}
+                x2={chartWidth}
+                y2={chartHeight - (average / maxAmount) * chartHeight}
+                stroke="#9CA3AF"
+                strokeWidth={1}
+                strokeDasharray="5,5"
+              />
+              {monthlyData.map((data, index) => {
+                const barHeight = (data.amount / maxAmount) * chartHeight;
+                const x = index * (chartWidth / monthlyData.length) + 6;
+                const y = chartHeight - barHeight;
+                const isCurrentMonth = index === monthlyData.length - 1;
+                const isSelected = selectedMonth === index;
+                const hasSelection = selectedMonth !== null;
+                
+                return (
+                  <G key={index}>
+                    <Rect
+                      x={x}
+                      y={y}
+                      width={barWidth}
+                      height={barHeight}
+                      rx={6}
+                      fill={isSelected ? "#3B5BDB" : isCurrentMonth && !hasSelection ? "#3B5BDB" : "#E5E7EB"}
+                      opacity={hasSelection && !isSelected ? 0.5 : 1}
+                    />
+                  </G>
+                );
+              })}
+            </Svg>
+            <View style={{ position: "absolute", top: 0, left: 0, flexDirection: "row", width: chartWidth, height: chartHeight }}>
+              {monthlyData.map((data, index) => {
+                const barHeight = (data.amount / maxAmount) * chartHeight;
+                const x = index * (chartWidth / monthlyData.length) + 6;
+                const isSelected = selectedMonth === index;
+                
+                return (
+                  <Pressable
+                    key={index}
+                    style={{
+                      position: "absolute",
+                      left: x,
+                      top: chartHeight - barHeight,
+                      width: barWidth,
+                      height: barHeight,
+                    }}
+                    onPress={() => onSelectMonth(isSelected ? null : index)}
                   />
-                </G>
-              );
-            })}
-          </Svg>
+                );
+              })}
+            </View>
+          </View>
           <View style={styles.chartLabels}>
             {monthlyData.map((data, index) => {
               const isSelected = selectedMonth === index;
