@@ -41,7 +41,7 @@ const topRightGoals = [
     color: "#FA6E5A",
     image: require("@assets/images/image_1767540791135.png"),
     overlayImage: require("@assets/images/woman-laptop.png"),
-    height: 167,
+    height: 195,
   },
   {
     id: "savings",
@@ -133,7 +133,7 @@ export default function Onboarding1Screen() {
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingBottom: insets.bottom + 140 },
+          { paddingBottom: insets.bottom + 180 },
         ]}
         showsVerticalScrollIndicator={false}
       >
@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
   },
   rightColumn: {
     flex: 1,
-    gap: 40,
+    gap: Spacing.md,
   },
   bottomSection: {
     flexDirection: "row",
