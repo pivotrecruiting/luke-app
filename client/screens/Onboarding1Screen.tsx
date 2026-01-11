@@ -16,44 +16,53 @@ import { Spacing, BorderRadius, Typography, Colors } from "@/constants/theme";
 
 type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
 
-const goals = [
+const leftGoals = [
   {
     id: "overview",
     label: "Überblick\ngewinnen",
-    color: Colors.light.cardOverview,
+    color: "#8E97FD",
     image: require("@assets/images/image_1767540420128.png"),
-  },
-  {
-    id: "klarna",
-    label: "Klarna\nabbezahlen",
-    color: Colors.light.cardKlarna,
-    image: require("@assets/images/image_1767540791135.png"),
-    overlayImage: require("@assets/images/woman-laptop.png"),
+    height: 210,
   },
   {
     id: "subscriptions",
     label: "Abos\noptimieren",
-    color: Colors.light.cardSubscriptions,
+    color: "#FEB18F",
     image: require("@assets/images/blob-subscriptions.png"),
     overlayImage: require("@assets/images/image_1767540704833.png"),
-  },
-  {
-    id: "savings",
-    label: "Notgroschen\naufbauen",
-    color: Colors.light.cardSavings,
-    image: require("@assets/images/image_1767540547771.png"),
+    height: 167,
   },
   {
     id: "goals",
     label: "Sparziel\nerreichen",
-    color: Colors.light.cardGoals,
+    color: "#6CB38E",
     image: require("@assets/images/image_1767540578781.png"),
+    height: 176,
+  },
+];
+
+const rightGoals = [
+  {
+    id: "klarna",
+    label: "Klarna & Raten\nim Griff haben",
+    color: "#FA6E5A",
+    image: require("@assets/images/image_1767540791135.png"),
+    overlayImage: require("@assets/images/woman-laptop.png"),
+    height: 167,
+  },
+  {
+    id: "savings",
+    label: "Notgroschen\naufbauen",
+    color: "#FFCF86",
+    image: require("@assets/images/image_1767540547771.png"),
+    height: 210,
   },
   {
     id: "peace",
     label: "Finanzielle Ruhe",
-    color: Colors.light.cardPeace,
+    color: "#D9A5B5",
     image: require("@assets/images/image_1767540595139.png"),
+    height: 171,
   },
 ];
 
@@ -67,6 +76,54 @@ export default function Onboarding1Screen() {
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
   };
+
+  const renderGoalCard = (goal: typeof leftGoals[0] | typeof rightGoals[0]) => (
+    <Pressable
+      key={goal.id}
+      onPress={() => toggleSelection(goal.id)}
+      style={({ pressed }) => [
+        styles.goalCard,
+        { backgroundColor: goal.color, height: goal.height },
+        selected.includes(goal.id) && styles.goalCardSelected,
+        pressed && styles.goalCardPressed,
+      ]}
+    >
+      {goal.id === "klarna" && "overlayImage" in goal ? (
+        <View style={styles.layeredImageContainer}>
+          <Image
+            source={goal.image}
+            style={styles.goalImageCloud}
+            contentFit="contain"
+          />
+          <Image
+            source={goal.overlayImage}
+            style={styles.goalImageOverlay}
+            contentFit="contain"
+          />
+        </View>
+      ) : goal.id === "subscriptions" && "overlayImage" in goal ? (
+        <View style={styles.layeredImageContainer}>
+          <Image
+            source={goal.image}
+            style={styles.subscriptionBlob}
+            contentFit="contain"
+          />
+          <Image
+            source={goal.overlayImage}
+            style={styles.subscriptionFigure}
+            contentFit="contain"
+          />
+        </View>
+      ) : (
+        <Image
+          source={goal.image}
+          style={styles.goalImage}
+          contentFit="contain"
+        />
+      )}
+      <Text style={styles.goalLabel}>{goal.label}</Text>
+    </Pressable>
+  );
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + Spacing.xl }]}>
@@ -89,76 +146,10 @@ export default function Onboarding1Screen() {
 
         <View style={styles.goalsGrid}>
           <View style={styles.leftColumn}>
-            {goals.filter((_, i) => i % 2 === 0).map((goal) => (
-              <Pressable
-                key={goal.id}
-                onPress={() => toggleSelection(goal.id)}
-                style={({ pressed }) => [
-                  styles.goalCard,
-                  { backgroundColor: goal.color },
-                  selected.includes(goal.id) && styles.goalCardSelected,
-                  pressed && styles.goalCardPressed,
-                ]}
-              >
-                {goal.id === "subscriptions" ? (
-                  <View style={styles.layeredImageContainer}>
-                    <Image
-                      source={goal.image}
-                      style={styles.subscriptionBlob}
-                      contentFit="contain"
-                    />
-                    <Image
-                      source={goal.overlayImage}
-                      style={styles.subscriptionFigure}
-                      contentFit="contain"
-                    />
-                  </View>
-                ) : (
-                  <Image
-                    source={goal.image}
-                    style={styles.goalImage}
-                    contentFit="contain"
-                  />
-                )}
-                <Text style={styles.goalLabel}>{goal.label}</Text>
-              </Pressable>
-            ))}
+            {leftGoals.map(renderGoalCard)}
           </View>
           <View style={styles.rightColumn}>
-            {goals.filter((_, i) => i % 2 === 1).map((goal) => (
-              <Pressable
-                key={goal.id}
-                onPress={() => toggleSelection(goal.id)}
-                style={({ pressed }) => [
-                  styles.goalCard,
-                  { backgroundColor: goal.color },
-                  selected.includes(goal.id) && styles.goalCardSelected,
-                  pressed && styles.goalCardPressed,
-                ]}
-              >
-                {goal.id === "klarna" ? (
-                  <View style={styles.layeredImageContainer}>
-                    <Image
-                      source={goal.image}
-                      style={styles.goalImageCloud}
-                      contentFit="contain"
-                    />
-                    <Image
-                      source={goal.overlayImage}
-                      style={styles.goalImageOverlay}
-                      contentFit="contain"
-                    />
-                  </View>
-                ) : (
-                  <Image
-                    source={goal.image}
-                    style={styles.goalImage}
-                    contentFit="contain"
-                  />
-                )}
-                <Text style={styles.goalLabel}>{goal.label}</Text>
-              </Pressable>
-            ))}
+            {rightGoals.map(renderGoalCard)}
           </View>
         </View>
       </ScrollView>
@@ -221,11 +212,10 @@ const styles = StyleSheet.create({
   rightColumn: {
     flex: 1,
     gap: Spacing.md,
-    marginTop: 40,
+    marginTop: 44,
   },
   goalCard: {
     width: "100%",
-    height: 160,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     justifyContent: "space-between",
