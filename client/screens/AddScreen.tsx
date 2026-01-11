@@ -111,6 +111,7 @@ export default function AddScreen() {
               placeholder="0,00"
               placeholderTextColor="#9CA3AF"
               keyboardType="decimal-pad"
+              selectTextOnFocus
             />
           </View>
         </View>
@@ -123,6 +124,7 @@ export default function AddScreen() {
             onChangeText={setDescription}
             placeholder="z.B. Einkauf bei REWE"
             placeholderTextColor="#9CA3AF"
+            selectTextOnFocus
           />
         </View>
 

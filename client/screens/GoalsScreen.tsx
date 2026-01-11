@@ -328,6 +328,7 @@ export default function GoalsScreen() {
                 onChangeText={setGoalName}
                 placeholder="z.B. neues IPhone"
                 placeholderTextColor="#9CA3AF"
+                selectTextOnFocus
               />
             </View>
 
@@ -356,6 +357,7 @@ export default function GoalsScreen() {
               placeholder="€ 1000,00"
               placeholderTextColor="#9CA3AF"
               keyboardType="decimal-pad"
+              selectTextOnFocus
             />
 
             <Text style={styles.modalLabel}>Monatlicher Beitrag</Text>
@@ -366,6 +368,7 @@ export default function GoalsScreen() {
               placeholder="€ 200,00"
               placeholderTextColor="#9CA3AF"
               keyboardType="decimal-pad"
+              selectTextOnFocus
             />
 
             <Text style={styles.calculationText}>
@@ -434,6 +437,7 @@ export default function GoalsScreen() {
               placeholder="€ 200,00"
               placeholderTextColor="#9CA3AF"
               keyboardType="decimal-pad"
+              selectTextOnFocus
             />
 
             <View style={styles.modalButtons}>

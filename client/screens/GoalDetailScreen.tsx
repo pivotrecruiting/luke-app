@@ -364,6 +364,7 @@ export default function GoalDetailScreen() {
               onChangeText={setTempName}
               placeholder="Goal Name"
               placeholderTextColor="#9CA3AF"
+              selectTextOnFocus
             />
 
             <Pressable style={styles.modalSaveButton} onPress={handleEditSave}>
@@ -403,6 +404,7 @@ export default function GoalDetailScreen() {
                 placeholder="0,00"
                 placeholderTextColor="#9CA3AF"
                 keyboardType="decimal-pad"
+                selectTextOnFocus
               />
             </View>
 
@@ -477,6 +479,7 @@ export default function GoalDetailScreen() {
                 placeholder="0,00"
                 placeholderTextColor="#9CA3AF"
                 keyboardType="decimal-pad"
+                selectTextOnFocus
               />
             </View>
 
