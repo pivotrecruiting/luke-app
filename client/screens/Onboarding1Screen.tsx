@@ -88,53 +88,78 @@ export default function Onboarding1Screen() {
         </View>
 
         <View style={styles.goalsGrid}>
-          {goals.map((goal) => (
-            <Pressable
-              key={goal.id}
-              onPress={() => toggleSelection(goal.id)}
-              style={({ pressed }) => [
-                styles.goalCard,
-                { backgroundColor: goal.color },
-                selected.includes(goal.id) && styles.goalCardSelected,
-                pressed && styles.goalCardPressed,
-              ]}
-            >
-              {goal.id === "klarna" ? (
-                <View style={styles.layeredImageContainer}>
+          <View style={styles.leftColumn}>
+            {goals.filter((_, i) => i % 2 === 0).map((goal) => (
+              <Pressable
+                key={goal.id}
+                onPress={() => toggleSelection(goal.id)}
+                style={({ pressed }) => [
+                  styles.goalCard,
+                  { backgroundColor: goal.color },
+                  selected.includes(goal.id) && styles.goalCardSelected,
+                  pressed && styles.goalCardPressed,
+                ]}
+              >
+                {goal.id === "subscriptions" ? (
+                  <View style={styles.layeredImageContainer}>
+                    <Image
+                      source={goal.image}
+                      style={styles.subscriptionBlob}
+                      contentFit="contain"
+                    />
+                    <Image
+                      source={goal.overlayImage}
+                      style={styles.subscriptionFigure}
+                      contentFit="contain"
+                    />
+                  </View>
+                ) : (
                   <Image
                     source={goal.image}
-                    style={styles.goalImageCloud}
+                    style={styles.goalImage}
                     contentFit="contain"
                   />
-                  <Image
-                    source={goal.overlayImage}
-                    style={styles.goalImageOverlay}
-                    contentFit="contain"
-                  />
-                </View>
-              ) : goal.id === "subscriptions" ? (
-                <View style={styles.layeredImageContainer}>
+                )}
+                <Text style={styles.goalLabel}>{goal.label}</Text>
+              </Pressable>
+            ))}
+          </View>
+          <View style={styles.rightColumn}>
+            {goals.filter((_, i) => i % 2 === 1).map((goal) => (
+              <Pressable
+                key={goal.id}
+                onPress={() => toggleSelection(goal.id)}
+                style={({ pressed }) => [
+                  styles.goalCard,
+                  { backgroundColor: goal.color },
+                  selected.includes(goal.id) && styles.goalCardSelected,
+                  pressed && styles.goalCardPressed,
+                ]}
+              >
+                {goal.id === "klarna" ? (
+                  <View style={styles.layeredImageContainer}>
+                    <Image
+                      source={goal.image}
+                      style={styles.goalImageCloud}
+                      contentFit="contain"
+                    />
+                    <Image
+                      source={goal.overlayImage}
+                      style={styles.goalImageOverlay}
+                      contentFit="contain"
+                    />
+                  </View>
+                ) : (
                   <Image
                     source={goal.image}
-                    style={styles.subscriptionBlob}
+                    style={styles.goalImage}
                     contentFit="contain"
                   />
-                  <Image
-                    source={goal.overlayImage}
-                    style={styles.subscriptionFigure}
-                    contentFit="contain"
-                  />
-                </View>
-              ) : (
-                <Image
-                  source={goal.image}
-                  style={styles.goalImage}
-                  contentFit="contain"
-                />
-              )}
-              <Text style={styles.goalLabel}>{goal.label}</Text>
-            </Pressable>
-          ))}
+                )}
+                <Text style={styles.goalLabel}>{goal.label}</Text>
+              </Pressable>
+            ))}
+          </View>
         </View>
       </ScrollView>
 
@@ -187,11 +212,19 @@ const styles = StyleSheet.create({
   },
   goalsGrid: {
     flexDirection: "row",
-    flexWrap: "wrap",
     gap: Spacing.md,
   },
+  leftColumn: {
+    flex: 1,
+    gap: Spacing.md,
+  },
+  rightColumn: {
+    flex: 1,
+    gap: Spacing.md,
+    marginTop: 40,
+  },
   goalCard: {
-    width: "48%",
+    width: "100%",
     height: 160,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
