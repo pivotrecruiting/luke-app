@@ -303,7 +303,7 @@ export default function GoalsScreen() {
       <Modal
         visible={createModalVisible}
         transparent
-        animationType="slide"
+        animationType="fade"
         onRequestClose={resetAndCloseModal}
       >
         <KeyboardAvoidingView
@@ -388,7 +388,7 @@ export default function GoalsScreen() {
       <Modal
         visible={budgetModalVisible}
         transparent
-        animationType="slide"
+        animationType="fade"
         onRequestClose={resetAndCloseBudgetModal}
       >
         <KeyboardAvoidingView

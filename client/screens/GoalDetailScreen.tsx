@@ -346,7 +346,7 @@ export default function GoalDetailScreen() {
       <Modal
         visible={editModalVisible}
         transparent
-        animationType="slide"
+        animationType="fade"
         onRequestClose={() => setEditModalVisible(false)}
       >
         <KeyboardAvoidingView
@@ -377,7 +377,7 @@ export default function GoalDetailScreen() {
       <Modal
         visible={depositModalVisible}
         transparent
-        animationType="slide"
+        animationType="fade"
         onRequestClose={handleDepositCancel}
       >
         <KeyboardAvoidingView
@@ -451,7 +451,7 @@ export default function GoalDetailScreen() {
       <Modal
         visible={editDepositModalVisible}
         transparent
-        animationType="slide"
+        animationType="fade"
         onRequestClose={handleEditDepositCancel}
       >
         <KeyboardAvoidingView

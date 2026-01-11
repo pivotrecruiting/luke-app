@@ -285,7 +285,7 @@ export default function InsightsScreen() {
       <Modal
         visible={filterModalVisible}
         transparent
-        animationType="slide"
+        animationType="fade"
         onRequestClose={() => setFilterModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
