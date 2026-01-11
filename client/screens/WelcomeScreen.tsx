@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
     width: 302,
     height: 208,
     marginTop: 0,
-    marginLeft: -15,
+    marginLeft: -20,
   },
   glowOval: {
     position: "absolute",
