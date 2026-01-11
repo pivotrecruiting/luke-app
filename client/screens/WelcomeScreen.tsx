@@ -9,6 +9,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "expo-image";
+import { BlurView } from "expo-blur";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { OnboardingStackParamList } from "@/navigation/OnboardingNavigator";
@@ -33,7 +34,11 @@ export default function WelcomeScreen() {
         contentFit="cover"
       />
 
-      <View style={styles.glowOval} />
+      <View style={styles.glowContainer}>
+        <View style={[styles.glowLayer, styles.glowLayer1]} />
+        <View style={[styles.glowLayer, styles.glowLayer2]} />
+        <View style={[styles.glowLayer, styles.glowLayer3]} />
+      </View>
 
       <View style={styles.textContainer}>
         <Text style={styles.headline}>Bring Licht in deine Finanzen</Text>
@@ -66,18 +71,33 @@ const styles = StyleSheet.create({
     marginTop: 0,
     marginLeft: -20,
   },
-  glowOval: {
+  glowContainer: {
     position: "absolute",
-    top: 155,
+    top: 120,
     alignSelf: "center",
-    width: 195,
-    height: 436,
-    borderRadius: 97.5,
-    backgroundColor: "rgba(97, 106, 201, 0.12)",
-    shadowColor: "#616AC9",
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.4,
-    shadowRadius: 150,
+    width: 300,
+    height: 520,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  glowLayer: {
+    position: "absolute",
+    borderRadius: 999,
+  },
+  glowLayer1: {
+    width: 280,
+    height: 480,
+    backgroundColor: "rgba(97, 106, 201, 0.03)",
+  },
+  glowLayer2: {
+    width: 220,
+    height: 400,
+    backgroundColor: "rgba(97, 106, 201, 0.06)",
+  },
+  glowLayer3: {
+    width: 160,
+    height: 320,
+    backgroundColor: "rgba(97, 106, 201, 0.10)",
   },
   textContainer: {
     position: "absolute",
