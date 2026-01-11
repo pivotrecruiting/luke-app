@@ -34,11 +34,7 @@ export default function WelcomeScreen() {
         contentFit="cover"
       />
 
-      <View style={styles.glowContainer}>
-        <View style={[styles.glowLayer, styles.glowLayer1]} />
-        <View style={[styles.glowLayer, styles.glowLayer2]} />
-        <View style={[styles.glowLayer, styles.glowLayer3]} />
-      </View>
+      <View style={styles.glowOval} />
 
       <View style={styles.textContainer}>
         <Text style={styles.headline}>Bring Licht in deine Finanzen</Text>
@@ -71,33 +67,18 @@ const styles = StyleSheet.create({
     marginTop: 0,
     marginLeft: -20,
   },
-  glowContainer: {
+  glowOval: {
     position: "absolute",
-    top: 120,
+    top: 155,
     alignSelf: "center",
-    width: 300,
-    height: 520,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  glowLayer: {
-    position: "absolute",
-    borderRadius: 999,
-  },
-  glowLayer1: {
-    width: 280,
-    height: 480,
-    backgroundColor: "rgba(97, 106, 201, 0.03)",
-  },
-  glowLayer2: {
-    width: 220,
-    height: 400,
-    backgroundColor: "rgba(97, 106, 201, 0.06)",
-  },
-  glowLayer3: {
-    width: 160,
-    height: 320,
-    backgroundColor: "rgba(97, 106, 201, 0.10)",
+    width: 195,
+    height: 436,
+    borderRadius: 97.5,
+    backgroundColor: "rgba(97, 106, 201, 0.12)",
+    shadowColor: "#616AC9",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.4,
+    shadowRadius: 150,
   },
   textContainer: {
     position: "absolute",
