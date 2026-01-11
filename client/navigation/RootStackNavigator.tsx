@@ -32,7 +32,8 @@ export default function RootStackNavigator() {
         component={GoalDetailScreen}
         options={{ 
           presentation: "transparentModal",
-          animation: "fade",
+          animation: "fade_from_bottom",
+          animationDuration: 200,
           contentStyle: { backgroundColor: "transparent" },
         }}
       />
