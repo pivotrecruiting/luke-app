@@ -133,7 +133,7 @@ export default function Onboarding1Screen() {
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingBottom: insets.bottom + 180 },
+          { paddingBottom: insets.bottom + 220 },
         ]}
         showsVerticalScrollIndicator={false}
       >
