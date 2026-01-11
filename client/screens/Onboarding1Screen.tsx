@@ -48,7 +48,7 @@ const topRightGoals = [
     label: "Notgroschen\naufbauen",
     color: "#FFCF86",
     image: require("@assets/images/image_1767540547771.png"),
-    height: 197,
+    height: 224,
   },
 ];
 
@@ -65,7 +65,7 @@ const bottomGoals = [
     label: "Finanzielle Ruhe",
     color: "#D9A5B5",
     image: require("@assets/images/image_1767540595139.png"),
-    height: 161,
+    height: 165,
   },
 ];
 
