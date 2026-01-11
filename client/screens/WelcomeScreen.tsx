@@ -26,6 +26,8 @@ export default function WelcomeScreen() {
         source={require("@assets/images/welcome-background.png")}
         style={styles.backgroundImage}
         contentFit="cover"
+        priority="high"
+        cachePolicy="memory-disk"
       />
 
       <View style={[styles.buttonContainer, { paddingBottom: insets.bottom + Spacing.xl }]}>
