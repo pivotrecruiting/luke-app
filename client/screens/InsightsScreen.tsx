@@ -183,7 +183,7 @@ function IncomeExpensesView({ income, expenses }: IncomeExpensesViewProps) {
 
       <View style={styles.tipsCard}>
         <View style={styles.tipsHeader}>
-          <Feather name="lightbulb" size={20} color="#F59E0B" />
+          <Feather name="zap" size={20} color="#F59E0B" />
           <Text style={styles.tipsTitle}>Tipp</Text>
         </View>
         <Text style={styles.tipsText}>
@@ -200,10 +200,11 @@ function IncomeExpensesView({ income, expenses }: IncomeExpensesViewProps) {
 
 interface TrendViewProps {
   monthlyData: { month: string; amount: number }[];
-  currentMonth: number;
+  selectedMonth: number | null;
+  onSelectMonth: (index: number | null) => void;
 }
 
-function TrendView({ monthlyData, currentMonth }: TrendViewProps) {
+function TrendView({ monthlyData, selectedMonth, onSelectMonth }: TrendViewProps) {
   const maxAmount = Math.max(...monthlyData.map(d => d.amount), 1);
   const chartHeight = 180;
   const chartWidth = screenWidth - 80;
@@ -213,10 +214,16 @@ function TrendView({ monthlyData, currentMonth }: TrendViewProps) {
   const currentMonthData = monthlyData[monthlyData.length - 1];
   const previousMonthData = monthlyData.length > 1 ? monthlyData[monthlyData.length - 2] : null;
   
+  const displayedData = selectedMonth !== null ? monthlyData[selectedMonth] : currentMonthData;
+  const displayLabel = selectedMonth !== null ? monthlyData[selectedMonth].month : "Diesen Monat";
+  
   const changePercent = previousMonthData && previousMonthData.amount > 0
     ? ((currentMonthData.amount - previousMonthData.amount) / previousMonthData.amount) * 100
     : 0;
   const isImproving = changePercent <= 0;
+
+  const bestMonthIndex = monthlyData.reduce((min, d, i, arr) => d.amount < arr[min].amount ? i : min, 0);
+  const worstMonthIndex = monthlyData.reduce((max, d, i, arr) => d.amount > arr[max].amount ? i : max, 0);
 
   return (
     <View style={styles.trendContainer}>
@@ -233,9 +240,9 @@ function TrendView({ monthlyData, currentMonth }: TrendViewProps) {
           </View>
           <View style={styles.trendStatDivider} />
           <View style={styles.trendStat}>
-            <Text style={styles.trendStatLabel}>Diesen Monat</Text>
-            <Text style={[styles.trendStatValue, isImproving ? styles.trendPositive : styles.trendNegative]}>
-              € {formatCurrency(currentMonthData.amount)}
+            <Text style={styles.trendStatLabel}>{displayLabel}</Text>
+            <Text style={[styles.trendStatValue, displayedData.amount <= average ? styles.trendPositive : styles.trendNegative]}>
+              € {formatCurrency(displayedData.amount)}
             </Text>
           </View>
         </View>
@@ -256,6 +263,8 @@ function TrendView({ monthlyData, currentMonth }: TrendViewProps) {
               const x = index * (chartWidth / monthlyData.length) + 6;
               const y = chartHeight - barHeight;
               const isCurrentMonth = index === monthlyData.length - 1;
+              const isSelected = selectedMonth === index;
+              const hasSelection = selectedMonth !== null;
               
               return (
                 <G key={index}>
@@ -265,26 +274,40 @@ function TrendView({ monthlyData, currentMonth }: TrendViewProps) {
                     width={barWidth}
                     height={barHeight}
                     rx={6}
-                    fill={isCurrentMonth ? "#3B5BDB" : "#E5E7EB"}
+                    fill={isSelected ? "#3B5BDB" : isCurrentMonth && !hasSelection ? "#3B5BDB" : "#E5E7EB"}
+                    opacity={hasSelection && !isSelected ? 0.5 : 1}
                   />
                 </G>
               );
             })}
           </Svg>
           <View style={styles.chartLabels}>
-            {monthlyData.map((data, index) => (
-              <Text 
-                key={index} 
-                style={[
-                  styles.chartMonthLabel,
-                  index === monthlyData.length - 1 && styles.chartMonthLabelActive
-                ]}
-              >
-                {data.month}
-              </Text>
-            ))}
+            {monthlyData.map((data, index) => {
+              const isSelected = selectedMonth === index;
+              const isCurrentMonth = index === monthlyData.length - 1;
+              const hasSelection = selectedMonth !== null;
+              
+              return (
+                <Pressable 
+                  key={index}
+                  style={styles.chartLabelPressable}
+                  onPress={() => onSelectMonth(isSelected ? null : index)}
+                >
+                  <Text 
+                    style={[
+                      styles.chartMonthLabel,
+                      (isSelected || (isCurrentMonth && !hasSelection)) && styles.chartMonthLabelActive
+                    ]}
+                  >
+                    {data.month}
+                  </Text>
+                </Pressable>
+              );
+            })}
           </View>
         </View>
+
+        <Text style={styles.trendHint}>Tippe auf einen Monat für Details</Text>
 
         <View style={styles.trendChangeRow}>
           <View style={[styles.changeIndicator, isImproving ? styles.changePositive : styles.changeNegative]}>
@@ -301,28 +324,34 @@ function TrendView({ monthlyData, currentMonth }: TrendViewProps) {
       </View>
 
       <View style={styles.insightCards}>
-        <View style={styles.insightCard}>
+        <Pressable 
+          style={[styles.insightCard, selectedMonth === bestMonthIndex && styles.insightCardSelected]}
+          onPress={() => onSelectMonth(selectedMonth === bestMonthIndex ? null : bestMonthIndex)}
+        >
           <View style={[styles.insightIcon, { backgroundColor: "#EFF6FF" }]}>
             <Feather name="calendar" size={18} color="#3B5BDB" />
           </View>
           <View style={styles.insightContent}>
             <Text style={styles.insightLabel}>Bester Monat</Text>
             <Text style={styles.insightValue}>
-              {GERMAN_MONTHS_SHORT[monthlyData.reduce((min, d, i, arr) => d.amount < arr[min].amount ? i : min, 0) % 12]}
+              {monthlyData[bestMonthIndex].month}
             </Text>
           </View>
-        </View>
-        <View style={styles.insightCard}>
+        </Pressable>
+        <Pressable 
+          style={[styles.insightCard, selectedMonth === worstMonthIndex && styles.insightCardSelected]}
+          onPress={() => onSelectMonth(selectedMonth === worstMonthIndex ? null : worstMonthIndex)}
+        >
           <View style={[styles.insightIcon, { backgroundColor: "#FEF3C7" }]}>
             <Feather name="alert-circle" size={18} color="#F59E0B" />
           </View>
           <View style={styles.insightContent}>
             <Text style={styles.insightLabel}>Teuerster Monat</Text>
             <Text style={styles.insightValue}>
-              {GERMAN_MONTHS_SHORT[monthlyData.reduce((max, d, i, arr) => d.amount > arr[max].amount ? i : max, 0) % 12]}
+              {monthlyData[worstMonthIndex].month}
             </Text>
           </View>
-        </View>
+        </Pressable>
       </View>
     </View>
   );
@@ -330,34 +359,16 @@ function TrendView({ monthlyData, currentMonth }: TrendViewProps) {
 
 export default function InsightsScreen() {
   const insets = useSafeAreaInsets();
-  const { insightCategories, totalIncome, totalFixedExpenses, weeklySpending } = useApp();
+  const { insightCategories, totalIncome, totalExpenses, savingsRate, monthlyTrendData } = useApp();
   const [activeTab, setActiveTab] = useState<"ausgaben" | "einnahmen">("ausgaben");
   const [activeFilter, setActiveFilter] = useState<"kategorien" | "income" | "trend">("kategorien");
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedTrendMonth, setSelectedTrendMonth] = useState<number | null>(null);
 
   const gesamtAusgaben = useMemo(() => {
     return insightCategories.reduce((sum, cat) => sum + cat.amount, 0);
   }, [insightCategories]);
-
-  const totalExpenses = useMemo(() => {
-    const variableExpenses = weeklySpending.reduce((sum, day) => sum + day.amount, 0);
-    return totalFixedExpenses + variableExpenses;
-  }, [totalFixedExpenses, weeklySpending]);
-
-  const monthlyTrendData = useMemo(() => {
-    const currentMonth = new Date().getMonth();
-    const months = [];
-    for (let i = 5; i >= 0; i--) {
-      const monthIndex = (currentMonth - i + 12) % 12;
-      const baseAmount = totalExpenses * (0.85 + Math.random() * 0.3);
-      months.push({
-        month: GERMAN_MONTHS_SHORT[monthIndex],
-        amount: i === 0 ? totalExpenses : baseAmount,
-      });
-    }
-    return months;
-  }, [totalExpenses]);
 
   const handleCategoryPress = (categoryName: string) => {
     setSelectedCategory((prev) => (prev === categoryName ? null : categoryName));
@@ -376,7 +387,8 @@ export default function InsightsScreen() {
         return (
           <TrendView
             monthlyData={monthlyTrendData}
-            currentMonth={new Date().getMonth()}
+            selectedMonth={selectedTrendMonth}
+            onSelectMonth={setSelectedTrendMonth}
           />
         );
       case "kategorien":
@@ -417,9 +429,9 @@ export default function InsightsScreen() {
             </View>
 
             <View style={styles.pageIndicator}>
-              <View style={[styles.pageDot, activeFilter === "kategorien" && styles.pageDotActive]} />
-              <View style={[styles.pageDot, activeFilter === "income" && styles.pageDotActive]} />
-              <View style={[styles.pageDot, activeFilter === "trend" && styles.pageDotActive]} />
+              <View style={[styles.pageDot, styles.pageDotActive]} />
+              <View style={styles.pageDot} />
+              <View style={styles.pageDot} />
             </View>
           </View>
         );
@@ -973,6 +985,17 @@ const styles = StyleSheet.create({
     color: "#3B5BDB",
     fontWeight: "600",
   },
+  chartLabelPressable: {
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: 8,
+  },
+  trendHint: {
+    fontSize: 12,
+    color: "#9CA3AF",
+    textAlign: "center",
+    marginBottom: 12,
+  },
   trendChangeRow: {
     alignItems: "center",
   },
@@ -1017,6 +1040,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
+    borderWidth: 2,
+    borderColor: "transparent",
+  },
+  insightCardSelected: {
+    borderColor: "#3B5BDB",
+    backgroundColor: "#F0F4FF",
   },
   insightIcon: {
     width: 40,

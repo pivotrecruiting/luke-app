@@ -67,6 +67,12 @@ export interface InsightCategory {
   color: string;
 }
 
+export interface MonthlyTrendData {
+  month: string;
+  monthIndex: number;
+  amount: number;
+}
+
 export interface AppState {
   isOnboardingComplete: boolean;
   userName: string;
@@ -79,8 +85,12 @@ export interface AppState {
   insightCategories: InsightCategory[];
   totalIncome: number;
   totalFixedExpenses: number;
+  totalVariableExpenses: number;
+  totalExpenses: number;
   monthlyBudget: number;
   balance: number;
+  savingsRate: number;
+  monthlyTrendData: MonthlyTrendData[];
 }
 
 export interface AppContextType extends AppState {
@@ -221,13 +231,14 @@ const INITIAL_TRANSACTIONS: Transaction[] = [
   { id: "tx-6", name: "Gehalt", category: "Einkommen", date: "01.11. 00:00", amount: 3200.00, icon: "briefcase" },
 ];
 
-const INITIAL_INSIGHT_CATEGORIES: InsightCategory[] = [
-  { name: "Lebensmittel", amount: 410.12, color: "#3B5BDB" },
-  { name: "Hygiene", amount: 160.48, color: "#B8C4E9" },
-  { name: "Wohnen", amount: 600.23, color: "#C77DFF" },
-  { name: "Abonnements", amount: 160.48, color: "#7B8CDE" },
-  { name: "Shopping", amount: 160.48, color: "#9D4EDD" },
-];
+const CATEGORY_COLORS: Record<string, string> = {
+  "Lebensmittel": "#3B5BDB",
+  "Shopping": "#9D4EDD",
+  "Wohnen": "#C77DFF",
+  "Abonnements": "#7B8CDE",
+  "Hygiene": "#B8C4E9",
+  "Sonstiges": "#6B7280",
+};
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -244,7 +255,6 @@ export function AppProvider({ children }: AppProviderProps) {
   const [budgets, setBudgets] = useState<Budget[]>(INITIAL_BUDGETS);
   const [weeklySpending, setWeeklySpending] = useState<WeeklySpending[]>(INITIAL_WEEKLY_SPENDING);
   const [transactions, setTransactions] = useState<Transaction[]>(INITIAL_TRANSACTIONS);
-  const [insightCategories] = useState<InsightCategory[]>(INITIAL_INSIGHT_CATEGORIES);
 
   const totalIncome = useMemo(() => {
     return incomeEntries.reduce((sum, entry) => sum + entry.amount, 0);
@@ -258,13 +268,89 @@ export function AppProvider({ children }: AppProviderProps) {
     return totalIncome - totalFixedExpenses;
   }, [totalIncome, totalFixedExpenses]);
 
-  const variableSpending = useMemo(() => {
+  const totalVariableExpenses = useMemo(() => {
     return budgets.reduce((sum, budget) => sum + budget.current, 0);
   }, [budgets]);
 
+  const totalExpenses = useMemo(() => {
+    return totalFixedExpenses + totalVariableExpenses;
+  }, [totalFixedExpenses, totalVariableExpenses]);
+
   const balance = useMemo(() => {
-    return monthlyBudget - variableSpending;
-  }, [monthlyBudget, variableSpending]);
+    return monthlyBudget - totalVariableExpenses;
+  }, [monthlyBudget, totalVariableExpenses]);
+
+  const savingsRate = useMemo(() => {
+    if (totalIncome <= 0) return 0;
+    const savings = totalIncome - totalExpenses;
+    return (savings / totalIncome) * 100;
+  }, [totalIncome, totalExpenses]);
+
+  const insightCategories = useMemo(() => {
+    const categories: Record<string, number> = {};
+    
+    budgets.forEach((budget) => {
+      const categoryName = budget.name;
+      categories[categoryName] = (categories[categoryName] || 0) + budget.current;
+    });
+    
+    const fixedCategories: Record<string, string[]> = {
+      "Wohnen": ["Wohnen", "Miete"],
+      "Abonnements": ["Netflix", "Spotify", "Handy", "Disney+", "Amazon Prime"],
+    };
+    
+    expenseEntries.forEach((entry) => {
+      let matched = false;
+      for (const [category, keywords] of Object.entries(fixedCategories)) {
+        if (keywords.some((keyword) => entry.type.includes(keyword))) {
+          categories[category] = (categories[category] || 0) + entry.amount;
+          matched = true;
+          break;
+        }
+      }
+      if (!matched) {
+        categories["Sonstiges"] = (categories["Sonstiges"] || 0) + entry.amount;
+      }
+    });
+    
+    return Object.entries(categories)
+      .filter(([_, amount]) => amount > 0)
+      .map(([name, amount]) => ({
+        name,
+        amount,
+        color: CATEGORY_COLORS[name] || "#6B7280",
+      }))
+      .sort((a, b) => b.amount - a.amount);
+  }, [budgets, expenseEntries]);
+
+  const GERMAN_MONTHS_SHORT = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
+
+  const monthlyTrendData = useMemo(() => {
+    const currentMonth = new Date().getMonth();
+    const months: { month: string; monthIndex: number; amount: number }[] = [];
+    
+    for (let i = 5; i >= 0; i--) {
+      const monthIndex = (currentMonth - i + 12) % 12;
+      let amount: number;
+      
+      if (i === 0) {
+        amount = totalExpenses;
+      } else {
+        const baseAmount = totalFixedExpenses;
+        const variationFactors = [0.92, 1.08, 0.95, 1.12, 0.88, 1.05];
+        const variableBase = totalVariableExpenses * variationFactors[i % variationFactors.length];
+        amount = baseAmount + variableBase;
+      }
+      
+      months.push({
+        month: GERMAN_MONTHS_SHORT[monthIndex],
+        monthIndex,
+        amount: Math.round(amount * 100) / 100,
+      });
+    }
+    
+    return months;
+  }, [totalExpenses, totalFixedExpenses, totalVariableExpenses]);
 
   const addIncomeEntry = (type: string, amount: number) => {
     const newEntry: IncomeEntry = {
@@ -500,8 +586,12 @@ export function AppProvider({ children }: AppProviderProps) {
     insightCategories,
     totalIncome,
     totalFixedExpenses,
+    totalVariableExpenses,
+    totalExpenses,
     monthlyBudget,
     balance,
+    savingsRate,
+    monthlyTrendData,
     addIncomeEntry,
     addExpenseEntry,
     setIncomeEntries: setIncomeEntriesFromOnboarding,

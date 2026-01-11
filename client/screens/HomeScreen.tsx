@@ -31,7 +31,7 @@ const formatCurrency = (value: number) => {
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
-  const { userName, balance, totalIncome, totalFixedExpenses, weeklySpending, transactions } = useApp();
+  const { userName, balance, totalIncome, totalExpenses, weeklySpending, transactions } = useApp();
   
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [allTransactionsVisible, setAllTransactionsVisible] = useState(false);
@@ -95,7 +95,7 @@ export default function HomeScreen() {
             </View>
             <Text style={styles.cardLabel}>Ausgaben</Text>
             <Text style={styles.expenseAmount}>
-              € {totalFixedExpenses.toLocaleString("de-DE", { minimumFractionDigits: 2 })}
+              € {totalExpenses.toLocaleString("de-DE", { minimumFractionDigits: 2 })}
             </Text>
           </View>
         </View>
