@@ -170,7 +170,7 @@ export default function HomeScreen() {
       <Modal
         visible={allTransactionsVisible}
         transparent
-        animationType="slide"
+        animationType="fade"
         onRequestClose={() => setAllTransactionsVisible(false)}
       >
         <Pressable 
