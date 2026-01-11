@@ -16,7 +16,7 @@ import { Spacing, BorderRadius, Typography, Colors } from "@/constants/theme";
 
 type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
 
-const leftGoals = [
+const topLeftGoals = [
   {
     id: "overview",
     label: "Überblick\ngewinnen",
@@ -30,18 +30,11 @@ const leftGoals = [
     color: "#FEB18F",
     image: require("@assets/images/blob-subscriptions.png"),
     overlayImage: require("@assets/images/image_1767540704833.png"),
-    height: 167,
-  },
-  {
-    id: "goals",
-    label: "Sparziel\nerreichen",
-    color: "#6CB38E",
-    image: require("@assets/images/image_1767540578781.png"),
-    height: 176,
+    height: 195,
   },
 ];
 
-const rightGoals = [
+const topRightGoals = [
   {
     id: "klarna",
     label: "Klarna & Raten\nim Griff haben",
@@ -57,12 +50,22 @@ const rightGoals = [
     image: require("@assets/images/image_1767540547771.png"),
     height: 210,
   },
+];
+
+const bottomGoals = [
+  {
+    id: "goals",
+    label: "Sparziel\nerreichen",
+    color: "#6CB38E",
+    image: require("@assets/images/image_1767540578781.png"),
+    height: 176,
+  },
   {
     id: "peace",
     label: "Finanzielle Ruhe",
     color: "#D9A5B5",
     image: require("@assets/images/image_1767540595139.png"),
-    height: 171,
+    height: 176,
   },
 ];
 
@@ -77,12 +80,12 @@ export default function Onboarding1Screen() {
     );
   };
 
-  const renderGoalCard = (goal: typeof leftGoals[0] | typeof rightGoals[0]) => (
+  const renderGoalCard = (goal: typeof topLeftGoals[0] | typeof topRightGoals[0], isBottom = false) => (
     <Pressable
       key={goal.id}
       onPress={() => toggleSelection(goal.id)}
       style={({ pressed }) => [
-        styles.goalCard,
+        isBottom ? styles.bottomCard : styles.goalCard,
         { backgroundColor: goal.color, height: goal.height },
         selected.includes(goal.id) && styles.goalCardSelected,
         pressed && styles.goalCardPressed,
@@ -144,13 +147,17 @@ export default function Onboarding1Screen() {
           </Text>
         </View>
 
-        <View style={styles.goalsGrid}>
+        <View style={styles.topSection}>
           <View style={styles.leftColumn}>
-            {leftGoals.map(renderGoalCard)}
+            {topLeftGoals.map((goal) => renderGoalCard(goal))}
           </View>
           <View style={styles.rightColumn}>
-            {rightGoals.map(renderGoalCard)}
+            {topRightGoals.map((goal) => renderGoalCard(goal))}
           </View>
+        </View>
+
+        <View style={styles.bottomSection}>
+          {bottomGoals.map((goal) => renderGoalCard(goal, true))}
         </View>
       </ScrollView>
 
@@ -201,21 +208,33 @@ const styles = StyleSheet.create({
     color: Colors.light.textSecondary,
     marginTop: Spacing.md,
   },
-  goalsGrid: {
+  topSection: {
     flexDirection: "row",
     gap: Spacing.md,
   },
   leftColumn: {
     flex: 1,
     gap: Spacing.md,
+    marginTop: 12,
   },
   rightColumn: {
     flex: 1,
     gap: Spacing.md,
-    marginTop: 44,
+  },
+  bottomSection: {
+    flexDirection: "row",
+    gap: Spacing.md,
+    marginTop: Spacing.md,
   },
   goalCard: {
     width: "100%",
+    borderRadius: BorderRadius.md,
+    padding: Spacing.lg,
+    justifyContent: "space-between",
+    overflow: "hidden",
+  },
+  bottomCard: {
+    flex: 1,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     justifyContent: "space-between",
