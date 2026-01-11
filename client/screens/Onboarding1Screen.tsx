@@ -215,7 +215,6 @@ const styles = StyleSheet.create({
   leftColumn: {
     flex: 1,
     gap: Spacing.md,
-    marginTop: 12,
   },
   rightColumn: {
     flex: 1,
