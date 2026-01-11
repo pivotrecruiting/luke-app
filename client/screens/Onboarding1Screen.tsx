@@ -129,44 +129,31 @@ export default function Onboarding1Screen() {
   );
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + Spacing.xl }]}>
-      <ScrollView
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: insets.bottom + 220 },
-        ]}
-        showsVerticalScrollIndicator={false}
-      >
-        <ProgressDots total={5} current={0} />
+    <View style={[styles.container, { paddingTop: insets.top + Spacing.md }]}>
+      <ProgressDots total={5} current={0} />
 
-        <View style={styles.headerContainer}>
-          <Text style={styles.titleBold}>Was bringt dich</Text>
-          <Text style={styles.titleNormal}>zu Luke?</Text>
-          <Text style={styles.subtitle}>
-            wähle mindestens eines der folgenden:
-          </Text>
+      <View style={styles.headerContainer}>
+        <Text style={styles.titleBold}>Was bringt dich</Text>
+        <Text style={styles.titleNormal}>zu Luke?</Text>
+        <Text style={styles.subtitle}>
+          wähle mindestens eines der folgenden:
+        </Text>
+      </View>
+
+      <View style={styles.topSection}>
+        <View style={styles.leftColumn}>
+          {topLeftGoals.map((goal) => renderGoalCard(goal))}
         </View>
-
-        <View style={styles.topSection}>
-          <View style={styles.leftColumn}>
-            {topLeftGoals.map((goal) => renderGoalCard(goal))}
-          </View>
-          <View style={styles.rightColumn}>
-            {topRightGoals.map((goal) => renderGoalCard(goal))}
-          </View>
+        <View style={styles.rightColumn}>
+          {topRightGoals.map((goal) => renderGoalCard(goal))}
         </View>
+      </View>
 
-        <View style={styles.bottomSection}>
-          {bottomGoals.map((goal) => renderGoalCard(goal, true))}
-        </View>
-      </ScrollView>
+      <View style={styles.bottomSection}>
+        {bottomGoals.map((goal) => renderGoalCard(goal, true))}
+      </View>
 
-      <View
-        style={[
-          styles.buttonContainer,
-          { paddingBottom: insets.bottom + Spacing.xl },
-        ]}
-      >
+      <View style={[styles.buttonContainer, { paddingBottom: insets.bottom + Spacing.md }]}>
         <Pressable
           onPress={() => navigation.navigate("Onboarding2")}
           style={({ pressed }) => [
@@ -191,8 +178,8 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   headerContainer: {
-    marginTop: Spacing["2xl"],
-    marginBottom: Spacing["2xl"],
+    marginTop: Spacing.md,
+    marginBottom: Spacing.lg,
   },
   titleBold: {
     ...Typography.h1,
@@ -285,13 +272,8 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   buttonContainer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: Spacing.xl,
-    backgroundColor: Colors.light.backgroundRoot,
-    paddingTop: Spacing.lg,
+    marginTop: "auto",
+    paddingTop: Spacing.md,
   },
   button: {
     backgroundColor: Colors.light.buttonPrimary,
