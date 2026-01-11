@@ -260,11 +260,18 @@ export default function GoalDetailScreen() {
   return (
     <GestureHandlerRootView style={styles.container}>
       <LinearGradient
-        colors={["rgba(42, 58, 230, 0.69)", "rgba(23, 32, 128, 0.69)"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
-        style={[styles.header, { paddingTop: insets.top + Spacing.lg }]}
-      >
+        colors={["transparent", "rgba(0,0,0,0.3)", "rgba(0,0,0,0.5)"]}
+        locations={[0, 0.3, 1]}
+        style={styles.fadeOverlay}
+        pointerEvents="none"
+      />
+      <View style={styles.modalContentWrapper}>
+        <LinearGradient
+          colors={["rgba(42, 58, 230, 0.69)", "rgba(23, 32, 128, 0.69)"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          style={[styles.header, { paddingTop: insets.top + Spacing.lg }]}
+        >
         <View style={styles.headerRow}>
           <View>
             <Text style={styles.headerTitle}>Goals</Text>
@@ -521,6 +528,7 @@ export default function GoalDetailScreen() {
           </ScrollView>
         </KeyboardAvoidingView>
       </Modal>
+      </View>
     </GestureHandlerRootView>
   );
 }
@@ -528,7 +536,19 @@ export default function GoalDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "transparent",
+  },
+  fadeOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 0,
+  },
+  modalContentWrapper: {
+    flex: 1,
     backgroundColor: "#F5F5F5",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    marginTop: 60,
+    overflow: "hidden",
   },
   header: {
     paddingHorizontal: 20,

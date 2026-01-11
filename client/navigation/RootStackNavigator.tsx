@@ -30,7 +30,11 @@ export default function RootStackNavigator() {
       <Stack.Screen 
         name="GoalDetail" 
         component={GoalDetailScreen}
-        options={{ presentation: "modal" }}
+        options={{ 
+          presentation: "transparentModal",
+          animation: "fade",
+          contentStyle: { backgroundColor: "transparent" },
+        }}
       />
     </Stack.Navigator>
   );
