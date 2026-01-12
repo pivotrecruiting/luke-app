@@ -1915,7 +1915,8 @@ const styles = StyleSheet.create({
     color: "#111827",
     borderWidth: 1,
     borderColor: "#E5E7EB",
-  },
+    outlineStyle: "none",
+  } as any,
   incomeAmountInputContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -1935,7 +1936,8 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     fontSize: 18,
     color: "#111827",
-  },
+    outlineStyle: "none",
+  } as any,
   incomeSaveButton: {
     backgroundColor: "#7340fd",
     paddingVertical: Spacing.md,
