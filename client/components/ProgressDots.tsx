@@ -27,6 +27,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     gap: Spacing.sm,
   },
   dot: {
