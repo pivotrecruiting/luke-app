@@ -1313,7 +1313,7 @@ const styles = StyleSheet.create({
   },
   pagerView: {
     flex: 1,
-    minHeight: 450,
+    minHeight: 550,
   },
   pagerPage: {
     flex: 1,
