@@ -99,6 +99,8 @@ function GoalItem({ goal, onPress }: { goal: Goal; onPress: () => void }) {
 
 function BudgetItem({ budget }: { budget: Budget }) {
   const percentage = (budget.current / budget.limit) * 100;
+  const isOverBudget = budget.current > budget.limit;
+  const displayPercentage = Math.min(percentage, 100);
 
   return (
     <View style={styles.budgetItem}>
@@ -109,15 +111,19 @@ function BudgetItem({ budget }: { budget: Budget }) {
           </View>
           <View>
             <Text style={styles.budgetName}>{budget.name}</Text>
-            <Text style={styles.budgetProgress}>
+            <Text style={[styles.budgetProgress, isOverBudget && styles.budgetProgressOver]}>
               € {formatCurrency(budget.current)} / € {budget.limit}
             </Text>
           </View>
         </View>
-        <Text style={styles.budgetLimit}>€ {budget.limit}</Text>
+        <Text style={[styles.budgetLimit, isOverBudget && styles.budgetLimitOver]}>€ {budget.limit}</Text>
       </View>
       <View style={styles.budgetProgressBarContainer}>
-        <View style={[styles.budgetProgressBar, { width: `${percentage}%` }]} />
+        <View style={[
+          styles.budgetProgressBar, 
+          { width: `${displayPercentage}%` },
+          isOverBudget && styles.budgetProgressBarOver
+        ]} />
       </View>
     </View>
   );
@@ -679,6 +685,15 @@ const styles = StyleSheet.create({
     height: "100%",
     backgroundColor: "rgba(42, 58, 230, 0.69)",
     borderRadius: 3,
+  },
+  budgetProgressBarOver: {
+    backgroundColor: "#EF4444",
+  },
+  budgetProgressOver: {
+    color: "#EF4444",
+  },
+  budgetLimitOver: {
+    color: "#EF4444",
   },
   modalOverlay: {
     flex: 1,
