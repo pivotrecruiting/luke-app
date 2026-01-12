@@ -104,10 +104,16 @@ export interface AppContextType extends AppState {
   updateGoalDeposit: (goalId: string, depositId: string, amount: number, date?: Date) => void;
   deleteGoalDeposit: (goalId: string, depositId: string) => void;
   addBudgetExpense: (budgetId: string, amount: number, name: string, customDate?: Date) => void;
+  updateBudgetExpense: (budgetId: string, expenseId: string, amount: number, name: string, date?: Date) => void;
+  deleteBudgetExpense: (budgetId: string, expenseId: string) => void;
   addTransaction: (transaction: Omit<Transaction, "id">) => void;
+  updateTransaction: (transactionId: string, updates: Partial<Omit<Transaction, "id">>) => void;
+  deleteTransaction: (transactionId: string) => void;
   completeOnboarding: () => void;
   updateGoal: (goalId: string, updates: Partial<Goal>) => void;
+  deleteGoal: (goalId: string) => void;
   updateBudget: (budgetId: string, updates: Partial<Budget>) => void;
+  deleteBudget: (budgetId: string) => void;
   addGoal: (name: string, icon: string, target: number) => void;
   addBudget: (name: string, icon: string, iconColor: string, limit: number) => void;
   updateIncomeEntry: (id: string, type: string, amount: number) => void;
@@ -116,6 +122,8 @@ export interface AppContextType extends AppState {
   deleteExpenseEntry: (id: string) => void;
   goToPreviousWeek: () => void;
   goToNextWeek: () => void;
+  resetMonthlyBudgets: () => void;
+  lastBudgetResetMonth: number;
 }
 
 const generateId = () => Math.random().toString(36).substring(2, 9);
@@ -634,6 +642,135 @@ export function AppProvider({ children }: AppProviderProps) {
     setExpenseEntries((prev) => prev.filter((entry) => entry.id !== id));
   };
 
+  const updateBudgetExpense = (budgetId: string, expenseId: string, amount: number, name: string, date?: Date) => {
+    setBudgets((prev) =>
+      prev.map((budget) => {
+        if (budget.id === budgetId) {
+          const oldExpense = budget.expenses.find((e) => e.id === expenseId);
+          if (!oldExpense) return budget;
+          
+          const amountDiff = amount - oldExpense.amount;
+          const updatedExpenses = budget.expenses.map((e) => {
+            if (e.id === expenseId) {
+              return {
+                ...e,
+                amount,
+                name,
+                date: date ? formatDate(date) : e.date,
+              };
+            }
+            return e;
+          });
+          
+          return {
+            ...budget,
+            current: budget.current + amountDiff,
+            expenses: updatedExpenses,
+          };
+        }
+        return budget;
+      })
+    );
+    
+    const budget = budgets.find((b) => b.id === budgetId);
+    const expense = budget?.expenses.find((e) => e.id === expenseId);
+    if (expense) {
+      const txId = transactions.find(
+        (tx) => tx.category === budget?.name && Math.abs(tx.amount) === expense.amount && tx.name === expense.name
+      )?.id;
+      if (txId) {
+        setTransactions((prev) =>
+          prev.map((tx) => {
+            if (tx.id === txId) {
+              return { ...tx, amount: -amount, name, date: date ? formatDate(date) : tx.date };
+            }
+            return tx;
+          })
+        );
+      }
+    }
+  };
+
+  const deleteBudgetExpense = (budgetId: string, expenseId: string) => {
+    const budget = budgets.find((b) => b.id === budgetId);
+    const expense = budget?.expenses.find((e) => e.id === expenseId);
+    
+    setBudgets((prev) =>
+      prev.map((b) => {
+        if (b.id === budgetId) {
+          const expenseToDelete = b.expenses.find((e) => e.id === expenseId);
+          if (!expenseToDelete) return b;
+          
+          return {
+            ...b,
+            current: Math.max(0, b.current - expenseToDelete.amount),
+            expenses: b.expenses.filter((e) => e.id !== expenseId),
+          };
+        }
+        return b;
+      })
+    );
+    
+    if (expense && budget) {
+      setTransactions((prev) =>
+        prev.filter(
+          (tx) => !(tx.category === budget.name && tx.name === expense.name && Math.abs(tx.amount) === expense.amount)
+        )
+      );
+    }
+  };
+
+  const updateTransaction = (transactionId: string, updates: Partial<Omit<Transaction, "id">>) => {
+    setTransactions((prev) =>
+      prev.map((tx) => {
+        if (tx.id === transactionId) {
+          return { ...tx, ...updates };
+        }
+        return tx;
+      })
+    );
+  };
+
+  const deleteTransaction = (transactionId: string) => {
+    setTransactions((prev) => prev.filter((tx) => tx.id !== transactionId));
+  };
+
+  const deleteGoal = (goalId: string) => {
+    setGoals((prev) => prev.filter((goal) => goal.id !== goalId));
+  };
+
+  const deleteBudget = (budgetId: string) => {
+    const budget = budgets.find((b) => b.id === budgetId);
+    if (budget) {
+      setTransactions((prev) => prev.filter((tx) => tx.category !== budget.name));
+    }
+    setBudgets((prev) => prev.filter((b) => b.id !== budgetId));
+  };
+
+  const [lastBudgetResetMonth, setLastBudgetResetMonth] = useState(() => new Date().getMonth());
+
+  const resetMonthlyBudgets = () => {
+    const currentMonth = new Date().getMonth();
+    if (currentMonth !== lastBudgetResetMonth) {
+      setBudgets((prev) =>
+        prev.map((budget) => ({
+          ...budget,
+          current: 0,
+          expenses: [],
+        }))
+      );
+      setLastBudgetResetMonth(currentMonth);
+    }
+  };
+
+  React.useEffect(() => {
+    const currentMonth = new Date().getMonth();
+    const currentDay = new Date().getDate();
+    if (currentDay === 1 && currentMonth !== lastBudgetResetMonth) {
+      resetMonthlyBudgets();
+    }
+  }, [lastBudgetResetMonth]);
+
   const value: AppContextType = {
     isOnboardingComplete,
     userName,
@@ -662,10 +799,16 @@ export function AppProvider({ children }: AppProviderProps) {
     updateGoalDeposit,
     deleteGoalDeposit,
     addBudgetExpense,
+    updateBudgetExpense,
+    deleteBudgetExpense,
     addTransaction,
+    updateTransaction,
+    deleteTransaction,
     completeOnboarding,
     updateGoal,
+    deleteGoal,
     updateBudget,
+    deleteBudget,
     addGoal,
     addBudget,
     updateIncomeEntry,
@@ -674,6 +817,8 @@ export function AppProvider({ children }: AppProviderProps) {
     deleteExpenseEntry,
     goToPreviousWeek,
     goToNextWeek,
+    resetMonthlyBudgets,
+    lastBudgetResetMonth,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

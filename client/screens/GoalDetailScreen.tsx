@@ -137,7 +137,7 @@ export default function GoalDetailScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const route = useRoute<any>();
-  const { goals, addGoalDeposit, updateGoalDeposit, deleteGoalDeposit, updateGoal } = useApp();
+  const { goals, addGoalDeposit, updateGoalDeposit, deleteGoalDeposit, updateGoal, deleteGoal } = useApp();
 
   const goalId = route.params?.goalId || route.params?.goal?.id;
   const goal = useMemo(() => {
@@ -161,9 +161,29 @@ export default function GoalDetailScreen() {
 
   const percentage = goal ? (goal.current / goal.target) * 100 : 0;
   const remaining = goal ? goal.target - goal.current : 0;
+  const isCompleted = percentage >= 100;
   
   const isKlarna = goal?.name.toLowerCase().includes("klarna");
   const depositTitle = isKlarna ? "Rückzahlung" : "Einzahlung";
+
+  const handleDeleteGoal = () => {
+    if (!goal) return;
+    Alert.alert(
+      "Ziel löschen",
+      `Möchtest du das Ziel "${goal.name}" wirklich löschen?`,
+      [
+        { text: "Abbrechen", style: "cancel" },
+        {
+          text: "Löschen",
+          style: "destructive",
+          onPress: () => {
+            deleteGoal(goal.id);
+            navigation.goBack();
+          },
+        },
+      ]
+    );
+  };
 
   const groupedTransactions = useMemo(() => {
     if (!goal?.deposits) return {};
@@ -275,11 +295,18 @@ export default function GoalDetailScreen() {
         <View style={styles.headerRow}>
           <View>
             <Text style={styles.headerTitle}>Goals</Text>
-            <Text style={styles.headerSubtitle}>bleib dran!</Text>
+            <Text style={styles.headerSubtitle}>{isCompleted ? "Geschafft!" : "bleib dran!"}</Text>
           </View>
-          <Pressable style={styles.closeButton} onPress={() => navigation.goBack()}>
-            <Feather name="x" size={24} color="#000000" />
-          </Pressable>
+          <View style={styles.headerButtons}>
+            {isCompleted ? (
+              <Pressable style={styles.deleteHeaderButton} onPress={handleDeleteGoal}>
+                <Feather name="trash-2" size={20} color="#FFFFFF" />
+              </Pressable>
+            ) : null}
+            <Pressable style={styles.closeButton} onPress={() => navigation.goBack()}>
+              <Feather name="x" size={24} color="#000000" />
+            </Pressable>
+          </View>
         </View>
 
         <View style={styles.goalCard}>
@@ -573,6 +600,19 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: 16,
     backgroundColor: "#FFFFFF",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  headerButtons: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  deleteHeaderButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(239,68,68,0.4)",
     justifyContent: "center",
     alignItems: "center",
   },
