@@ -224,65 +224,9 @@ const INITIAL_INCOME_ENTRIES: IncomeEntry[] = [];
 
 const INITIAL_EXPENSE_ENTRIES: ExpenseEntry[] = [];
 
-const INITIAL_GOALS: Goal[] = [
-  {
-    id: "goal-1",
-    name: "Vespa 2026",
-    icon: "🛵",
-    target: 5200,
-    current: 924.73,
-    remaining: 4275.27,
-    deposits: [
-      { id: "dep-1", date: "Heute, 11:32", amount: 50.00, type: "Einzahlung" },
-      { id: "dep-2", date: "Gestern", amount: 100.00, type: "Einzahlung" },
-      { id: "dep-3", date: "12/11/2025", amount: 150.00, type: "Einzahlung" },
-      { id: "dep-4", date: "05/11/2025", amount: 200.00, type: "Einzahlung" },
-      { id: "dep-5", date: "28/10/2025", amount: 424.73, type: "Einzahlung" },
-    ],
-  },
-  {
-    id: "goal-2",
-    name: "Klarna abbezahlen",
-    icon: "💳",
-    target: 443.12,
-    current: 260.67,
-    remaining: 182.45,
-    deposits: [
-      { id: "rep-1", date: "Heute, 09:15", amount: 30.00, type: "Rückzahlung" },
-      { id: "rep-2", date: "Gestern", amount: 50.00, type: "Rückzahlung" },
-      { id: "rep-3", date: "10/11/2025", amount: 80.67, type: "Rückzahlung" },
-      { id: "rep-4", date: "25/10/2025", amount: 100.00, type: "Rückzahlung" },
-    ],
-  },
-];
+const INITIAL_GOALS: Goal[] = [];
 
-const INITIAL_BUDGETS: Budget[] = [
-  {
-    id: "budget-1",
-    name: "Lebensmittel",
-    icon: "shopping-cart",
-    iconColor: "#F59E0B",
-    limit: 400,
-    current: 92.40,
-    expenses: [
-      { id: "be-1", name: "REWE", date: "Gestern", amount: 45.20 },
-      { id: "be-2", name: "Lidl", date: "10.01. 14:30", amount: 32.80 },
-      { id: "be-3", name: "Bäckerei Schmidt", date: "08/01/2026", amount: 14.40 },
-    ],
-  },
-  {
-    id: "budget-2",
-    name: "Shopping",
-    icon: "shopping-bag",
-    iconColor: "#8B5CF6",
-    limit: 200,
-    current: 40.37,
-    expenses: [
-      { id: "be-4", name: "Zara", date: "06/01/2026", amount: 29.99 },
-      { id: "be-5", name: "Amazon", date: "04/01/2026", amount: 10.38 },
-    ],
-  },
-];
+const INITIAL_BUDGETS: Budget[] = [];
 
 const INITIAL_TRANSACTIONS: Transaction[] = [
   { id: "tx-1", name: "Starbucks", category: "Lebensmittel", date: "Gestern", amount: -4.50, icon: "coffee" },

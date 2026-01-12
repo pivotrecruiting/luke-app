@@ -16,6 +16,7 @@ import CurrencyInput from "@/components/CurrencyInput";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { Spacing, BorderRadius, Typography, Colors } from "@/constants/theme";
 import { Feather } from "@expo/vector-icons";
+import { useApp } from "@/context/AppContext";
 
 type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
 
@@ -83,9 +84,21 @@ function getIconForText(text: string): string {
 export default function Onboarding3Screen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
+  const { addGoal } = useApp();
   const [selectedGoal, setSelectedGoal] = useState("Wohnung");
   const [amount, setAmount] = useState("");
   const [monthlyAmount, setMonthlyAmount] = useState("");
+
+  const handleContinue = () => {
+    if (selectedGoal && amount) {
+      const parsedAmount = parseFloat(amount.replace(",", "."));
+      if (!isNaN(parsedAmount) && parsedAmount > 0) {
+        const icon = getIconForText(selectedGoal);
+        addGoal(selectedGoal, icon, parsedAmount);
+      }
+    }
+    navigation.navigate("Onboarding4");
+  };
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + Spacing.xl }]}>
@@ -162,7 +175,7 @@ export default function Onboarding3Screen() {
         ]}
       >
         <Pressable
-          onPress={() => navigation.navigate("Onboarding4")}
+          onPress={handleContinue}
           style={({ pressed }) => [
             styles.button,
             pressed && styles.buttonPressed,
