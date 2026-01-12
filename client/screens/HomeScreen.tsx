@@ -35,7 +35,10 @@ const formatCurrency = (value: number) => {
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { userName, balance, totalIncome, totalExpenses, weeklySpending, transactions } = useApp();
+  const { 
+    userName, balance, totalIncome, totalExpenses, weeklySpending, transactions,
+    selectedWeekOffset, currentWeekLabel, goToPreviousWeek, goToNextWeek 
+  } = useApp();
   
   // Parse various date formats to Date object for sorting
   const parseTransactionDate = (dateStr: string): Date => {
@@ -165,14 +168,30 @@ export default function HomeScreen() {
         <View style={styles.chartCard}>
           <View style={styles.chartHeader}>
             <Text style={styles.chartTitle}>Wochenausgaben</Text>
-            {selectedDay && (
-              <View style={styles.selectedAmount}>
-                <Text style={styles.selectedAmountText}>
-                  € {weeklySpending.find(d => d.day === selectedDay)?.amount || 0}
-                </Text>
-              </View>
-            )}
+            <View style={styles.weekNavigation}>
+              <Pressable onPress={goToPreviousWeek} style={styles.weekArrow}>
+                <Feather name="chevron-left" size={20} color="#6B7280" />
+              </Pressable>
+              <Text style={styles.weekLabel}>{currentWeekLabel}</Text>
+              <Pressable 
+                onPress={goToNextWeek} 
+                style={[styles.weekArrow, selectedWeekOffset >= 0 && styles.weekArrowDisabled]}
+              >
+                <Feather 
+                  name="chevron-right" 
+                  size={20} 
+                  color={selectedWeekOffset >= 0 ? "#D1D5DB" : "#6B7280"} 
+                />
+              </Pressable>
+            </View>
           </View>
+          {selectedDay && (
+            <View style={styles.selectedAmount}>
+              <Text style={styles.selectedAmountText}>
+                € {weeklySpending.find(d => d.day === selectedDay)?.amount.toFixed(2) || "0.00"}
+              </Text>
+            </View>
+          )}
           <View style={styles.chartContainer}>
             {weeklySpending.map((item) => {
               const barHeight = Math.max((item.amount / item.maxAmount) * 100, 8);
@@ -446,6 +465,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#000000",
+  },
+  weekNavigation: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  weekArrow: {
+    padding: 4,
+  },
+  weekArrowDisabled: {
+    opacity: 0.5,
+  },
+  weekLabel: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#6B7280",
+    minWidth: 100,
+    textAlign: "center",
   },
   selectedAmount: {
     backgroundColor: "#5B6BBE",

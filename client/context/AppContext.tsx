@@ -91,6 +91,8 @@ export interface AppState {
   balance: number;
   savingsRate: number;
   monthlyTrendData: MonthlyTrendData[];
+  selectedWeekOffset: number;
+  currentWeekLabel: string;
 }
 
 export interface AppContextType extends AppState {
@@ -112,24 +114,100 @@ export interface AppContextType extends AppState {
   deleteIncomeEntry: (id: string) => void;
   updateExpenseEntry: (id: string, type: string, amount: number) => void;
   deleteExpenseEntry: (id: string) => void;
+  goToPreviousWeek: () => void;
+  goToNextWeek: () => void;
 }
 
 const generateId = () => Math.random().toString(36).substring(2, 9);
 
 const parseFormattedDate = (dateStr: string): Date => {
+  const now = new Date();
+  
   if (dateStr.startsWith("Heute")) {
-    return new Date();
+    const timeMatch = dateStr.match(/(\d{2}):(\d{2})/);
+    if (timeMatch) {
+      return new Date(now.getFullYear(), now.getMonth(), now.getDate(),
+        parseInt(timeMatch[1]), parseInt(timeMatch[2]));
+    }
+    return now;
   }
-  if (dateStr === "Gestern") {
-    const yesterday = new Date();
+  
+  if (dateStr === "Gestern" || dateStr.startsWith("Gestern")) {
+    const yesterday = new Date(now);
     yesterday.setDate(yesterday.getDate() - 1);
     return yesterday;
   }
-  const match = dateStr.match(/(\d{2})\/(\d{2})\/(\d{4})/);
-  if (match) {
-    return new Date(parseInt(match[3], 10), parseInt(match[2], 10) - 1, parseInt(match[1], 10));
+  
+  const slashMatch = dateStr.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  if (slashMatch) {
+    return new Date(parseInt(slashMatch[3]), parseInt(slashMatch[2]) - 1, parseInt(slashMatch[1]));
   }
-  return new Date();
+  
+  const dotTimeMatch = dateStr.match(/(\d{2})\.(\d{2})\.\s*(\d{2}):(\d{2})/);
+  if (dotTimeMatch) {
+    return new Date(now.getFullYear(), parseInt(dotTimeMatch[2]) - 1, parseInt(dotTimeMatch[1]),
+      parseInt(dotTimeMatch[3]), parseInt(dotTimeMatch[4]));
+  }
+  
+  const fullDotMatch = dateStr.match(/(\d{2})\.(\d{2})\.(\d{4})/);
+  if (fullDotMatch) {
+    return new Date(parseInt(fullDotMatch[3]), parseInt(fullDotMatch[2]) - 1, parseInt(fullDotMatch[1]));
+  }
+  
+  return now;
+};
+
+const getWeekBounds = (weekOffset: number): { start: Date; end: Date } => {
+  const now = new Date();
+  const dayOfWeek = now.getDay();
+  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  
+  const monday = new Date(now);
+  monday.setDate(now.getDate() + mondayOffset + (weekOffset * 7));
+  monday.setHours(0, 0, 0, 0);
+  
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  sunday.setHours(23, 59, 59, 999);
+  
+  return { start: monday, end: sunday };
+};
+
+const formatWeekLabel = (weekOffset: number): string => {
+  const { start, end } = getWeekBounds(weekOffset);
+  const formatDay = (d: Date) => `${d.getDate().toString().padStart(2, '0')}.${(d.getMonth() + 1).toString().padStart(2, '0')}`;
+  
+  if (weekOffset === 0) {
+    return "Diese Woche";
+  } else if (weekOffset === -1) {
+    return "Letzte Woche";
+  } else {
+    return `${formatDay(start)} - ${formatDay(end)}`;
+  }
+};
+
+const calculateWeeklySpending = (transactions: Transaction[], weekOffset: number): WeeklySpending[] => {
+  const { start, end } = getWeekBounds(weekOffset);
+  const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const dailyAmounts = [0, 0, 0, 0, 0, 0, 0];
+  
+  transactions.forEach((tx) => {
+    if (tx.amount >= 0) return;
+    
+    const txDate = parseFormattedDate(tx.date);
+    if (txDate >= start && txDate <= end) {
+      const dayIndex = txDate.getDay() === 0 ? 6 : txDate.getDay() - 1;
+      dailyAmounts[dayIndex] += Math.abs(tx.amount);
+    }
+  });
+  
+  const maxAmount = Math.max(...dailyAmounts, 1);
+  
+  return days.map((day, index) => ({
+    day,
+    amount: Math.round(dailyAmounts[index] * 100) / 100,
+    maxAmount,
+  }));
 };
 
 const formatDate = (date: Date): string => {
@@ -218,16 +296,6 @@ const INITIAL_BUDGETS: Budget[] = [
   },
 ];
 
-const INITIAL_WEEKLY_SPENDING: WeeklySpending[] = [
-  { day: "Mon", amount: 45, maxAmount: 120 },
-  { day: "Tue", amount: 85, maxAmount: 120 },
-  { day: "Wed", amount: 65, maxAmount: 120 },
-  { day: "Thu", amount: 50, maxAmount: 120 },
-  { day: "Fri", amount: 95, maxAmount: 120 },
-  { day: "Sat", amount: 120, maxAmount: 120 },
-  { day: "Sun", amount: 75, maxAmount: 120 },
-];
-
 const INITIAL_TRANSACTIONS: Transaction[] = [
   { id: "tx-1", name: "Starbucks", category: "Lebensmittel", date: "Heute, 11:32", amount: -4.50, icon: "coffee" },
   { id: "tx-2", name: "Amazon", category: "Shopping", date: "28.11. 20:14", amount: -29.90, icon: "shopping-cart" },
@@ -259,8 +327,26 @@ export function AppProvider({ children }: AppProviderProps) {
   const [expenseEntries, setExpenseEntries] = useState<ExpenseEntry[]>(INITIAL_EXPENSE_ENTRIES);
   const [goals, setGoals] = useState<Goal[]>(INITIAL_GOALS);
   const [budgets, setBudgets] = useState<Budget[]>(INITIAL_BUDGETS);
-  const [weeklySpending, setWeeklySpending] = useState<WeeklySpending[]>(INITIAL_WEEKLY_SPENDING);
   const [transactions, setTransactions] = useState<Transaction[]>(INITIAL_TRANSACTIONS);
+  const [selectedWeekOffset, setSelectedWeekOffset] = useState(0);
+
+  const weeklySpending = useMemo(() => {
+    return calculateWeeklySpending(transactions, selectedWeekOffset);
+  }, [transactions, selectedWeekOffset]);
+
+  const currentWeekLabel = useMemo(() => {
+    return formatWeekLabel(selectedWeekOffset);
+  }, [selectedWeekOffset]);
+
+  const goToPreviousWeek = () => {
+    setSelectedWeekOffset((prev) => prev - 1);
+  };
+
+  const goToNextWeek = () => {
+    if (selectedWeekOffset < 0) {
+      setSelectedWeekOffset((prev) => prev + 1);
+    }
+  };
 
   const totalIncome = useMemo(() => {
     return incomeEntries.reduce((sum, entry) => sum + entry.amount, 0);
@@ -531,21 +617,6 @@ export function AppProvider({ children }: AppProviderProps) {
       };
       setTransactions((prev) => [newTransaction, ...prev]);
     }
-
-    const today = new Date().getDay();
-    const dayIndex = today === 0 ? 6 : today - 1;
-    setWeeklySpending((prev) =>
-      prev.map((day, index) => {
-        if (index === dayIndex) {
-          return {
-            ...day,
-            amount: day.amount + amount,
-            maxAmount: Math.max(day.maxAmount, day.amount + amount),
-          };
-        }
-        return day;
-      })
-    );
   };
 
   const addTransaction = (transaction: Omit<Transaction, "id">) => {
@@ -656,6 +727,8 @@ export function AppProvider({ children }: AppProviderProps) {
     balance,
     savingsRate,
     monthlyTrendData,
+    selectedWeekOffset,
+    currentWeekLabel,
     addIncomeEntry,
     addExpenseEntry,
     setIncomeEntries: setIncomeEntriesFromOnboarding,
@@ -674,6 +747,8 @@ export function AppProvider({ children }: AppProviderProps) {
     deleteIncomeEntry,
     updateExpenseEntry,
     deleteExpenseEntry,
+    goToPreviousWeek,
+    goToNextWeek,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
