@@ -37,11 +37,54 @@ export default function HomeScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { userName, balance, totalIncome, totalExpenses, weeklySpending, transactions } = useApp();
   
+  // Parse various date formats to Date object for sorting
+  const parseTransactionDate = (dateStr: string): Date => {
+    const now = new Date();
+    
+    // Handle "Heute, HH:MM"
+    if (dateStr.startsWith("Heute")) {
+      const timeMatch = dateStr.match(/(\d{2}):(\d{2})/);
+      if (timeMatch) {
+        return new Date(now.getFullYear(), now.getMonth(), now.getDate(), 
+          parseInt(timeMatch[1]), parseInt(timeMatch[2]));
+      }
+      return now;
+    }
+    
+    // Handle "Gestern"
+    if (dateStr === "Gestern" || dateStr.startsWith("Gestern")) {
+      const yesterday = new Date(now);
+      yesterday.setDate(yesterday.getDate() - 1);
+      return yesterday;
+    }
+    
+    // Handle "DD/MM/YYYY" format
+    const slashMatch = dateStr.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+    if (slashMatch) {
+      return new Date(parseInt(slashMatch[3]), parseInt(slashMatch[2]) - 1, parseInt(slashMatch[1]));
+    }
+    
+    // Handle "DD.MM. HH:MM" format (e.g., "28.11. 20:14")
+    const dotMatch = dateStr.match(/(\d{2})\.(\d{2})\.\s*(\d{2}):(\d{2})/);
+    if (dotMatch) {
+      return new Date(now.getFullYear(), parseInt(dotMatch[2]) - 1, parseInt(dotMatch[1]),
+        parseInt(dotMatch[3]), parseInt(dotMatch[4]));
+    }
+    
+    // Handle "DD.MM.YYYY" format
+    const fullDotMatch = dateStr.match(/(\d{2})\.(\d{2})\.(\d{4})/);
+    if (fullDotMatch) {
+      return new Date(parseInt(fullDotMatch[3]), parseInt(fullDotMatch[2]) - 1, parseInt(fullDotMatch[1]));
+    }
+    
+    return now;
+  };
+
   // Sort transactions by date (newest first)
   const sortedTransactions = useMemo(() => {
     return [...transactions].sort((a, b) => {
-      const dateA = new Date(a.date.split('.').reverse().join('-'));
-      const dateB = new Date(b.date.split('.').reverse().join('-'));
+      const dateA = parseTransactionDate(a.date);
+      const dateB = parseTransactionDate(b.date);
       return dateB.getTime() - dateA.getTime();
     });
   }, [transactions]);
