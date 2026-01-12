@@ -219,21 +219,50 @@ export default function AddScreen() {
           <Text style={styles.inputLabel}>Datum</Text>
           <Pressable
             style={styles.dateButton}
-            onPress={() => setShowDatePicker(true)}
+            onPress={() => setShowDatePicker(!showDatePicker)}
           >
             <Feather name="calendar" size={20} color="#7340fd" />
             <Text style={styles.dateButtonText}>{formatDateDisplay(selectedDate)}</Text>
-            <Feather name="chevron-down" size={20} color="#6B7280" />
+            <Feather name={showDatePicker ? "chevron-up" : "chevron-down"} size={20} color="#6B7280" />
           </Pressable>
-          {showDatePicker && (
+          {showDatePicker && Platform.OS === "ios" && (
+            <View style={styles.datePickerContainer}>
+              <DateTimePicker
+                value={selectedDate}
+                mode="date"
+                display="spinner"
+                onChange={handleDateChange}
+                maximumDate={new Date()}
+                locale="de-DE"
+                style={styles.datePicker}
+              />
+              <Pressable
+                style={styles.datePickerDone}
+                onPress={() => setShowDatePicker(false)}
+              >
+                <Text style={styles.datePickerDoneText}>Fertig</Text>
+              </Pressable>
+            </View>
+          )}
+          {showDatePicker && Platform.OS === "android" && (
             <DateTimePicker
               value={selectedDate}
               mode="date"
-              display={Platform.OS === "ios" ? "spinner" : "default"}
+              display="default"
               onChange={handleDateChange}
               maximumDate={new Date()}
-              locale="de-DE"
             />
+          )}
+          {showDatePicker && Platform.OS === "web" && (
+            <View style={styles.datePickerContainer}>
+              <DateTimePicker
+                value={selectedDate}
+                mode="date"
+                display="spinner"
+                onChange={handleDateChange}
+                maximumDate={new Date()}
+              />
+            </View>
           )}
         </View>
 
@@ -394,6 +423,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "500",
     color: "#000000",
+  },
+  datePickerContainer: {
+    marginTop: 12,
+    backgroundColor: "#F9FAFB",
+    borderRadius: 12,
+    overflow: "hidden",
+  },
+  datePicker: {
+    height: 150,
+  },
+  datePickerDone: {
+    backgroundColor: "#7340fd",
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  datePickerDoneText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FFFFFF",
   },
   categoriesGrid: {
     flexDirection: "row",
