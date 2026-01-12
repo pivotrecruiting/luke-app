@@ -15,14 +15,10 @@ import { Feather } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Spacing } from "@/constants/theme";
 import { useApp } from "@/context/AppContext";
+import { BUDGET_CATEGORIES } from "@/constants/budgetCategories";
 
-const CATEGORIES = [
-  { id: "lebensmittel", name: "Lebensmittel", icon: "shopping-cart" },
-  { id: "wohnen", name: "Wohnen", icon: "home" },
-  { id: "transport", name: "Transport", icon: "truck" },
-  { id: "hygiene", name: "Hygiene", icon: "heart" },
-  { id: "abonnements", name: "Abonnements", icon: "repeat" },
-  { id: "shopping", name: "Shopping", icon: "shopping-bag" },
+const EXPENSE_CATEGORIES = [
+  ...BUDGET_CATEGORIES.map((cat) => ({ id: cat.id, name: cat.name, icon: cat.icon })),
   { id: "sonstiges", name: "Sonstiges", icon: "more-horizontal" },
 ];
 
@@ -73,7 +69,7 @@ export default function AddScreen() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
 
-  const categories = activeTab === "ausgaben" ? CATEGORIES : INCOME_CATEGORIES;
+  const categories = activeTab === "ausgaben" ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
 
   const handleDateChange = (event: any, date?: Date) => {
     setShowDatePicker(Platform.OS === "ios");
