@@ -260,7 +260,7 @@ export default function GoalsScreen() {
           <GoalItem key={goal.id} goal={goal} onPress={() => handleGoalPress(goal.id)} />
         ))}
 
-        <View style={styles.sectionHeader}>
+        <View style={[styles.sectionHeader, { marginTop: 24 }]}>
           <Text style={styles.sectionTitle}>Budgets</Text>
           <Pressable style={styles.addButton} onPress={() => setBudgetModalVisible(true)}>
             <Feather name="plus" size={20} color="#FFFFFF" />
