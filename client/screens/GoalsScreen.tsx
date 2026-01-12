@@ -17,7 +17,8 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { Spacing } from "@/constants/theme";
-import { useApp, Goal, Budget, Transaction } from "@/context/AppContext";
+import { useApp, Goal, Budget } from "@/context/AppContext";
+import { BUDGET_CATEGORIES } from "@/constants/budgetCategories";
 
 const MOCK_DATA = {
   level: {
@@ -134,25 +135,13 @@ function BudgetItem({ budget, onPress }: { budget: Budget; onPress: () => void }
 
 const EMOJI_LIST = ["😀", "🛵", "💳", "🏠", "🚗", "✈️", "💻", "📱", "🎮", "👗", "💍", "🎓"];
 
-const BUDGET_CATEGORIES = [
-  { id: "essen", name: "Essen", icon: "shopping-cart", color: "#F97316" },
-  { id: "transport", name: "Transport", icon: "truck", color: "#6366F1" },
-  { id: "miete", name: "Miete", icon: "home", color: "#14B8A6" },
-  { id: "bills", name: "Bills", icon: "dollar-sign", color: "#F59E0B" },
-  { id: "mitgliedschaften", name: "Mitgliedschaften", icon: "briefcase", color: "#A855F7" },
-  { id: "unterhaltung", name: "Unterhaltung", icon: "smile", color: "#FBBF24" },
-  { id: "shoppen", name: "Shoppen", icon: "shopping-bag", color: "#EC4899" },
-  { id: "gifts", name: "Gifts", icon: "gift", color: "#8B5CF6" },
-];
 
 export default function GoalsScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { goals, budgets, transactions, addGoal, addBudget } = useApp();
+  const { goals, budgets, addGoal, addBudget } = useApp();
 
   const [createModalVisible, setCreateModalVisible] = useState(false);
-  const [selectedBudget, setSelectedBudget] = useState<Budget | null>(null);
-  const [budgetDetailModalVisible, setBudgetDetailModalVisible] = useState(false);
   const [goalName, setGoalName] = useState("");
   const [goalAmount, setGoalAmount] = useState("");
   const [monthlyContribution, setMonthlyContribution] = useState("");
@@ -282,10 +271,7 @@ export default function GoalsScreen() {
           <BudgetItem 
             key={budget.id} 
             budget={budget} 
-            onPress={() => {
-              setSelectedBudget(budget);
-              setBudgetDetailModalVisible(true);
-            }}
+            onPress={() => navigation.navigate("BudgetDetail", { budgetId: budget.id })}
           />
         ))}
       </ScrollView>
@@ -437,77 +423,6 @@ export default function GoalsScreen() {
             </View>
           </View>
         </KeyboardAvoidingView>
-      </Modal>
-
-      <Modal
-        visible={budgetDetailModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setBudgetDetailModalVisible(false)}
-      >
-        <Pressable 
-          style={styles.modalOverlay} 
-          onPress={() => setBudgetDetailModalVisible(false)}
-        >
-          <View style={[styles.budgetDetailModal, { paddingBottom: insets.bottom + 24 }]}>
-            <View style={styles.modalHandle} />
-            {selectedBudget ? (
-              <>
-                <View style={styles.budgetDetailHeader}>
-                  <View style={[styles.budgetIconContainer, { backgroundColor: `${selectedBudget.iconColor}20` }]}>
-                    <Feather name={selectedBudget.icon as any} size={24} color={selectedBudget.iconColor} />
-                  </View>
-                  <View>
-                    <Text style={styles.budgetDetailTitle}>{selectedBudget.name}</Text>
-                    <Text style={styles.budgetDetailSubtitle}>
-                      € {formatCurrency(selectedBudget.current)} / € {selectedBudget.limit}
-                    </Text>
-                  </View>
-                </View>
-
-                <Text style={styles.transactionsTitle}>Transaktionen</Text>
-                
-                <ScrollView style={styles.transactionsList} showsVerticalScrollIndicator={false}>
-                  {transactions.filter(tx => tx.category === selectedBudget.name).length === 0 ? (
-                    <View style={styles.emptyTransactions}>
-                      <Feather name="inbox" size={40} color="#D1D5DB" />
-                      <Text style={styles.emptyTransactionsText}>Keine Transaktionen</Text>
-                    </View>
-                  ) : (
-                    transactions
-                      .filter(tx => tx.category === selectedBudget.name)
-                      .map((tx) => (
-                        <View key={tx.id} style={styles.transactionItem}>
-                          <View style={styles.transactionLeft}>
-                            <View style={styles.transactionIconContainer}>
-                              <Feather name={tx.icon as any} size={18} color="#6B7280" />
-                            </View>
-                            <View>
-                              <Text style={styles.transactionName}>{tx.name}</Text>
-                              <Text style={styles.transactionDate}>{tx.date}</Text>
-                            </View>
-                          </View>
-                          <Text style={[
-                            styles.transactionAmount,
-                            tx.amount < 0 && styles.transactionAmountNegative
-                          ]}>
-                            {tx.amount >= 0 ? "+" : ""}€ {formatCurrency(Math.abs(tx.amount))}
-                          </Text>
-                        </View>
-                      ))
-                  )}
-                </ScrollView>
-
-                <Pressable 
-                  style={styles.closeDetailButton} 
-                  onPress={() => setBudgetDetailModalVisible(false)}
-                >
-                  <Text style={styles.closeDetailButtonText}>Schließen</Text>
-                </Pressable>
-              </>
-            ) : null}
-          </View>
-        </Pressable>
       </Modal>
     </View>
   );

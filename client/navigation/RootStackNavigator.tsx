@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import OnboardingNavigator from "@/navigation/OnboardingNavigator";
 import MainTabNavigator from "@/navigation/MainTabNavigator";
 import GoalDetailScreen from "@/screens/GoalDetailScreen";
+import BudgetDetailScreen from "@/screens/BudgetDetailScreen";
 import IncomeScreen from "@/screens/IncomeScreen";
 import ExpensesScreen from "@/screens/ExpensesScreen";
 import { useApp } from "@/context/AppContext";
@@ -12,6 +13,9 @@ export type RootStackParamList = {
   Main: undefined;
   GoalDetail: {
     goalId: string;
+  };
+  BudgetDetail: {
+    budgetId: string;
   };
   Income: undefined;
   Expenses: undefined;
@@ -34,6 +38,16 @@ export default function RootStackNavigator() {
       <Stack.Screen 
         name="GoalDetail" 
         component={GoalDetailScreen}
+        options={{ 
+          presentation: "transparentModal",
+          animation: "fade_from_bottom",
+          animationDuration: 200,
+          contentStyle: { backgroundColor: "transparent" },
+        }}
+      />
+      <Stack.Screen 
+        name="BudgetDetail" 
+        component={BudgetDetailScreen}
         options={{ 
           presentation: "transparentModal",
           animation: "fade_from_bottom",
