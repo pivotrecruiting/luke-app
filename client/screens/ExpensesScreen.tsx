@@ -8,8 +8,6 @@ import {
   Modal,
   TextInput,
   Dimensions,
-  KeyboardAvoidingView,
-  Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
@@ -17,6 +15,7 @@ import { useNavigation } from "@react-navigation/native";
 import { useApp } from "@/context/AppContext";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
+import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 
 const { width: screenWidth } = Dimensions.get("window");
 
@@ -216,15 +215,11 @@ export default function ExpensesScreen() {
 
       <Modal
         visible={modalVisible}
-        animationType="slide"
+        animationType="fade"
         transparent={true}
         onRequestClose={() => setModalVisible(false)}
       >
-        <KeyboardAvoidingView 
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.modalOverlay}
-          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
-        >
+        <View style={styles.modalOverlay}>
           <Pressable 
             style={styles.modalBackdrop} 
             onPress={() => setModalVisible(false)}
@@ -239,10 +234,9 @@ export default function ExpensesScreen() {
               </Pressable>
             </View>
 
-            <ScrollView 
+            <KeyboardAwareScrollViewCompat 
               showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-              contentContainerStyle={{ paddingBottom: 20 }}
+              contentContainerStyle={{ paddingBottom: 40 }}
             >
               <Text style={styles.modalLabel}>Art der Ausgabe</Text>
               <View style={styles.typeGrid}>
@@ -308,9 +302,9 @@ export default function ExpensesScreen() {
                   {editingId ? "Speichern" : "Hinzufügen"}
                 </Text>
               </Pressable>
-            </ScrollView>
+            </KeyboardAwareScrollViewCompat>
           </View>
-        </KeyboardAvoidingView>
+        </View>
       </Modal>
     </View>
   );
