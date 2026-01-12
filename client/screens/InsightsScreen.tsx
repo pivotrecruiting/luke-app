@@ -736,7 +736,7 @@ export default function InsightsScreen() {
                   activeFilter === "income" && styles.tabButtonTextActive,
                 ]}
               >
-                vs Ausgaben
+                Vergleich
               </Text>
             </Pressable>
             <Pressable
