@@ -568,7 +568,8 @@ const styles = StyleSheet.create({
     color: "#111827",
     borderWidth: 1,
     borderColor: "#E5E7EB",
-  },
+    outlineStyle: "none",
+  } as any,
   amountInputContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -588,7 +589,8 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     fontSize: 18,
     color: "#111827",
-  },
+    outlineStyle: "none",
+  } as any,
   saveButton: {
     backgroundColor: "#EF4444",
     paddingVertical: Spacing.md,
