@@ -113,7 +113,7 @@ export default function HomeScreen() {
 
         <View style={[styles.balanceCard, { top: insets.top + 95 }]}>
           <Text style={styles.balanceLabel}>Balance</Text>
-          <Text style={styles.balanceAmount}>
+          <Text style={[styles.balanceAmount, balance < 0 && styles.balanceAmountNegative]}>
             € {balance.toLocaleString("de-DE", { minimumFractionDigits: 2 })}
           </Text>
         </View>
@@ -347,6 +347,9 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: "700",
     color: "#22C55E",
+  },
+  balanceAmountNegative: {
+    color: "#EF4444",
   },
   businessmanFigure: {
     width: 71,
