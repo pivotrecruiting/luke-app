@@ -593,96 +593,6 @@ export default function InsightsScreen() {
             onSelectMonth={setSelectedTrendMonth}
           />
         );
-      case "fixkosten":
-        return (
-          <View style={styles.fixkostenContainer}>
-            <View style={styles.expenseSummaryCard}>
-              <View style={styles.expenseSummaryIcon}>
-                <Feather name="credit-card" size={28} color="#EF4444" />
-              </View>
-              <View style={styles.expenseSummaryContent}>
-                <Text style={styles.expenseSummaryLabel}>Monatliche Fixkosten</Text>
-                <Text style={styles.expenseSummaryAmount}>€ {formatCurrency(totalFixedExpenses)}</Text>
-              </View>
-              <Pressable style={styles.addExpenseButton} onPress={openAddExpenseModal}>
-                <Feather name="plus" size={20} color="#7340fd" />
-              </Pressable>
-            </View>
-
-            <Text style={styles.expenseSectionTitle}>Fixe Ausgaben</Text>
-            
-            {expenseEntries.length === 0 ? (
-              <View style={styles.expenseEmptyState}>
-                <Feather name="inbox" size={48} color="#D1D5DB" />
-                <Text style={styles.expenseEmptyText}>Noch keine Fixkosten hinzugefügt</Text>
-                <Pressable style={styles.expenseEmptyButton} onPress={openAddExpenseModal}>
-                  <Text style={styles.expenseEmptyButtonText}>Ausgabe hinzufügen</Text>
-                </Pressable>
-              </View>
-            ) : (
-              expenseEntries.map((entry, index) => (
-                <Animated.View 
-                  key={entry.id} 
-                  entering={FadeInDown.delay(index * 50).duration(300)}
-                >
-                  <Pressable 
-                    style={styles.expenseItem}
-                    onPress={() => openEditExpenseModal(entry)}
-                  >
-                    <View style={styles.expenseLeft}>
-                      <View style={styles.expenseIconContainer}>
-                        <Feather name={getIconForExpenseType(entry.type) as any} size={20} color="#EF4444" />
-                      </View>
-                      <View>
-                        <Text style={styles.expenseType}>{entry.type}</Text>
-                        <Text style={styles.expenseFrequency}>Monatlich</Text>
-                      </View>
-                    </View>
-                    <View style={styles.expenseRight}>
-                      <Text style={styles.expenseAmount}>€ {formatCurrency(entry.amount)}</Text>
-                      <Pressable 
-                        onPress={() => setDeleteExpenseConfirmId(entry.id)}
-                        hitSlop={8}
-                      >
-                        <Feather name="trash-2" size={18} color="#9CA3AF" />
-                      </Pressable>
-                    </View>
-                  </Pressable>
-
-                  {deleteExpenseConfirmId === entry.id && (
-                    <View style={styles.deleteConfirm}>
-                      <Text style={styles.deleteConfirmText}>Wirklich löschen?</Text>
-                      <View style={styles.deleteActions}>
-                        <Pressable 
-                          style={styles.cancelDeleteBtn}
-                          onPress={() => setDeleteExpenseConfirmId(null)}
-                        >
-                          <Text style={styles.cancelDeleteText}>Abbrechen</Text>
-                        </Pressable>
-                        <Pressable 
-                          style={styles.confirmDeleteBtn}
-                          onPress={() => handleDeleteExpense(entry.id)}
-                        >
-                          <Text style={styles.confirmDeleteText}>Löschen</Text>
-                        </Pressable>
-                      </View>
-                    </View>
-                  )}
-                </Animated.View>
-              ))
-            )}
-
-            <View style={styles.expenseTipCard}>
-              <View style={styles.expenseTipHeader}>
-                <Feather name="info" size={18} color="#EF4444" />
-                <Text style={styles.expenseTipTitle}>Tipp</Text>
-              </View>
-              <Text style={styles.expenseTipText}>
-                Erfasse alle fixen Kosten wie Miete, Versicherungen und Abos für eine genaue Budgetplanung.
-              </Text>
-            </View>
-          </View>
-        );
       case "kategorien":
       default:
         return (
@@ -849,22 +759,6 @@ export default function InsightsScreen() {
                 ]}
               >
                 Trend
-              </Text>
-            </Pressable>
-            <Pressable
-              style={[
-                styles.tabButton,
-                activeFilter === "fixkosten" && styles.tabButtonActive,
-              ]}
-              onPress={() => setActiveFilter("fixkosten")}
-            >
-              <Text
-                style={[
-                  styles.tabButtonText,
-                  activeFilter === "fixkosten" && styles.tabButtonTextActive,
-                ]}
-              >
-                Fixkosten
               </Text>
             </Pressable>
           </ScrollView>
