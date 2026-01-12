@@ -17,7 +17,7 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { Spacing } from "@/constants/theme";
-import { useApp, Goal, Budget } from "@/context/AppContext";
+import { useApp, Goal, Budget, Transaction } from "@/context/AppContext";
 
 const MOCK_DATA = {
   level: {
@@ -97,13 +97,13 @@ function GoalItem({ goal, onPress }: { goal: Goal; onPress: () => void }) {
   );
 }
 
-function BudgetItem({ budget }: { budget: Budget }) {
+function BudgetItem({ budget, onPress }: { budget: Budget; onPress: () => void }) {
   const percentage = (budget.current / budget.limit) * 100;
   const isOverBudget = budget.current > budget.limit;
   const displayPercentage = Math.min(percentage, 100);
 
   return (
-    <View style={styles.budgetItem}>
+    <Pressable style={styles.budgetItem} onPress={onPress}>
       <View style={styles.budgetHeader}>
         <View style={styles.budgetLeft}>
           <View style={[styles.budgetIconContainer, { backgroundColor: `${budget.iconColor}20` }]}>
@@ -116,7 +116,10 @@ function BudgetItem({ budget }: { budget: Budget }) {
             </Text>
           </View>
         </View>
-        <Text style={[styles.budgetLimit, isOverBudget && styles.budgetLimitOver]}>€ {budget.limit}</Text>
+        <View style={styles.budgetRight}>
+          <Text style={[styles.budgetLimit, isOverBudget && styles.budgetLimitOver]}>€ {budget.limit}</Text>
+          <Feather name="chevron-right" size={16} color="#9CA3AF" />
+        </View>
       </View>
       <View style={styles.budgetProgressBarContainer}>
         <View style={[
@@ -125,7 +128,7 @@ function BudgetItem({ budget }: { budget: Budget }) {
           isOverBudget && styles.budgetProgressBarOver
         ]} />
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -145,9 +148,11 @@ const BUDGET_CATEGORIES = [
 export default function GoalsScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { goals, budgets, addGoal, addBudget } = useApp();
+  const { goals, budgets, transactions, addGoal, addBudget } = useApp();
 
   const [createModalVisible, setCreateModalVisible] = useState(false);
+  const [selectedBudget, setSelectedBudget] = useState<Budget | null>(null);
+  const [budgetDetailModalVisible, setBudgetDetailModalVisible] = useState(false);
   const [goalName, setGoalName] = useState("");
   const [goalAmount, setGoalAmount] = useState("");
   const [monthlyContribution, setMonthlyContribution] = useState("");
@@ -274,7 +279,14 @@ export default function GoalsScreen() {
         </View>
 
         {budgets.map((budget) => (
-          <BudgetItem key={budget.id} budget={budget} />
+          <BudgetItem 
+            key={budget.id} 
+            budget={budget} 
+            onPress={() => {
+              setSelectedBudget(budget);
+              setBudgetDetailModalVisible(true);
+            }}
+          />
         ))}
       </ScrollView>
 
@@ -425,6 +437,77 @@ export default function GoalsScreen() {
             </View>
           </View>
         </KeyboardAvoidingView>
+      </Modal>
+
+      <Modal
+        visible={budgetDetailModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setBudgetDetailModalVisible(false)}
+      >
+        <Pressable 
+          style={styles.modalOverlay} 
+          onPress={() => setBudgetDetailModalVisible(false)}
+        >
+          <View style={[styles.budgetDetailModal, { paddingBottom: insets.bottom + 24 }]}>
+            <View style={styles.modalHandle} />
+            {selectedBudget ? (
+              <>
+                <View style={styles.budgetDetailHeader}>
+                  <View style={[styles.budgetIconContainer, { backgroundColor: `${selectedBudget.iconColor}20` }]}>
+                    <Feather name={selectedBudget.icon as any} size={24} color={selectedBudget.iconColor} />
+                  </View>
+                  <View>
+                    <Text style={styles.budgetDetailTitle}>{selectedBudget.name}</Text>
+                    <Text style={styles.budgetDetailSubtitle}>
+                      € {formatCurrency(selectedBudget.current)} / € {selectedBudget.limit}
+                    </Text>
+                  </View>
+                </View>
+
+                <Text style={styles.transactionsTitle}>Transaktionen</Text>
+                
+                <ScrollView style={styles.transactionsList} showsVerticalScrollIndicator={false}>
+                  {transactions.filter(tx => tx.category === selectedBudget.name).length === 0 ? (
+                    <View style={styles.emptyTransactions}>
+                      <Feather name="inbox" size={40} color="#D1D5DB" />
+                      <Text style={styles.emptyTransactionsText}>Keine Transaktionen</Text>
+                    </View>
+                  ) : (
+                    transactions
+                      .filter(tx => tx.category === selectedBudget.name)
+                      .map((tx) => (
+                        <View key={tx.id} style={styles.transactionItem}>
+                          <View style={styles.transactionLeft}>
+                            <View style={styles.transactionIconContainer}>
+                              <Feather name={tx.icon as any} size={18} color="#6B7280" />
+                            </View>
+                            <View>
+                              <Text style={styles.transactionName}>{tx.name}</Text>
+                              <Text style={styles.transactionDate}>{tx.date}</Text>
+                            </View>
+                          </View>
+                          <Text style={[
+                            styles.transactionAmount,
+                            tx.amount < 0 && styles.transactionAmountNegative
+                          ]}>
+                            {tx.amount >= 0 ? "+" : ""}€ {formatCurrency(Math.abs(tx.amount))}
+                          </Text>
+                        </View>
+                      ))
+                  )}
+                </ScrollView>
+
+                <Pressable 
+                  style={styles.closeDetailButton} 
+                  onPress={() => setBudgetDetailModalVisible(false)}
+                >
+                  <Text style={styles.closeDetailButtonText}>Schließen</Text>
+                </Pressable>
+              </>
+            ) : null}
+          </View>
+        </Pressable>
       </Modal>
     </View>
   );
@@ -859,5 +942,105 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: "#374151",
     textAlign: "center",
+  },
+  budgetRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  budgetDetailModal: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    maxHeight: "80%",
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+  budgetDetailHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+    marginBottom: 24,
+  },
+  budgetDetailTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#000000",
+  },
+  budgetDetailSubtitle: {
+    fontSize: 14,
+    color: "#6B7280",
+  },
+  transactionsTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#374151",
+    marginBottom: 12,
+  },
+  transactionsList: {
+    maxHeight: 300,
+  },
+  emptyTransactions: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 40,
+  },
+  emptyTransactionsText: {
+    fontSize: 14,
+    color: "#9CA3AF",
+    marginTop: 12,
+  },
+  transactionItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F3F4F6",
+  },
+  transactionLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  transactionIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#F3F4F6",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  transactionName: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#000000",
+  },
+  transactionDate: {
+    fontSize: 12,
+    color: "#9CA3AF",
+  },
+  transactionAmount: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#10B981",
+  },
+  transactionAmountNegative: {
+    color: "#EF4444",
+  },
+  closeDetailButton: {
+    backgroundColor: "#7340FE",
+    borderRadius: 24,
+    paddingVertical: 14,
+    alignItems: "center",
+    marginTop: 20,
+  },
+  closeDetailButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FFFFFF",
   },
 });
