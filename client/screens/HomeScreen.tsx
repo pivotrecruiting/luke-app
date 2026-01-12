@@ -111,38 +111,44 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.chartCard}>
-          <Text style={styles.chartTitle}>Wochenausgaben</Text>
+          <View style={styles.chartHeader}>
+            <Text style={styles.chartTitle}>Wochenausgaben</Text>
+            {selectedDay && (
+              <View style={styles.selectedAmount}>
+                <Text style={styles.selectedAmountText}>
+                  € {weeklySpending.find(d => d.day === selectedDay)?.amount || 0}
+                </Text>
+              </View>
+            )}
+          </View>
           <View style={styles.chartContainer}>
-            {weeklySpending.map((item) => (
-              <Pressable 
-                key={item.day} 
-                style={styles.barContainer}
-                onPress={() => handleBarPress(item.day)}
-              >
-                <View style={styles.barWrapper}>
-                  {selectedDay === item.day ? (
-                    <View style={styles.tooltipContainer}>
-                      <View style={styles.tooltip}>
-                        <Text style={styles.tooltipText}>€ {item.amount}</Text>
-                      </View>
-                      <View style={styles.tooltipArrow} />
-                    </View>
-                  ) : null}
-                  <LinearGradient
-                    colors={["#7B8CDE", "#5B6BBE"]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 0, y: 1 }}
-                    style={[
-                      styles.bar,
-                      {
-                        height: (item.amount / item.maxAmount) * 120,
-                      },
-                    ]}
-                  />
-                </View>
-                <Text style={styles.barLabel}>{item.day}</Text>
-              </Pressable>
-            ))}
+            {weeklySpending.map((item) => {
+              const barHeight = Math.max((item.amount / item.maxAmount) * 100, 8);
+              const isSelected = selectedDay === item.day;
+              return (
+                <Pressable 
+                  key={item.day} 
+                  style={styles.barContainer}
+                  onPress={() => handleBarPress(item.day)}
+                >
+                  <View style={styles.barWrapper}>
+                    <LinearGradient
+                      colors={isSelected ? ["#5B6BBE", "#3B4B9E"] : ["#A5B4FC", "#7B8CDE"]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 0, y: 1 }}
+                      style={[
+                        styles.bar,
+                        { height: barHeight },
+                        isSelected && styles.barSelected,
+                      ]}
+                    />
+                  </View>
+                  <Text style={[styles.barLabel, isSelected && styles.barLabelSelected]}>
+                    {item.day}
+                  </Text>
+                </Pressable>
+              );
+            })}
           </View>
         </View>
 
@@ -375,64 +381,57 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
+  chartHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: Spacing.lg,
+  },
   chartTitle: {
     fontSize: 16,
     fontWeight: "600",
     color: "#000000",
-    marginBottom: Spacing.lg,
+  },
+  selectedAmount: {
+    backgroundColor: "#5B6BBE",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  selectedAmountText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "600",
   },
   chartContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-end",
-    height: 160,
-    paddingTop: Spacing.lg,
+    height: 130,
   },
   barContainer: {
     alignItems: "center",
     flex: 1,
   },
   barWrapper: {
-    height: 120,
+    height: 100,
     justifyContent: "flex-end",
-    position: "relative",
   },
   bar: {
-    width: 24,
-    borderRadius: 6,
+    width: 28,
+    borderRadius: 8,
+  },
+  barSelected: {
+    width: 32,
   },
   barLabel: {
     fontSize: 12,
     color: "#9CA3AF",
     marginTop: Spacing.sm,
   },
-  tooltipContainer: {
-    position: "absolute",
-    top: -30,
-    left: -8,
-    alignItems: "center",
-    zIndex: 100,
-  },
-  tooltip: {
-    backgroundColor: "#3B5BDB",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  tooltipText: {
-    color: "#FFFFFF",
-    fontSize: 12,
+  barLabelSelected: {
+    color: "#5B6BBE",
     fontWeight: "600",
-  },
-  tooltipArrow: {
-    width: 0,
-    height: 0,
-    borderLeftWidth: 6,
-    borderRightWidth: 6,
-    borderTopWidth: 6,
-    borderLeftColor: "transparent",
-    borderRightColor: "transparent",
-    borderTopColor: "#3B5BDB",
   },
   transactionsSection: {
     marginTop: Spacing.lg,
