@@ -101,7 +101,7 @@ export interface AppContextType extends AppState {
   addGoalDeposit: (goalId: string, amount: number, customDate?: Date) => void;
   updateGoalDeposit: (goalId: string, depositId: string, amount: number, date?: Date) => void;
   deleteGoalDeposit: (goalId: string, depositId: string) => void;
-  addBudgetExpense: (budgetId: string, amount: number, name: string) => void;
+  addBudgetExpense: (budgetId: string, amount: number, name: string, customDate?: Date) => void;
   addTransaction: (transaction: Omit<Transaction, "id">) => void;
   completeOnboarding: () => void;
   updateGoal: (goalId: string, updates: Partial<Goal>) => void;
@@ -497,14 +497,16 @@ export function AppProvider({ children }: AppProviderProps) {
     );
   };
 
-  const addBudgetExpense = (budgetId: string, amount: number, name: string) => {
+  const addBudgetExpense = (budgetId: string, amount: number, name: string, customDate?: Date) => {
+    const expenseDate = customDate || new Date();
+    
     setBudgets((prev) =>
       prev.map((budget) => {
         if (budget.id === budgetId) {
           const newExpense: BudgetExpense = {
             id: generateId(),
             name,
-            date: formatDate(new Date()),
+            date: formatDate(expenseDate),
             amount,
           };
           return {
@@ -523,7 +525,7 @@ export function AppProvider({ children }: AppProviderProps) {
         id: generateId(),
         name,
         category: budget.name,
-        date: formatDate(new Date()),
+        date: formatDate(expenseDate),
         amount: -amount,
         icon: budget.icon,
       };

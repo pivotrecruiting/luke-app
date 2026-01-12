@@ -6,11 +6,15 @@ import {
   Pressable,
   TextInput,
   ScrollView,
+  Platform,
+  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { Spacing } from "@/constants/theme";
+import { useApp } from "@/context/AppContext";
 
 const CATEGORIES = [
   { id: "lebensmittel", name: "Lebensmittel", icon: "shopping-cart" },
@@ -30,19 +34,103 @@ const INCOME_CATEGORIES = [
   { id: "sonstiges", name: "Sonstiges", icon: "more-horizontal" },
 ];
 
+const formatDateDisplay = (date: Date): string => {
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  if (date.toDateString() === today.toDateString()) {
+    return "Heute";
+  } else if (date.toDateString() === yesterday.toDateString()) {
+    return "Gestern";
+  } else {
+    return `${date.getDate().toString().padStart(2, "0")}.${(date.getMonth() + 1).toString().padStart(2, "0")}.${date.getFullYear()}`;
+  }
+};
+
+const formatDateForTransaction = (date: Date): string => {
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  if (date.toDateString() === today.toDateString()) {
+    return `Heute, ${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
+  } else if (date.toDateString() === yesterday.toDateString()) {
+    return "Gestern";
+  } else {
+    return `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1).toString().padStart(2, "0")}/${date.getFullYear()}`;
+  }
+};
+
 export default function AddScreen() {
   const insets = useSafeAreaInsets();
+  const { addTransaction, addBudgetExpense, budgets } = useApp();
+  
   const [activeTab, setActiveTab] = useState<"ausgaben" | "einnahmen">("ausgaben");
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const categories = activeTab === "ausgaben" ? CATEGORIES : INCOME_CATEGORIES;
 
+  const handleDateChange = (event: any, date?: Date) => {
+    setShowDatePicker(Platform.OS === "ios");
+    if (date) {
+      setSelectedDate(date);
+    }
+  };
+
   const handleSave = () => {
+    if (!amount || !selectedCategory) return;
+
+    const parsedAmount = parseFloat(amount.replace(",", "."));
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      Alert.alert("Ungültiger Betrag", "Bitte gib einen gültigen Betrag ein.");
+      return;
+    }
+
+    const category = categories.find((c) => c.id === selectedCategory);
+    if (!category) return;
+
+    const transactionName = description.trim() || category.name;
+    const transactionAmount = activeTab === "ausgaben" ? -parsedAmount : parsedAmount;
+
+    if (activeTab === "ausgaben") {
+      const matchingBudget = budgets.find(
+        (b) => b.name.toLowerCase() === category.name.toLowerCase()
+      );
+      if (matchingBudget) {
+        addBudgetExpense(matchingBudget.id, parsedAmount, transactionName, selectedDate);
+      } else {
+        addTransaction({
+          name: transactionName,
+          category: category.name,
+          date: formatDateForTransaction(selectedDate),
+          amount: transactionAmount,
+          icon: category.icon,
+        });
+      }
+    } else {
+      addTransaction({
+        name: transactionName,
+        category: category.name,
+        date: formatDateForTransaction(selectedDate),
+        amount: transactionAmount,
+        icon: category.icon,
+      });
+    }
+
     setAmount("");
     setDescription("");
     setSelectedCategory(null);
+    setSelectedDate(new Date());
+
+    Alert.alert(
+      activeTab === "ausgaben" ? "Ausgabe gespeichert" : "Einnahme gespeichert",
+      `${transactionName}: € ${parsedAmount.toLocaleString("de-DE", { minimumFractionDigits: 2 })}`
+    );
   };
 
   return (
@@ -125,6 +213,28 @@ export default function AddScreen() {
             placeholder="z.B. Einkauf bei REWE"
             placeholderTextColor="#9CA3AF"
           />
+        </View>
+
+        <View style={styles.inputCard}>
+          <Text style={styles.inputLabel}>Datum</Text>
+          <Pressable
+            style={styles.dateButton}
+            onPress={() => setShowDatePicker(true)}
+          >
+            <Feather name="calendar" size={20} color="#7340fd" />
+            <Text style={styles.dateButtonText}>{formatDateDisplay(selectedDate)}</Text>
+            <Feather name="chevron-down" size={20} color="#6B7280" />
+          </Pressable>
+          {showDatePicker && (
+            <DateTimePicker
+              value={selectedDate}
+              mode="date"
+              display={Platform.OS === "ios" ? "spinner" : "default"}
+              onChange={handleDateChange}
+              maximumDate={new Date()}
+              locale="de-DE"
+            />
+          )}
         </View>
 
         <View style={styles.inputCard}>
@@ -215,13 +325,11 @@ const styles = StyleSheet.create({
   },
   toggleButtonActive: {
     backgroundColor: "#FFFFFF",
-    borderWidth: 2,
-    borderColor: "#3B5BDB",
   },
   toggleButtonText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "rgba(255,255,255,0.8)",
+    color: "#FFFFFF",
   },
   toggleButtonTextActive: {
     color: "#3B5BDB",
@@ -256,7 +364,7 @@ const styles = StyleSheet.create({
   currencySymbol: {
     fontSize: 32,
     fontWeight: "700",
-    color: "#000000",
+    color: "#7340fd",
     marginRight: 8,
   },
   amountInput: {
@@ -272,6 +380,21 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     outlineStyle: "none",
   } as any,
+  dateButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F3F4F6",
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    gap: 12,
+  },
+  dateButtonText: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#000000",
+  },
   categoriesGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
