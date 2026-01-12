@@ -800,6 +800,8 @@ export default function InsightsScreen() {
             showsHorizontalScrollIndicator={false}
             style={styles.tabsScrollView}
             contentContainerStyle={styles.tabsRow}
+            keyboardShouldPersistTaps="always"
+            nestedScrollEnabled={true}
           >
             <Pressable
               style={[
