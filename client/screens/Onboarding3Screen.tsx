@@ -37,48 +37,48 @@ const savingsGoals = [
   "Klarna",
 ];
 
-const iconKeywords: Array<{ keywords: string[]; icon: string }> = [
-  { keywords: ["iphone", "handy", "smartphone", "telefon", "phone", "samsung", "pixel", "xiaomi"], icon: "smartphone" },
-  { keywords: ["laptop", "macbook", "notebook", "computer", "pc", "imac", "mac"], icon: "monitor" },
-  { keywords: ["bildschirm", "monitor", "tv", "fernseher", "display", "screen"], icon: "monitor" },
-  { keywords: ["auto", "car", "fahrzeug", "wagen", "tesla", "bmw", "mercedes", "audi", "vw"], icon: "truck" },
-  { keywords: ["vespa", "roller", "motorrad", "moped", "bike", "fahrrad", "ebike", "e-bike"], icon: "compass" },
-  { keywords: ["urlaub", "reise", "ferien", "travel", "trip", "strand", "meer", "vacation"], icon: "sun" },
-  { keywords: ["führerschein", "lizenz", "license", "prüfung"], icon: "award" },
-  { keywords: ["wohnung", "haus", "home", "apartment", "immobilie", "miete", "eigentum", "zimmer"], icon: "home" },
-  { keywords: ["hochzeit", "heirat", "wedding", "ring", "verlobung", "ehe"], icon: "heart" },
-  { keywords: ["schulden", "kredit", "loan", "abbezahlen", "tilgung", "raten"], icon: "credit-card" },
-  { keywords: ["notgroschen", "reserve", "emergency", "rücklage", "sicherheit"], icon: "shield" },
-  { keywords: ["uhr", "watch", "armbanduhr", "rolex", "smartwatch", "apple watch"], icon: "watch" },
-  { keywords: ["weihnachten", "christmas", "geschenk", "gift", "geburtstag", "birthday", "present"], icon: "gift" },
-  { keywords: ["klarna", "paypal", "zahlung", "payment", "rechnung", "bill"], icon: "dollar-sign" },
-  { keywords: ["kamera", "camera", "foto", "photo", "gopro", "dslr"], icon: "camera" },
-  { keywords: ["musik", "music", "kopfhörer", "headphones", "airpods", "spotify", "instrument", "gitarre"], icon: "headphones" },
-  { keywords: ["fitness", "gym", "sport", "training", "workout", "mitgliedschaft"], icon: "activity" },
-  { keywords: ["buch", "book", "bücher", "kindle", "lesen", "reading"], icon: "book" },
-  { keywords: ["kurs", "course", "ausbildung", "studium", "uni", "schule", "lernen", "education"], icon: "book-open" },
-  { keywords: ["flug", "flight", "flugzeug", "plane", "airline", "fliegen"], icon: "send" },
-  { keywords: ["möbel", "furniture", "sofa", "couch", "tisch", "stuhl", "bett", "schrank"], icon: "box" },
-  { keywords: ["kleidung", "clothes", "mode", "fashion", "schuhe", "shoes", "jacke", "anzug"], icon: "shopping-bag" },
-  { keywords: ["spiel", "game", "playstation", "xbox", "nintendo", "switch", "ps5", "gaming", "konsole"], icon: "play" },
-  { keywords: ["tablet", "ipad", "surface"], icon: "tablet" },
-  { keywords: ["schmuck", "jewelry", "kette", "armband", "ohrringe", "gold", "silber"], icon: "star" },
-  { keywords: ["baby", "kind", "child", "familie", "family"], icon: "users" },
-  { keywords: ["hund", "katze", "haustier", "pet", "tier", "animal"], icon: "heart" },
-  { keywords: ["garten", "garden", "pflanzen", "plants", "balkon"], icon: "sun" },
-  { keywords: ["küche", "kitchen", "kochen", "cooking", "thermomix", "kaffeemaschine"], icon: "coffee" },
+const emojiKeywords: Array<{ keywords: string[]; emoji: string }> = [
+  { keywords: ["iphone", "handy", "smartphone", "telefon", "phone", "samsung", "pixel", "xiaomi"], emoji: "📱" },
+  { keywords: ["laptop", "macbook", "notebook", "computer", "pc", "imac", "mac"], emoji: "💻" },
+  { keywords: ["bildschirm", "monitor", "tv", "fernseher", "display", "screen"], emoji: "🖥️" },
+  { keywords: ["auto", "car", "fahrzeug", "wagen", "tesla", "bmw", "mercedes", "audi", "vw"], emoji: "🚗" },
+  { keywords: ["vespa", "roller", "motorrad", "moped", "bike", "fahrrad", "ebike", "e-bike"], emoji: "🛵" },
+  { keywords: ["urlaub", "reise", "ferien", "travel", "trip", "strand", "meer", "vacation"], emoji: "🏖️" },
+  { keywords: ["führerschein", "lizenz", "license", "prüfung"], emoji: "🎓" },
+  { keywords: ["wohnung", "haus", "home", "apartment", "immobilie", "miete", "eigentum", "zimmer"], emoji: "🏠" },
+  { keywords: ["hochzeit", "heirat", "wedding", "ring", "verlobung", "ehe"], emoji: "💍" },
+  { keywords: ["schulden", "kredit", "loan", "abbezahlen", "tilgung", "raten", "klarna"], emoji: "💳" },
+  { keywords: ["notgroschen", "reserve", "emergency", "rücklage", "sicherheit"], emoji: "🛡️" },
+  { keywords: ["uhr", "watch", "armbanduhr", "rolex", "smartwatch", "apple watch"], emoji: "⌚" },
+  { keywords: ["weihnachten", "christmas", "geschenk", "gift", "geburtstag", "birthday", "present"], emoji: "🎁" },
+  { keywords: ["paypal", "zahlung", "payment", "rechnung", "bill"], emoji: "💵" },
+  { keywords: ["kamera", "camera", "foto", "photo", "gopro", "dslr"], emoji: "📷" },
+  { keywords: ["musik", "music", "kopfhörer", "headphones", "airpods", "spotify", "instrument", "gitarre"], emoji: "🎧" },
+  { keywords: ["fitness", "gym", "sport", "training", "workout", "mitgliedschaft"], emoji: "💪" },
+  { keywords: ["buch", "book", "bücher", "kindle", "lesen", "reading"], emoji: "📚" },
+  { keywords: ["kurs", "course", "ausbildung", "studium", "uni", "schule", "lernen", "education"], emoji: "🎓" },
+  { keywords: ["flug", "flight", "flugzeug", "plane", "airline", "fliegen"], emoji: "✈️" },
+  { keywords: ["möbel", "furniture", "sofa", "couch", "tisch", "stuhl", "bett", "schrank"], emoji: "🛋️" },
+  { keywords: ["kleidung", "clothes", "mode", "fashion", "schuhe", "shoes", "jacke", "anzug"], emoji: "👗" },
+  { keywords: ["spiel", "game", "playstation", "xbox", "nintendo", "switch", "ps5", "gaming", "konsole"], emoji: "🎮" },
+  { keywords: ["tablet", "ipad", "surface"], emoji: "📱" },
+  { keywords: ["schmuck", "jewelry", "kette", "armband", "ohrringe", "gold", "silber"], emoji: "💎" },
+  { keywords: ["baby", "kind", "child", "familie", "family"], emoji: "👶" },
+  { keywords: ["hund", "katze", "haustier", "pet", "tier", "animal"], emoji: "🐕" },
+  { keywords: ["garten", "garden", "pflanzen", "plants", "balkon"], emoji: "🌱" },
+  { keywords: ["küche", "kitchen", "kochen", "cooking", "thermomix", "kaffeemaschine"], emoji: "☕" },
 ];
 
-function getIconForText(text: string): string {
+function getEmojiForText(text: string): string {
   const lowerText = text.toLowerCase();
-  for (const entry of iconKeywords) {
+  for (const entry of emojiKeywords) {
     for (const keyword of entry.keywords) {
       if (lowerText.includes(keyword)) {
-        return entry.icon;
+        return entry.emoji;
       }
     }
   }
-  return "target";
+  return "🎯";
 }
 
 export default function Onboarding3Screen() {
@@ -93,8 +93,8 @@ export default function Onboarding3Screen() {
     if (selectedGoal && amount) {
       const parsedAmount = parseFloat(amount.replace(",", "."));
       if (!isNaN(parsedAmount) && parsedAmount > 0) {
-        const icon = getIconForText(selectedGoal);
-        addGoal(selectedGoal, icon, parsedAmount);
+        const emoji = getEmojiForText(selectedGoal);
+        addGoal(selectedGoal, emoji, parsedAmount);
       }
     }
     navigation.navigate("Onboarding4");
@@ -132,12 +132,7 @@ export default function Onboarding3Screen() {
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Name</Text>
             <View style={styles.nameInputContainer}>
-              <Feather
-                name={getIconForText(selectedGoal) as any}
-                size={20}
-                color="#6B7280"
-                style={styles.inputIcon}
-              />
+              <Text style={styles.inputEmoji}>{getEmojiForText(selectedGoal)}</Text>
               <TextInput
                 style={styles.nameInput}
                 value={selectedGoal}
@@ -235,7 +230,8 @@ const styles = StyleSheet.create({
     borderColor: Colors.light.inputBorderLight,
     paddingHorizontal: Spacing.lg,
   },
-  inputIcon: {
+  inputEmoji: {
+    fontSize: 20,
     marginRight: Spacing.sm,
   },
   nameInput: {
