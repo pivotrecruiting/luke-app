@@ -705,14 +705,7 @@ export default function InsightsScreen() {
             </Pressable>
           </View>
 
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            style={styles.tabsScrollView}
-            contentContainerStyle={styles.tabsRow}
-            keyboardShouldPersistTaps="always"
-            nestedScrollEnabled={true}
-          >
+          <View style={styles.tabsRow}>
             <Pressable
               style={[
                 styles.tabButton,
@@ -742,7 +735,7 @@ export default function InsightsScreen() {
                   activeFilter === "income" && styles.tabButtonTextActive,
                 ]}
               >
-                Einnahmen vs Ausgaben
+                vs Ausgaben
               </Text>
             </Pressable>
             <Pressable
@@ -761,7 +754,7 @@ export default function InsightsScreen() {
                 Trend
               </Text>
             </Pressable>
-          </ScrollView>
+          </View>
 
           {renderContent()}
         </ScrollView>
@@ -1126,32 +1119,31 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#6B7280",
   },
-  tabsScrollView: {
-    marginBottom: 16,
-    marginHorizontal: -20,
-  },
   tabsRow: {
     flexDirection: "row",
     gap: 8,
-    paddingLeft: 20,
-    paddingRight: 40,
+    marginBottom: 16,
   },
   tabButton: {
-    paddingHorizontal: 16,
+    flex: 1,
+    paddingHorizontal: 8,
     paddingVertical: 10,
     borderRadius: 20,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
     borderColor: "#E5E7EB",
+    alignItems: "center",
+    justifyContent: "center",
   },
   tabButtonActive: {
     backgroundColor: "#3B5BDB",
     borderColor: "#3B5BDB",
   },
   tabButtonText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "500",
     color: "#6B7280",
+    textAlign: "center",
   },
   tabButtonTextActive: {
     color: "#FFFFFF",
