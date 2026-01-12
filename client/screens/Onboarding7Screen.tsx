@@ -1,23 +1,24 @@
-import React, { useState, useRef } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  ScrollView,
-  NativeSyntheticEvent,
-  NativeScrollEvent,
-} from "react-native";
-import Animated, { FadeIn } from "react-native-reanimated";
+import React, { useState } from "react";
+import { View, Text, StyleSheet, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { OnboardingStackParamList } from "@/navigation/OnboardingNavigator";
+import { Feather } from "@expo/vector-icons";
 import ProgressDots from "@/components/ProgressDots";
 import Chip from "@/components/Chip";
-import { Spacing, BorderRadius, Colors } from "@/constants/theme";
+import CurrencyInput from "@/components/CurrencyInput";
+import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
+import { Spacing, BorderRadius, Typography, Colors } from "@/constants/theme";
+import { useApp } from "@/context/AppContext";
+
+interface Entry {
+  type: string;
+  amount: string;
+}
 
 const categories = [
+  "Lebensmittel",
   "Essen & Trinken",
   "Feiern",
   "Shoppen",
@@ -27,126 +28,128 @@ const categories = [
   "Events",
   "Mobilität",
   "Coffee 2 go",
-  "Aus",
 ];
-
-const amounts = [10, 20, 30, 50, 100, 150, 200, 250, 300, 400, 500];
-
-const ITEM_HEIGHT = 40;
-const VISIBLE_ITEMS = 5;
 
 type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
 
 export default function Onboarding7Screen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
-  const [selectedCategory, setSelectedCategory] = useState<string>("Shoppen");
-  const [selectedAmount, setSelectedAmount] = useState<number>(50);
-  const scrollViewRef = useRef<ScrollView>(null);
+  const { addBudget } = useApp();
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [amount, setAmount] = useState("");
+  const [entries, setEntries] = useState<Entry[]>([]);
 
-  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const offsetY = event.nativeEvent.contentOffset.y;
-    const index = Math.round(offsetY / ITEM_HEIGHT);
-    if (index >= 0 && index < amounts.length) {
-      setSelectedAmount(amounts[index]);
+  const handleAddEntry = () => {
+    if (selectedCategory && amount !== "") {
+      setEntries((prev) => [...prev, { type: selectedCategory, amount }]);
+      setSelectedCategory(null);
+      setAmount("");
     }
   };
 
-  const handleScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const offsetY = event.nativeEvent.contentOffset.y;
-    const index = Math.round(offsetY / ITEM_HEIGHT);
-    if (index >= 0 && index < amounts.length) {
-      scrollViewRef.current?.scrollTo({
-        y: index * ITEM_HEIGHT,
-        animated: true,
-      });
-      setSelectedAmount(amounts[index]);
-    }
+  const handleDeleteEntry = (index: number) => {
+    setEntries((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const categoryIcons: Record<string, { icon: string; color: string }> = {
+    "Lebensmittel": { icon: "shopping-cart", color: "#F59E0B" },
+    "Essen & Trinken": { icon: "coffee", color: "#EF4444" },
+    "Feiern": { icon: "music", color: "#8B5CF6" },
+    "Shoppen": { icon: "shopping-bag", color: "#EC4899" },
+    "Sprit": { icon: "truck", color: "#6366F1" },
+    "Auswärts": { icon: "map-pin", color: "#10B981" },
+    "Freizeit": { icon: "sun", color: "#F97316" },
+    "Events": { icon: "calendar", color: "#3B82F6" },
+    "Mobilität": { icon: "navigation", color: "#14B8A6" },
+    "Coffee 2 go": { icon: "coffee", color: "#78350F" },
   };
 
   const handleContinue = () => {
+    if (entries.length > 0) {
+      entries.forEach((entry) => {
+        const parsedAmount = parseFloat(entry.amount.replace(",", "."));
+        const iconData = categoryIcons[entry.type] || { icon: "circle", color: "#6B7280" };
+        addBudget(entry.type, iconData.icon, iconData.color, parsedAmount);
+      });
+    }
     navigation.navigate("Paywall");
   };
 
-  const initialScrollIndex = amounts.indexOf(50);
-
   return (
     <View style={[styles.container, { paddingTop: insets.top + Spacing.xl }]}>
-      <View style={styles.content}>
+      <KeyboardAwareScrollViewCompat
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: insets.bottom + 100 },
+        ]}
+      >
         <ProgressDots total={5} current={4} />
 
         <View style={styles.headerContainer}>
-          <Text style={styles.title}>Wofür gibst du aktuell</Text>
-          <Text style={styles.title}>am meisten Geld aus?</Text>
+          <Text style={styles.titleBold}>Wofür gibst du aktuell</Text>
+          <Text style={styles.titleBold}>am meisten Geld aus?</Text>
           <Text style={styles.subtitle}>
-            Wähle einen Bereich den wir gemeinsam zähmen
+            Wähle Bereiche die wir gemeinsam zähmen und lege dein monatliches Limit fest.
           </Text>
         </View>
 
         <View style={styles.chipsContainer}>
-          {categories.map((category) => (
+          {categories.map((type) => (
             <Chip
-              key={category}
-              label={category}
-              selected={selectedCategory === category}
-              onPress={() => setSelectedCategory(category)}
+              key={type}
+              label={type}
+              selected={selectedCategory === type}
+              onPress={() => setSelectedCategory(type)}
             />
           ))}
         </View>
 
-        <View style={styles.pickerSection}>
-          <Text style={styles.pickerLabel}>
-            Dein monatliches Limit für{" "}
-            <Text style={styles.pickerLabelBold}>{selectedCategory}</Text>:
-          </Text>
-
-          <View style={styles.pickerContainer}>
-            <View style={styles.pickerHighlight} />
-            <ScrollView
-              ref={scrollViewRef}
-              showsVerticalScrollIndicator={false}
-              snapToInterval={ITEM_HEIGHT}
-              decelerationRate="fast"
-              onScroll={handleScroll}
-              onMomentumScrollEnd={handleScrollEnd}
-              scrollEventThrottle={16}
-              contentContainerStyle={{
-                paddingVertical: ITEM_HEIGHT * Math.floor(VISIBLE_ITEMS / 2),
-              }}
-              contentOffset={{ x: 0, y: initialScrollIndex * ITEM_HEIGHT }}
-              keyboardShouldPersistTaps="handled"
-            >
-              {amounts.map((amount) => (
-                <View key={amount} style={styles.pickerItem}>
-                  <Text
-                    style={[
-                      styles.pickerItemText,
-                      selectedAmount === amount && styles.pickerItemTextSelected,
-                    ]}
-                  >
-                    {selectedAmount === amount ? `€ ${amount}` : amount}
-                  </Text>
-                </View>
-              ))}
-            </ScrollView>
-          </View>
+        <View style={styles.inputContainer}>
+          <CurrencyInput value={amount} onChangeText={setAmount} />
         </View>
-      </View>
+
+        <Pressable
+          onPress={handleAddEntry}
+          style={({ pressed }) => [
+            styles.addButton,
+            pressed && styles.addButtonPressed,
+          ]}
+        >
+          <Text style={styles.addButtonText}>Hinzufügen</Text>
+        </Pressable>
+
+        {entries.length > 0 ? (
+          <View style={styles.entriesContainer}>
+            {entries.map((entry, index) => (
+              <View key={index} style={styles.entryRow}>
+                <View style={styles.entryInfo}>
+                  <Text style={styles.entryType}>{entry.type}</Text>
+                  <Text style={styles.entryAmount}>{entry.amount} €</Text>
+                </View>
+                <Pressable onPress={() => handleDeleteEntry(index)}>
+                  <Feather name="x" size={20} color="#9CA3AF" />
+                </Pressable>
+              </View>
+            ))}
+          </View>
+        ) : null}
+      </KeyboardAwareScrollViewCompat>
 
       <View
         style={[
           styles.buttonContainer,
-          { paddingBottom: insets.bottom + Spacing.lg },
+          { paddingBottom: insets.bottom + Spacing.xl },
         ]}
       >
         <Pressable
+          onPress={handleContinue}
           style={({ pressed }) => [
-            styles.continueButton,
+            styles.button,
             pressed && styles.buttonPressed,
           ]}
-          onPress={handleContinue}
         >
-          <Text style={styles.continueButtonText}>WEITER</Text>
+          <Text style={styles.buttonText}>WEITER</Text>
         </Pressable>
       </View>
     </View>
@@ -156,98 +159,98 @@ export default function Onboarding7Screen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Colors.light.backgroundRoot,
+    paddingHorizontal: Spacing.xl,
   },
-  content: {
-    flex: 1,
+  scrollContent: {
+    flexGrow: 1,
   },
   headerContainer: {
-    paddingHorizontal: Spacing.xl,
     marginTop: Spacing["2xl"],
   },
-  title: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: "#000000",
+  titleBold: {
+    ...Typography.h1,
+    color: Colors.light.text,
   },
   subtitle: {
-    fontSize: 16,
-    color: "#9CA3AF",
+    ...Typography.body,
+    color: Colors.light.textSecondary,
     marginTop: Spacing.md,
   },
   chipsContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: Spacing.sm,
-    paddingHorizontal: Spacing.xl,
-    marginTop: Spacing["2xl"],
+    marginTop: Spacing["3xl"],
   },
-  pickerSection: {
-    flex: 1,
+  inputContainer: {
+    marginTop: Spacing["3xl"],
+  },
+  addButton: {
+    backgroundColor: "transparent",
+    borderWidth: 1,
+    borderColor: "#7340FE",
+    borderRadius: 12,
+    height: Spacing.buttonHeight,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: Spacing["2xl"],
+    marginTop: Spacing.lg,
   },
-  pickerLabel: {
+  addButtonPressed: {
+    opacity: 0.8,
+  },
+  addButtonText: {
     fontSize: 16,
-    color: "#9CA3AF",
-    marginBottom: Spacing.lg,
+    fontWeight: "600",
+    color: "#7340FE",
   },
-  pickerLabelBold: {
-    fontWeight: "700",
-    color: "#000000",
+  entriesContainer: {
+    marginTop: Spacing.xl,
   },
-  pickerContainer: {
-    height: ITEM_HEIGHT * VISIBLE_ITEMS,
-    width: 200,
-    overflow: "hidden",
-    position: "relative",
-  },
-  pickerHighlight: {
-    position: "absolute",
-    top: ITEM_HEIGHT * Math.floor(VISIBLE_ITEMS / 2),
-    left: 0,
-    right: 0,
-    height: ITEM_HEIGHT,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: "#E5E7EB",
-    zIndex: 1,
-    pointerEvents: "none",
-  },
-  pickerItem: {
-    height: ITEM_HEIGHT,
-    justifyContent: "center",
+  entryRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
+    backgroundColor: "#F3F4F6",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 8,
   },
-  pickerItemText: {
-    fontSize: 20,
-    color: "#D1D5DB",
+  entryInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.md,
   },
-  pickerItemTextSelected: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#000000",
+  entryType: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#000",
+  },
+  entryAmount: {
+    fontSize: 16,
+    color: "#6B7280",
   },
   buttonContainer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
     paddingHorizontal: Spacing.xl,
+    backgroundColor: Colors.light.backgroundRoot,
     paddingTop: Spacing.lg,
-    backgroundColor: "#FFFFFF",
   },
-  continueButton: {
-    backgroundColor: "#8E97FD",
-    height: 56,
+  button: {
+    backgroundColor: Colors.light.buttonPrimary,
     borderRadius: BorderRadius.md,
-    justifyContent: "center",
+    height: Spacing.buttonHeight,
     alignItems: "center",
+    justifyContent: "center",
   },
   buttonPressed: {
     opacity: 0.8,
   },
-  continueButtonText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "800",
-    letterSpacing: 1,
+  buttonText: {
+    ...Typography.button,
+    color: Colors.light.buttonText,
   },
 });
