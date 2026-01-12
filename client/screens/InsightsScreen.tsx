@@ -407,10 +407,55 @@ const EXPENSE_TYPES = [
   { id: "sonstiges", name: "Sonstiges", icon: "plus-circle" },
 ];
 
+const parseGermanDate = (dateStr: string): Date => {
+  const parts = dateStr.split(".");
+  if (parts.length === 3) {
+    return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+  }
+  return new Date();
+};
+
+const getDateRangeForFilter = (filter: "thisMonth" | "lastMonth" | "last3Months" | "last6Months" | "thisYear"): { start: Date; end: Date } => {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+  
+  switch (filter) {
+    case "thisMonth": {
+      const start = new Date(currentYear, currentMonth, 1);
+      const end = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59);
+      return { start, end };
+    }
+    case "lastMonth": {
+      const start = new Date(currentYear, currentMonth - 1, 1);
+      const end = new Date(currentYear, currentMonth, 0, 23, 59, 59);
+      return { start, end };
+    }
+    case "last3Months": {
+      const start = new Date(currentYear, currentMonth - 2, 1);
+      const end = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59);
+      return { start, end };
+    }
+    case "last6Months": {
+      const start = new Date(currentYear, currentMonth - 5, 1);
+      const end = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59);
+      return { start, end };
+    }
+    case "thisYear": {
+      const start = new Date(currentYear, 0, 1);
+      const end = new Date(currentYear, 11, 31, 23, 59, 59);
+      return { start, end };
+    }
+    default:
+      return { start: new Date(currentYear, currentMonth, 1), end: now };
+  }
+};
+
 export default function InsightsScreen() {
   const insets = useSafeAreaInsets();
   const { 
-    insightCategories, 
+    insightCategories,
+    budgets,
     totalIncome, 
     totalExpenses,
     totalFixedExpenses,
@@ -448,34 +493,45 @@ export default function InsightsScreen() {
   const [expenseAmount, setExpenseAmount] = useState("");
   const [deleteExpenseConfirmId, setDeleteExpenseConfirmId] = useState<string | null>(null);
 
-  const getTimeFilterMultiplier = (filter: typeof selectedTimeFilter): { multiplier: number; variation: number } => {
-    switch (filter) {
-      case "thisMonth": return { multiplier: 1, variation: 0 };
-      case "lastMonth": return { multiplier: 1, variation: -0.08 };
-      case "last3Months": return { multiplier: 3, variation: 0.05 };
-      case "last6Months": return { multiplier: 6, variation: -0.03 };
-      case "thisYear": return { multiplier: 12, variation: 0.02 };
-      default: return { multiplier: 1, variation: 0 };
-    }
-  };
-
   const filteredCategories = useMemo(() => {
-    let categories = insightCategories;
+    const { start, end } = getDateRangeForFilter(selectedTimeFilter);
+    
+    const categoryColors: Record<string, string> = {
+      "Lebensmittel": "#3B5BDB",
+      "Transport": "#7B8CDE",
+      "Unterhaltung": "#5C7CFA",
+      "Shopping": "#748FFC",
+      "Restaurant": "#91A7FF",
+      "Gesundheit": "#BAC8FF",
+      "Sonstiges": "#DBE4FF",
+    };
+    
+    const categoryTotals: Record<string, number> = {};
+    
+    budgets.forEach((budget) => {
+      const filteredExpenses = budget.expenses.filter((expense) => {
+        const expenseDate = parseGermanDate(expense.date);
+        return expenseDate >= start && expenseDate <= end;
+      });
+      
+      const totalForCategory = filteredExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+      if (totalForCategory > 0) {
+        categoryTotals[budget.name] = (categoryTotals[budget.name] || 0) + totalForCategory;
+      }
+    });
+    
+    let categories = Object.entries(categoryTotals).map(([name, amount]) => ({
+      name,
+      amount,
+      color: categoryColors[name] || "#7B8CDE",
+    }));
     
     if (selectedCostFilters.length > 0) {
       categories = categories.filter(cat => selectedCostFilters.includes(cat.name));
     }
     
-    const { multiplier, variation } = getTimeFilterMultiplier(selectedTimeFilter);
-    if (multiplier !== 1 || variation !== 0) {
-      categories = categories.map(cat => ({
-        ...cat,
-        amount: Math.round(cat.amount * multiplier * (1 + variation) * 100) / 100,
-      }));
-    }
-    
     return categories;
-  }, [insightCategories, selectedCostFilters, selectedTimeFilter]);
+  }, [budgets, selectedCostFilters, selectedTimeFilter]);
 
   React.useEffect(() => {
     if (selectedCategory && !filteredCategories.find(c => c.name === selectedCategory)) {
@@ -837,9 +893,9 @@ export default function InsightsScreen() {
                   </View>
 
                   <View style={styles.pageIndicator}>
-                    <View style={[styles.pageDot, activeFilter === "kategorien" && styles.pageDotActive]} />
-                    <View style={[styles.pageDot, activeFilter === "income" && styles.pageDotActive]} />
-                    <View style={[styles.pageDot, activeFilter === "trend" && styles.pageDotActive]} />
+                    <View style={[styles.pageDot, styles.pageDotActive]} />
+                    <View style={styles.pageDot} />
+                    <View style={styles.pageDot} />
                   </View>
                 </View>
               </View>
@@ -852,9 +908,9 @@ export default function InsightsScreen() {
                   expenses={totalExpenses}
                 />
                 <View style={styles.pageIndicatorStandalone}>
-                  <View style={[styles.pageDot, activeFilter === "kategorien" && styles.pageDotActive]} />
-                  <View style={[styles.pageDot, activeFilter === "income" && styles.pageDotActive]} />
-                  <View style={[styles.pageDot, activeFilter === "trend" && styles.pageDotActive]} />
+                  <View style={styles.pageDot} />
+                  <View style={[styles.pageDot, styles.pageDotActive]} />
+                  <View style={styles.pageDot} />
                 </View>
               </View>
             )}
@@ -867,9 +923,9 @@ export default function InsightsScreen() {
                   onSelectMonth={setSelectedTrendMonth}
                 />
                 <View style={styles.pageIndicatorStandalone}>
-                  <View style={[styles.pageDot, activeFilter === "kategorien" && styles.pageDotActive]} />
-                  <View style={[styles.pageDot, activeFilter === "income" && styles.pageDotActive]} />
-                  <View style={[styles.pageDot, activeFilter === "trend" && styles.pageDotActive]} />
+                  <View style={styles.pageDot} />
+                  <View style={styles.pageDot} />
+                  <View style={[styles.pageDot, styles.pageDotActive]} />
                 </View>
               </View>
             )}
