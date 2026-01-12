@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -36,6 +36,15 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { userName, balance, totalIncome, totalExpenses, weeklySpending, transactions } = useApp();
+  
+  // Sort transactions by date (newest first)
+  const sortedTransactions = useMemo(() => {
+    return [...transactions].sort((a, b) => {
+      const dateA = new Date(a.date.split('.').reverse().join('-'));
+      const dateB = new Date(b.date.split('.').reverse().join('-'));
+      return dateB.getTime() - dateA.getTime();
+    });
+  }, [transactions]);
   
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [allTransactionsVisible, setAllTransactionsVisible] = useState(false);
@@ -160,7 +169,7 @@ export default function HomeScreen() {
             </Pressable>
           </View>
 
-          {transactions.slice(0, 2).map((transaction) => (
+          {sortedTransactions.slice(0, 2).map((transaction) => (
             <View key={transaction.id} style={styles.transactionItem}>
               <View style={styles.transactionIconContainer}>
                 <Feather
@@ -216,7 +225,7 @@ export default function HomeScreen() {
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
             >
-              {transactions.map((transaction) => (
+              {sortedTransactions.map((transaction) => (
                 <View key={transaction.id} style={styles.transactionItem}>
                   <View style={styles.transactionIconContainer}>
                     <Feather
