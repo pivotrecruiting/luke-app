@@ -228,14 +228,7 @@ const INITIAL_GOALS: Goal[] = [];
 
 const INITIAL_BUDGETS: Budget[] = [];
 
-const INITIAL_TRANSACTIONS: Transaction[] = [
-  { id: "tx-1", name: "Starbucks", category: "Lebensmittel", date: "Gestern", amount: -4.50, icon: "coffee" },
-  { id: "tx-2", name: "Amazon", category: "Shopping", date: "10.01. 20:14", amount: -29.90, icon: "shopping-cart" },
-  { id: "tx-3", name: "REWE", category: "Lebensmittel", date: "09.01. 16:45", amount: -67.32, icon: "shopping-cart" },
-  { id: "tx-4", name: "Netflix", category: "Abonnements", date: "08.01. 00:00", amount: -12.99, icon: "tv" },
-  { id: "tx-5", name: "Spotify", category: "Abonnements", date: "07.01. 00:00", amount: -9.99, icon: "music" },
-  { id: "tx-6", name: "Gehalt", category: "Einkommen", date: "01.01. 00:00", amount: 3200.00, icon: "briefcase" },
-];
+const INITIAL_TRANSACTIONS: Transaction[] = [];
 
 const CATEGORY_COLORS: Record<string, string> = {
   "Lebensmittel": "#3B5BDB",
