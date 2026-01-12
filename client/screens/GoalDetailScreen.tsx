@@ -267,7 +267,7 @@ export default function GoalDetailScreen() {
       />
       <View style={styles.modalContentWrapper}>
         <LinearGradient
-          colors={["rgba(42, 58, 230, 0.69)", "rgba(23, 32, 128, 0.69)"]}
+          colors={["#2A3AE6", "#171F80"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 1 }}
           style={[styles.header, { paddingTop: insets.top + Spacing.lg }]}
@@ -536,7 +536,7 @@ export default function GoalDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "transparent",
+    backgroundColor: "#000000",
   },
   fadeOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -547,7 +547,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#F5F5F5",
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    marginTop: 60,
     overflow: "hidden",
   },
   header: {
