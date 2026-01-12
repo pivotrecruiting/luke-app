@@ -8,6 +8,7 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from "react-native";
+import Animated, { FadeIn } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -82,13 +83,7 @@ export default function Onboarding7Screen() {
           </Text>
         </View>
 
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.chipsContainer}
-          style={styles.chipsScroll}
-          keyboardShouldPersistTaps="handled"
-        >
+        <View style={styles.chipsContainer}>
           {categories.map((category) => (
             <Chip
               key={category}
@@ -97,7 +92,7 @@ export default function Onboarding7Screen() {
               onPress={() => setSelectedCategory(category)}
             />
           ))}
-        </ScrollView>
+        </View>
 
         <View style={styles.pickerSection}>
           <Text style={styles.pickerLabel}>
@@ -180,16 +175,12 @@ const styles = StyleSheet.create({
     color: "#9CA3AF",
     marginTop: Spacing.md,
   },
-  chipsScroll: {
-    marginTop: Spacing["2xl"],
-    maxHeight: 100,
-  },
   chipsContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: Spacing.sm,
     paddingHorizontal: Spacing.xl,
-    paddingBottom: Spacing.md,
+    marginTop: Spacing["2xl"],
   },
   pickerSection: {
     flex: 1,
