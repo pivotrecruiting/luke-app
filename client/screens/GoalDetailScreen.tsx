@@ -78,10 +78,18 @@ interface SwipeableDepositProps {
   goalIcon: string;
   onDelete: () => void;
   onEdit: () => void;
+  isActive: boolean;
+  onSwipeOpen: (id: string) => void;
 }
 
-function SwipeableDeposit({ deposit, goalIcon, onDelete, onEdit }: SwipeableDepositProps) {
-  const [isSwipedOpen, setIsSwipedOpen] = useState(false);
+function SwipeableDeposit({ deposit, goalIcon, onDelete, onEdit, isActive, onSwipeOpen }: SwipeableDepositProps) {
+  const handleSwipeOpen = () => {
+    onSwipeOpen(deposit.id);
+  };
+
+  const handleCloseSwipe = () => {
+    onSwipeOpen("");
+  };
 
   const handleDelete = () => {
     Alert.alert(
@@ -91,7 +99,7 @@ function SwipeableDeposit({ deposit, goalIcon, onDelete, onEdit }: SwipeableDepo
         { 
           text: "Abbrechen", 
           style: "cancel",
-          onPress: () => setIsSwipedOpen(false)
+          onPress: handleCloseSwipe
         },
         {
           text: "Löschen",
@@ -104,21 +112,21 @@ function SwipeableDeposit({ deposit, goalIcon, onDelete, onEdit }: SwipeableDepo
 
   return (
     <View style={styles.swipeableContainer}>
-      {isSwipedOpen ? (
+      {isActive ? (
         <Pressable style={styles.deleteButton} onPress={handleDelete}>
           <Feather name="trash-2" size={20} color="#FFFFFF" />
         </Pressable>
       ) : null}
       <Pressable
-        style={[styles.transactionItem, isSwipedOpen && { marginRight: 80 }]}
+        style={[styles.transactionItem, isActive && { marginRight: 80 }]}
         onPress={() => {
-          if (isSwipedOpen) {
-            setIsSwipedOpen(false);
+          if (isActive) {
+            handleCloseSwipe();
           } else {
             onEdit();
           }
         }}
-        onLongPress={() => setIsSwipedOpen(true)}
+        onLongPress={handleSwipeOpen}
       >
         <View style={styles.transactionLeft}>
           <Text style={styles.transactionIcon}>{goalIcon}</Text>
@@ -158,6 +166,7 @@ export default function GoalDetailScreen() {
   const [editDepositAmount, setEditDepositAmount] = useState("");
   const [editDepositDate, setEditDepositDate] = useState(new Date());
   const [showEditDatePicker, setShowEditDatePicker] = useState(false);
+  const [activeSwipeId, setActiveSwipeId] = useState<string>("");
 
   const percentage = goal ? (goal.current / goal.target) * 100 : 0;
   const remaining = goal ? goal.target - goal.current : 0;
@@ -358,6 +367,8 @@ export default function GoalDetailScreen() {
                   goalIcon={goal.icon}
                   onDelete={() => handleDeleteDeposit(transaction.id)}
                   onEdit={() => handleEditDeposit(transaction)}
+                  isActive={activeSwipeId === transaction.id}
+                  onSwipeOpen={setActiveSwipeId}
                 />
               ))}
             </View>

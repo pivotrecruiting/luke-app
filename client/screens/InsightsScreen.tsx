@@ -431,6 +431,9 @@ export default function InsightsScreen() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedTrendMonth, setSelectedTrendMonth] = useState<number | null>(null);
   
+  const [selectedTimeFilter, setSelectedTimeFilter] = useState<"thisMonth" | "lastMonth" | "last3Months" | "last6Months" | "thisYear">("thisMonth");
+  const [selectedCostFilters, setSelectedCostFilters] = useState<string[]>([]);
+  
   const [incomeModalVisible, setIncomeModalVisible] = useState(false);
   const [editingIncomeId, setEditingIncomeId] = useState<string | null>(null);
   const [selectedIncomeType, setSelectedIncomeType] = useState<string | null>(null);
@@ -445,9 +448,46 @@ export default function InsightsScreen() {
   const [expenseAmount, setExpenseAmount] = useState("");
   const [deleteExpenseConfirmId, setDeleteExpenseConfirmId] = useState<string | null>(null);
 
+  const getTimeFilterMultiplier = (filter: typeof selectedTimeFilter): { multiplier: number; variation: number } => {
+    switch (filter) {
+      case "thisMonth": return { multiplier: 1, variation: 0 };
+      case "lastMonth": return { multiplier: 1, variation: -0.08 };
+      case "last3Months": return { multiplier: 3, variation: 0.05 };
+      case "last6Months": return { multiplier: 6, variation: -0.03 };
+      case "thisYear": return { multiplier: 12, variation: 0.02 };
+      default: return { multiplier: 1, variation: 0 };
+    }
+  };
+
+  const filteredCategories = useMemo(() => {
+    let categories = insightCategories;
+    
+    if (selectedCostFilters.length > 0) {
+      categories = categories.filter(cat => selectedCostFilters.includes(cat.name));
+    }
+    
+    const { multiplier, variation } = getTimeFilterMultiplier(selectedTimeFilter);
+    if (multiplier !== 1 || variation !== 0) {
+      categories = categories.map(cat => ({
+        ...cat,
+        amount: Math.round(cat.amount * multiplier * (1 + variation) * 100) / 100,
+      }));
+    }
+    
+    return categories;
+  }, [insightCategories, selectedCostFilters, selectedTimeFilter]);
+
+  React.useEffect(() => {
+    if (selectedCategory && !filteredCategories.find(c => c.name === selectedCategory)) {
+      setSelectedCategory(null);
+    }
+  }, [filteredCategories, selectedCategory]);
+
   const gesamtAusgaben = useMemo(() => {
-    return insightCategories.reduce((sum, cat) => sum + cat.amount, 0);
-  }, [insightCategories]);
+    return filteredCategories.reduce((sum, cat) => sum + cat.amount, 0);
+  }, [filteredCategories]);
+
+  const activeFilterCount = selectedCostFilters.length + (selectedTimeFilter !== "thisMonth" ? 1 : 0);
 
   const handleCategoryPress = (categoryName: string) => {
     setSelectedCategory((prev) => (prev === categoryName ? null : categoryName));
@@ -599,14 +639,14 @@ export default function InsightsScreen() {
         return (
           <View style={styles.chartCard}>
             <DonutChart
-              categories={insightCategories}
+              categories={filteredCategories}
               total={gesamtAusgaben}
               selectedCategory={selectedCategory}
               onSelectCategory={setSelectedCategory}
             />
 
             <View style={styles.kategorienGrid}>
-              {insightCategories.map((kategorie, index) => {
+              {filteredCategories.map((kategorie, index) => {
                 const isSelected = selectedCategory === kategorie.name;
                 return (
                   <Pressable
@@ -700,9 +740,11 @@ export default function InsightsScreen() {
         >
           <View style={styles.filterRow}>
             <Pressable style={styles.filterButton} onPress={() => setFilterModalVisible(true)}>
-              <Feather name="sliders" size={16} color="#6B7280" />
-              <Text style={styles.filterButtonText}>Filter</Text>
-              <Feather name="chevron-down" size={16} color="#6B7280" />
+              <Feather name="sliders" size={16} color={activeFilterCount > 0 ? "#7340fd" : "#6B7280"} />
+              <Text style={[styles.filterButtonText, activeFilterCount > 0 && styles.filterButtonTextActive]}>
+                Filter{activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
+              </Text>
+              <Feather name="chevron-down" size={16} color={activeFilterCount > 0 ? "#7340fd" : "#6B7280"} />
             </Pressable>
           </View>
 
@@ -762,14 +804,14 @@ export default function InsightsScreen() {
               <View style={styles.pagerPage}>
                 <View style={styles.chartCard}>
                   <DonutChart
-                    categories={insightCategories}
+                    categories={filteredCategories}
                     total={gesamtAusgaben}
                     selectedCategory={selectedCategory}
                     onSelectCategory={setSelectedCategory}
                   />
 
                   <View style={styles.kategorienGrid}>
-                    {insightCategories.map((kategorie, index) => {
+                    {filteredCategories.map((kategorie, index) => {
                       const isSelected = selectedCategory === kategorie.name;
                       return (
                         <Pressable
@@ -939,21 +981,89 @@ export default function InsightsScreen() {
       >
         <View style={styles.modalOverlay}>
           <Pressable style={styles.modalBackdrop} onPress={() => setFilterModalVisible(false)} />
-          <View style={[styles.modalContent, { paddingBottom: insets.bottom + 24 }]}>
+          <ScrollView style={[styles.modalContent, { paddingBottom: insets.bottom + 24, maxHeight: '80%' }]} showsVerticalScrollIndicator={false}>
             <View style={styles.modalHandle} />
             <Text style={styles.modalTitle}>Filter</Text>
 
             <Text style={styles.modalSectionTitle}>Zeitspanne</Text>
+            <View style={styles.filterOptionsGrid}>
+              {[
+                { id: "thisMonth", label: "Dieser Monat" },
+                { id: "lastMonth", label: "Letzter Monat" },
+                { id: "last3Months", label: "3 Monate" },
+                { id: "last6Months", label: "6 Monate" },
+                { id: "thisYear", label: "Dieses Jahr" },
+              ].map((option) => (
+                <Pressable
+                  key={option.id}
+                  style={[
+                    styles.filterOption,
+                    selectedTimeFilter === option.id && styles.filterOptionSelected,
+                  ]}
+                  onPress={() => setSelectedTimeFilter(option.id as any)}
+                >
+                  <Text
+                    style={[
+                      styles.filterOptionText,
+                      selectedTimeFilter === option.id && styles.filterOptionTextSelected,
+                    ]}
+                  >
+                    {option.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
 
-            <Text style={styles.modalSectionTitle}>Kosten</Text>
+            <Text style={styles.modalSectionTitle}>Kategorien</Text>
+            <View style={styles.filterOptionsGrid}>
+              {insightCategories.map((cat) => {
+                const isSelected = selectedCostFilters.includes(cat.name);
+                return (
+                  <Pressable
+                    key={cat.name}
+                    style={[
+                      styles.filterOption,
+                      isSelected && styles.filterOptionSelected,
+                    ]}
+                    onPress={() => {
+                      if (isSelected) {
+                        setSelectedCostFilters(prev => prev.filter(c => c !== cat.name));
+                      } else {
+                        setSelectedCostFilters(prev => [...prev, cat.name]);
+                      }
+                    }}
+                  >
+                    <View style={[styles.filterOptionDot, { backgroundColor: cat.color }]} />
+                    <Text
+                      style={[
+                        styles.filterOptionText,
+                        isSelected && styles.filterOptionTextSelected,
+                      ]}
+                    >
+                      {cat.name}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            {selectedCostFilters.length > 0 ? (
+              <Pressable
+                style={styles.clearFiltersButton}
+                onPress={() => setSelectedCostFilters([])}
+              >
+                <Feather name="x" size={14} color="#6B7280" />
+                <Text style={styles.clearFiltersText}>Filter zurücksetzen</Text>
+              </Pressable>
+            ) : null}
 
             <Pressable
               style={styles.modalDoneButton}
               onPress={() => setFilterModalVisible(false)}
             >
-              <Text style={styles.modalDoneButtonText}>Done</Text>
+              <Text style={styles.modalDoneButtonText}>Fertig</Text>
             </Pressable>
-          </View>
+          </ScrollView>
         </View>
       </Modal>
 
@@ -1193,6 +1303,9 @@ const styles = StyleSheet.create({
   filterButtonText: {
     fontSize: 14,
     color: "#6B7280",
+  },
+  filterButtonTextActive: {
+    color: "#7340fd",
   },
   tabsRow: {
     flexDirection: "row",
@@ -1656,7 +1769,52 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     color: "#000000",
-    marginBottom: 40,
+    marginBottom: 16,
+  },
+  filterOptionsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 24,
+  },
+  filterOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    backgroundColor: "#F3F4F6",
+    gap: 8,
+  },
+  filterOptionSelected: {
+    backgroundColor: "#EDE9FE",
+    borderWidth: 1,
+    borderColor: "#7340fd",
+  },
+  filterOptionText: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#6B7280",
+  },
+  filterOptionTextSelected: {
+    color: "#7340fd",
+  },
+  filterOptionDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  clearFiltersButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 12,
+    marginBottom: 16,
+  },
+  clearFiltersText: {
+    fontSize: 14,
+    color: "#6B7280",
   },
   modalDoneButton: {
     backgroundColor: "#7340fd",

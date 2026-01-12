@@ -77,10 +77,18 @@ interface SwipeableExpenseProps {
   budgetIcon: string;
   onDelete: () => void;
   onEdit: () => void;
+  isActive: boolean;
+  onSwipeOpen: (id: string) => void;
 }
 
-function SwipeableExpense({ expense, budgetIcon, onDelete, onEdit }: SwipeableExpenseProps) {
-  const [isSwipedOpen, setIsSwipedOpen] = useState(false);
+function SwipeableExpense({ expense, budgetIcon, onDelete, onEdit, isActive, onSwipeOpen }: SwipeableExpenseProps) {
+  const handleSwipeOpen = () => {
+    onSwipeOpen(expense.id);
+  };
+
+  const handleCloseSwipe = () => {
+    onSwipeOpen("");
+  };
 
   const handleDelete = () => {
     Alert.alert(
@@ -90,7 +98,7 @@ function SwipeableExpense({ expense, budgetIcon, onDelete, onEdit }: SwipeableEx
         { 
           text: "Abbrechen", 
           style: "cancel",
-          onPress: () => setIsSwipedOpen(false)
+          onPress: handleCloseSwipe
         },
         {
           text: "Löschen",
@@ -103,21 +111,21 @@ function SwipeableExpense({ expense, budgetIcon, onDelete, onEdit }: SwipeableEx
 
   return (
     <View style={styles.swipeableContainer}>
-      {isSwipedOpen ? (
+      {isActive ? (
         <Pressable style={styles.deleteButton} onPress={handleDelete}>
           <Feather name="trash-2" size={20} color="#FFFFFF" />
         </Pressable>
       ) : null}
       <Pressable
-        style={[styles.transactionItem, isSwipedOpen && { marginRight: 80 }]}
+        style={[styles.transactionItem, isActive && { marginRight: 80 }]}
         onPress={() => {
-          if (isSwipedOpen) {
-            setIsSwipedOpen(false);
+          if (isActive) {
+            handleCloseSwipe();
           } else {
             onEdit();
           }
         }}
-        onLongPress={() => setIsSwipedOpen(true)}
+        onLongPress={handleSwipeOpen}
       >
         <View style={styles.transactionLeft}>
           <View style={styles.transactionIconContainer}>
@@ -151,6 +159,7 @@ export default function BudgetDetailScreen() {
   const [editExpenseName, setEditExpenseName] = useState("");
   const [editExpenseDate, setEditExpenseDate] = useState(new Date());
   const [showEditDatePicker, setShowEditDatePicker] = useState(false);
+  const [activeSwipeId, setActiveSwipeId] = useState<string>("");
 
   if (!budget) {
     return (
@@ -334,6 +343,8 @@ export default function BudgetDetailScreen() {
                     budgetIcon={budget.icon}
                     onDelete={() => handleDeleteExpense(expense.id)}
                     onEdit={() => handleEditExpense(expense)}
+                    isActive={activeSwipeId === expense.id}
+                    onSwipeOpen={setActiveSwipeId}
                   />
                 ))}
               </View>
