@@ -51,13 +51,11 @@ export default function Onboarding4Screen() {
   };
 
   const handleContinue = () => {
-    if (entries.length > 0) {
-      const parsedEntries = entries.map((entry) => ({
-        type: entry.type,
-        amount: parseFloat(entry.amount.replace(",", ".")),
-      }));
-      setIncomeEntries(parsedEntries);
-    }
+    const parsedEntries = entries.map((entry) => ({
+      type: entry.type,
+      amount: parseFloat(entry.amount.replace(",", ".")),
+    }));
+    setIncomeEntries(parsedEntries);
     navigation.navigate("Onboarding5");
   };
 

@@ -53,13 +53,11 @@ export default function Onboarding5Screen() {
   };
 
   const handleContinue = () => {
-    if (entries.length > 0) {
-      const parsedEntries = entries.map((entry) => ({
-        type: entry.type,
-        amount: parseFloat(entry.amount.replace(",", ".")),
-      }));
-      setExpenseEntries(parsedEntries);
-    }
+    const parsedEntries = entries.map((entry) => ({
+      type: entry.type,
+      amount: parseFloat(entry.amount.replace(",", ".")),
+    }));
+    setExpenseEntries(parsedEntries);
     navigation.navigate("Onboarding6");
   };
 

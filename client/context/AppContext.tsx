@@ -220,17 +220,9 @@ const formatDate = (date: Date): string => {
   }
 };
 
-const INITIAL_INCOME_ENTRIES: IncomeEntry[] = [
-  { id: "income-1", type: "Gehalt/Lohn", amount: 3200 },
-  { id: "income-2", type: "Nebenjob", amount: 612.57 },
-];
+const INITIAL_INCOME_ENTRIES: IncomeEntry[] = [];
 
-const INITIAL_EXPENSE_ENTRIES: ExpenseEntry[] = [
-  { id: "expense-1", type: "Wohnen", amount: 850 },
-  { id: "expense-2", type: "Netflix", amount: 12.99 },
-  { id: "expense-3", type: "Spotify", amount: 9.99 },
-  { id: "expense-4", type: "Handy", amount: 29.99 },
-];
+const INITIAL_EXPENSE_ENTRIES: ExpenseEntry[] = [];
 
 const INITIAL_GOALS: Goal[] = [
   {
