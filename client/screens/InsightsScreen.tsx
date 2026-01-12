@@ -15,7 +15,7 @@ import { Feather } from "@expo/vector-icons";
 import Svg, { Circle, G, Rect, Line } from "react-native-svg";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { Spacing, BorderRadius } from "@/constants/theme";
-import { useApp, IncomeEntry } from "@/context/AppContext";
+import { useApp, IncomeEntry, ExpenseEntry } from "@/context/AppContext";
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -393,21 +393,39 @@ const INCOME_TYPES = [
   { id: "sonstiges", name: "Sonstiges", icon: "plus-circle" },
 ];
 
+const EXPENSE_TYPES = [
+  { id: "versicherungen", name: "Versicherungen", icon: "shield" },
+  { id: "netflix", name: "Netflix", icon: "tv" },
+  { id: "wohnen", name: "Wohnen", icon: "home" },
+  { id: "handy", name: "Handy", icon: "smartphone" },
+  { id: "altersvorsorge", name: "Altersvorsorge", icon: "umbrella" },
+  { id: "spotify", name: "Spotify", icon: "music" },
+  { id: "fitness", name: "Fitness", icon: "activity" },
+  { id: "abos", name: "Abos", icon: "repeat" },
+  { id: "fahrticket", name: "Fahrticket", icon: "navigation" },
+  { id: "sonstiges", name: "Sonstiges", icon: "plus-circle" },
+];
+
 export default function InsightsScreen() {
   const insets = useSafeAreaInsets();
   const { 
     insightCategories, 
     totalIncome, 
-    totalExpenses, 
+    totalExpenses,
+    totalFixedExpenses,
     savingsRate, 
     monthlyTrendData,
     incomeEntries,
+    expenseEntries,
     addIncomeEntry,
     updateIncomeEntry,
     deleteIncomeEntry,
+    addExpenseEntry,
+    updateExpenseEntry,
+    deleteExpenseEntry,
   } = useApp();
   const [activeTab, setActiveTab] = useState<"ausgaben" | "einnahmen">("ausgaben");
-  const [activeFilter, setActiveFilter] = useState<"kategorien" | "income" | "trend">("kategorien");
+  const [activeFilter, setActiveFilter] = useState<"kategorien" | "income" | "trend" | "fixkosten">("kategorien");
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedTrendMonth, setSelectedTrendMonth] = useState<number | null>(null);
@@ -418,6 +436,13 @@ export default function InsightsScreen() {
   const [customIncomeType, setCustomIncomeType] = useState("");
   const [incomeAmount, setIncomeAmount] = useState("");
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  const [expenseModalVisible, setExpenseModalVisible] = useState(false);
+  const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
+  const [selectedExpenseType, setSelectedExpenseType] = useState<string | null>(null);
+  const [customExpenseType, setCustomExpenseType] = useState("");
+  const [expenseAmount, setExpenseAmount] = useState("");
+  const [deleteExpenseConfirmId, setDeleteExpenseConfirmId] = useState<string | null>(null);
 
   const gesamtAusgaben = useMemo(() => {
     return insightCategories.reduce((sum, cat) => sum + cat.amount, 0);
@@ -489,6 +514,68 @@ export default function InsightsScreen() {
     return matchingType?.icon || "plus-circle";
   };
 
+  const openAddExpenseModal = () => {
+    setEditingExpenseId(null);
+    setSelectedExpenseType(null);
+    setCustomExpenseType("");
+    setExpenseAmount("");
+    setExpenseModalVisible(true);
+  };
+
+  const openEditExpenseModal = (entry: ExpenseEntry) => {
+    setEditingExpenseId(entry.id);
+    const matchingType = EXPENSE_TYPES.find(t => t.name === entry.type);
+    if (matchingType) {
+      setSelectedExpenseType(matchingType.id);
+      setCustomExpenseType("");
+    } else {
+      setSelectedExpenseType("sonstiges");
+      setCustomExpenseType(entry.type);
+    }
+    setExpenseAmount(entry.amount.toString().replace(".", ","));
+    setExpenseModalVisible(true);
+  };
+
+  const handleSaveExpense = () => {
+    const parsedAmount = parseFloat(expenseAmount.replace(",", ".")) || 0;
+    if (parsedAmount <= 0) return;
+    
+    let typeName = "";
+    if (selectedExpenseType === "sonstiges" && customExpenseType.trim()) {
+      typeName = customExpenseType.trim();
+    } else {
+      const typeObj = EXPENSE_TYPES.find(t => t.id === selectedExpenseType);
+      if (!typeObj) return;
+      typeName = typeObj.name;
+    }
+
+    if (editingExpenseId) {
+      updateExpenseEntry(editingExpenseId, typeName, parsedAmount);
+    } else {
+      addExpenseEntry(typeName, parsedAmount);
+    }
+    
+    setExpenseModalVisible(false);
+    resetExpenseForm();
+  };
+
+  const handleDeleteExpense = (id: string) => {
+    deleteExpenseEntry(id);
+    setDeleteExpenseConfirmId(null);
+  };
+
+  const resetExpenseForm = () => {
+    setSelectedExpenseType(null);
+    setCustomExpenseType("");
+    setExpenseAmount("");
+    setEditingExpenseId(null);
+  };
+
+  const getIconForExpenseType = (typeName: string): string => {
+    const matchingType = EXPENSE_TYPES.find(t => t.name === typeName);
+    return matchingType?.icon || "plus-circle";
+  };
+
   const renderContent = () => {
     switch (activeFilter) {
       case "income":
@@ -505,6 +592,96 @@ export default function InsightsScreen() {
             selectedMonth={selectedTrendMonth}
             onSelectMonth={setSelectedTrendMonth}
           />
+        );
+      case "fixkosten":
+        return (
+          <View style={styles.fixkostenContainer}>
+            <View style={styles.expenseSummaryCard}>
+              <View style={styles.expenseSummaryIcon}>
+                <Feather name="credit-card" size={28} color="#EF4444" />
+              </View>
+              <View style={styles.expenseSummaryContent}>
+                <Text style={styles.expenseSummaryLabel}>Monatliche Fixkosten</Text>
+                <Text style={styles.expenseSummaryAmount}>€ {formatCurrency(totalFixedExpenses)}</Text>
+              </View>
+              <Pressable style={styles.addExpenseButton} onPress={openAddExpenseModal}>
+                <Feather name="plus" size={20} color="#7340fd" />
+              </Pressable>
+            </View>
+
+            <Text style={styles.expenseSectionTitle}>Fixe Ausgaben</Text>
+            
+            {expenseEntries.length === 0 ? (
+              <View style={styles.expenseEmptyState}>
+                <Feather name="inbox" size={48} color="#D1D5DB" />
+                <Text style={styles.expenseEmptyText}>Noch keine Fixkosten hinzugefügt</Text>
+                <Pressable style={styles.expenseEmptyButton} onPress={openAddExpenseModal}>
+                  <Text style={styles.expenseEmptyButtonText}>Ausgabe hinzufügen</Text>
+                </Pressable>
+              </View>
+            ) : (
+              expenseEntries.map((entry, index) => (
+                <Animated.View 
+                  key={entry.id} 
+                  entering={FadeInDown.delay(index * 50).duration(300)}
+                >
+                  <Pressable 
+                    style={styles.expenseItem}
+                    onPress={() => openEditExpenseModal(entry)}
+                  >
+                    <View style={styles.expenseLeft}>
+                      <View style={styles.expenseIconContainer}>
+                        <Feather name={getIconForExpenseType(entry.type) as any} size={20} color="#EF4444" />
+                      </View>
+                      <View>
+                        <Text style={styles.expenseType}>{entry.type}</Text>
+                        <Text style={styles.expenseFrequency}>Monatlich</Text>
+                      </View>
+                    </View>
+                    <View style={styles.expenseRight}>
+                      <Text style={styles.expenseAmount}>€ {formatCurrency(entry.amount)}</Text>
+                      <Pressable 
+                        onPress={() => setDeleteExpenseConfirmId(entry.id)}
+                        hitSlop={8}
+                      >
+                        <Feather name="trash-2" size={18} color="#9CA3AF" />
+                      </Pressable>
+                    </View>
+                  </Pressable>
+
+                  {deleteExpenseConfirmId === entry.id && (
+                    <View style={styles.deleteConfirm}>
+                      <Text style={styles.deleteConfirmText}>Wirklich löschen?</Text>
+                      <View style={styles.deleteActions}>
+                        <Pressable 
+                          style={styles.cancelDeleteBtn}
+                          onPress={() => setDeleteExpenseConfirmId(null)}
+                        >
+                          <Text style={styles.cancelDeleteText}>Abbrechen</Text>
+                        </Pressable>
+                        <Pressable 
+                          style={styles.confirmDeleteBtn}
+                          onPress={() => handleDeleteExpense(entry.id)}
+                        >
+                          <Text style={styles.confirmDeleteText}>Löschen</Text>
+                        </Pressable>
+                      </View>
+                    </View>
+                  )}
+                </Animated.View>
+              ))
+            )}
+
+            <View style={styles.expenseTipCard}>
+              <View style={styles.expenseTipHeader}>
+                <Feather name="info" size={18} color="#EF4444" />
+                <Text style={styles.expenseTipTitle}>Tipp</Text>
+              </View>
+              <Text style={styles.expenseTipText}>
+                Erfasse alle fixen Kosten wie Miete, Versicherungen und Abos für eine genaue Budgetplanung.
+              </Text>
+            </View>
+          </View>
         );
       case "kategorien":
       default:
@@ -670,6 +847,22 @@ export default function InsightsScreen() {
                 ]}
               >
                 Trend
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[
+                styles.tabButton,
+                activeFilter === "fixkosten" && styles.tabButtonActive,
+              ]}
+              onPress={() => setActiveFilter("fixkosten")}
+            >
+              <Text
+                style={[
+                  styles.tabButtonText,
+                  activeFilter === "fixkosten" && styles.tabButtonTextActive,
+                ]}
+              >
+                Fixkosten
               </Text>
             </Pressable>
           </ScrollView>
@@ -879,6 +1072,91 @@ export default function InsightsScreen() {
             >
               <Text style={styles.incomeSaveButtonText}>
                 {editingIncomeId ? "Speichern" : "Hinzufügen"}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={expenseModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setExpenseModalVisible(false)}
+      >
+        <View style={styles.incomeModalOverlay}>
+          <View style={[styles.incomeModalContent, { paddingBottom: insets.bottom + Spacing.lg }]}>
+            <View style={styles.incomeModalHeader}>
+              <Text style={styles.incomeModalTitle}>
+                {editingExpenseId ? "Ausgabe bearbeiten" : "Neue Ausgabe"}
+              </Text>
+              <Pressable onPress={() => setExpenseModalVisible(false)}>
+                <Feather name="x" size={24} color="#6B7280" />
+              </Pressable>
+            </View>
+
+            <Text style={styles.incomeModalLabel}>Art der Ausgabe</Text>
+            <View style={styles.incomeTypeGrid}>
+              {EXPENSE_TYPES.map((type) => (
+                <Pressable
+                  key={type.id}
+                  style={[
+                    styles.incomeTypeButton,
+                    selectedExpenseType === type.id && styles.expenseTypeButtonSelected,
+                  ]}
+                  onPress={() => setSelectedExpenseType(type.id)}
+                >
+                  <Feather 
+                    name={type.icon as any} 
+                    size={20} 
+                    color={selectedExpenseType === type.id ? "#EF4444" : "#6B7280"} 
+                  />
+                  <Text style={[
+                    styles.incomeTypeButtonText,
+                    selectedExpenseType === type.id && styles.expenseTypeButtonTextSelected,
+                  ]}>
+                    {type.name}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+
+            {selectedExpenseType === "sonstiges" && (
+              <View style={styles.customTypeContainer}>
+                <Text style={styles.incomeModalLabel}>Bezeichnung</Text>
+                <TextInput
+                  style={styles.incomeTextInput}
+                  value={customExpenseType}
+                  onChangeText={setCustomExpenseType}
+                  placeholder="z.B. Strom"
+                  placeholderTextColor="#9CA3AF"
+                />
+              </View>
+            )}
+
+            <Text style={styles.incomeModalLabel}>Betrag (monatlich)</Text>
+            <View style={styles.incomeAmountInputContainer}>
+              <Text style={styles.incomeCurrencySymbol}>€</Text>
+              <TextInput
+                style={styles.incomeAmountInput}
+                value={expenseAmount}
+                onChangeText={setExpenseAmount}
+                placeholder="0,00"
+                placeholderTextColor="#9CA3AF"
+                keyboardType="decimal-pad"
+              />
+            </View>
+
+            <Pressable 
+              style={[
+                styles.expenseSaveButton,
+                (!selectedExpenseType || !expenseAmount) && styles.incomeSaveButtonDisabled,
+              ]}
+              onPress={handleSaveExpense}
+              disabled={!selectedExpenseType || !expenseAmount}
+            >
+              <Text style={styles.incomeSaveButtonText}>
+                {editingExpenseId ? "Speichern" : "Hinzufügen"}
               </Text>
             </Pressable>
           </View>
@@ -1693,5 +1971,160 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#FFFFFF",
+  },
+  fixkostenContainer: {
+    flex: 1,
+  },
+  expenseSummaryCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    marginBottom: Spacing.lg,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  expenseSummaryIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#FEE2E2",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: Spacing.md,
+  },
+  expenseSummaryContent: {
+    flex: 1,
+  },
+  expenseSummaryLabel: {
+    fontSize: 14,
+    color: "#6B7280",
+    marginBottom: 4,
+  },
+  expenseSummaryAmount: {
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#EF4444",
+  },
+  addExpenseButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#F3F0FF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  expenseSectionTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#374151",
+    marginBottom: Spacing.md,
+  },
+  expenseEmptyState: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing["2xl"],
+    backgroundColor: "#FFFFFF",
+    borderRadius: BorderRadius.lg,
+  },
+  expenseEmptyText: {
+    fontSize: 14,
+    color: "#9CA3AF",
+    marginTop: Spacing.md,
+    marginBottom: Spacing.lg,
+  },
+  expenseEmptyButton: {
+    backgroundColor: "#EF4444",
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.md,
+  },
+  expenseEmptyButtonText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  expenseItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#FFFFFF",
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    marginBottom: Spacing.sm,
+  },
+  expenseLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  expenseIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#FEE2E2",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: Spacing.md,
+  },
+  expenseType: {
+    fontSize: 15,
+    fontWeight: "500",
+    color: "#111827",
+  },
+  expenseFrequency: {
+    fontSize: 12,
+    color: "#9CA3AF",
+    marginTop: 2,
+  },
+  expenseRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.md,
+  },
+  expenseAmount: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#EF4444",
+  },
+  expenseTipCard: {
+    backgroundColor: "#FEF2F2",
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    marginTop: Spacing.xl,
+  },
+  expenseTipHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.xs,
+    marginBottom: Spacing.xs,
+  },
+  expenseTipTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#EF4444",
+  },
+  expenseTipText: {
+    fontSize: 13,
+    color: "#991B1B",
+    lineHeight: 18,
+  },
+  expenseTypeButtonSelected: {
+    backgroundColor: "#FEF2F2",
+    borderColor: "#EF4444",
+  },
+  expenseTypeButtonTextSelected: {
+    color: "#EF4444",
+    fontWeight: "500",
+  },
+  expenseSaveButton: {
+    backgroundColor: "#EF4444",
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.md,
+    alignItems: "center",
+    marginTop: Spacing.xl,
   },
 });
