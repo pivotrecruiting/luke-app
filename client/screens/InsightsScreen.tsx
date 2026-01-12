@@ -8,13 +8,13 @@ import {
   Dimensions,
   Modal,
   TextInput,
+  Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import Svg, { Circle, G, Rect, Line } from "react-native-svg";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import PagerView from "react-native-pager-view";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { useApp, IncomeEntry, ExpenseEntry } from "@/context/AppContext";
 
@@ -427,8 +427,6 @@ export default function InsightsScreen() {
   } = useApp();
   const [activeTab, setActiveTab] = useState<"ausgaben" | "einnahmen">("ausgaben");
   const [activeFilter, setActiveFilter] = useState<"kategorien" | "income" | "trend">("kategorien");
-  const pagerRef = useRef<PagerView>(null);
-  const filterPages = ["kategorien", "income", "trend"] as const;
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedTrendMonth, setSelectedTrendMonth] = useState<number | null>(null);
@@ -714,10 +712,7 @@ export default function InsightsScreen() {
                 styles.tabButton,
                 activeFilter === "kategorien" && styles.tabButtonActive,
               ]}
-              onPress={() => {
-                setActiveFilter("kategorien");
-                pagerRef.current?.setPage(0);
-              }}
+              onPress={() => setActiveFilter("kategorien")}
             >
               <Text
                 style={[
@@ -733,10 +728,7 @@ export default function InsightsScreen() {
                 styles.tabButton,
                 activeFilter === "income" && styles.tabButtonActive,
               ]}
-              onPress={() => {
-                setActiveFilter("income");
-                pagerRef.current?.setPage(1);
-              }}
+              onPress={() => setActiveFilter("income")}
             >
               <Text
                 style={[
@@ -752,10 +744,7 @@ export default function InsightsScreen() {
                 styles.tabButton,
                 activeFilter === "trend" && styles.tabButtonActive,
               ]}
-              onPress={() => {
-                setActiveFilter("trend");
-                pagerRef.current?.setPage(2);
-              }}
+              onPress={() => setActiveFilter("trend")}
             >
               <Text
                 style={[
@@ -768,83 +757,81 @@ export default function InsightsScreen() {
             </Pressable>
           </View>
 
-          <PagerView
-            ref={pagerRef}
-            style={styles.pagerView}
-            initialPage={0}
-            onPageSelected={(e: { nativeEvent: { position: number } }) => {
-              const pageIndex = e.nativeEvent.position;
-              setActiveFilter(filterPages[pageIndex]);
-            }}
-          >
-            <View key="kategorien" style={styles.pagerPage}>
-              <View style={styles.chartCard}>
-                <DonutChart
-                  categories={insightCategories}
-                  total={gesamtAusgaben}
-                  selectedCategory={selectedCategory}
-                  onSelectCategory={setSelectedCategory}
-                />
+          <View style={styles.pagerView}>
+            {activeFilter === "kategorien" && (
+              <View style={styles.pagerPage}>
+                <View style={styles.chartCard}>
+                  <DonutChart
+                    categories={insightCategories}
+                    total={gesamtAusgaben}
+                    selectedCategory={selectedCategory}
+                    onSelectCategory={setSelectedCategory}
+                  />
 
-                <View style={styles.kategorienGrid}>
-                  {insightCategories.map((kategorie, index) => {
-                    const isSelected = selectedCategory === kategorie.name;
-                    return (
-                      <Pressable
-                        key={index}
-                        style={[
-                          styles.kategorieItem,
-                          isSelected && styles.kategorieItemSelected,
-                        ]}
-                        onPress={() => handleCategoryPress(kategorie.name)}
-                      >
-                        <View
-                          style={[styles.kategorieDot, { backgroundColor: kategorie.color }]}
-                        />
-                        <View>
-                          <Text style={styles.kategorieName}>{kategorie.name}</Text>
-                          <Text style={styles.kategorieBetrag}>
-                            € {formatCurrency(kategorie.amount)}
-                          </Text>
-                        </View>
-                      </Pressable>
-                    );
-                  })}
+                  <View style={styles.kategorienGrid}>
+                    {insightCategories.map((kategorie, index) => {
+                      const isSelected = selectedCategory === kategorie.name;
+                      return (
+                        <Pressable
+                          key={index}
+                          style={[
+                            styles.kategorieItem,
+                            isSelected && styles.kategorieItemSelected,
+                          ]}
+                          onPress={() => handleCategoryPress(kategorie.name)}
+                        >
+                          <View
+                            style={[styles.kategorieDot, { backgroundColor: kategorie.color }]}
+                          />
+                          <View>
+                            <Text style={styles.kategorieName}>{kategorie.name}</Text>
+                            <Text style={styles.kategorieBetrag}>
+                              € {formatCurrency(kategorie.amount)}
+                            </Text>
+                          </View>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+
+                  <View style={styles.pageIndicator}>
+                    <View style={[styles.pageDot, activeFilter === "kategorien" && styles.pageDotActive]} />
+                    <View style={[styles.pageDot, activeFilter === "income" && styles.pageDotActive]} />
+                    <View style={[styles.pageDot, activeFilter === "trend" && styles.pageDotActive]} />
+                  </View>
                 </View>
+              </View>
+            )}
 
-                <View style={styles.pageIndicator}>
+            {activeFilter === "income" && (
+              <View style={styles.pagerPage}>
+                <IncomeExpensesView
+                  income={totalIncome}
+                  expenses={totalExpenses}
+                />
+                <View style={styles.pageIndicatorStandalone}>
                   <View style={[styles.pageDot, activeFilter === "kategorien" && styles.pageDotActive]} />
                   <View style={[styles.pageDot, activeFilter === "income" && styles.pageDotActive]} />
                   <View style={[styles.pageDot, activeFilter === "trend" && styles.pageDotActive]} />
                 </View>
               </View>
-            </View>
+            )}
 
-            <View key="income" style={styles.pagerPage}>
-              <IncomeExpensesView
-                income={totalIncome}
-                expenses={totalExpenses}
-              />
-              <View style={styles.pageIndicatorStandalone}>
-                <View style={[styles.pageDot, activeFilter === "kategorien" && styles.pageDotActive]} />
-                <View style={[styles.pageDot, activeFilter === "income" && styles.pageDotActive]} />
-                <View style={[styles.pageDot, activeFilter === "trend" && styles.pageDotActive]} />
+            {activeFilter === "trend" && (
+              <View style={styles.pagerPage}>
+                <TrendView
+                  monthlyData={monthlyTrendData}
+                  selectedMonth={selectedTrendMonth}
+                  onSelectMonth={setSelectedTrendMonth}
+                />
+                <View style={styles.pageIndicatorStandalone}>
+                  <View style={[styles.pageDot, activeFilter === "kategorien" && styles.pageDotActive]} />
+                  <View style={[styles.pageDot, activeFilter === "income" && styles.pageDotActive]} />
+                  <View style={[styles.pageDot, activeFilter === "trend" && styles.pageDotActive]} />
+                </View>
               </View>
-            </View>
-
-            <View key="trend" style={styles.pagerPage}>
-              <TrendView
-                monthlyData={monthlyTrendData}
-                selectedMonth={selectedTrendMonth}
-                onSelectMonth={setSelectedTrendMonth}
-              />
-              <View style={styles.pageIndicatorStandalone}>
-                <View style={[styles.pageDot, activeFilter === "kategorien" && styles.pageDotActive]} />
-                <View style={[styles.pageDot, activeFilter === "income" && styles.pageDotActive]} />
-                <View style={[styles.pageDot, activeFilter === "trend" && styles.pageDotActive]} />
-              </View>
-            </View>
-          </PagerView>
+            )}
+          </View>
         </ScrollView>
       ) : (
         <ScrollView

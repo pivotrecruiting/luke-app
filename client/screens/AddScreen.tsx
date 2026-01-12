@@ -225,32 +225,17 @@ export default function AddScreen() {
             <Text style={styles.dateButtonText}>{formatDateDisplay(selectedDate)}</Text>
             <Feather name={showDatePicker ? "chevron-up" : "chevron-down"} size={20} color="#6B7280" />
           </Pressable>
-          {showDatePicker && Platform.OS === "ios" && (
-            <View style={styles.datePickerContainer}>
-              <DateTimePicker
-                value={selectedDate}
-                mode="date"
-                display="spinner"
-                onChange={handleDateChange}
-                maximumDate={new Date()}
-                locale="de-DE"
-                style={styles.datePicker}
-              />
-              <Pressable
-                style={styles.datePickerDone}
-                onPress={() => setShowDatePicker(false)}
-              >
-                <Text style={styles.datePickerDoneText}>Fertig</Text>
-              </Pressable>
-            </View>
-          )}
-          {showDatePicker && Platform.OS === "android" && (
+          {showDatePicker && Platform.OS !== "web" && (
             <DateTimePicker
               value={selectedDate}
               mode="date"
-              display="default"
+              display={Platform.OS === "ios" ? "inline" : "default"}
               onChange={handleDateChange}
               maximumDate={new Date()}
+              locale="de-DE"
+              accentColor="#7340fd"
+              themeVariant="light"
+              style={Platform.OS === "ios" ? styles.iosDatePicker : undefined}
             />
           )}
           {showDatePicker && Platform.OS === "web" && (
@@ -442,6 +427,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#FFFFFF",
+  },
+  iosDatePicker: {
+    marginTop: 12,
+    backgroundColor: "#F9FAFB",
+    borderRadius: 12,
+    overflow: "hidden",
   },
   categoriesGrid: {
     flexDirection: "row",
