@@ -174,16 +174,12 @@ const getWeekBounds = (weekOffset: number): { start: Date; end: Date } => {
 };
 
 const formatWeekLabel = (weekOffset: number): string => {
-  const { start, end } = getWeekBounds(weekOffset);
-  const formatDay = (d: Date) => `${d.getDate().toString().padStart(2, '0')}.${(d.getMonth() + 1).toString().padStart(2, '0')}`;
-  
   if (weekOffset === 0) {
     return "Diese Woche";
-  } else if (weekOffset === -1) {
-    return "Letzte Woche";
-  } else {
-    return `${formatDay(start)} - ${formatDay(end)}`;
   }
+  const { start, end } = getWeekBounds(weekOffset);
+  const formatDay = (d: Date) => `${d.getDate().toString().padStart(2, '0')}.${(d.getMonth() + 1).toString().padStart(2, '0')}`;
+  return `${formatDay(start)} - ${formatDay(end)}`;
 };
 
 const calculateWeeklySpending = (transactions: Transaction[], weekOffset: number): WeeklySpending[] => {

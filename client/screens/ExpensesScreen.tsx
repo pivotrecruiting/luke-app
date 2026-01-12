@@ -8,6 +8,8 @@ import {
   Modal,
   TextInput,
   Dimensions,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
@@ -218,7 +220,14 @@ export default function ExpensesScreen() {
         transparent={true}
         onRequestClose={() => setModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalOverlay}
+        >
+          <Pressable 
+            style={styles.modalBackdrop} 
+            onPress={() => setModalVisible(false)}
+          />
           <View style={[styles.modalContent, { paddingBottom: insets.bottom + Spacing.lg }]}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>
@@ -229,72 +238,77 @@ export default function ExpensesScreen() {
               </Pressable>
             </View>
 
-            <Text style={styles.modalLabel}>Art der Ausgabe</Text>
-            <View style={styles.typeGrid}>
-              {EXPENSE_TYPES.map((type) => (
-                <Pressable
-                  key={type.id}
-                  style={[
-                    styles.typeButton,
-                    selectedType === type.id && styles.typeButtonSelected,
-                  ]}
-                  onPress={() => setSelectedType(type.id)}
-                >
-                  <Feather 
-                    name={type.icon as any} 
-                    size={20} 
-                    color={selectedType === type.id ? "#EF4444" : "#6B7280"} 
-                  />
-                  <Text style={[
-                    styles.typeButtonText,
-                    selectedType === type.id && styles.typeButtonTextSelected,
-                  ]}>
-                    {type.name}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
+            <ScrollView 
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
+              <Text style={styles.modalLabel}>Art der Ausgabe</Text>
+              <View style={styles.typeGrid}>
+                {EXPENSE_TYPES.map((type) => (
+                  <Pressable
+                    key={type.id}
+                    style={[
+                      styles.typeButton,
+                      selectedType === type.id && styles.typeButtonSelected,
+                    ]}
+                    onPress={() => setSelectedType(type.id)}
+                  >
+                    <Feather 
+                      name={type.icon as any} 
+                      size={20} 
+                      color={selectedType === type.id ? "#EF4444" : "#6B7280"} 
+                    />
+                    <Text style={[
+                      styles.typeButtonText,
+                      selectedType === type.id && styles.typeButtonTextSelected,
+                    ]}>
+                      {type.name}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
 
-            {selectedType === "sonstiges" && (
-              <View style={styles.customTypeContainer}>
-                <Text style={styles.modalLabel}>Bezeichnung</Text>
+              {selectedType === "sonstiges" && (
+                <View style={styles.customTypeContainer}>
+                  <Text style={styles.modalLabel}>Bezeichnung</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={customType}
+                    onChangeText={setCustomType}
+                    placeholder="z.B. Strom"
+                    placeholderTextColor="#9CA3AF"
+                  />
+                </View>
+              )}
+
+              <Text style={styles.modalLabel}>Betrag (monatlich)</Text>
+              <View style={styles.amountInputContainer}>
+                <Text style={styles.currencySymbol}>€</Text>
                 <TextInput
-                  style={styles.textInput}
-                  value={customType}
-                  onChangeText={setCustomType}
-                  placeholder="z.B. Strom"
+                  style={styles.amountInput}
+                  value={amount}
+                  onChangeText={setAmount}
+                  placeholder="0,00"
                   placeholderTextColor="#9CA3AF"
+                  keyboardType="decimal-pad"
                 />
               </View>
-            )}
 
-            <Text style={styles.modalLabel}>Betrag (monatlich)</Text>
-            <View style={styles.amountInputContainer}>
-              <Text style={styles.currencySymbol}>€</Text>
-              <TextInput
-                style={styles.amountInput}
-                value={amount}
-                onChangeText={setAmount}
-                placeholder="0,00"
-                placeholderTextColor="#9CA3AF"
-                keyboardType="decimal-pad"
-              />
-            </View>
-
-            <Pressable 
-              style={[
-                styles.saveButton,
-                (!selectedType || !amount) && styles.saveButtonDisabled,
-              ]}
-              onPress={handleSave}
-              disabled={!selectedType || !amount}
-            >
-              <Text style={styles.saveButtonText}>
-                {editingId ? "Speichern" : "Hinzufügen"}
-              </Text>
-            </Pressable>
+              <Pressable 
+                style={[
+                  styles.saveButton,
+                  (!selectedType || !amount) && styles.saveButtonDisabled,
+                ]}
+                onPress={handleSave}
+                disabled={!selectedType || !amount}
+              >
+                <Text style={styles.saveButtonText}>
+                  {editingId ? "Speichern" : "Hinzufügen"}
+                </Text>
+              </Pressable>
+            </ScrollView>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
@@ -501,8 +515,11 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "flex-end",
+  },
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.5)",
   },
   modalContent: {
     backgroundColor: "#FFFFFF",
