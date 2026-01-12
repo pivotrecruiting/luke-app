@@ -1239,7 +1239,8 @@ const styles = StyleSheet.create({
   tabsRow: {
     flexDirection: "row",
     gap: 8,
-    paddingHorizontal: 20,
+    paddingLeft: 20,
+    paddingRight: 40,
   },
   tabButton: {
     paddingHorizontal: 16,
