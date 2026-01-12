@@ -273,9 +273,9 @@ const INITIAL_BUDGETS: Budget[] = [
     limit: 400,
     current: 92.40,
     expenses: [
-      { id: "be-1", name: "REWE", date: "Heute, 14:30", amount: 45.20 },
-      { id: "be-2", name: "Lidl", date: "Gestern", amount: 32.80 },
-      { id: "be-3", name: "Bäckerei Schmidt", date: "14/11/2025", amount: 14.40 },
+      { id: "be-1", name: "REWE", date: "Gestern", amount: 45.20 },
+      { id: "be-2", name: "Lidl", date: "10.01. 14:30", amount: 32.80 },
+      { id: "be-3", name: "Bäckerei Schmidt", date: "08/01/2026", amount: 14.40 },
     ],
   },
   {
@@ -286,19 +286,19 @@ const INITIAL_BUDGETS: Budget[] = [
     limit: 200,
     current: 40.37,
     expenses: [
-      { id: "be-4", name: "Zara", date: "12/11/2025", amount: 29.99 },
-      { id: "be-5", name: "Amazon", date: "10/11/2025", amount: 10.38 },
+      { id: "be-4", name: "Zara", date: "06/01/2026", amount: 29.99 },
+      { id: "be-5", name: "Amazon", date: "04/01/2026", amount: 10.38 },
     ],
   },
 ];
 
 const INITIAL_TRANSACTIONS: Transaction[] = [
-  { id: "tx-1", name: "Starbucks", category: "Lebensmittel", date: "Heute, 11:32", amount: -4.50, icon: "coffee" },
-  { id: "tx-2", name: "Amazon", category: "Shopping", date: "28.11. 20:14", amount: -29.90, icon: "shopping-cart" },
-  { id: "tx-3", name: "REWE", category: "Lebensmittel", date: "27.11. 16:45", amount: -67.32, icon: "shopping-cart" },
-  { id: "tx-4", name: "Netflix", category: "Abonnements", date: "25.11. 00:00", amount: -12.99, icon: "tv" },
-  { id: "tx-5", name: "Spotify", category: "Abonnements", date: "24.11. 00:00", amount: -9.99, icon: "music" },
-  { id: "tx-6", name: "Gehalt", category: "Einkommen", date: "01.11. 00:00", amount: 3200.00, icon: "briefcase" },
+  { id: "tx-1", name: "Starbucks", category: "Lebensmittel", date: "Gestern", amount: -4.50, icon: "coffee" },
+  { id: "tx-2", name: "Amazon", category: "Shopping", date: "10.01. 20:14", amount: -29.90, icon: "shopping-cart" },
+  { id: "tx-3", name: "REWE", category: "Lebensmittel", date: "09.01. 16:45", amount: -67.32, icon: "shopping-cart" },
+  { id: "tx-4", name: "Netflix", category: "Abonnements", date: "08.01. 00:00", amount: -12.99, icon: "tv" },
+  { id: "tx-5", name: "Spotify", category: "Abonnements", date: "07.01. 00:00", amount: -9.99, icon: "music" },
+  { id: "tx-6", name: "Gehalt", category: "Einkommen", date: "01.01. 00:00", amount: 3200.00, icon: "briefcase" },
 ];
 
 const CATEGORY_COLORS: Record<string, string> = {
