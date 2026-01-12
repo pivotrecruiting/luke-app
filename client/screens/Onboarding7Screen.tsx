@@ -11,24 +11,12 @@ import CurrencyInput from "@/components/CurrencyInput";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { Spacing, BorderRadius, Typography, Colors } from "@/constants/theme";
 import { useApp } from "@/context/AppContext";
+import { BUDGET_CATEGORIES, getCategoryByName } from "@/constants/budgetCategories";
 
 interface Entry {
   type: string;
   amount: string;
 }
-
-const categories = [
-  "Lebensmittel",
-  "Essen & Trinken",
-  "Feiern",
-  "Shoppen",
-  "Sprit",
-  "Auswärts",
-  "Freizeit",
-  "Events",
-  "Mobilität",
-  "Coffee 2 go",
-];
 
 type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
 
@@ -52,25 +40,14 @@ export default function Onboarding7Screen() {
     setEntries((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const categoryIcons: Record<string, { icon: string; color: string }> = {
-    "Lebensmittel": { icon: "shopping-cart", color: "#F59E0B" },
-    "Essen & Trinken": { icon: "coffee", color: "#EF4444" },
-    "Feiern": { icon: "music", color: "#8B5CF6" },
-    "Shoppen": { icon: "shopping-bag", color: "#EC4899" },
-    "Sprit": { icon: "truck", color: "#6366F1" },
-    "Auswärts": { icon: "map-pin", color: "#10B981" },
-    "Freizeit": { icon: "sun", color: "#F97316" },
-    "Events": { icon: "calendar", color: "#3B82F6" },
-    "Mobilität": { icon: "navigation", color: "#14B8A6" },
-    "Coffee 2 go": { icon: "coffee", color: "#78350F" },
-  };
-
   const handleContinue = () => {
     if (entries.length > 0) {
       entries.forEach((entry) => {
         const parsedAmount = parseFloat(entry.amount.replace(",", "."));
-        const iconData = categoryIcons[entry.type] || { icon: "circle", color: "#6B7280" };
-        addBudget(entry.type, iconData.icon, iconData.color, parsedAmount);
+        const category = getCategoryByName(entry.type);
+        const icon = category?.icon || "circle";
+        const color = category?.color || "#6B7280";
+        addBudget(entry.type, icon, color, parsedAmount);
       });
     }
     navigation.navigate("Paywall");
@@ -95,12 +72,12 @@ export default function Onboarding7Screen() {
         </View>
 
         <View style={styles.chipsContainer}>
-          {categories.map((type) => (
+          {BUDGET_CATEGORIES.map((cat) => (
             <Chip
-              key={type}
-              label={type}
-              selected={selectedCategory === type}
-              onPress={() => setSelectedCategory(type)}
+              key={cat.id}
+              label={cat.name}
+              selected={selectedCategory === cat.name}
+              onPress={() => setSelectedCategory(cat.name)}
             />
           ))}
         </View>
