@@ -96,7 +96,10 @@ export default function HomeScreen() {
             </Text>
           </Pressable>
 
-          <View style={styles.expenseCard}>
+          <Pressable 
+            style={styles.expenseCard}
+            onPress={() => navigation.navigate("Expenses")}
+          >
             <View style={styles.expenseIconContainer}>
               <Feather name="arrow-down" size={20} color="#EF4444" />
             </View>
@@ -104,7 +107,7 @@ export default function HomeScreen() {
             <Text style={styles.expenseAmount}>
               € {totalExpenses.toLocaleString("de-DE", { minimumFractionDigits: 2 })}
             </Text>
-          </View>
+          </Pressable>
         </View>
 
         <View style={styles.chartCard}>

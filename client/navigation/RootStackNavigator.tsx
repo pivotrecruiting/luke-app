@@ -4,6 +4,7 @@ import OnboardingNavigator from "@/navigation/OnboardingNavigator";
 import MainTabNavigator from "@/navigation/MainTabNavigator";
 import GoalDetailScreen from "@/screens/GoalDetailScreen";
 import IncomeScreen from "@/screens/IncomeScreen";
+import ExpensesScreen from "@/screens/ExpensesScreen";
 import { useApp } from "@/context/AppContext";
 
 export type RootStackParamList = {
@@ -13,6 +14,7 @@ export type RootStackParamList = {
     goalId: string;
   };
   Income: undefined;
+  Expenses: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -42,6 +44,14 @@ export default function RootStackNavigator() {
       <Stack.Screen 
         name="Income" 
         component={IncomeScreen}
+        options={{ 
+          headerShown: false,
+          animation: "slide_from_right",
+        }}
+      />
+      <Stack.Screen 
+        name="Expenses" 
+        component={ExpensesScreen}
         options={{ 
           headerShown: false,
           animation: "slide_from_right",
