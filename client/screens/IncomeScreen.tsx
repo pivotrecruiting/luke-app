@@ -221,6 +221,7 @@ export default function IncomeScreen() {
         <KeyboardAvoidingView 
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.modalOverlay}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
         >
           <Pressable 
             style={styles.modalBackdrop} 
@@ -239,6 +240,7 @@ export default function IncomeScreen() {
             <ScrollView 
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{ paddingBottom: 20 }}
             >
               <Text style={styles.modalLabel}>Art der Einnahme</Text>
               <View style={styles.typeGrid}>
@@ -524,7 +526,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: BorderRadius.xl,
     borderTopRightRadius: BorderRadius.xl,
     padding: Spacing.lg,
-    maxHeight: "90%",
+    maxHeight: "80%",
   },
   modalHeader: {
     flexDirection: "row",

@@ -582,9 +582,12 @@ export function AppProvider({ children }: AppProviderProps) {
   const addBudgetExpense = (budgetId: string, amount: number, name: string, customDate?: Date) => {
     const expenseDate = customDate || new Date();
     
+    const budget = budgets.find((b) => b.id === budgetId);
+    if (!budget) return;
+    
     setBudgets((prev) =>
-      prev.map((budget) => {
-        if (budget.id === budgetId) {
+      prev.map((b) => {
+        if (b.id === budgetId) {
           const newExpense: BudgetExpense = {
             id: generateId(),
             name,
@@ -592,27 +595,24 @@ export function AppProvider({ children }: AppProviderProps) {
             amount,
           };
           return {
-            ...budget,
-            current: budget.current + amount,
-            expenses: [newExpense, ...budget.expenses],
+            ...b,
+            current: b.current + amount,
+            expenses: [newExpense, ...b.expenses],
           };
         }
-        return budget;
+        return b;
       })
     );
 
-    const budget = budgets.find((b) => b.id === budgetId);
-    if (budget) {
-      const newTransaction: Transaction = {
-        id: generateId(),
-        name,
-        category: budget.name,
-        date: formatDate(expenseDate),
-        amount: -amount,
-        icon: budget.icon,
-      };
-      setTransactions((prev) => [newTransaction, ...prev]);
-    }
+    const newTransaction: Transaction = {
+      id: generateId(),
+      name,
+      category: budget.name,
+      date: formatDate(expenseDate),
+      amount: -amount,
+      icon: budget.icon,
+    };
+    setTransactions((prev) => [newTransaction, ...prev]);
   };
 
   const addTransaction = (transaction: Omit<Transaction, "id">) => {
