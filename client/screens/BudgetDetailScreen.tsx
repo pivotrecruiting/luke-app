@@ -149,7 +149,7 @@ export default function BudgetDetailScreen() {
   const navigation = useNavigation();
   const route = useRoute();
   const { budgetId } = route.params as { budgetId: string };
-  const { budgets, updateBudgetExpense, deleteBudgetExpense, deleteBudget } = useApp();
+  const { budgets, updateBudgetExpense, deleteBudgetExpense, deleteBudget, updateBudget } = useApp();
 
   const budget = budgets.find((b) => b.id === budgetId);
 
@@ -160,6 +160,9 @@ export default function BudgetDetailScreen() {
   const [editExpenseDate, setEditExpenseDate] = useState(new Date());
   const [showEditDatePicker, setShowEditDatePicker] = useState(false);
   const [activeSwipeId, setActiveSwipeId] = useState<string>("");
+
+  const [editBudgetModalVisible, setEditBudgetModalVisible] = useState(false);
+  const [editBudgetLimit, setEditBudgetLimit] = useState("");
 
   if (!budget) {
     return (
@@ -227,6 +230,25 @@ export default function BudgetDetailScreen() {
     );
   };
 
+  const openEditBudgetModal = () => {
+    setEditBudgetLimit(budget.limit.toString().replace(".", ","));
+    setEditBudgetModalVisible(true);
+  };
+
+  const handleEditBudgetSave = () => {
+    const limit = parseFloat(editBudgetLimit.replace(",", "."));
+    if (!isNaN(limit) && limit >= 0) {
+      updateBudget(budget.id, { limit });
+      setEditBudgetModalVisible(false);
+      setEditBudgetLimit("");
+    }
+  };
+
+  const handleEditBudgetCancel = () => {
+    setEditBudgetModalVisible(false);
+    setEditBudgetLimit("");
+  };
+
   const onEditDateChange = (event: any, date?: Date) => {
     if (Platform.OS === "android") {
       setShowEditDatePicker(false);
@@ -255,11 +277,14 @@ export default function BudgetDetailScreen() {
           <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
             <Feather name="arrow-left" size={24} color="#FFFFFF" />
           </Pressable>
-          {isCompleted ? (
+          <View style={styles.headerActions}>
+            <Pressable style={styles.editHeaderButton} onPress={openEditBudgetModal}>
+              <Feather name="edit-2" size={20} color="#FFFFFF" />
+            </Pressable>
             <Pressable style={styles.deleteHeaderButton} onPress={handleDeleteBudget}>
               <Feather name="trash-2" size={20} color="#FFFFFF" />
             </Pressable>
-          ) : null}
+          </View>
         </View>
         <Text style={styles.headerTitle}>{budget.name}</Text>
         <Text style={styles.headerSubtitle}>Budget Details</Text>
@@ -433,6 +458,46 @@ export default function BudgetDetailScreen() {
               <Text style={styles.modalCancelButtonText}>Abbrechen</Text>
             </Pressable>
           </ScrollView>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      <Modal
+        visible={editBudgetModalVisible}
+        transparent
+        animationType="none"
+        onRequestClose={handleEditBudgetCancel}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalOverlay}
+        >
+          <Pressable style={styles.modalBackdrop} onPress={handleEditBudgetCancel} />
+          <View style={[styles.modalContent, { paddingBottom: insets.bottom + 24 }]}>
+            <View style={styles.modalHandle} />
+            <Text style={styles.modalTitle}>Budget bearbeiten</Text>
+
+            <Text style={styles.modalLabel}>Monatliches Limit</Text>
+            <View style={styles.currencyInputContainer}>
+              <Text style={styles.currencyPrefix}>€</Text>
+              <TextInput
+                style={styles.currencyInput}
+                value={editBudgetLimit}
+                onChangeText={setEditBudgetLimit}
+                placeholder="0,00"
+                placeholderTextColor="#9CA3AF"
+                keyboardType="decimal-pad"
+                autoFocus
+              />
+            </View>
+
+            <Pressable style={styles.modalSaveButton} onPress={handleEditBudgetSave}>
+              <Text style={styles.modalSaveButtonText}>Speichern</Text>
+            </Pressable>
+            
+            <Pressable style={styles.modalCancelButton} onPress={handleEditBudgetCancel}>
+              <Text style={styles.modalCancelButtonText}>Abbrechen</Text>
+            </Pressable>
+          </View>
         </KeyboardAvoidingView>
       </Modal>
     </View>
@@ -779,5 +844,18 @@ const styles = StyleSheet.create({
     color: "#6B7280",
     fontSize: 16,
     fontWeight: "500",
+  },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  editHeaderButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
