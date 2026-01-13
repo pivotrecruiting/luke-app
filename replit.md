@@ -27,7 +27,13 @@ The frontend uses a layered navigation structure:
 - `MainTabNavigator` contains Home, Goals, and Insights tabs
 
 ### Global State (AppContext)
-Located at `client/context/AppContext.tsx`, manages all app data without database:
+Located at `client/context/AppContext.tsx`, manages all app data with local persistence:
+
+**Data Persistence:**
+- Uses `@react-native-async-storage/async-storage` for local storage
+- Data persists across app sessions automatically
+- Storage key: `@luke_app_data`
+- Persisted data includes: isOnboardingComplete, incomeEntries, expenseEntries, goals, budgets, transactions, lastBudgetResetMonth
 
 **Data Types:**
 - `incomeEntries` - User income sources (type, amount)
