@@ -6,18 +6,15 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { OnboardingStackParamList } from "@/navigation/OnboardingNavigator";
 import ProgressDots from "@/components/ProgressDots";
 import { Spacing, BorderRadius, Typography, Colors } from "@/constants/theme";
-
-const MOCK_DATA = {
-  einkommen: 1218.4,
-  fixkosten: 500.0,
-};
+import { useApp } from "@/context/AppContext";
 
 type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
 
 export default function Onboarding6Screen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
-  const verfuegbar = MOCK_DATA.einkommen - MOCK_DATA.fixkosten;
+  const { totalIncome, totalFixedExpenses } = useApp();
+  const verfuegbar = totalIncome - totalFixedExpenses;
 
   const formatCurrency = (value: number, showPlus: boolean = false) => {
     const formatted = value.toLocaleString("de-DE", {
@@ -46,7 +43,7 @@ export default function Onboarding6Screen() {
           <View style={styles.row}>
             <Text style={styles.rowLabel}>Einkommen</Text>
             <Text style={styles.incomeValue}>
-              {formatCurrency(MOCK_DATA.einkommen, true)}
+              {formatCurrency(totalIncome, true)}
             </Text>
           </View>
 
@@ -55,7 +52,7 @@ export default function Onboarding6Screen() {
           <View style={styles.row}>
             <Text style={styles.rowLabel}>Fixkosten</Text>
             <Text style={styles.expenseValue}>
-              - {formatCurrency(MOCK_DATA.fixkosten)}
+              - {formatCurrency(totalFixedExpenses)}
             </Text>
           </View>
 
