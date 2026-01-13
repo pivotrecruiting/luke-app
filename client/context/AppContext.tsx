@@ -280,13 +280,19 @@ export function AppProvider({ children }: AppProviderProps) {
   const [selectedWeekOffset, setSelectedWeekOffset] = useState(0);
   const [lastBudgetResetMonth, setLastBudgetResetMonth] = useState(() => new Date().getMonth());
 
+  const TEST_MODE = true;
+
   useEffect(() => {
     const loadData = async () => {
       try {
         const jsonValue = await AsyncStorage.getItem(STORAGE_KEY);
         if (jsonValue !== null) {
           const data: PersistedData = JSON.parse(jsonValue);
-          setIsOnboardingComplete(data.isOnboardingComplete ?? false);
+          if (TEST_MODE) {
+            setIsOnboardingComplete(false);
+          } else {
+            setIsOnboardingComplete(data.isOnboardingComplete ?? false);
+          }
           setIncomeEntries(data.incomeEntries ?? []);
           setExpenseEntries(data.expenseEntries ?? []);
           setGoals(data.goals ?? []);
