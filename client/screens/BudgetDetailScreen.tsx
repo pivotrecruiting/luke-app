@@ -771,7 +771,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#000000",
     marginBottom: 16,
-    outlineStyle: "none",
+    outlineStyle: "none" as any,
   },
   currencyInputContainer: {
     flexDirection: "row",
@@ -792,7 +792,7 @@ const styles = StyleSheet.create({
     padding: 16,
     fontSize: 16,
     color: "#000000",
-    outlineStyle: "none",
+    outlineStyle: "none" as any,
   },
   datePickerButton: {
     flexDirection: "row",

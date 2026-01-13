@@ -128,6 +128,7 @@ export interface AppContextType extends AppState {
   goToNextWeek: () => void;
   resetMonthlyBudgets: () => void;
   lastBudgetResetMonth: number;
+  resetAllData: () => void;
 }
 
 const generateId = () => Math.random().toString(36).substring(2, 9);
@@ -912,6 +913,21 @@ export function AppProvider({ children }: AppProviderProps) {
     }
   }, [lastBudgetResetMonth]);
 
+  const resetAllData = async () => {
+    try {
+      await AsyncStorage.removeItem(STORAGE_KEY);
+      setIsOnboardingComplete(false);
+      setIncomeEntries([]);
+      setExpenseEntries([]);
+      setGoals([]);
+      setBudgets([]);
+      setTransactions([]);
+      setLastBudgetResetMonth(-1);
+    } catch (e) {
+      console.error("Failed to reset data:", e);
+    }
+  };
+
   const value: AppContextType = {
     isOnboardingComplete,
     userName,
@@ -961,6 +977,7 @@ export function AppProvider({ children }: AppProviderProps) {
     goToNextWeek,
     resetMonthlyBudgets,
     lastBudgetResetMonth,
+    resetAllData,
   };
 
   if (isLoading) {
