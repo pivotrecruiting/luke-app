@@ -307,11 +307,9 @@ export default function GoalDetailScreen() {
             <Text style={styles.headerSubtitle}>{isCompleted ? "Geschafft!" : "bleib dran!"}</Text>
           </View>
           <View style={styles.headerButtons}>
-            {isCompleted ? (
-              <Pressable style={styles.deleteHeaderButton} onPress={handleDeleteGoal}>
-                <Feather name="trash-2" size={20} color="#FFFFFF" />
-              </Pressable>
-            ) : null}
+            <Pressable style={styles.deleteHeaderButton} onPress={handleDeleteGoal}>
+              <Feather name="trash-2" size={20} color="#FFFFFF" />
+            </Pressable>
             <Pressable style={styles.closeButton} onPress={() => navigation.goBack()}>
               <Feather name="x" size={24} color="#000000" />
             </Pressable>

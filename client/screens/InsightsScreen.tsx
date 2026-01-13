@@ -532,7 +532,12 @@ export default function InsightsScreen() {
     
     budgets.forEach((budget) => {
       const filteredExpenses = budget.expenses.filter((expense) => {
-        const expenseDate = parseGermanDate(expense.date);
+        let expenseDate: Date;
+        if (expense.timestamp) {
+          expenseDate = new Date(expense.timestamp);
+        } else {
+          expenseDate = parseGermanDate(expense.date);
+        }
         return expenseDate >= start && expenseDate <= end;
       });
       

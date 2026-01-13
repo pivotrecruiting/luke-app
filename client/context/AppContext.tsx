@@ -37,6 +37,7 @@ export interface BudgetExpense {
   name: string;
   date: string;
   amount: number;
+  timestamp?: number;
 }
 
 export interface Budget {
@@ -62,6 +63,7 @@ export interface Transaction {
   date: string;
   amount: number;
   icon: string;
+  timestamp?: number;
 }
 
 export interface InsightCategory {
@@ -588,6 +590,11 @@ export function AppProvider({ children }: AppProviderProps) {
 
   const addBudgetExpense = (budgetId: string, amount: number, name: string, customDate?: Date) => {
     const expenseDate = customDate || new Date();
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    const expenseMonth = expenseDate.getMonth();
+    const expenseYear = expenseDate.getFullYear();
+    const isCurrentMonth = expenseMonth === currentMonth && expenseYear === currentYear;
     
     const budget = budgets.find((b) => b.id === budgetId);
     if (!budget) return;
@@ -600,10 +607,11 @@ export function AppProvider({ children }: AppProviderProps) {
             name,
             date: formatDate(expenseDate),
             amount,
+            timestamp: expenseDate.getTime(),
           };
           return {
             ...b,
-            current: b.current + amount,
+            current: isCurrentMonth ? b.current + amount : b.current,
             expenses: [newExpense, ...b.expenses],
           };
         }
@@ -618,6 +626,7 @@ export function AppProvider({ children }: AppProviderProps) {
       date: formatDate(expenseDate),
       amount: -amount,
       icon: budget.icon,
+      timestamp: expenseDate.getTime(),
     };
     setTransactions((prev) => [newTransaction, ...prev]);
   };
@@ -793,13 +802,31 @@ export function AppProvider({ children }: AppProviderProps) {
   };
 
   const updateBudgetExpense = (budgetId: string, expenseId: string, amount: number, name: string, date?: Date) => {
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    
     setBudgets((prev) =>
       prev.map((budget) => {
         if (budget.id === budgetId) {
           const oldExpense = budget.expenses.find((e) => e.id === expenseId);
           if (!oldExpense) return budget;
           
-          const amountDiff = amount - oldExpense.amount;
+          const oldTimestamp = oldExpense.timestamp || parseFormattedDate(oldExpense.date).getTime();
+          const oldDate = new Date(oldTimestamp);
+          const wasInCurrentMonth = oldDate.getMonth() === currentMonth && oldDate.getFullYear() === currentYear;
+          
+          const newDate = date || new Date(oldTimestamp);
+          const isInCurrentMonth = newDate.getMonth() === currentMonth && newDate.getFullYear() === currentYear;
+          
+          let currentDiff = 0;
+          if (wasInCurrentMonth && isInCurrentMonth) {
+            currentDiff = amount - oldExpense.amount;
+          } else if (wasInCurrentMonth && !isInCurrentMonth) {
+            currentDiff = -oldExpense.amount;
+          } else if (!wasInCurrentMonth && isInCurrentMonth) {
+            currentDiff = amount;
+          }
+          
           const updatedExpenses = budget.expenses.map((e) => {
             if (e.id === expenseId) {
               return {
@@ -807,6 +834,7 @@ export function AppProvider({ children }: AppProviderProps) {
                 amount,
                 name,
                 date: date ? formatDate(date) : e.date,
+                timestamp: date ? date.getTime() : e.timestamp,
               };
             }
             return e;
@@ -814,7 +842,7 @@ export function AppProvider({ children }: AppProviderProps) {
           
           return {
             ...budget,
-            current: budget.current + amountDiff,
+            current: Math.max(0, budget.current + currentDiff),
             expenses: updatedExpenses,
           };
         }
@@ -844,6 +872,8 @@ export function AppProvider({ children }: AppProviderProps) {
   const deleteBudgetExpense = (budgetId: string, expenseId: string) => {
     const budget = budgets.find((b) => b.id === budgetId);
     const expense = budget?.expenses.find((e) => e.id === expenseId);
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
     
     setBudgets((prev) =>
       prev.map((b) => {
@@ -851,9 +881,13 @@ export function AppProvider({ children }: AppProviderProps) {
           const expenseToDelete = b.expenses.find((e) => e.id === expenseId);
           if (!expenseToDelete) return b;
           
+          const expenseTimestamp = expenseToDelete.timestamp || parseFormattedDate(expenseToDelete.date).getTime();
+          const expenseDate = new Date(expenseTimestamp);
+          const isCurrentMonth = expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
+          
           return {
             ...b,
-            current: Math.max(0, b.current - expenseToDelete.amount),
+            current: isCurrentMonth ? Math.max(0, b.current - expenseToDelete.amount) : b.current,
             expenses: b.expenses.filter((e) => e.id !== expenseId),
           };
         }
@@ -899,25 +933,33 @@ export function AppProvider({ children }: AppProviderProps) {
 
   const resetMonthlyBudgets = () => {
     const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
     if (currentMonth !== lastBudgetResetMonth) {
       setBudgets((prev) =>
-        prev.map((budget) => ({
-          ...budget,
-          current: 0,
-          expenses: [],
-        }))
+        prev.map((budget) => {
+          const currentMonthExpenses = budget.expenses.filter((expense) => {
+            const timestamp = expense.timestamp || parseFormattedDate(expense.date).getTime();
+            const expenseDate = new Date(timestamp);
+            return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
+          });
+          const currentMonthTotal = currentMonthExpenses.reduce((sum, e) => sum + e.amount, 0);
+          return {
+            ...budget,
+            current: currentMonthTotal,
+          };
+        })
       );
       setLastBudgetResetMonth(currentMonth);
     }
   };
 
   React.useEffect(() => {
+    if (isLoading) return;
     const currentMonth = new Date().getMonth();
-    const currentDay = new Date().getDate();
-    if (currentDay === 1 && currentMonth !== lastBudgetResetMonth) {
+    if (currentMonth !== lastBudgetResetMonth) {
       resetMonthlyBudgets();
     }
-  }, [lastBudgetResetMonth]);
+  }, [lastBudgetResetMonth, isLoading]);
 
   const resetAllData = async () => {
     try {
