@@ -107,12 +107,18 @@ export default function Onboarding4Screen() {
           <View style={styles.entriesContainer}>
             {entries.map((entry, index) => (
               <View key={index} style={styles.entryRow}>
-                <View style={styles.entryInfo}>
+                <View style={styles.entryIconContainer}>
+                  <Feather name="trending-up" size={18} color="#7340FE" />
+                </View>
+                <View style={styles.entryContent}>
                   <Text style={styles.entryType}>{entry.type}</Text>
                   <Text style={styles.entryAmount}>{entry.amount} €</Text>
                 </View>
-                <Pressable onPress={() => handleDeleteEntry(index)}>
-                  <Feather name="x" size={20} color="#9CA3AF" />
+                <Pressable 
+                  style={styles.entryDeleteButton}
+                  onPress={() => handleDeleteEntry(index)}
+                >
+                  <Feather name="x" size={18} color="#9CA3AF" />
                 </Pressable>
               </View>
             ))}
@@ -190,29 +196,47 @@ const styles = StyleSheet.create({
   },
   entriesContainer: {
     marginTop: Spacing.xl,
+    gap: 12,
   },
   entryRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "#F3F4F6",
-    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
     padding: 16,
-    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
   },
-  entryInfo: {
-    flexDirection: "row",
+  entryIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: "#F3E8FF",
     alignItems: "center",
-    gap: Spacing.md,
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  entryContent: {
+    flex: 1,
   },
   entryType: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "600",
-    color: "#000",
+    color: "#1F2937",
+    marginBottom: 2,
   },
   entryAmount: {
-    fontSize: 16,
-    color: "#6B7280",
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#7340FE",
+  },
+  entryDeleteButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#F3F4F6",
+    alignItems: "center",
+    justifyContent: "center",
   },
   buttonContainer: {
     position: "absolute",
