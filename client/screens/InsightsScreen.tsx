@@ -408,10 +408,24 @@ const EXPENSE_TYPES = [
 ];
 
 const parseGermanDate = (dateStr: string): Date => {
-  const parts = dateStr.split(".");
+  if (dateStr.startsWith("Heute") || dateStr.startsWith("Gestern")) {
+    const today = new Date();
+    if (dateStr.startsWith("Gestern")) {
+      today.setDate(today.getDate() - 1);
+    }
+    return today;
+  }
+  
+  let parts = dateStr.split(".");
   if (parts.length === 3) {
     return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
   }
+  
+  parts = dateStr.split("/");
+  if (parts.length === 3) {
+    return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+  }
+  
   return new Date();
 };
 

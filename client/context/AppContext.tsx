@@ -119,6 +119,7 @@ export interface AppContextType extends AppState {
   deleteBudget: (budgetId: string) => void;
   addGoal: (name: string, icon: string, target: number) => void;
   addBudget: (name: string, icon: string, iconColor: string, limit: number) => void;
+  addExpenseWithAutobudget: (categoryName: string, icon: string, amount: number, name: string, date: Date) => void;
   updateIncomeEntry: (id: string, type: string, amount: number) => void;
   deleteIncomeEntry: (id: string) => void;
   updateExpenseEntry: (id: string, type: string, amount: number) => void;
@@ -674,6 +675,86 @@ export function AppProvider({ children }: AppProviderProps) {
     setBudgets((prev) => [...prev, newBudget]);
   };
 
+  const addExpenseWithAutobudget = (categoryName: string, icon: string, amount: number, name: string, date: Date) => {
+    const categoryColors: Record<string, string> = {
+      "Lebensmittel": "#3B5BDB",
+      "Transport": "#7B8CDE",
+      "Unterhaltung": "#5C7CFA",
+      "Shopping": "#748FFC",
+      "Restaurant": "#91A7FF",
+      "Gesundheit": "#BAC8FF",
+      "Hygiene": "#B8C4E9",
+      "Feiern": "#9D4EDD",
+      "Sonstiges": "#DBE4FF",
+    };
+
+    setBudgets((prevBudgets) => {
+      const existingBudget = prevBudgets.find(
+        (b) => b.name.toLowerCase() === categoryName.toLowerCase()
+      );
+
+      if (existingBudget) {
+        const newExpense: BudgetExpense = {
+          id: generateId(),
+          name,
+          date: formatDate(date),
+          amount,
+        };
+        const updatedBudgets = prevBudgets.map((b) => {
+          if (b.id === existingBudget.id) {
+            return {
+              ...b,
+              current: b.current + amount,
+              expenses: [newExpense, ...b.expenses],
+            };
+          }
+          return b;
+        });
+
+        const newTransaction: Transaction = {
+          id: generateId(),
+          name,
+          category: categoryName,
+          date: formatDate(date),
+          amount: -amount,
+          icon,
+        };
+        setTransactions((prev) => [newTransaction, ...prev]);
+
+        return updatedBudgets;
+      } else {
+        const iconColor = categoryColors[categoryName] || "#7340fd";
+        const newExpense: BudgetExpense = {
+          id: generateId(),
+          name,
+          date: formatDate(date),
+          amount,
+        };
+        const newBudget: Budget = {
+          id: generateId(),
+          name: categoryName,
+          icon,
+          iconColor,
+          limit: 0,
+          current: amount,
+          expenses: [newExpense],
+        };
+
+        const newTransaction: Transaction = {
+          id: generateId(),
+          name,
+          category: categoryName,
+          date: formatDate(date),
+          amount: -amount,
+          icon,
+        };
+        setTransactions((prev) => [newTransaction, ...prev]);
+
+        return [...prevBudgets, newBudget];
+      }
+    });
+  };
+
   const updateIncomeEntry = (id: string, type: string, amount: number) => {
     setIncomeEntries((prev) =>
       prev.map((entry) => {
@@ -871,6 +952,7 @@ export function AppProvider({ children }: AppProviderProps) {
     deleteBudget,
     addGoal,
     addBudget,
+    addExpenseWithAutobudget,
     updateIncomeEntry,
     deleteIncomeEntry,
     updateExpenseEntry,

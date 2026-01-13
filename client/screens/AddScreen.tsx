@@ -8,6 +8,7 @@ import {
   ScrollView,
   Platform,
   Alert,
+  Keyboard,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -60,7 +61,7 @@ const formatDateForTransaction = (date: Date): string => {
 
 export default function AddScreen() {
   const insets = useSafeAreaInsets();
-  const { addTransaction, addBudgetExpense, budgets } = useApp();
+  const { addTransaction, addExpenseWithAutobudget } = useApp();
   
   const [activeTab, setActiveTab] = useState<"ausgaben" | "einnahmen">("ausgaben");
   const [amount, setAmount] = useState("");
@@ -94,20 +95,7 @@ export default function AddScreen() {
     const transactionAmount = activeTab === "ausgaben" ? -parsedAmount : parsedAmount;
 
     if (activeTab === "ausgaben") {
-      const matchingBudget = budgets.find(
-        (b) => b.name.toLowerCase() === category.name.toLowerCase()
-      );
-      if (matchingBudget) {
-        addBudgetExpense(matchingBudget.id, parsedAmount, transactionName, selectedDate);
-      } else {
-        addTransaction({
-          name: transactionName,
-          category: category.name,
-          date: formatDateForTransaction(selectedDate),
-          amount: transactionAmount,
-          icon: category.icon,
-        });
-      }
+      addExpenseWithAutobudget(category.name, category.icon, parsedAmount, transactionName, selectedDate);
     } else {
       addTransaction({
         name: transactionName,
@@ -215,7 +203,10 @@ export default function AddScreen() {
           <Text style={styles.inputLabel}>Datum</Text>
           <Pressable
             style={styles.dateButton}
-            onPress={() => setShowDatePicker(!showDatePicker)}
+            onPress={() => {
+              Keyboard.dismiss();
+              setShowDatePicker(!showDatePicker);
+            }}
           >
             <Feather name="calendar" size={20} color="#7340fd" />
             <Text style={styles.dateButtonText}>{formatDateDisplay(selectedDate)}</Text>
@@ -257,7 +248,10 @@ export default function AddScreen() {
                   styles.categoryItem,
                   selectedCategory === category.id && styles.categoryItemActive,
                 ]}
-                onPress={() => setSelectedCategory(category.id)}
+                onPress={() => {
+                  Keyboard.dismiss();
+                  setSelectedCategory(category.id);
+                }}
               >
                 <View
                   style={[
