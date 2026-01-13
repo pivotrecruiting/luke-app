@@ -33,10 +33,12 @@ const incomeTypes = [
 export default function Onboarding4Screen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
-  const { setIncomeEntries } = useApp();
+  const { setIncomeEntries, incomeEntries } = useApp();
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
-  const [entries, setEntries] = useState<Entry[]>([]);
+  const [entries, setEntries] = useState<Entry[]>(() => 
+    incomeEntries.map(e => ({ type: e.type, amount: e.amount.toString() }))
+  );
 
   const handleAddEntry = () => {
     if (selectedType && amount !== "") {

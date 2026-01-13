@@ -35,10 +35,12 @@ type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
 export default function Onboarding5Screen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
-  const { setExpenseEntries } = useApp();
+  const { setExpenseEntries, expenseEntries } = useApp();
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
-  const [entries, setEntries] = useState<Entry[]>([]);
+  const [entries, setEntries] = useState<Entry[]>(() =>
+    expenseEntries.map(e => ({ type: e.type, amount: e.amount.toString() }))
+  );
 
   const handleAddEntry = () => {
     if (selectedType && amount !== "") {
