@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useMemo, useRef, useCallback } from "react";
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
 import Svg, { Circle, G, Rect, Line } from "react-native-svg";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { Spacing, BorderRadius } from "@/constants/theme";
@@ -506,6 +507,13 @@ export default function InsightsScreen() {
   const [customExpenseType, setCustomExpenseType] = useState("");
   const [expenseAmount, setExpenseAmount] = useState("");
   const [deleteExpenseConfirmId, setDeleteExpenseConfirmId] = useState<string | null>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+    }, [])
+  );
 
   const filteredCategories = useMemo(() => {
     const { start, end } = getDateRangeForFilter(selectedTimeFilter);
@@ -800,6 +808,7 @@ export default function InsightsScreen() {
 
       {activeTab === "ausgaben" ? (
         <ScrollView
+          ref={scrollViewRef}
           style={styles.scrollView}
           contentContainerStyle={[
             styles.scrollContent,
@@ -1086,31 +1095,31 @@ export default function InsightsScreen() {
 
             <Text style={styles.modalSectionTitle}>Kategorien</Text>
             <View style={styles.filterOptionsGrid}>
-              {insightCategories.map((cat) => {
-                const isSelected = selectedCostFilters.includes(cat.name);
+              {budgets.map((budget) => {
+                const isSelected = selectedCostFilters.includes(budget.name);
                 return (
                   <Pressable
-                    key={cat.name}
+                    key={budget.id}
                     style={[
                       styles.filterOption,
                       isSelected && styles.filterOptionSelected,
                     ]}
                     onPress={() => {
                       if (isSelected) {
-                        setSelectedCostFilters(prev => prev.filter(c => c !== cat.name));
+                        setSelectedCostFilters(prev => prev.filter(c => c !== budget.name));
                       } else {
-                        setSelectedCostFilters(prev => [...prev, cat.name]);
+                        setSelectedCostFilters(prev => [...prev, budget.name]);
                       }
                     }}
                   >
-                    <View style={[styles.filterOptionDot, { backgroundColor: cat.color }]} />
+                    <View style={[styles.filterOptionDot, { backgroundColor: budget.iconColor }]} />
                     <Text
                       style={[
                         styles.filterOptionText,
                         isSelected && styles.filterOptionTextSelected,
                       ]}
                     >
-                      {cat.name}
+                      {budget.name}
                     </Text>
                   </Pressable>
                 );
