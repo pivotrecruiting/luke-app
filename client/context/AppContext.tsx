@@ -1,4 +1,7 @@
-import React, { createContext, useContext, useState, useMemo, ReactNode } from "react";
+import React, { createContext, useContext, useState, useMemo, useEffect, useCallback, ReactNode } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const STORAGE_KEY = "@luke_app_data";
 
 export interface IncomeEntry {
   id: string;
@@ -253,7 +256,18 @@ interface AppProviderProps {
   children: ReactNode;
 }
 
+interface PersistedData {
+  isOnboardingComplete: boolean;
+  incomeEntries: IncomeEntry[];
+  expenseEntries: ExpenseEntry[];
+  goals: Goal[];
+  budgets: Budget[];
+  transactions: Transaction[];
+  lastBudgetResetMonth: number;
+}
+
 export function AppProvider({ children }: AppProviderProps) {
+  const [isLoading, setIsLoading] = useState(true);
   const [isOnboardingComplete, setIsOnboardingComplete] = useState(false);
   const [userName] = useState("Deni");
   const [incomeEntries, setIncomeEntries] = useState<IncomeEntry[]>(INITIAL_INCOME_ENTRIES);
@@ -262,6 +276,54 @@ export function AppProvider({ children }: AppProviderProps) {
   const [budgets, setBudgets] = useState<Budget[]>(INITIAL_BUDGETS);
   const [transactions, setTransactions] = useState<Transaction[]>(INITIAL_TRANSACTIONS);
   const [selectedWeekOffset, setSelectedWeekOffset] = useState(0);
+  const [lastBudgetResetMonth, setLastBudgetResetMonth] = useState(() => new Date().getMonth());
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const jsonValue = await AsyncStorage.getItem(STORAGE_KEY);
+        if (jsonValue !== null) {
+          const data: PersistedData = JSON.parse(jsonValue);
+          setIsOnboardingComplete(data.isOnboardingComplete ?? false);
+          setIncomeEntries(data.incomeEntries ?? []);
+          setExpenseEntries(data.expenseEntries ?? []);
+          setGoals(data.goals ?? []);
+          setBudgets(data.budgets ?? []);
+          setTransactions(data.transactions ?? []);
+          if (data.lastBudgetResetMonth !== undefined) {
+            setLastBudgetResetMonth(data.lastBudgetResetMonth);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load data from storage:", e);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadData();
+  }, []);
+
+  const saveData = useCallback(async () => {
+    if (isLoading) return;
+    try {
+      const data: PersistedData = {
+        isOnboardingComplete,
+        incomeEntries,
+        expenseEntries,
+        goals,
+        budgets,
+        transactions,
+        lastBudgetResetMonth,
+      };
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch (e) {
+      console.error("Failed to save data to storage:", e);
+    }
+  }, [isLoading, isOnboardingComplete, incomeEntries, expenseEntries, goals, budgets, transactions, lastBudgetResetMonth]);
+
+  useEffect(() => {
+    saveData();
+  }, [saveData]);
 
   const weeklySpending = useMemo(() => {
     return calculateWeeklySpending(transactions, selectedWeekOffset);
@@ -747,8 +809,6 @@ export function AppProvider({ children }: AppProviderProps) {
     setBudgets((prev) => prev.filter((b) => b.id !== budgetId));
   };
 
-  const [lastBudgetResetMonth, setLastBudgetResetMonth] = useState(() => new Date().getMonth());
-
   const resetMonthlyBudgets = () => {
     const currentMonth = new Date().getMonth();
     if (currentMonth !== lastBudgetResetMonth) {
@@ -820,6 +880,10 @@ export function AppProvider({ children }: AppProviderProps) {
     resetMonthlyBudgets,
     lastBudgetResetMonth,
   };
+
+  if (isLoading) {
+    return null;
+  }
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
