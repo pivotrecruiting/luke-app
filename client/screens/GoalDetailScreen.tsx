@@ -296,9 +296,9 @@ export default function GoalDetailScreen() {
       />
       <View style={styles.modalContentWrapper}>
         <LinearGradient
-          colors={["#2A3AE6", "#171F80"]}
+          colors={["#7340fd", "#3B5BDB"]}
           start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
+          end={{ x: 1, y: 1 }}
           style={[styles.header, { paddingTop: insets.top + Spacing.lg }]}
         >
         <View style={styles.headerRow}>
