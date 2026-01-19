@@ -254,9 +254,6 @@ export default function SignUpScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={[styles.tealBlur, { top: -50 - insets.top }]} />
-      <View style={styles.purpleBlur} />
-
       <KeyboardAwareScrollViewCompat
         contentContainerStyle={[
           styles.scrollContent,
