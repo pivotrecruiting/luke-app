@@ -31,7 +31,7 @@ export default function WelcomeScreen() {
         cachePolicy="memory-disk"
       />
 
-      <View style={[styles.buttonContainer, { paddingBottom: insets.bottom + Spacing.xl }]}>
+      <View style={[styles.buttonContainer, { paddingBottom: insets.bottom + 50 }]}>
         <Pressable
           onPress={() => navigation.navigate("SignUp")}
           style={({ pressed }) => [
@@ -66,8 +66,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
   },
   button: {
-    height: 56,
-    borderRadius: 28,
+    height: 70,
+    borderRadius: 35,
     backgroundColor: Colors.light.primary,
     justifyContent: "center",
     alignItems: "center",
