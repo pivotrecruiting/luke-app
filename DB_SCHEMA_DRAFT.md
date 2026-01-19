@@ -178,6 +178,61 @@ create index goal_contributions_user_time_idx on public.goal_contributions (user
 create index goal_contributions_goal_time_idx on public.goal_contributions (goal_id, contribution_at);
 ```
 
+## User Settings & Levels (MVP)
+
+```sql
+create type public.language_code as enum ('de', 'en');
+create type public.theme_preference as enum ('system', 'light', 'dark');
+
+create table public.user_settings (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null unique references public.users (id) on delete cascade,
+  language public.language_code not null default 'de',
+  theme public.theme_preference not null default 'system',
+  daily_reminder_enabled boolean not null default false,
+  weekly_report_enabled boolean not null default false,
+  monthly_reminder_enabled boolean not null default false,
+  timezone text null,
+  reminder_time time null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table public.levels (
+  id uuid primary key default gen_random_uuid(),
+  level_number integer not null unique,
+  name text not null,
+  emoji text not null,
+  xp_required integer not null check (xp_required >= 0)
+);
+
+create table public.user_progress (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null unique references public.users (id) on delete cascade,
+  xp_total integer not null default 0,
+  current_level_id uuid null references public.levels (id),
+  current_streak integer not null default 0,
+  longest_streak integer not null default 0,
+  last_login_at timestamptz null,
+  last_streak_date date null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table public.xp_events (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.users (id) on delete cascade,
+  event_type text not null,
+  xp_delta integer not null,
+  source_type text null,
+  source_id uuid null,
+  meta jsonb null,
+  created_at timestamptz not null default now()
+);
+
+create index xp_events_user_time_idx on public.xp_events (user_id, created_at);
+```
+
 ## Ableitungen (Views/Queries statt Persistenz)
 
 - `budget_current` = Summe `transactions.amount_cents` pro `budget_id` in aktuellem Monat
@@ -189,4 +244,3 @@ create index goal_contributions_goal_time_idx on public.goal_contributions (goal
 - RLS Policies fuer alle neuen Tabellen (Nutzerduerfen nur eigene Daten sehen)
 - Optional: `currencies` Lookup statt Enum
 - Optional: `fx_rates` falls Multi-Currency pro Eintrag spaeter genutzt wird
-
