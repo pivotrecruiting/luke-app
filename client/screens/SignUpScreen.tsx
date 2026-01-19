@@ -134,7 +134,7 @@ export default function SignUpScreen() {
       <Modal
         visible={showWorkshopModal}
         transparent={true}
-        animationType="slide"
+        animationType="fade"
         onRequestClose={() => setShowWorkshopModal(false)}
       >
         <TouchableWithoutFeedback onPress={() => setShowWorkshopModal(false)}>
