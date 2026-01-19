@@ -78,7 +78,7 @@ export default function SignUpScreen() {
           />
 
           <Pressable
-            onPress={() => navigation.navigate("Onboarding1")}
+            onPress={() => navigation.navigate("OnboardingCurrency")}
             style={({ pressed }) => [
               styles.continueButton,
               pressed && styles.buttonPressed,
@@ -94,7 +94,7 @@ export default function SignUpScreen() {
           </View>
 
           <Pressable
-            onPress={() => navigation.navigate("Onboarding1")}
+            onPress={() => navigation.navigate("OnboardingCurrency")}
             style={({ pressed }) => [
               styles.socialButton,
               pressed && styles.buttonPressed,
@@ -105,7 +105,7 @@ export default function SignUpScreen() {
           </Pressable>
 
           <Pressable
-            onPress={() => navigation.navigate("Onboarding1")}
+            onPress={() => navigation.navigate("OnboardingCurrency")}
             style={({ pressed }) => [
               styles.socialButton,
               pressed && styles.buttonPressed,

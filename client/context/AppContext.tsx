@@ -3,6 +3,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const STORAGE_KEY = "@luke_app_data";
 
+export type CurrencyCode = "EUR" | "USD" | "CHF";
+
 export interface IncomeEntry {
   id: string;
   type: string;
@@ -81,6 +83,7 @@ export interface MonthlyTrendData {
 export interface AppState {
   isOnboardingComplete: boolean;
   userName: string;
+  currency: CurrencyCode;
   incomeEntries: IncomeEntry[];
   expenseEntries: ExpenseEntry[];
   goals: Goal[];
@@ -105,6 +108,7 @@ export interface AppContextType extends AppState {
   addExpenseEntry: (type: string, amount: number) => void;
   setIncomeEntries: (entries: Array<{type: string, amount: number}>) => void;
   setExpenseEntries: (entries: Array<{type: string, amount: number}>) => void;
+  setCurrency: (currency: CurrencyCode) => void;
   addGoalDeposit: (goalId: string, amount: number, customDate?: Date) => void;
   updateGoalDeposit: (goalId: string, depositId: string, amount: number, date?: Date) => void;
   deleteGoalDeposit: (goalId: string, depositId: string) => void;
@@ -262,6 +266,7 @@ interface AppProviderProps {
 
 interface PersistedData {
   isOnboardingComplete: boolean;
+  currency: CurrencyCode;
   incomeEntries: IncomeEntry[];
   expenseEntries: ExpenseEntry[];
   goals: Goal[];
@@ -274,6 +279,7 @@ export function AppProvider({ children }: AppProviderProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isOnboardingComplete, setIsOnboardingComplete] = useState(false);
   const [userName] = useState("Deni");
+  const [currency, setCurrency] = useState<CurrencyCode>("EUR");
   const [incomeEntries, setIncomeEntries] = useState<IncomeEntry[]>(INITIAL_INCOME_ENTRIES);
   const [expenseEntries, setExpenseEntries] = useState<ExpenseEntry[]>(INITIAL_EXPENSE_ENTRIES);
   const [goals, setGoals] = useState<Goal[]>(INITIAL_GOALS);
@@ -294,6 +300,9 @@ export function AppProvider({ children }: AppProviderProps) {
             setIsOnboardingComplete(false);
           } else {
             setIsOnboardingComplete(data.isOnboardingComplete ?? false);
+          }
+          if (data.currency) {
+            setCurrency(data.currency);
           }
           setIncomeEntries(data.incomeEntries ?? []);
           setExpenseEntries(data.expenseEntries ?? []);
@@ -318,6 +327,7 @@ export function AppProvider({ children }: AppProviderProps) {
     try {
       const data: PersistedData = {
         isOnboardingComplete,
+        currency,
         incomeEntries,
         expenseEntries,
         goals,
@@ -329,7 +339,7 @@ export function AppProvider({ children }: AppProviderProps) {
     } catch (e) {
       console.error("Failed to save data to storage:", e);
     }
-  }, [isLoading, isOnboardingComplete, incomeEntries, expenseEntries, goals, budgets, transactions, lastBudgetResetMonth]);
+  }, [isLoading, isOnboardingComplete, currency, incomeEntries, expenseEntries, goals, budgets, transactions, lastBudgetResetMonth]);
 
   useEffect(() => {
     saveData();
@@ -965,6 +975,7 @@ export function AppProvider({ children }: AppProviderProps) {
     try {
       await AsyncStorage.removeItem(STORAGE_KEY);
       setIsOnboardingComplete(false);
+      setCurrency("EUR");
       setIncomeEntries([]);
       setExpenseEntries([]);
       setGoals([]);
@@ -979,6 +990,7 @@ export function AppProvider({ children }: AppProviderProps) {
   const value: AppContextType = {
     isOnboardingComplete,
     userName,
+    currency,
     incomeEntries,
     expenseEntries,
     goals,
@@ -1000,6 +1012,7 @@ export function AppProvider({ children }: AppProviderProps) {
     addExpenseEntry,
     setIncomeEntries: setIncomeEntriesFromOnboarding,
     setExpenseEntries: setExpenseEntriesFromOnboarding,
+    setCurrency,
     addGoalDeposit,
     updateGoalDeposit,
     deleteGoalDeposit,
