@@ -48,6 +48,7 @@ export default function SignUpScreen() {
   const [email, setEmail] = useState("");
   const [showWorkshopModal, setShowWorkshopModal] = useState(false);
   const [workshopCode, setWorkshopCode] = useState("");
+  const [codeStatus, setCodeStatus] = useState<"neutral" | "valid" | "invalid">("neutral");
 
   return (
     <View style={styles.container}>
@@ -146,18 +147,35 @@ export default function SignUpScreen() {
                 <Text style={styles.modalSubtitle}>Gib dein persönlichen Code ein</Text>
 
                 <TextInput
-                  style={styles.modalInput}
+                  style={[
+                    styles.modalInput,
+                    codeStatus === "valid" && styles.inputValid,
+                    codeStatus === "invalid" && styles.inputInvalid,
+                  ]}
                   placeholder="DEIN CODE HIER"
                   placeholderTextColor="#9CA3AF"
                   value={workshopCode}
-                  onChangeText={setWorkshopCode}
+                  onChangeText={(text) => {
+                    setWorkshopCode(text);
+                    setCodeStatus("neutral");
+                  }}
                   autoCapitalize="characters"
                 />
 
                 <Pressable
                   onPress={() => {
-                    setShowWorkshopModal(false);
-                    navigation.navigate("Onboarding1");
+                    const validCodes = ["12345", "LUKE2024", "WORKSHOP"];
+                    if (validCodes.includes(workshopCode.toUpperCase())) {
+                      setCodeStatus("valid");
+                      setTimeout(() => {
+                        setShowWorkshopModal(false);
+                        setWorkshopCode("");
+                        setCodeStatus("neutral");
+                        navigation.navigate("Onboarding1");
+                      }, 600);
+                    } else {
+                      setCodeStatus("invalid");
+                    }
                   }}
                   style={({ pressed }) => [
                     styles.activateButton,
@@ -347,7 +365,7 @@ const styles = StyleSheet.create({
   modalInput: {
     width: "100%",
     height: 56,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: "#E5E7EB",
     borderRadius: 12,
     marginTop: Spacing["2xl"],
@@ -357,6 +375,12 @@ const styles = StyleSheet.create({
     color: Colors.light.text,
     outlineStyle: "none",
   } as any,
+  inputValid: {
+    borderColor: "#22C55E",
+  },
+  inputInvalid: {
+    borderColor: "#EF4444",
+  },
   activateButton: {
     width: "100%",
     height: 56,
