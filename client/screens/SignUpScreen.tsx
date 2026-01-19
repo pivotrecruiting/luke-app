@@ -71,9 +71,11 @@ export default function SignUpScreen() {
 
   useEffect(() => {
     if (Platform.OS !== "ios") return;
-    AppleAuthentication.isAvailableAsync().then(setAppleAvailable).catch(() => {
-      setAppleAvailable(false);
-    });
+    AppleAuthentication.isAvailableAsync()
+      .then(setAppleAvailable)
+      .catch(() => {
+        setAppleAvailable(false);
+      });
   }, []);
 
   const handlePostAuth = useCallback(() => {
@@ -266,9 +268,9 @@ export default function SignUpScreen() {
         <Text style={styles.logo}>Luke</Text>
 
         <View style={styles.formContainer}>
-          <Text style={styles.title}>Create an account</Text>
+          <Text style={styles.title}>Erstelle einen Account</Text>
           <Text style={styles.subtitle}>
-            Enter your email to sign up for this app
+            Melde dich mit deiner E-Mail an, um loszulegen.
           </Text>
 
           <TextInput
@@ -293,8 +295,12 @@ export default function SignUpScreen() {
             editable={!isLoading}
           />
 
-          {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
-          {infoMessage ? <Text style={styles.infoText}>{infoMessage}</Text> : null}
+          {errorMessage ? (
+            <Text style={styles.errorText}>{errorMessage}</Text>
+          ) : null}
+          {infoMessage ? (
+            <Text style={styles.infoText}>{infoMessage}</Text>
+          ) : null}
 
           <Pressable
             onPress={handleEmailSignUp}
@@ -324,7 +330,7 @@ export default function SignUpScreen() {
 
           <View style={styles.dividerContainer}>
             <View style={styles.divider} />
-            <Text style={styles.dividerText}>or</Text>
+            <Text style={styles.dividerText}>oder</Text>
             <View style={styles.divider} />
           </View>
 
@@ -337,7 +343,7 @@ export default function SignUpScreen() {
             ]}
           >
             <GoogleLogo size={20} />
-            <Text style={styles.socialButtonText}>Continue with Google</Text>
+            <Text style={styles.socialButtonText}>Anmelden über Google</Text>
           </Pressable>
 
           {appleAvailable ? (
@@ -353,12 +359,17 @@ export default function SignUpScreen() {
               <Text style={styles.socialButtonText}>Continue with Apple</Text>
             </Pressable>
           ) : null}
-
           <Text style={styles.termsText}>
-            By clicking continue, you agree to our{" "}
-            <Text style={styles.termsLink}>Terms of Service</Text> and{" "}
-            <Text style={styles.termsLink}>Privacy Policy</Text>
+            Durch das Fortfahren stimmst du unseren{" "}
+            <Text style={styles.termsLink}>AGB</Text> und dem{" "}
+            <Text style={styles.termsLink}>Datenschutz</Text> zu.
           </Text>
+
+          <Pressable style={styles.workshopCodeButton}>
+            <Text style={styles.workshopCodeText}>
+              Du hast einen Workshop-Code?
+            </Text>
+          </Pressable>
         </View>
       </KeyboardAwareScrollViewCompat>
     </View>
@@ -432,7 +443,7 @@ const styles = StyleSheet.create({
   continueButton: {
     width: "100%",
     height: 48,
-    backgroundColor: Colors.light.primary,
+    backgroundColor: "#1A1A1A",
     borderRadius: BorderRadius.xs,
     alignItems: "center",
     justifyContent: "center",
@@ -441,7 +452,7 @@ const styles = StyleSheet.create({
   continueButtonText: {
     ...Typography.body,
     fontWeight: "600",
-    color: Colors.light.buttonText,
+    color: "#FFFFFF",
   },
   secondaryButton: {
     width: "100%",
@@ -480,8 +491,7 @@ const styles = StyleSheet.create({
   socialButton: {
     width: "100%",
     height: 48,
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
+    backgroundColor: "#F3F4F6",
     borderRadius: BorderRadius.xs,
     flexDirection: "row",
     alignItems: "center",
@@ -492,18 +502,27 @@ const styles = StyleSheet.create({
   socialButtonText: {
     ...Typography.body,
     fontWeight: "500",
-    color: Colors.light.text,
+    color: "#000000",
   },
   termsText: {
     ...Typography.tiny,
-    color: "#6B7280",
+    color: "#9CA3AF",
     textAlign: "center",
     marginTop: Spacing["3xl"],
-    lineHeight: 20,
+    lineHeight: 18,
   },
   termsLink: {
-    color: Colors.light.text,
-    textDecorationLine: "underline",
+    color: "#6B7280",
+    fontWeight: "500",
+  },
+  workshopCodeButton: {
+    marginTop: Spacing.xl,
+  },
+  workshopCodeText: {
+    ...Typography.body,
+    color: "#4F46E5",
+    fontWeight: "500",
+    textDecorationLine: "none",
   },
   errorText: {
     ...Typography.small,
