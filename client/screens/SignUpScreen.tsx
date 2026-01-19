@@ -517,12 +517,14 @@ const styles = StyleSheet.create({
   },
   workshopCodeButton: {
     marginTop: Spacing.xl,
+    borderBottomWidth: 1,
+    borderBottomColor: "#4F46E5",
+    paddingBottom: 2,
   },
   workshopCodeText: {
-    ...Typography.body,
+    ...Typography.small,
     color: "#4F46E5",
     fontWeight: "500",
-    textDecorationLine: "none",
   },
   errorText: {
     ...Typography.small,
