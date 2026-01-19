@@ -10,7 +10,8 @@ import { Image } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { OnboardingStackParamList } from "@/navigation/OnboardingNavigator";
-import { Spacing } from "@/constants/theme";
+import { Spacing, Colors } from "@/constants/theme";
+import { ThemedText } from "@/components/ThemedText";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
@@ -37,7 +38,9 @@ export default function WelcomeScreen() {
             styles.button,
             pressed && styles.buttonPressed,
           ]}
-        />
+        >
+          <ThemedText style={styles.buttonText}>Loslegen</ThemedText>
+        </Pressable>
       </View>
     </View>
   );
@@ -65,8 +68,16 @@ const styles = StyleSheet.create({
   button: {
     height: 56,
     borderRadius: 28,
+    backgroundColor: Colors.light.primary,
+    justifyContent: "center",
+    alignItems: "center",
   },
   buttonPressed: {
-    opacity: 0.7,
+    opacity: 0.8,
+  },
+  buttonText: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "600",
   },
 });
