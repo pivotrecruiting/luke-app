@@ -20,8 +20,18 @@ import { Spacing } from "@/constants/theme";
 import { useApp, BudgetExpense } from "@/context/AppContext";
 
 const GERMAN_MONTHS = [
-  "Januar", "Februar", "März", "April", "Mai", "Juni",
-  "Juli", "August", "September", "Oktober", "November", "Dezember"
+  "Januar",
+  "Februar",
+  "März",
+  "April",
+  "Mai",
+  "Juni",
+  "Juli",
+  "August",
+  "September",
+  "Oktober",
+  "November",
+  "Dezember",
 ];
 
 const formatCurrency = (value: number) => {
@@ -31,7 +41,9 @@ const formatCurrency = (value: number) => {
   });
 };
 
-const parseExpenseDate = (dateStr: string): { month: number; year: number; date: Date } | null => {
+const parseExpenseDate = (
+  dateStr: string,
+): { month: number; year: number; date: Date } | null => {
   const now = new Date();
   if (dateStr.startsWith("Heute")) {
     return { month: now.getMonth(), year: now.getFullYear(), date: now };
@@ -39,25 +51,35 @@ const parseExpenseDate = (dateStr: string): { month: number; year: number; date:
   if (dateStr === "Gestern" || dateStr.startsWith("Gestern")) {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
-    return { month: yesterday.getMonth(), year: yesterday.getFullYear(), date: yesterday };
+    return {
+      month: yesterday.getMonth(),
+      year: yesterday.getFullYear(),
+      date: yesterday,
+    };
   }
   const match = dateStr.match(/(\d{2})\/(\d{2})\/(\d{4})/);
   if (match) {
-    const date = new Date(parseInt(match[3], 10), parseInt(match[2], 10) - 1, parseInt(match[1], 10));
+    const date = new Date(
+      parseInt(match[3], 10),
+      parseInt(match[2], 10) - 1,
+      parseInt(match[1], 10),
+    );
     return { month: date.getMonth(), year: date.getFullYear(), date };
   }
   return null;
 };
 
-const groupExpensesByMonth = (expenses: BudgetExpense[]): Record<string, BudgetExpense[]> => {
+const groupExpensesByMonth = (
+  expenses: BudgetExpense[],
+): Record<string, BudgetExpense[]> => {
   const grouped: Record<string, BudgetExpense[]> = {};
-  
+
   const sortedExpenses = [...expenses].sort((a, b) => {
     const dateA = parseExpenseDate(a.date)?.date || new Date();
     const dateB = parseExpenseDate(b.date)?.date || new Date();
     return dateB.getTime() - dateA.getTime();
   });
-  
+
   sortedExpenses.forEach((expense) => {
     const parsed = parseExpenseDate(expense.date);
     if (parsed) {
@@ -68,7 +90,7 @@ const groupExpensesByMonth = (expenses: BudgetExpense[]): Record<string, BudgetE
       grouped[key].push(expense);
     }
   });
-  
+
   return grouped;
 };
 
@@ -81,7 +103,14 @@ interface SwipeableExpenseProps {
   onSwipeOpen: (id: string) => void;
 }
 
-function SwipeableExpense({ expense, budgetIcon, onDelete, onEdit, isActive, onSwipeOpen }: SwipeableExpenseProps) {
+function SwipeableExpense({
+  expense,
+  budgetIcon,
+  onDelete,
+  onEdit,
+  isActive,
+  onSwipeOpen,
+}: SwipeableExpenseProps) {
   const handleSwipeOpen = () => {
     onSwipeOpen(expense.id);
   };
@@ -95,17 +124,17 @@ function SwipeableExpense({ expense, budgetIcon, onDelete, onEdit, isActive, onS
       "Ausgabe löschen",
       `Möchtest du diese Ausgabe über € ${formatCurrency(expense.amount)} wirklich löschen?`,
       [
-        { 
-          text: "Abbrechen", 
+        {
+          text: "Abbrechen",
           style: "cancel",
-          onPress: handleCloseSwipe
+          onPress: handleCloseSwipe,
         },
         {
           text: "Löschen",
           style: "destructive",
           onPress: () => onDelete(),
         },
-      ]
+      ],
     );
   };
 
@@ -149,12 +178,23 @@ export default function BudgetDetailScreen() {
   const navigation = useNavigation();
   const route = useRoute();
   const { budgetId } = route.params as { budgetId: string };
-  const { budgets, updateBudgetExpense, deleteBudgetExpense, deleteBudget, updateBudget } = useApp();
+  const {
+    budgets,
+    updateBudgetExpense,
+    deleteBudgetExpense,
+    deleteBudget,
+    updateBudget,
+  } = useApp();
 
   const budget = budgets.find((b) => b.id === budgetId);
+  const groupedExpenses = useMemo(() => {
+    return groupExpensesByMonth(budget?.expenses ?? []);
+  }, [budget?.expenses]);
 
   const [editModalVisible, setEditModalVisible] = useState(false);
-  const [editingExpense, setEditingExpense] = useState<BudgetExpense | null>(null);
+  const [editingExpense, setEditingExpense] = useState<BudgetExpense | null>(
+    null,
+  );
   const [editExpenseAmount, setEditExpenseAmount] = useState("");
   const [editExpenseName, setEditExpenseName] = useState("");
   const [editExpenseDate, setEditExpenseDate] = useState(new Date());
@@ -175,11 +215,6 @@ export default function BudgetDetailScreen() {
   const percentage = (budget.current / budget.limit) * 100;
   const isOverBudget = budget.current > budget.limit;
   const displayPercentage = Math.min(percentage, 100);
-  const isCompleted = budget.current >= budget.limit;
-
-  const groupedExpenses = useMemo(() => {
-    return groupExpensesByMonth(budget.expenses);
-  }, [budget.expenses]);
 
   const handleEditExpense = (expense: BudgetExpense) => {
     setEditingExpense(expense);
@@ -193,7 +228,13 @@ export default function BudgetDetailScreen() {
   const handleEditExpenseSave = () => {
     const amount = parseFloat(editExpenseAmount.replace(",", "."));
     if (!isNaN(amount) && amount > 0 && editingExpense) {
-      updateBudgetExpense(budget.id, editingExpense.id, amount, editExpenseName, editExpenseDate);
+      updateBudgetExpense(
+        budget.id,
+        editingExpense.id,
+        amount,
+        editExpenseName,
+        editExpenseDate,
+      );
       setEditModalVisible(false);
       setEditingExpense(null);
       setEditExpenseAmount("");
@@ -226,7 +267,7 @@ export default function BudgetDetailScreen() {
             navigation.goBack();
           },
         },
-      ]
+      ],
     );
   };
 
@@ -274,14 +315,23 @@ export default function BudgetDetailScreen() {
         style={[styles.header, { paddingTop: insets.top + Spacing.md }]}
       >
         <View style={styles.headerRow}>
-          <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Pressable
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
             <Feather name="arrow-left" size={24} color="#FFFFFF" />
           </Pressable>
           <View style={styles.headerActions}>
-            <Pressable style={styles.editHeaderButton} onPress={openEditBudgetModal}>
+            <Pressable
+              style={styles.editHeaderButton}
+              onPress={openEditBudgetModal}
+            >
               <Feather name="edit-2" size={20} color="#FFFFFF" />
             </Pressable>
-            <Pressable style={styles.deleteHeaderButton} onPress={handleDeleteBudget}>
+            <Pressable
+              style={styles.deleteHeaderButton}
+              onPress={handleDeleteBudget}
+            >
               <Feather name="trash-2" size={20} color="#FFFFFF" />
             </Pressable>
           </View>
@@ -300,12 +350,26 @@ export default function BudgetDetailScreen() {
       >
         <View style={styles.summaryCard}>
           <View style={styles.summaryHeader}>
-            <View style={[styles.iconContainer, { backgroundColor: `${budget.iconColor}20` }]}>
-              <Feather name={budget.icon as any} size={28} color={budget.iconColor} />
+            <View
+              style={[
+                styles.iconContainer,
+                { backgroundColor: `${budget.iconColor}20` },
+              ]}
+            >
+              <Feather
+                name={budget.icon as any}
+                size={28}
+                color={budget.iconColor}
+              />
             </View>
             <View style={styles.summaryInfo}>
               <Text style={styles.summaryTitle}>{budget.name}</Text>
-              <Text style={[styles.summaryAmount, isOverBudget && styles.overBudgetText]}>
+              <Text
+                style={[
+                  styles.summaryAmount,
+                  isOverBudget && styles.overBudgetText,
+                ]}
+              >
                 € {formatCurrency(budget.current)} / € {budget.limit}
               </Text>
             </View>
@@ -324,7 +388,12 @@ export default function BudgetDetailScreen() {
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
               <Text style={styles.statLabel}>Ausgegeben</Text>
-              <Text style={[styles.statValue, isOverBudget && styles.overBudgetText]}>
+              <Text
+                style={[
+                  styles.statValue,
+                  isOverBudget && styles.overBudgetText,
+                ]}
+              >
                 € {formatCurrency(budget.current)}
               </Text>
             </View>
@@ -343,7 +412,9 @@ export default function BudgetDetailScreen() {
 
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Transaktionen</Text>
-          <Text style={styles.swipeHint}>Lang drücken zum Löschen, tippen zum Bearbeiten</Text>
+          <Text style={styles.swipeHint}>
+            Lang drücken zum Löschen, tippen zum Bearbeiten
+          </Text>
         </View>
 
         {Object.keys(groupedExpenses).length === 0 ? (
@@ -388,9 +459,12 @@ export default function BudgetDetailScreen() {
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.modalOverlay}
         >
-          <Pressable style={styles.modalBackdrop} onPress={handleEditExpenseCancel} />
-          <ScrollView 
-            style={[styles.modalContent, { maxHeight: '80%' }]}
+          <Pressable
+            style={styles.modalBackdrop}
+            onPress={handleEditExpenseCancel}
+          />
+          <ScrollView
+            style={[styles.modalContent, { maxHeight: "80%" }]}
             contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
@@ -426,7 +500,9 @@ export default function BudgetDetailScreen() {
               onPress={() => setShowEditDatePicker(true)}
             >
               <Feather name="calendar" size={20} color="#7340FE" />
-              <Text style={styles.datePickerText}>{formatDisplayDate(editExpenseDate)}</Text>
+              <Text style={styles.datePickerText}>
+                {formatDisplayDate(editExpenseDate)}
+              </Text>
             </Pressable>
 
             {showEditDatePicker ? (
@@ -450,11 +526,17 @@ export default function BudgetDetailScreen() {
               </View>
             ) : null}
 
-            <Pressable style={styles.modalSaveButton} onPress={handleEditExpenseSave}>
+            <Pressable
+              style={styles.modalSaveButton}
+              onPress={handleEditExpenseSave}
+            >
               <Text style={styles.modalSaveButtonText}>Speichern</Text>
             </Pressable>
-            
-            <Pressable style={styles.modalCancelButton} onPress={handleEditExpenseCancel}>
+
+            <Pressable
+              style={styles.modalCancelButton}
+              onPress={handleEditExpenseCancel}
+            >
               <Text style={styles.modalCancelButtonText}>Abbrechen</Text>
             </Pressable>
           </ScrollView>
@@ -471,8 +553,13 @@ export default function BudgetDetailScreen() {
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.modalOverlay}
         >
-          <Pressable style={styles.modalBackdrop} onPress={handleEditBudgetCancel} />
-          <View style={[styles.modalContent, { paddingBottom: insets.bottom + 24 }]}>
+          <Pressable
+            style={styles.modalBackdrop}
+            onPress={handleEditBudgetCancel}
+          />
+          <View
+            style={[styles.modalContent, { paddingBottom: insets.bottom + 24 }]}
+          >
             <View style={styles.modalHandle} />
             <Text style={styles.modalTitle}>Budget bearbeiten</Text>
 
@@ -490,11 +577,17 @@ export default function BudgetDetailScreen() {
               />
             </View>
 
-            <Pressable style={styles.modalSaveButton} onPress={handleEditBudgetSave}>
+            <Pressable
+              style={styles.modalSaveButton}
+              onPress={handleEditBudgetSave}
+            >
               <Text style={styles.modalSaveButtonText}>Speichern</Text>
             </Pressable>
-            
-            <Pressable style={styles.modalCancelButton} onPress={handleEditBudgetCancel}>
+
+            <Pressable
+              style={styles.modalCancelButton}
+              onPress={handleEditBudgetCancel}
+            >
               <Text style={styles.modalCancelButtonText}>Abbrechen</Text>
             </Pressable>
           </View>

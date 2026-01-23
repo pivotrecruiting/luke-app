@@ -7,7 +7,6 @@ import {
   ScrollView,
   Modal,
   TextInput,
-  Dimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
@@ -16,8 +15,6 @@ import { useApp } from "@/context/AppContext";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
-
-const { width: screenWidth } = Dimensions.get("window");
 
 const EXPENSE_TYPES = [
   { id: "versicherungen", name: "Versicherungen", icon: "shield" },
@@ -33,14 +30,23 @@ const EXPENSE_TYPES = [
 ];
 
 function formatCurrency(value: number): string {
-  return value.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return value.toLocaleString("de-DE", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 }
 
 export default function ExpensesScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
-  const { expenseEntries, totalFixedExpenses, addExpenseEntry, updateExpenseEntry, deleteExpenseEntry } = useApp();
-  
+  const {
+    expenseEntries,
+    totalFixedExpenses,
+    addExpenseEntry,
+    updateExpenseEntry,
+    deleteExpenseEntry,
+  } = useApp();
+
   const [modalVisible, setModalVisible] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState<string | null>(null);
@@ -56,9 +62,13 @@ export default function ExpensesScreen() {
     setModalVisible(true);
   };
 
-  const openEditModal = (entry: { id: string; type: string; amount: number }) => {
+  const openEditModal = (entry: {
+    id: string;
+    type: string;
+    amount: number;
+  }) => {
     setEditingId(entry.id);
-    const matchingType = EXPENSE_TYPES.find(t => t.name === entry.type);
+    const matchingType = EXPENSE_TYPES.find((t) => t.name === entry.type);
     if (matchingType) {
       setSelectedType(matchingType.id);
       setCustomType("");
@@ -73,12 +83,12 @@ export default function ExpensesScreen() {
   const handleSave = () => {
     const parsedAmount = parseFloat(amount.replace(",", ".")) || 0;
     if (parsedAmount <= 0) return;
-    
+
     let typeName = "";
     if (selectedType === "sonstiges" && customType.trim()) {
       typeName = customType.trim();
     } else {
-      const typeObj = EXPENSE_TYPES.find(t => t.id === selectedType);
+      const typeObj = EXPENSE_TYPES.find((t) => t.id === selectedType);
       if (!typeObj) return;
       typeName = typeObj.name;
     }
@@ -88,7 +98,7 @@ export default function ExpensesScreen() {
     } else {
       addExpenseEntry(typeName, parsedAmount);
     }
-    
+
     setModalVisible(false);
     resetForm();
   };
@@ -106,14 +116,17 @@ export default function ExpensesScreen() {
   };
 
   const getIconForType = (typeName: string): string => {
-    const matchingType = EXPENSE_TYPES.find(t => t.name === typeName);
+    const matchingType = EXPENSE_TYPES.find((t) => t.name === typeName);
     return matchingType?.icon || "plus-circle";
   };
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <Animated.View entering={FadeIn.duration(300)} style={styles.header}>
-        <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
+        <Pressable
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+        >
           <Feather name="arrow-left" size={24} color="#111827" />
         </Pressable>
         <Text style={styles.headerTitle}>Ausgaben</Text>
@@ -122,45 +135,56 @@ export default function ExpensesScreen() {
         </Pressable>
       </Animated.View>
 
-      <ScrollView 
+      <ScrollView
         style={styles.content}
         contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.xl }}
         showsVerticalScrollIndicator={false}
       >
-        <Animated.View entering={FadeInDown.delay(100).duration(300)} style={styles.summaryCard}>
+        <Animated.View
+          entering={FadeInDown.delay(100).duration(300)}
+          style={styles.summaryCard}
+        >
           <View style={styles.summaryIcon}>
             <Feather name="trending-down" size={28} color="#EF4444" />
           </View>
           <View style={styles.summaryContent}>
             <Text style={styles.summaryLabel}>Monatliche Fixkosten</Text>
-            <Text style={styles.summaryAmount}>€ {formatCurrency(totalFixedExpenses)}</Text>
+            <Text style={styles.summaryAmount}>
+              € {formatCurrency(totalFixedExpenses)}
+            </Text>
           </View>
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(200).duration(300)}>
           <Text style={styles.sectionTitle}>Fixkosten</Text>
-          
+
           {expenseEntries.length === 0 ? (
             <View style={styles.emptyState}>
               <Feather name="inbox" size={48} color="#D1D5DB" />
-              <Text style={styles.emptyText}>Noch keine Ausgaben hinzugefügt</Text>
+              <Text style={styles.emptyText}>
+                Noch keine Ausgaben hinzugefügt
+              </Text>
               <Pressable style={styles.emptyButton} onPress={openAddModal}>
                 <Text style={styles.emptyButtonText}>Ausgabe hinzufügen</Text>
               </Pressable>
             </View>
           ) : (
             expenseEntries.map((entry, index) => (
-              <Animated.View 
-                key={entry.id} 
+              <Animated.View
+                key={entry.id}
                 entering={FadeInDown.delay(250 + index * 50).duration(300)}
               >
-                <Pressable 
+                <Pressable
                   style={styles.expenseItem}
                   onPress={() => openEditModal(entry)}
                 >
                   <View style={styles.expenseLeft}>
                     <View style={styles.expenseIconContainer}>
-                      <Feather name={getIconForType(entry.type) as any} size={20} color="#EF4444" />
+                      <Feather
+                        name={getIconForType(entry.type) as any}
+                        size={20}
+                        color="#EF4444"
+                      />
                     </View>
                     <View>
                       <Text style={styles.expenseType}>{entry.type}</Text>
@@ -168,8 +192,10 @@ export default function ExpensesScreen() {
                     </View>
                   </View>
                   <View style={styles.expenseRight}>
-                    <Text style={styles.expenseAmount}>€ {formatCurrency(entry.amount)}</Text>
-                    <Pressable 
+                    <Text style={styles.expenseAmount}>
+                      € {formatCurrency(entry.amount)}
+                    </Text>
+                    <Pressable
                       onPress={() => setDeleteConfirmId(entry.id)}
                       hitSlop={8}
                     >
@@ -180,15 +206,17 @@ export default function ExpensesScreen() {
 
                 {deleteConfirmId === entry.id && (
                   <View style={styles.deleteConfirm}>
-                    <Text style={styles.deleteConfirmText}>Wirklich löschen?</Text>
+                    <Text style={styles.deleteConfirmText}>
+                      Wirklich löschen?
+                    </Text>
                     <View style={styles.deleteActions}>
-                      <Pressable 
+                      <Pressable
                         style={styles.cancelDeleteBtn}
                         onPress={() => setDeleteConfirmId(null)}
                       >
                         <Text style={styles.cancelDeleteText}>Abbrechen</Text>
                       </Pressable>
-                      <Pressable 
+                      <Pressable
                         style={styles.confirmDeleteBtn}
                         onPress={() => handleDelete(entry.id)}
                       >
@@ -202,13 +230,17 @@ export default function ExpensesScreen() {
           )}
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(400).duration(300)} style={styles.tipCard}>
+        <Animated.View
+          entering={FadeInDown.delay(400).duration(300)}
+          style={styles.tipCard}
+        >
           <View style={styles.tipHeader}>
             <Feather name="info" size={18} color="#EF4444" />
             <Text style={styles.tipTitle}>Tipp</Text>
           </View>
           <Text style={styles.tipText}>
-            Füge alle regelmäßigen Fixkosten hinzu, um dein verfügbares Budget genauer zu berechnen.
+            Füge alle regelmäßigen Fixkosten hinzu, um dein verfügbares Budget
+            genauer zu berechnen.
           </Text>
         </Animated.View>
       </ScrollView>
@@ -220,11 +252,16 @@ export default function ExpensesScreen() {
         onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <Pressable 
-            style={styles.modalBackdrop} 
+          <Pressable
+            style={styles.modalBackdrop}
             onPress={() => setModalVisible(false)}
           />
-          <View style={[styles.modalContent, { paddingBottom: insets.bottom + Spacing.lg }]}>
+          <View
+            style={[
+              styles.modalContent,
+              { paddingBottom: insets.bottom + Spacing.lg },
+            ]}
+          >
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>
                 {editingId ? "Ausgabe bearbeiten" : "Neue Ausgabe"}
@@ -234,7 +271,7 @@ export default function ExpensesScreen() {
               </Pressable>
             </View>
 
-            <KeyboardAwareScrollViewCompat 
+            <KeyboardAwareScrollViewCompat
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{ paddingBottom: 40 }}
             >
@@ -249,15 +286,18 @@ export default function ExpensesScreen() {
                     ]}
                     onPress={() => setSelectedType(type.id)}
                   >
-                    <Feather 
-                      name={type.icon as any} 
-                      size={20} 
-                      color={selectedType === type.id ? "#EF4444" : "#6B7280"} 
+                    <Feather
+                      name={type.icon as any}
+                      size={20}
+                      color={selectedType === type.id ? "#EF4444" : "#6B7280"}
                     />
-                    <Text style={[
-                      styles.typeButtonText,
-                      selectedType === type.id && styles.typeButtonTextSelected,
-                    ]}>
+                    <Text
+                      style={[
+                        styles.typeButtonText,
+                        selectedType === type.id &&
+                          styles.typeButtonTextSelected,
+                      ]}
+                    >
                       {type.name}
                     </Text>
                   </Pressable>
@@ -290,7 +330,7 @@ export default function ExpensesScreen() {
                 />
               </View>
 
-              <Pressable 
+              <Pressable
                 style={[
                   styles.saveButton,
                   (!selectedType || !amount) && styles.saveButtonDisabled,
