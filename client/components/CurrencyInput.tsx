@@ -1,12 +1,14 @@
 import React from "react";
 import { View, TextInput, Text, StyleSheet } from "react-native";
 import { Colors, Spacing, BorderRadius, Typography } from "@/constants/theme";
+import { useApp, type CurrencyCode } from "@/context/AppContext";
 
 interface CurrencyInputProps {
   value: string;
   onChangeText: (text: string) => void;
   placeholder?: string;
   highlighted?: boolean;
+  currency?: CurrencyCode;
 }
 
 export default function CurrencyInput({
@@ -14,7 +16,15 @@ export default function CurrencyInput({
   onChangeText,
   placeholder = "0,00",
   highlighted = true,
+  currency,
 }: CurrencyInputProps) {
+  const { currency: appCurrency } = useApp();
+  const displayCurrency = currency ?? appCurrency;
+  const currencySymbol: Record<CurrencyCode, string> = {
+    EUR: "€",
+    USD: "$",
+    CHF: "CHF",
+  };
   const handleChange = (text: string) => {
     const cleaned = text.replace(/[^0-9,]/g, "");
     onChangeText(cleaned);
@@ -27,7 +37,7 @@ export default function CurrencyInput({
         highlighted ? styles.highlighted : styles.normal,
       ]}
     >
-      <Text style={styles.currency}>€</Text>
+      <Text style={styles.currency}>{currencySymbol[displayCurrency]}</Text>
       <TextInput
         style={styles.input}
         value={value}

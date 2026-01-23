@@ -28,7 +28,20 @@ const formatCurrency = (value: number) => {
   });
 };
 
-const GERMAN_MONTHS_SHORT = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
+const GERMAN_MONTHS_SHORT = [
+  "Jan",
+  "Feb",
+  "Mär",
+  "Apr",
+  "Mai",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Okt",
+  "Nov",
+  "Dez",
+];
 
 interface DonutChartProps {
   categories: { name: string; amount: number; color: string }[];
@@ -37,7 +50,12 @@ interface DonutChartProps {
   onSelectCategory: (name: string | null) => void;
 }
 
-function DonutChart({ categories, total, selectedCategory, onSelectCategory }: DonutChartProps) {
+function DonutChart({
+  categories,
+  total,
+  selectedCategory,
+  onSelectCategory,
+}: DonutChartProps) {
   const size = 215;
   const strokeWidth = 26;
   const radius = (size - strokeWidth) / 2;
@@ -66,11 +84,15 @@ function DonutChart({ categories, total, selectedCategory, onSelectCategory }: D
     ? categories.find((c) => c.name === selectedCategory)
     : null;
 
-  const displayAmount = selectedCategoryData ? selectedCategoryData.amount : total;
-  const displayLabel = selectedCategoryData ? selectedCategoryData.name : "Gesamt";
+  const displayAmount = selectedCategoryData
+    ? selectedCategoryData.amount
+    : total;
+  const displayLabel = selectedCategoryData
+    ? selectedCategoryData.name
+    : "Gesamt";
 
   return (
-    <Pressable 
+    <Pressable
       style={styles.chartWrapper}
       onPress={() => onSelectCategory(null)}
     >
@@ -80,8 +102,10 @@ function DonutChart({ categories, total, selectedCategory, onSelectCategory }: D
             const isSelected = selectedCategory === segment.name;
             const hasSelection = selectedCategory !== null;
             const segmentOpacity = hasSelection ? (isSelected ? 1 : 0.4) : 1;
-            const segmentStrokeWidth = isSelected ? strokeWidth + 4 : strokeWidth;
-            
+            const segmentStrokeWidth = isSelected
+              ? strokeWidth + 4
+              : strokeWidth;
+
             return (
               <Circle
                 key={index}
@@ -103,7 +127,9 @@ function DonutChart({ categories, total, selectedCategory, onSelectCategory }: D
         </G>
       </Svg>
       <View style={styles.chartCenter}>
-        <Text style={styles.chartAmount}>€ {formatCurrency(displayAmount)}</Text>
+        <Text style={styles.chartAmount}>
+          € {formatCurrency(displayAmount)}
+        </Text>
         <Text style={styles.chartLabel}>{displayLabel}</Text>
         {selectedCategoryData ? (
           <Text style={styles.chartPercentage}>
@@ -126,16 +152,32 @@ function IncomeExpensesView({ income, expenses }: IncomeExpensesViewProps) {
   const maxValue = Math.max(income, expenses);
   const incomeWidth = maxValue > 0 ? (income / maxValue) * 100 : 0;
   const expensesWidth = maxValue > 0 ? (expenses / maxValue) * 100 : 0;
-  const savingsRate = income > 0 ? ((difference / income) * 100) : 0;
+  const savingsRate = income > 0 ? (difference / income) * 100 : 0;
 
   return (
     <View style={styles.incomeExpensesContainer}>
       <View style={styles.summaryCard}>
         <View style={styles.summaryHeader}>
           <Text style={styles.summaryTitle}>Monatliche Bilanz</Text>
-          <View style={[styles.statusBadge, isPositive ? styles.statusPositive : styles.statusNegative]}>
-            <Feather name={isPositive ? "trending-up" : "trending-down"} size={14} color={isPositive ? "#059669" : "#DC2626"} />
-            <Text style={[styles.statusText, isPositive ? styles.statusTextPositive : styles.statusTextNegative]}>
+          <View
+            style={[
+              styles.statusBadge,
+              isPositive ? styles.statusPositive : styles.statusNegative,
+            ]}
+          >
+            <Feather
+              name={isPositive ? "trending-up" : "trending-down"}
+              size={14}
+              color={isPositive ? "#059669" : "#DC2626"}
+            />
+            <Text
+              style={[
+                styles.statusText,
+                isPositive
+                  ? styles.statusTextPositive
+                  : styles.statusTextNegative,
+              ]}
+            >
               {isPositive ? "Im Plus" : "Im Minus"}
             </Text>
           </View>
@@ -144,26 +186,42 @@ function IncomeExpensesView({ income, expenses }: IncomeExpensesViewProps) {
         <View style={styles.barSection}>
           <View style={styles.barRow}>
             <View style={styles.barLabelContainer}>
-              <View style={[styles.barIndicator, { backgroundColor: "#22C55E" }]} />
+              <View
+                style={[styles.barIndicator, { backgroundColor: "#22C55E" }]}
+              />
               <Text style={styles.barLabel}>Einnahmen</Text>
             </View>
             <Text style={styles.barValue}>€ {formatCurrency(income)}</Text>
           </View>
           <View style={styles.barTrack}>
-            <View style={[styles.barFill, styles.barFillIncome, { width: `${incomeWidth}%` }]} />
+            <View
+              style={[
+                styles.barFill,
+                styles.barFillIncome,
+                { width: `${incomeWidth}%` },
+              ]}
+            />
           </View>
         </View>
 
         <View style={styles.barSection}>
           <View style={styles.barRow}>
             <View style={styles.barLabelContainer}>
-              <View style={[styles.barIndicator, { backgroundColor: "#EF4444" }]} />
+              <View
+                style={[styles.barIndicator, { backgroundColor: "#EF4444" }]}
+              />
               <Text style={styles.barLabel}>Ausgaben</Text>
             </View>
             <Text style={styles.barValue}>€ {formatCurrency(expenses)}</Text>
           </View>
           <View style={styles.barTrack}>
-            <View style={[styles.barFill, styles.barFillExpenses, { width: `${expensesWidth}%` }]} />
+            <View
+              style={[
+                styles.barFill,
+                styles.barFillExpenses,
+                { width: `${expensesWidth}%` },
+              ]}
+            />
           </View>
         </View>
 
@@ -172,13 +230,27 @@ function IncomeExpensesView({ income, expenses }: IncomeExpensesViewProps) {
         <View style={styles.differenceSection}>
           <View style={styles.differenceRow}>
             <Text style={styles.differenceLabel}>Differenz</Text>
-            <Text style={[styles.differenceValue, isPositive ? styles.differencePositive : styles.differenceNegative]}>
+            <Text
+              style={[
+                styles.differenceValue,
+                isPositive
+                  ? styles.differencePositive
+                  : styles.differenceNegative,
+              ]}
+            >
               {isPositive ? "+" : ""}€ {formatCurrency(difference)}
             </Text>
           </View>
           <View style={styles.differenceRow}>
             <Text style={styles.savingsLabel}>Sparquote</Text>
-            <Text style={[styles.savingsValue, isPositive ? styles.differencePositive : styles.differenceNegative]}>
+            <Text
+              style={[
+                styles.savingsValue,
+                isPositive
+                  ? styles.differencePositive
+                  : styles.differenceNegative,
+              ]}
+            >
               {savingsRate.toFixed(1)}%
             </Text>
           </View>
@@ -191,8 +263,8 @@ function IncomeExpensesView({ income, expenses }: IncomeExpensesViewProps) {
           <Text style={styles.tipsTitle}>Tipp</Text>
         </View>
         <Text style={styles.tipsText}>
-          {isPositive 
-            ? savingsRate >= 20 
+          {isPositive
+            ? savingsRate >= 20
               ? "Hervorragend! Du sparst über 20% deines Einkommens. Weiter so!"
               : "Du bist auf einem guten Weg. Versuche, deine Sparquote auf 20% zu erhöhen."
             : "Deine Ausgaben übersteigen deine Einnahmen. Prüfe deine variablen Kosten."}
@@ -208,26 +280,43 @@ interface TrendViewProps {
   onSelectMonth: (index: number | null) => void;
 }
 
-function TrendView({ monthlyData, selectedMonth, onSelectMonth }: TrendViewProps) {
-  const maxAmount = Math.max(...monthlyData.map(d => d.amount), 1);
+function TrendView({
+  monthlyData,
+  selectedMonth,
+  onSelectMonth,
+}: TrendViewProps) {
+  const maxAmount = Math.max(...monthlyData.map((d) => d.amount), 1);
   const chartHeight = 180;
   const chartWidth = screenWidth - 80;
-  const barWidth = (chartWidth / monthlyData.length) - 12;
-  
-  const average = monthlyData.reduce((sum, d) => sum + d.amount, 0) / monthlyData.length;
+  const barWidth = chartWidth / monthlyData.length - 12;
+
+  const average =
+    monthlyData.reduce((sum, d) => sum + d.amount, 0) / monthlyData.length;
   const currentMonthData = monthlyData[monthlyData.length - 1];
-  const previousMonthData = monthlyData.length > 1 ? monthlyData[monthlyData.length - 2] : null;
-  
-  const displayedData = selectedMonth !== null ? monthlyData[selectedMonth] : currentMonthData;
-  const displayLabel = selectedMonth !== null ? monthlyData[selectedMonth].month : "Diesen Monat";
-  
-  const changePercent = previousMonthData && previousMonthData.amount > 0
-    ? ((currentMonthData.amount - previousMonthData.amount) / previousMonthData.amount) * 100
-    : 0;
+  const previousMonthData =
+    monthlyData.length > 1 ? monthlyData[monthlyData.length - 2] : null;
+
+  const displayedData =
+    selectedMonth !== null ? monthlyData[selectedMonth] : currentMonthData;
+  const displayLabel =
+    selectedMonth !== null ? monthlyData[selectedMonth].month : "Diesen Monat";
+
+  const changePercent =
+    previousMonthData && previousMonthData.amount > 0
+      ? ((currentMonthData.amount - previousMonthData.amount) /
+          previousMonthData.amount) *
+        100
+      : 0;
   const isImproving = changePercent <= 0;
 
-  const bestMonthIndex = monthlyData.reduce((min, d, i, arr) => d.amount < arr[min].amount ? i : min, 0);
-  const worstMonthIndex = monthlyData.reduce((max, d, i, arr) => d.amount > arr[max].amount ? i : max, 0);
+  const bestMonthIndex = monthlyData.reduce(
+    (min, d, i, arr) => (d.amount < arr[min].amount ? i : min),
+    0,
+  );
+  const worstMonthIndex = monthlyData.reduce(
+    (max, d, i, arr) => (d.amount > arr[max].amount ? i : max),
+    0,
+  );
 
   return (
     <View style={styles.trendContainer}>
@@ -240,20 +329,39 @@ function TrendView({ monthlyData, selectedMonth, onSelectMonth }: TrendViewProps
         <View style={styles.trendStatsRow}>
           <View style={styles.trendStat}>
             <Text style={styles.trendStatLabel}>Durchschnitt</Text>
-            <Text style={styles.trendStatValue}>€ {formatCurrency(average)}</Text>
+            <Text style={styles.trendStatValue}>
+              € {formatCurrency(average)}
+            </Text>
           </View>
           <View style={styles.trendStatDivider} />
           <View style={styles.trendStat}>
             <Text style={styles.trendStatLabel}>{displayLabel}</Text>
-            <Text style={[styles.trendStatValue, displayedData.amount <= average ? styles.trendPositive : styles.trendNegative]}>
+            <Text
+              style={[
+                styles.trendStatValue,
+                displayedData.amount <= average
+                  ? styles.trendPositive
+                  : styles.trendNegative,
+              ]}
+            >
               € {formatCurrency(displayedData.amount)}
             </Text>
           </View>
         </View>
 
         <View style={styles.chartContainer}>
-          <View style={{ position: "relative", width: chartWidth, height: chartHeight + 30 }}>
-            <Svg width={chartWidth} height={chartHeight + 30} style={{ position: "absolute", top: 0, left: 0 }}>
+          <View
+            style={{
+              position: "relative",
+              width: chartWidth,
+              height: chartHeight + 30,
+            }}
+          >
+            <Svg
+              width={chartWidth}
+              height={chartHeight + 30}
+              style={{ position: "absolute", top: 0, left: 0 }}
+            >
               <Line
                 x1={0}
                 y1={chartHeight - (average / maxAmount) * chartHeight}
@@ -270,7 +378,7 @@ function TrendView({ monthlyData, selectedMonth, onSelectMonth }: TrendViewProps
                 const isCurrentMonth = index === monthlyData.length - 1;
                 const isSelected = selectedMonth === index;
                 const hasSelection = selectedMonth !== null;
-                
+
                 return (
                   <G key={index}>
                     <Rect
@@ -279,19 +387,34 @@ function TrendView({ monthlyData, selectedMonth, onSelectMonth }: TrendViewProps
                       width={barWidth}
                       height={barHeight}
                       rx={6}
-                      fill={isSelected ? "#3B5BDB" : isCurrentMonth && !hasSelection ? "#3B5BDB" : "#E5E7EB"}
+                      fill={
+                        isSelected
+                          ? "#3B5BDB"
+                          : isCurrentMonth && !hasSelection
+                            ? "#3B5BDB"
+                            : "#E5E7EB"
+                      }
                       opacity={hasSelection && !isSelected ? 0.5 : 1}
                     />
                   </G>
                 );
               })}
             </Svg>
-            <View style={{ position: "absolute", top: 0, left: 0, flexDirection: "row", width: chartWidth, height: chartHeight }}>
+            <View
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                flexDirection: "row",
+                width: chartWidth,
+                height: chartHeight,
+              }}
+            >
               {monthlyData.map((data, index) => {
                 const barHeight = (data.amount / maxAmount) * chartHeight;
                 const x = index * (chartWidth / monthlyData.length) + 6;
                 const isSelected = selectedMonth === index;
-                
+
                 return (
                   <Pressable
                     key={index}
@@ -313,17 +436,18 @@ function TrendView({ monthlyData, selectedMonth, onSelectMonth }: TrendViewProps
               const isSelected = selectedMonth === index;
               const isCurrentMonth = index === monthlyData.length - 1;
               const hasSelection = selectedMonth !== null;
-              
+
               return (
-                <Pressable 
+                <Pressable
                   key={index}
                   style={styles.chartLabelPressable}
                   onPress={() => onSelectMonth(isSelected ? null : index)}
                 >
-                  <Text 
+                  <Text
                     style={[
                       styles.chartMonthLabel,
-                      (isSelected || (isCurrentMonth && !hasSelection)) && styles.chartMonthLabelActive
+                      (isSelected || (isCurrentMonth && !hasSelection)) &&
+                        styles.chartMonthLabelActive,
                     ]}
                   >
                     {data.month}
@@ -337,23 +461,43 @@ function TrendView({ monthlyData, selectedMonth, onSelectMonth }: TrendViewProps
         <Text style={styles.trendHint}>Tippe auf einen Monat für Details</Text>
 
         <View style={styles.trendChangeRow}>
-          <View style={[styles.changeIndicator, isImproving ? styles.changePositive : styles.changeNegative]}>
-            <Feather 
-              name={isImproving ? "arrow-down" : "arrow-up"} 
-              size={16} 
-              color={isImproving ? "#059669" : "#DC2626"} 
+          <View
+            style={[
+              styles.changeIndicator,
+              isImproving ? styles.changePositive : styles.changeNegative,
+            ]}
+          >
+            <Feather
+              name={isImproving ? "arrow-down" : "arrow-up"}
+              size={16}
+              color={isImproving ? "#059669" : "#DC2626"}
             />
-            <Text style={[styles.changeText, isImproving ? styles.changeTextPositive : styles.changeTextNegative]}>
-              {Math.abs(changePercent).toFixed(1)}% {isImproving ? "weniger" : "mehr"} als letzten Monat
+            <Text
+              style={[
+                styles.changeText,
+                isImproving
+                  ? styles.changeTextPositive
+                  : styles.changeTextNegative,
+              ]}
+            >
+              {Math.abs(changePercent).toFixed(1)}%{" "}
+              {isImproving ? "weniger" : "mehr"} als letzten Monat
             </Text>
           </View>
         </View>
       </View>
 
       <View style={styles.insightCards}>
-        <Pressable 
-          style={[styles.insightCard, selectedMonth === bestMonthIndex && styles.insightCardSelected]}
-          onPress={() => onSelectMonth(selectedMonth === bestMonthIndex ? null : bestMonthIndex)}
+        <Pressable
+          style={[
+            styles.insightCard,
+            selectedMonth === bestMonthIndex && styles.insightCardSelected,
+          ]}
+          onPress={() =>
+            onSelectMonth(
+              selectedMonth === bestMonthIndex ? null : bestMonthIndex,
+            )
+          }
         >
           <View style={[styles.insightIcon, { backgroundColor: "#EFF6FF" }]}>
             <Feather name="calendar" size={18} color="#3B5BDB" />
@@ -365,9 +509,16 @@ function TrendView({ monthlyData, selectedMonth, onSelectMonth }: TrendViewProps
             </Text>
           </View>
         </Pressable>
-        <Pressable 
-          style={[styles.insightCard, selectedMonth === worstMonthIndex && styles.insightCardSelected]}
-          onPress={() => onSelectMonth(selectedMonth === worstMonthIndex ? null : worstMonthIndex)}
+        <Pressable
+          style={[
+            styles.insightCard,
+            selectedMonth === worstMonthIndex && styles.insightCardSelected,
+          ]}
+          onPress={() =>
+            onSelectMonth(
+              selectedMonth === worstMonthIndex ? null : worstMonthIndex,
+            )
+          }
         >
           <View style={[styles.insightIcon, { backgroundColor: "#FEF3C7" }]}>
             <Feather name="alert-circle" size={18} color="#F59E0B" />
@@ -416,25 +567,40 @@ const parseGermanDate = (dateStr: string): Date => {
     }
     return today;
   }
-  
+
   let parts = dateStr.split(".");
   if (parts.length === 3) {
-    return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+    return new Date(
+      parseInt(parts[2]),
+      parseInt(parts[1]) - 1,
+      parseInt(parts[0]),
+    );
   }
-  
+
   parts = dateStr.split("/");
   if (parts.length === 3) {
-    return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+    return new Date(
+      parseInt(parts[2]),
+      parseInt(parts[1]) - 1,
+      parseInt(parts[0]),
+    );
   }
-  
+
   return new Date();
 };
 
-const getDateRangeForFilter = (filter: "thisMonth" | "lastMonth" | "last3Months" | "last6Months" | "thisYear"): { start: Date; end: Date } => {
+const getDateRangeForFilter = (
+  filter:
+    | "thisMonth"
+    | "lastMonth"
+    | "last3Months"
+    | "last6Months"
+    | "thisYear",
+): { start: Date; end: Date } => {
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth();
-  
+
   switch (filter) {
     case "thisMonth": {
       const start = new Date(currentYear, currentMonth, 1);
@@ -468,13 +634,13 @@ const getDateRangeForFilter = (filter: "thisMonth" | "lastMonth" | "last3Months"
 
 export default function InsightsScreen() {
   const insets = useSafeAreaInsets();
-  const { 
+  const {
     insightCategories,
     budgets,
-    totalIncome, 
+    totalIncome,
     totalExpenses,
     totalFixedExpenses,
-    savingsRate, 
+    savingsRate,
     monthlyTrendData,
     incomeEntries,
     expenseEntries,
@@ -485,51 +651,65 @@ export default function InsightsScreen() {
     updateExpenseEntry,
     deleteExpenseEntry,
   } = useApp();
-  const [activeTab, setActiveTab] = useState<"ausgaben" | "einnahmen">("ausgaben");
-  const [activeFilter, setActiveFilter] = useState<"kategorien" | "income" | "trend">("kategorien");
+  const [activeTab, setActiveTab] = useState<"ausgaben" | "einnahmen">(
+    "ausgaben",
+  );
+  const [activeFilter, setActiveFilter] = useState<
+    "kategorien" | "income" | "trend"
+  >("kategorien");
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [selectedTrendMonth, setSelectedTrendMonth] = useState<number | null>(null);
-  
-  const [selectedTimeFilter, setSelectedTimeFilter] = useState<"thisMonth" | "lastMonth" | "last3Months" | "last6Months" | "thisYear">("thisMonth");
+  const [selectedTrendMonth, setSelectedTrendMonth] = useState<number | null>(
+    null,
+  );
+
+  const [selectedTimeFilter, setSelectedTimeFilter] = useState<
+    "thisMonth" | "lastMonth" | "last3Months" | "last6Months" | "thisYear"
+  >("thisMonth");
   const [selectedCostFilters, setSelectedCostFilters] = useState<string[]>([]);
-  
+
   const [incomeModalVisible, setIncomeModalVisible] = useState(false);
   const [editingIncomeId, setEditingIncomeId] = useState<string | null>(null);
-  const [selectedIncomeType, setSelectedIncomeType] = useState<string | null>(null);
+  const [selectedIncomeType, setSelectedIncomeType] = useState<string | null>(
+    null,
+  );
   const [customIncomeType, setCustomIncomeType] = useState("");
   const [incomeAmount, setIncomeAmount] = useState("");
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const [expenseModalVisible, setExpenseModalVisible] = useState(false);
   const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
-  const [selectedExpenseType, setSelectedExpenseType] = useState<string | null>(null);
+  const [selectedExpenseType, setSelectedExpenseType] = useState<string | null>(
+    null,
+  );
   const [customExpenseType, setCustomExpenseType] = useState("");
   const [expenseAmount, setExpenseAmount] = useState("");
-  const [deleteExpenseConfirmId, setDeleteExpenseConfirmId] = useState<string | null>(null);
+  const [deleteExpenseConfirmId, setDeleteExpenseConfirmId] = useState<
+    string | null
+  >(null);
   const scrollViewRef = useRef<ScrollView>(null);
 
   useFocusEffect(
     useCallback(() => {
       scrollViewRef.current?.scrollTo({ y: 0, animated: false });
-    }, [])
+    }, []),
   );
 
   const filteredCategories = useMemo(() => {
     const { start, end } = getDateRangeForFilter(selectedTimeFilter);
-    
+
     const categoryColors: Record<string, string> = {
-      "Lebensmittel": "#3B5BDB",
-      "Transport": "#7B8CDE",
-      "Unterhaltung": "#5C7CFA",
-      "Shopping": "#748FFC",
-      "Restaurant": "#91A7FF",
-      "Gesundheit": "#BAC8FF",
-      "Sonstiges": "#DBE4FF",
+      Lebensmittel: "#3B5BDB",
+      Transport: "#7B8CDE",
+      Unterhaltung: "#5C7CFA",
+      Shopping: "#748FFC",
+      Restaurant: "#91A7FF",
+      Gesundheit: "#BAC8FF",
+      Sonstiges: "#DBE4FF",
     };
-    
+
     const categoryTotals: Record<string, number> = {};
-    
+
     budgets.forEach((budget) => {
       const filteredExpenses = budget.expenses.filter((expense) => {
         let expenseDate: Date;
@@ -540,28 +720,37 @@ export default function InsightsScreen() {
         }
         return expenseDate >= start && expenseDate <= end;
       });
-      
-      const totalForCategory = filteredExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+
+      const totalForCategory = filteredExpenses.reduce(
+        (sum, exp) => sum + exp.amount,
+        0,
+      );
       if (totalForCategory > 0) {
-        categoryTotals[budget.name] = (categoryTotals[budget.name] || 0) + totalForCategory;
+        categoryTotals[budget.name] =
+          (categoryTotals[budget.name] || 0) + totalForCategory;
       }
     });
-    
+
     let categories = Object.entries(categoryTotals).map(([name, amount]) => ({
       name,
       amount,
       color: categoryColors[name] || "#7B8CDE",
     }));
-    
+
     if (selectedCostFilters.length > 0) {
-      categories = categories.filter(cat => selectedCostFilters.includes(cat.name));
+      categories = categories.filter((cat) =>
+        selectedCostFilters.includes(cat.name),
+      );
     }
-    
+
     return categories;
   }, [budgets, selectedCostFilters, selectedTimeFilter]);
 
   React.useEffect(() => {
-    if (selectedCategory && !filteredCategories.find(c => c.name === selectedCategory)) {
+    if (
+      selectedCategory &&
+      !filteredCategories.find((c) => c.name === selectedCategory)
+    ) {
       setSelectedCategory(null);
     }
   }, [filteredCategories, selectedCategory]);
@@ -570,10 +759,13 @@ export default function InsightsScreen() {
     return filteredCategories.reduce((sum, cat) => sum + cat.amount, 0);
   }, [filteredCategories]);
 
-  const activeFilterCount = selectedCostFilters.length + (selectedTimeFilter !== "thisMonth" ? 1 : 0);
+  const activeFilterCount =
+    selectedCostFilters.length + (selectedTimeFilter !== "thisMonth" ? 1 : 0);
 
   const handleCategoryPress = (categoryName: string) => {
-    setSelectedCategory((prev) => (prev === categoryName ? null : categoryName));
+    setSelectedCategory((prev) =>
+      prev === categoryName ? null : categoryName,
+    );
   };
 
   const openAddIncomeModal = () => {
@@ -586,7 +778,7 @@ export default function InsightsScreen() {
 
   const openEditIncomeModal = (entry: IncomeEntry) => {
     setEditingIncomeId(entry.id);
-    const matchingType = INCOME_TYPES.find(t => t.name === entry.type);
+    const matchingType = INCOME_TYPES.find((t) => t.name === entry.type);
     if (matchingType) {
       setSelectedIncomeType(matchingType.id);
       setCustomIncomeType("");
@@ -601,12 +793,12 @@ export default function InsightsScreen() {
   const handleSaveIncome = () => {
     const parsedAmount = parseFloat(incomeAmount.replace(",", ".")) || 0;
     if (parsedAmount <= 0) return;
-    
+
     let typeName = "";
     if (selectedIncomeType === "sonstiges" && customIncomeType.trim()) {
       typeName = customIncomeType.trim();
     } else {
-      const typeObj = INCOME_TYPES.find(t => t.id === selectedIncomeType);
+      const typeObj = INCOME_TYPES.find((t) => t.id === selectedIncomeType);
       if (!typeObj) return;
       typeName = typeObj.name;
     }
@@ -616,7 +808,7 @@ export default function InsightsScreen() {
     } else {
       addIncomeEntry(typeName, parsedAmount);
     }
-    
+
     setIncomeModalVisible(false);
     resetIncomeForm();
   };
@@ -634,7 +826,7 @@ export default function InsightsScreen() {
   };
 
   const getIconForIncomeType = (typeName: string): string => {
-    const matchingType = INCOME_TYPES.find(t => t.name === typeName);
+    const matchingType = INCOME_TYPES.find((t) => t.name === typeName);
     return matchingType?.icon || "plus-circle";
   };
 
@@ -648,7 +840,7 @@ export default function InsightsScreen() {
 
   const openEditExpenseModal = (entry: ExpenseEntry) => {
     setEditingExpenseId(entry.id);
-    const matchingType = EXPENSE_TYPES.find(t => t.name === entry.type);
+    const matchingType = EXPENSE_TYPES.find((t) => t.name === entry.type);
     if (matchingType) {
       setSelectedExpenseType(matchingType.id);
       setCustomExpenseType("");
@@ -663,12 +855,12 @@ export default function InsightsScreen() {
   const handleSaveExpense = () => {
     const parsedAmount = parseFloat(expenseAmount.replace(",", ".")) || 0;
     if (parsedAmount <= 0) return;
-    
+
     let typeName = "";
     if (selectedExpenseType === "sonstiges" && customExpenseType.trim()) {
       typeName = customExpenseType.trim();
     } else {
-      const typeObj = EXPENSE_TYPES.find(t => t.id === selectedExpenseType);
+      const typeObj = EXPENSE_TYPES.find((t) => t.id === selectedExpenseType);
       if (!typeObj) return;
       typeName = typeObj.name;
     }
@@ -678,7 +870,7 @@ export default function InsightsScreen() {
     } else {
       addExpenseEntry(typeName, parsedAmount);
     }
-    
+
     setExpenseModalVisible(false);
     resetExpenseForm();
   };
@@ -696,7 +888,7 @@ export default function InsightsScreen() {
   };
 
   const getIconForExpenseType = (typeName: string): string => {
-    const matchingType = EXPENSE_TYPES.find(t => t.name === typeName);
+    const matchingType = EXPENSE_TYPES.find((t) => t.name === typeName);
     return matchingType?.icon || "plus-circle";
   };
 
@@ -704,10 +896,7 @@ export default function InsightsScreen() {
     switch (activeFilter) {
       case "income":
         return (
-          <IncomeExpensesView
-            income={totalIncome}
-            expenses={totalExpenses}
-          />
+          <IncomeExpensesView income={totalIncome} expenses={totalExpenses} />
         );
       case "trend":
         return (
@@ -741,7 +930,10 @@ export default function InsightsScreen() {
                     onPress={() => handleCategoryPress(kategorie.name)}
                   >
                     <View
-                      style={[styles.kategorieDot, { backgroundColor: kategorie.color }]}
+                      style={[
+                        styles.kategorieDot,
+                        { backgroundColor: kategorie.color },
+                      ]}
                     />
                     <View>
                       <Text style={styles.kategorieName}>{kategorie.name}</Text>
@@ -823,12 +1015,28 @@ export default function InsightsScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.filterRow}>
-            <Pressable style={styles.filterButton} onPress={() => setFilterModalVisible(true)}>
-              <Feather name="sliders" size={16} color={activeFilterCount > 0 ? "#7340fd" : "#6B7280"} />
-              <Text style={[styles.filterButtonText, activeFilterCount > 0 && styles.filterButtonTextActive]}>
+            <Pressable
+              style={styles.filterButton}
+              onPress={() => setFilterModalVisible(true)}
+            >
+              <Feather
+                name="sliders"
+                size={16}
+                color={activeFilterCount > 0 ? "#7340fd" : "#6B7280"}
+              />
+              <Text
+                style={[
+                  styles.filterButtonText,
+                  activeFilterCount > 0 && styles.filterButtonTextActive,
+                ]}
+              >
                 Filter{activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
               </Text>
-              <Feather name="chevron-down" size={16} color={activeFilterCount > 0 ? "#7340fd" : "#6B7280"} />
+              <Feather
+                name="chevron-down"
+                size={16}
+                color={activeFilterCount > 0 ? "#7340fd" : "#6B7280"}
+              />
             </Pressable>
           </View>
 
@@ -907,10 +1115,15 @@ export default function InsightsScreen() {
                           onPress={() => handleCategoryPress(kategorie.name)}
                         >
                           <View
-                            style={[styles.kategorieDot, { backgroundColor: kategorie.color }]}
+                            style={[
+                              styles.kategorieDot,
+                              { backgroundColor: kategorie.color },
+                            ]}
                           />
                           <View>
-                            <Text style={styles.kategorieName}>{kategorie.name}</Text>
+                            <Text style={styles.kategorieName}>
+                              {kategorie.name}
+                            </Text>
                             <Text style={styles.kategorieBetrag}>
                               € {formatCurrency(kategorie.amount)}
                             </Text>
@@ -974,37 +1187,55 @@ export default function InsightsScreen() {
               <Feather name="trending-up" size={28} color="#10B981" />
             </View>
             <View style={styles.incomeSummaryContent}>
-              <Text style={styles.incomeSummaryLabel}>Monatliche Einnahmen</Text>
-              <Text style={styles.incomeSummaryAmount}>€ {formatCurrency(totalIncome)}</Text>
+              <Text style={styles.incomeSummaryLabel}>
+                Monatliche Einnahmen
+              </Text>
+              <Text style={styles.incomeSummaryAmount}>
+                € {formatCurrency(totalIncome)}
+              </Text>
             </View>
-            <Pressable style={styles.addIncomeButton} onPress={openAddIncomeModal}>
+            <Pressable
+              style={styles.addIncomeButton}
+              onPress={openAddIncomeModal}
+            >
               <Feather name="plus" size={20} color="#7340fd" />
             </Pressable>
           </View>
 
           <Text style={styles.incomeSectionTitle}>Einnahmequellen</Text>
-          
+
           {incomeEntries.length === 0 ? (
             <View style={styles.incomeEmptyState}>
               <Feather name="inbox" size={48} color="#D1D5DB" />
-              <Text style={styles.incomeEmptyText}>Noch keine Einnahmen hinzugefügt</Text>
-              <Pressable style={styles.incomeEmptyButton} onPress={openAddIncomeModal}>
-                <Text style={styles.incomeEmptyButtonText}>Einnahme hinzufügen</Text>
+              <Text style={styles.incomeEmptyText}>
+                Noch keine Einnahmen hinzugefügt
+              </Text>
+              <Pressable
+                style={styles.incomeEmptyButton}
+                onPress={openAddIncomeModal}
+              >
+                <Text style={styles.incomeEmptyButtonText}>
+                  Einnahme hinzufügen
+                </Text>
               </Pressable>
             </View>
           ) : (
             incomeEntries.map((entry, index) => (
-              <Animated.View 
-                key={entry.id} 
+              <Animated.View
+                key={entry.id}
                 entering={FadeInDown.delay(index * 50).duration(300)}
               >
-                <Pressable 
+                <Pressable
                   style={styles.incomeItem}
                   onPress={() => openEditIncomeModal(entry)}
                 >
                   <View style={styles.incomeLeft}>
                     <View style={styles.incomeIconContainer}>
-                      <Feather name={getIconForIncomeType(entry.type) as any} size={20} color="#10B981" />
+                      <Feather
+                        name={getIconForIncomeType(entry.type) as any}
+                        size={20}
+                        color="#10B981"
+                      />
                     </View>
                     <View>
                       <Text style={styles.incomeType}>{entry.type}</Text>
@@ -1012,8 +1243,10 @@ export default function InsightsScreen() {
                     </View>
                   </View>
                   <View style={styles.incomeRight}>
-                    <Text style={styles.incomeAmount}>€ {formatCurrency(entry.amount)}</Text>
-                    <Pressable 
+                    <Text style={styles.incomeAmount}>
+                      € {formatCurrency(entry.amount)}
+                    </Text>
+                    <Pressable
                       onPress={() => setDeleteConfirmId(entry.id)}
                       hitSlop={8}
                     >
@@ -1024,15 +1257,17 @@ export default function InsightsScreen() {
 
                 {deleteConfirmId === entry.id && (
                   <View style={styles.deleteConfirm}>
-                    <Text style={styles.deleteConfirmText}>Wirklich löschen?</Text>
+                    <Text style={styles.deleteConfirmText}>
+                      Wirklich löschen?
+                    </Text>
                     <View style={styles.deleteActions}>
-                      <Pressable 
+                      <Pressable
                         style={styles.cancelDeleteBtn}
                         onPress={() => setDeleteConfirmId(null)}
                       >
                         <Text style={styles.cancelDeleteText}>Abbrechen</Text>
                       </Pressable>
-                      <Pressable 
+                      <Pressable
                         style={styles.confirmDeleteBtn}
                         onPress={() => handleDeleteIncome(entry.id)}
                       >
@@ -1051,7 +1286,8 @@ export default function InsightsScreen() {
               <Text style={styles.incomeTipTitle}>Tipp</Text>
             </View>
             <Text style={styles.incomeTipText}>
-              Füge alle regelmäßigen Einnahmen hinzu, um dein verfügbares Budget genauer zu berechnen.
+              Füge alle regelmäßigen Einnahmen hinzu, um dein verfügbares Budget
+              genauer zu berechnen.
             </Text>
           </View>
         </ScrollView>
@@ -1064,8 +1300,17 @@ export default function InsightsScreen() {
         onRequestClose={() => setFilterModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <Pressable style={styles.modalBackdrop} onPress={() => setFilterModalVisible(false)} />
-          <ScrollView style={[styles.modalContent, { paddingBottom: insets.bottom + 24, maxHeight: '80%' }]} showsVerticalScrollIndicator={false}>
+          <Pressable
+            style={styles.modalBackdrop}
+            onPress={() => setFilterModalVisible(false)}
+          />
+          <ScrollView
+            style={[
+              styles.modalContent,
+              { paddingBottom: insets.bottom + 24, maxHeight: "80%" },
+            ]}
+            showsVerticalScrollIndicator={false}
+          >
             <View style={styles.modalHandle} />
             <Text style={styles.modalTitle}>Filter</Text>
 
@@ -1082,14 +1327,16 @@ export default function InsightsScreen() {
                   key={option.id}
                   style={[
                     styles.filterOption,
-                    selectedTimeFilter === option.id && styles.filterOptionSelected,
+                    selectedTimeFilter === option.id &&
+                      styles.filterOptionSelected,
                   ]}
                   onPress={() => setSelectedTimeFilter(option.id as any)}
                 >
                   <Text
                     style={[
                       styles.filterOptionText,
-                      selectedTimeFilter === option.id && styles.filterOptionTextSelected,
+                      selectedTimeFilter === option.id &&
+                        styles.filterOptionTextSelected,
                     ]}
                   >
                     {option.label}
@@ -1111,13 +1358,23 @@ export default function InsightsScreen() {
                     ]}
                     onPress={() => {
                       if (isSelected) {
-                        setSelectedCostFilters(prev => prev.filter(c => c !== budget.name));
+                        setSelectedCostFilters((prev) =>
+                          prev.filter((c) => c !== budget.name),
+                        );
                       } else {
-                        setSelectedCostFilters(prev => [...prev, budget.name]);
+                        setSelectedCostFilters((prev) => [
+                          ...prev,
+                          budget.name,
+                        ]);
                       }
                     }}
                   >
-                    <View style={[styles.filterOptionDot, { backgroundColor: budget.iconColor }]} />
+                    <View
+                      style={[
+                        styles.filterOptionDot,
+                        { backgroundColor: budget.iconColor },
+                      ]}
+                    />
                     <Text
                       style={[
                         styles.filterOptionText,
@@ -1158,7 +1415,12 @@ export default function InsightsScreen() {
         onRequestClose={() => setIncomeModalVisible(false)}
       >
         <View style={styles.incomeModalOverlay}>
-          <View style={[styles.incomeModalContent, { paddingBottom: insets.bottom + Spacing.lg }]}>
+          <View
+            style={[
+              styles.incomeModalContent,
+              { paddingBottom: insets.bottom + Spacing.lg },
+            ]}
+          >
             <View style={styles.incomeModalHeader}>
               <Text style={styles.incomeModalTitle}>
                 {editingIncomeId ? "Einnahme bearbeiten" : "Neue Einnahme"}
@@ -1175,19 +1437,25 @@ export default function InsightsScreen() {
                   key={type.id}
                   style={[
                     styles.incomeTypeButton,
-                    selectedIncomeType === type.id && styles.incomeTypeButtonSelected,
+                    selectedIncomeType === type.id &&
+                      styles.incomeTypeButtonSelected,
                   ]}
                   onPress={() => setSelectedIncomeType(type.id)}
                 >
-                  <Feather 
-                    name={type.icon as any} 
-                    size={20} 
-                    color={selectedIncomeType === type.id ? "#7340fd" : "#6B7280"} 
+                  <Feather
+                    name={type.icon as any}
+                    size={20}
+                    color={
+                      selectedIncomeType === type.id ? "#7340fd" : "#6B7280"
+                    }
                   />
-                  <Text style={[
-                    styles.incomeTypeButtonText,
-                    selectedIncomeType === type.id && styles.incomeTypeButtonTextSelected,
-                  ]}>
+                  <Text
+                    style={[
+                      styles.incomeTypeButtonText,
+                      selectedIncomeType === type.id &&
+                        styles.incomeTypeButtonTextSelected,
+                    ]}
+                  >
                     {type.name}
                   </Text>
                 </Pressable>
@@ -1220,10 +1488,11 @@ export default function InsightsScreen() {
               />
             </View>
 
-            <Pressable 
+            <Pressable
               style={[
                 styles.incomeSaveButton,
-                (!selectedIncomeType || !incomeAmount) && styles.incomeSaveButtonDisabled,
+                (!selectedIncomeType || !incomeAmount) &&
+                  styles.incomeSaveButtonDisabled,
               ]}
               onPress={handleSaveIncome}
               disabled={!selectedIncomeType || !incomeAmount}
@@ -1243,7 +1512,12 @@ export default function InsightsScreen() {
         onRequestClose={() => setExpenseModalVisible(false)}
       >
         <View style={styles.incomeModalOverlay}>
-          <View style={[styles.incomeModalContent, { paddingBottom: insets.bottom + Spacing.lg }]}>
+          <View
+            style={[
+              styles.incomeModalContent,
+              { paddingBottom: insets.bottom + Spacing.lg },
+            ]}
+          >
             <View style={styles.incomeModalHeader}>
               <Text style={styles.incomeModalTitle}>
                 {editingExpenseId ? "Ausgabe bearbeiten" : "Neue Ausgabe"}
@@ -1260,19 +1534,25 @@ export default function InsightsScreen() {
                   key={type.id}
                   style={[
                     styles.incomeTypeButton,
-                    selectedExpenseType === type.id && styles.expenseTypeButtonSelected,
+                    selectedExpenseType === type.id &&
+                      styles.expenseTypeButtonSelected,
                   ]}
                   onPress={() => setSelectedExpenseType(type.id)}
                 >
-                  <Feather 
-                    name={type.icon as any} 
-                    size={20} 
-                    color={selectedExpenseType === type.id ? "#EF4444" : "#6B7280"} 
+                  <Feather
+                    name={type.icon as any}
+                    size={20}
+                    color={
+                      selectedExpenseType === type.id ? "#EF4444" : "#6B7280"
+                    }
                   />
-                  <Text style={[
-                    styles.incomeTypeButtonText,
-                    selectedExpenseType === type.id && styles.expenseTypeButtonTextSelected,
-                  ]}>
+                  <Text
+                    style={[
+                      styles.incomeTypeButtonText,
+                      selectedExpenseType === type.id &&
+                        styles.expenseTypeButtonTextSelected,
+                    ]}
+                  >
                     {type.name}
                   </Text>
                 </Pressable>
@@ -1305,10 +1585,11 @@ export default function InsightsScreen() {
               />
             </View>
 
-            <Pressable 
+            <Pressable
               style={[
                 styles.expenseSaveButton,
-                (!selectedExpenseType || !expenseAmount) && styles.incomeSaveButtonDisabled,
+                (!selectedExpenseType || !expenseAmount) &&
+                  styles.incomeSaveButtonDisabled,
               ]}
               onPress={handleSaveExpense}
               disabled={!selectedExpenseType || !expenseAmount}
