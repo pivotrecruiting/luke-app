@@ -39,6 +39,16 @@ export default function HomeScreen() {
     userName, balance, totalIncome, totalExpenses, weeklySpending, transactions,
     selectedWeekOffset, currentWeekLabel, goToPreviousWeek, goToNextWeek 
   } = useApp();
+  const firstName = useMemo(() => {
+    if (typeof userName !== "string") {
+      return null;
+    }
+    const trimmed = userName.trim();
+    if (!trimmed) {
+      return null;
+    }
+    return trimmed.split(" ")[0] ?? null;
+  }, [userName]);
   
   // Parse various date formats to Date object for sorting
   const parseTransactionDate = (dateStr: string): Date => {
@@ -116,7 +126,9 @@ export default function HomeScreen() {
           style={[styles.header, { paddingTop: insets.top + Spacing.lg }]}
         >
           <View style={styles.headerTextContainer}>
-            <Text style={styles.welcomeText}>Willkommen, {userName}!</Text>
+            <Text style={styles.welcomeText}>
+              {firstName ? `Willkommen, ${firstName}!` : "Wilkommen bei Luke!"}
+            </Text>
             <Text style={styles.subtitleText}>hier der aktuelle Monat</Text>
           </View>
         </LinearGradient>

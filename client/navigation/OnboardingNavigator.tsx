@@ -2,6 +2,7 @@ import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import WelcomeScreen from "@/screens/WelcomeScreen";
 import SignUpScreen from "@/screens/SignUpScreen";
+import OnboardingCurrencyScreen from "@/screens/OnboardingCurrencyScreen";
 import Onboarding1Screen from "@/screens/Onboarding1Screen";
 import Onboarding2Screen from "@/screens/Onboarding2Screen";
 import Onboarding3Screen from "@/screens/Onboarding3Screen";
@@ -14,6 +15,7 @@ import PaywallScreen from "@/screens/PaywallScreen";
 export type OnboardingStackParamList = {
   Welcome: undefined;
   SignUp: undefined;
+  OnboardingCurrency: undefined;
   Onboarding1: undefined;
   Onboarding2: undefined;
   Onboarding3: undefined;
@@ -36,6 +38,7 @@ export default function OnboardingNavigator() {
     >
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
       <Stack.Screen name="SignUp" component={SignUpScreen} />
+      <Stack.Screen name="OnboardingCurrency" component={OnboardingCurrencyScreen} />
       <Stack.Screen name="Onboarding1" component={Onboarding1Screen} />
       <Stack.Screen name="Onboarding2" component={Onboarding2Screen} />
       <Stack.Screen name="Onboarding3" component={Onboarding3Screen} />

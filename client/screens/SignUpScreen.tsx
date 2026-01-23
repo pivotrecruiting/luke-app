@@ -1,19 +1,31 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   View,
   Text,
   TextInput,
   StyleSheet,
   Pressable,
+  ActivityIndicator,
+  Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { OnboardingStackParamList } from "@/navigation/OnboardingNavigator";
-import { Feather, AntDesign } from "@expo/vector-icons";
+import { AntDesign } from "@expo/vector-icons";
 import Svg, { Path } from "react-native-svg";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { Spacing, BorderRadius, Typography, Colors } from "@/constants/theme";
+import * as AppleAuthentication from "expo-apple-authentication";
+import * as Linking from "expo-linking";
+import * as WebBrowser from "expo-web-browser";
+import { makeRedirectUri } from "expo-auth-session";
+import * as QueryParams from "expo-auth-session/build/QueryParams";
+import { supabase } from "@/lib/supabase";
+import { useApp } from "@/context/AppContext";
+import Constants from "expo-constants";
+
+WebBrowser.maybeCompleteAuthSession();
 
 type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
 
@@ -43,7 +55,202 @@ function GoogleLogo({ size = 20 }: { size?: number }) {
 export default function SignUpScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
+  const { isOnboardingComplete } = useApp();
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [infoMessage, setInfoMessage] = useState<string | null>(null);
+  const [appleAvailable, setAppleAvailable] = useState(false);
+
+  const isExpoGo = Constants.appOwnership === "expo";
+  const redirectTo = isExpoGo
+    ? makeRedirectUri()
+    : makeRedirectUri({ scheme: "myapp" });
+  // TODO: Add exp://** (Expo Go) and myapp://** (dev build/standalone) to Supabase Auth redirect URLs.
+
+  useEffect(() => {
+    if (Platform.OS !== "ios") return;
+    AppleAuthentication.isAvailableAsync().then(setAppleAvailable).catch(() => {
+      setAppleAvailable(false);
+    });
+  }, []);
+
+  const handlePostAuth = useCallback(() => {
+    if (!isOnboardingComplete) {
+      navigation.navigate("OnboardingCurrency");
+    }
+  }, [isOnboardingComplete, navigation]);
+
+  const createSessionFromUrl = useCallback(
+    async (url: string) => {
+      const { params, errorCode } = QueryParams.getQueryParams(url);
+      if (errorCode) {
+        throw new Error(errorCode);
+      }
+
+      const accessToken = params.access_token as string | undefined;
+      const refreshToken = params.refresh_token as string | undefined;
+
+      if (!accessToken || !refreshToken) {
+        return;
+      }
+
+      const { error } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      handlePostAuth();
+    },
+    [handlePostAuth],
+  );
+
+  const url = Linking.useURL();
+  useEffect(() => {
+    if (!url) return;
+    createSessionFromUrl(url).catch((error) => {
+      setErrorMessage(error.message);
+    });
+  }, [url, createSessionFromUrl]);
+
+  const handleEmailSignUp = async () => {
+    if (!email || !password) {
+      setErrorMessage("Bitte Email und Passwort eingeben.");
+      return;
+    }
+
+    setIsLoading(true);
+    setErrorMessage(null);
+    setInfoMessage(null);
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: redirectTo,
+      },
+    });
+
+    if (error) {
+      setErrorMessage(error.message);
+    } else if (!data.session) {
+      setInfoMessage("Bitte bestätige deine Email, um fortzufahren.");
+    } else {
+      handlePostAuth();
+    }
+
+    setIsLoading(false);
+  };
+
+  const handleEmailSignIn = async () => {
+    if (!email || !password) {
+      setErrorMessage("Bitte Email und Passwort eingeben.");
+      return;
+    }
+
+    setIsLoading(true);
+    setErrorMessage(null);
+    setInfoMessage(null);
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      setErrorMessage(error.message);
+    } else {
+      handlePostAuth();
+    }
+
+    setIsLoading(false);
+  };
+
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    setErrorMessage(null);
+    setInfoMessage(null);
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo,
+        skipBrowserRedirect: true,
+      },
+    });
+
+    if (error) {
+      setErrorMessage(error.message);
+      setIsLoading(false);
+      return;
+    }
+
+    const result = await WebBrowser.openAuthSessionAsync(
+      data?.url ?? "",
+      redirectTo,
+    );
+
+    if (result.type === "success") {
+      await createSessionFromUrl(result.url);
+    }
+
+    setIsLoading(false);
+  };
+
+  const handleAppleSignIn = async () => {
+    setIsLoading(true);
+    setErrorMessage(null);
+    setInfoMessage(null);
+
+    try {
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+
+      if (!credential.identityToken) {
+        throw new Error("Apple Sign-In fehlgeschlagen.");
+      }
+
+      const { error } = await supabase.auth.signInWithIdToken({
+        provider: "apple",
+        token: credential.identityToken,
+        nonce: credential.nonce ?? undefined,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (credential.fullName) {
+        const fullNameParts = [
+          credential.fullName.givenName,
+          credential.fullName.familyName,
+        ].filter(Boolean);
+
+        if (fullNameParts.length > 0) {
+          await supabase.auth.updateUser({
+            data: {
+              full_name: fullNameParts.join(" "),
+            },
+          });
+        }
+      }
+
+      handlePostAuth();
+    } catch (error) {
+      setErrorMessage((error as Error).message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -75,16 +282,47 @@ export default function SignUpScreen() {
             onChangeText={setEmail}
             keyboardType="email-address"
             autoCapitalize="none"
+            editable={!isLoading}
           />
 
+          <TextInput
+            style={styles.input}
+            placeholder="Passwort"
+            placeholderTextColor="#9CA3AF"
+            value={password}
+            onChangeText={setPassword}
+            autoCapitalize="none"
+            secureTextEntry
+            editable={!isLoading}
+          />
+
+          {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+          {infoMessage ? <Text style={styles.infoText}>{infoMessage}</Text> : null}
+
           <Pressable
-            onPress={() => navigation.navigate("Onboarding1")}
+            onPress={handleEmailSignUp}
+            disabled={isLoading}
             style={({ pressed }) => [
               styles.continueButton,
               pressed && styles.buttonPressed,
             ]}
           >
-            <Text style={styles.continueButtonText}>Continue</Text>
+            {isLoading ? (
+              <ActivityIndicator color={Colors.light.buttonText} />
+            ) : (
+              <Text style={styles.continueButtonText}>Create account</Text>
+            )}
+          </Pressable>
+
+          <Pressable
+            onPress={handleEmailSignIn}
+            disabled={isLoading}
+            style={({ pressed }) => [
+              styles.secondaryButton,
+              pressed && styles.buttonPressed,
+            ]}
+          >
+            <Text style={styles.secondaryButtonText}>Sign in</Text>
           </Pressable>
 
           <View style={styles.dividerContainer}>
@@ -94,7 +332,8 @@ export default function SignUpScreen() {
           </View>
 
           <Pressable
-            onPress={() => navigation.navigate("Onboarding1")}
+            onPress={handleGoogleSignIn}
+            disabled={isLoading}
             style={({ pressed }) => [
               styles.socialButton,
               pressed && styles.buttonPressed,
@@ -104,16 +343,19 @@ export default function SignUpScreen() {
             <Text style={styles.socialButtonText}>Continue with Google</Text>
           </Pressable>
 
-          <Pressable
-            onPress={() => navigation.navigate("Onboarding1")}
-            style={({ pressed }) => [
-              styles.socialButton,
-              pressed && styles.buttonPressed,
-            ]}
-          >
-            <AntDesign name="apple" size={20} color="#000000" />
-            <Text style={styles.socialButtonText}>Continue with Apple</Text>
-          </Pressable>
+          {appleAvailable ? (
+            <Pressable
+              onPress={handleAppleSignIn}
+              disabled={isLoading}
+              style={({ pressed }) => [
+                styles.socialButton,
+                pressed && styles.buttonPressed,
+              ]}
+            >
+              <AntDesign name="apple" size={20} color="#000000" />
+              <Text style={styles.socialButtonText}>Continue with Apple</Text>
+            </Pressable>
+          ) : null}
 
           <Text style={styles.termsText}>
             By clicking continue, you agree to our{" "}
@@ -185,7 +427,7 @@ const styles = StyleSheet.create({
     borderColor: "#D1D5DB",
     borderRadius: BorderRadius.xs,
     paddingHorizontal: Spacing.lg,
-    marginTop: Spacing["3xl"],
+    marginTop: Spacing.lg,
     ...Typography.body,
     color: Colors.light.text,
     outlineStyle: "none",
@@ -203,6 +445,21 @@ const styles = StyleSheet.create({
     ...Typography.body,
     fontWeight: "600",
     color: Colors.light.buttonText,
+  },
+  secondaryButton: {
+    width: "100%",
+    height: 48,
+    borderWidth: 1,
+    borderColor: Colors.light.primary,
+    borderRadius: BorderRadius.xs,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: Spacing.sm,
+  },
+  secondaryButtonText: {
+    ...Typography.body,
+    fontWeight: "600",
+    color: Colors.light.primary,
   },
   buttonPressed: {
     opacity: 0.8,
@@ -250,5 +507,17 @@ const styles = StyleSheet.create({
   termsLink: {
     color: Colors.light.text,
     textDecorationLine: "underline",
+  },
+  errorText: {
+    ...Typography.small,
+    color: "#DC2626",
+    marginTop: Spacing.sm,
+    textAlign: "center",
+  },
+  infoText: {
+    ...Typography.small,
+    color: "#2563EB",
+    marginTop: Spacing.sm,
+    textAlign: "center",
   },
 });

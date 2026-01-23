@@ -8,10 +8,6 @@ import AddScreen from "@/screens/AddScreen";
 import GoalsScreen from "@/screens/GoalsScreen";
 import ProfileScreen from "@/screens/ProfileScreen";
 
-function PlaceholderScreen() {
-  return <View style={styles.placeholder} />;
-}
-
 export type MainTabParamList = {
   Home: undefined;
   Insights: undefined;
@@ -54,7 +50,9 @@ export default function MainTabNavigator() {
           tabBarLabel: () => null,
           tabBarIcon: ({ focused }) => (
             <View style={[styles.tabButton, focused && styles.tabButtonActive]}>
-              <View style={[styles.homeCircle, focused && styles.homeCircleActive]} />
+              <View
+                style={[styles.homeCircle, focused && styles.homeCircleActive]}
+              />
               <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>
                 Home
               </Text>
@@ -69,7 +67,12 @@ export default function MainTabNavigator() {
           tabBarLabel: () => null,
           tabBarIcon: ({ focused }) => (
             <View style={[styles.tabButton, focused && styles.tabButtonActive]}>
-              <View style={[styles.insightsCircle, focused && styles.insightsCircleActive]} />
+              <View
+                style={[
+                  styles.insightsCircle,
+                  focused && styles.insightsCircleActive,
+                ]}
+              />
               <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>
                 Insight
               </Text>
@@ -84,8 +87,14 @@ export default function MainTabNavigator() {
           tabBarLabel: () => null,
           tabBarIcon: ({ focused }) => (
             <View style={[styles.tabButton, focused && styles.tabButtonActive]}>
-              <View style={[styles.addCircle, focused && styles.addCircleActive]}>
-                <Feather name="plus" size={18} color={focused ? "#FFFFFF" : "#9CA3AF"} />
+              <View
+                style={[styles.addCircle, focused && styles.addCircleActive]}
+              >
+                <Feather
+                  name="plus"
+                  size={18}
+                  color={focused ? "#FFFFFF" : "#9CA3AF"}
+                />
               </View>
               <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>
                 Add
@@ -101,7 +110,11 @@ export default function MainTabNavigator() {
           tabBarLabel: () => null,
           tabBarIcon: ({ focused }) => (
             <View style={[styles.tabButton, focused && styles.tabButtonActive]}>
-              <Feather name="star" size={22} color={focused ? "#6155F5" : "#9CA3AF"} />
+              <Feather
+                name="star"
+                size={22}
+                color={focused ? "#6155F5" : "#9CA3AF"}
+              />
               <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>
                 Goals
               </Text>
@@ -116,7 +129,11 @@ export default function MainTabNavigator() {
           tabBarLabel: () => null,
           tabBarIcon: ({ focused }) => (
             <View style={[styles.tabButton, focused && styles.tabButtonActive]}>
-              <Feather name="user" size={22} color={focused ? "#6155F5" : "#9CA3AF"} />
+              <Feather
+                name="user"
+                size={22}
+                color={focused ? "#6155F5" : "#9CA3AF"}
+              />
               <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>
                 Profil
               </Text>
@@ -129,10 +146,6 @@ export default function MainTabNavigator() {
 }
 
 const styles = StyleSheet.create({
-  placeholder: {
-    flex: 1,
-    backgroundColor: "#F5F5F5",
-  },
   tabButton: {
     alignItems: "center",
     justifyContent: "center",
@@ -142,8 +155,7 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     minWidth: 44,
   },
-  tabButtonActive: {
-  },
+  tabButtonActive: {},
   insightsCircle: {
     width: 22,
     height: 22,
