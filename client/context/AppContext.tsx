@@ -1,293 +1,91 @@
-import React, { createContext, useContext, useState, useMemo, useEffect, useCallback, ReactNode } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { supabase } from "@/lib/supabase";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useMemo,
+  useEffect,
+  useCallback,
+  ReactNode,
+} from "react";
 import { useAuth } from "@/context/AuthContext";
+import {
+  AUTOBUDGET_CATEGORY_COLORS,
+  CATEGORY_COLORS,
+  GERMAN_MONTHS_SHORT,
+  INITIAL_BUDGETS,
+  INITIAL_EXPENSE_ENTRIES,
+  INITIAL_GOALS,
+  INITIAL_INCOME_ENTRIES,
+  INITIAL_TRANSACTIONS,
+  ONBOARDING_VERSION,
+} from "@/context/app/constants";
+import type {
+  AppContextType,
+  Budget,
+  BudgetExpense,
+  CurrencyCode,
+  ExpenseEntry,
+  Goal,
+  GoalDeposit,
+  IncomeEntry,
+  PersistedData,
+  Transaction,
+} from "@/context/app/types";
+import {
+  loadPersistedData,
+  savePersistedData,
+  clearPersistedData,
+} from "@/services/local-storage";
+import {
+  createBudget as createBudgetInDb,
+  createExpenseEntry,
+  createGoal as createGoalInDb,
+  createGoalContribution,
+  createIncomeEntry,
+  createTransaction,
+  deleteBudget as deleteBudgetInDb,
+  deleteExpenseEntry as deleteExpenseEntryInDb,
+  deleteGoal as deleteGoalInDb,
+  deleteGoalContribution,
+  deleteIncomeEntry as deleteIncomeEntryInDb,
+  deleteTransaction as deleteTransactionInDb,
+  deleteTransactionsByBudget,
+  fetchAppData,
+  replaceExpenseEntries,
+  replaceIncomeEntries,
+  resetUserData,
+  updateBudget as updateBudgetInDb,
+  updateExpenseEntry as updateExpenseEntryInDb,
+  updateGoal as updateGoalInDb,
+  updateGoalContribution,
+  updateIncomeEntry as updateIncomeEntryInDb,
+  updateOnboardingComplete,
+  updateTransaction as updateTransactionInDb,
+  upsertUserCurrency,
+} from "@/services/app-service";
+import type { BudgetCategoryRow } from "@/services/types";
+import { formatDate, formatWeekLabel, parseFormattedDate } from "@/utils/dates";
+import { generateId } from "@/utils/ids";
+import { toCents } from "@/utils/money";
+import { calculateWeeklySpending } from "@/utils/weekly-spending";
 
-const STORAGE_KEY = "@luke_app_data";
-const ONBOARDING_VERSION = "v1";
-
-const toCents = (value: number): number => Math.round(value * 100);
-const fromCents = (value: number | null | undefined): number => (value ?? 0) / 100;
-
-export type CurrencyCode = "EUR" | "USD" | "CHF";
-
-export interface IncomeEntry {
-  id: string;
-  type: string;
-  amount: number;
-}
-
-export interface ExpenseEntry {
-  id: string;
-  type: string;
-  amount: number;
-}
-
-export interface GoalDeposit {
-  id: string;
-  date: string;
-  amount: number;
-  type: "Einzahlung" | "Rückzahlung";
-}
-
-export interface Goal {
-  id: string;
-  name: string;
-  icon: string;
-  target: number;
-  current: number;
-  remaining: number;
-  deposits: GoalDeposit[];
-}
-
-export interface BudgetExpense {
-  id: string;
-  name: string;
-  date: string;
-  amount: number;
-  timestamp?: number;
-}
-
-export interface Budget {
-  id: string;
-  name: string;
-  icon: string;
-  iconColor: string;
-  limit: number;
-  current: number;
-  expenses: BudgetExpense[];
-}
-
-export interface WeeklySpending {
-  day: string;
-  amount: number;
-  maxAmount: number;
-}
-
-export interface Transaction {
-  id: string;
-  name: string;
-  category: string;
-  date: string;
-  amount: number;
-  icon: string;
-  timestamp?: number;
-}
-
-export interface InsightCategory {
-  name: string;
-  amount: number;
-  color: string;
-}
-
-export interface MonthlyTrendData {
-  month: string;
-  monthIndex: number;
-  amount: number;
-}
-
-export interface AppState {
-  isOnboardingComplete: boolean;
-  isAppLoading: boolean;
-  userName: string | null;
-  currency: CurrencyCode;
-  incomeEntries: IncomeEntry[];
-  expenseEntries: ExpenseEntry[];
-  goals: Goal[];
-  budgets: Budget[];
-  weeklySpending: WeeklySpending[];
-  transactions: Transaction[];
-  insightCategories: InsightCategory[];
-  totalIncome: number;
-  totalFixedExpenses: number;
-  totalVariableExpenses: number;
-  totalExpenses: number;
-  monthlyBudget: number;
-  balance: number;
-  savingsRate: number;
-  monthlyTrendData: MonthlyTrendData[];
-  selectedWeekOffset: number;
-  currentWeekLabel: string;
-}
-
-export interface AppContextType extends AppState {
-  addIncomeEntry: (type: string, amount: number) => void;
-  addExpenseEntry: (type: string, amount: number) => void;
-  setIncomeEntries: (entries: Array<{type: string, amount: number}>) => void;
-  setExpenseEntries: (entries: Array<{type: string, amount: number}>) => void;
-  setCurrency: (currency: CurrencyCode) => void;
-  addGoalDeposit: (goalId: string, amount: number, customDate?: Date) => void;
-  updateGoalDeposit: (goalId: string, depositId: string, amount: number, date?: Date) => void;
-  deleteGoalDeposit: (goalId: string, depositId: string) => void;
-  addBudgetExpense: (budgetId: string, amount: number, name: string, customDate?: Date) => void;
-  updateBudgetExpense: (budgetId: string, expenseId: string, amount: number, name: string, date?: Date) => void;
-  deleteBudgetExpense: (budgetId: string, expenseId: string) => void;
-  addTransaction: (transaction: Omit<Transaction, "id">) => void;
-  updateTransaction: (transactionId: string, updates: Partial<Omit<Transaction, "id">>) => void;
-  deleteTransaction: (transactionId: string) => void;
-  completeOnboarding: () => void;
-  updateGoal: (goalId: string, updates: Partial<Goal>) => void;
-  deleteGoal: (goalId: string) => void;
-  updateBudget: (budgetId: string, updates: Partial<Budget>) => void;
-  deleteBudget: (budgetId: string) => void;
-  addGoal: (name: string, icon: string, target: number) => void;
-  addBudget: (name: string, icon: string, iconColor: string, limit: number) => void;
-  addExpenseWithAutobudget: (categoryName: string, icon: string, amount: number, name: string, date: Date) => void;
-  updateIncomeEntry: (id: string, type: string, amount: number) => void;
-  deleteIncomeEntry: (id: string) => void;
-  updateExpenseEntry: (id: string, type: string, amount: number) => void;
-  deleteExpenseEntry: (id: string) => void;
-  goToPreviousWeek: () => void;
-  goToNextWeek: () => void;
-  resetMonthlyBudgets: () => void;
-  lastBudgetResetMonth: number;
-  resetAllData: () => void;
-}
-
-const generateId = () => Math.random().toString(36).substring(2, 9);
-
-const parseFormattedDate = (dateStr: string): Date => {
-  const now = new Date();
-  
-  if (dateStr.startsWith("Heute")) {
-    const timeMatch = dateStr.match(/(\d{2}):(\d{2})/);
-    if (timeMatch) {
-      return new Date(now.getFullYear(), now.getMonth(), now.getDate(),
-        parseInt(timeMatch[1]), parseInt(timeMatch[2]));
-    }
-    return now;
-  }
-  
-  if (dateStr === "Gestern" || dateStr.startsWith("Gestern")) {
-    const yesterday = new Date(now);
-    yesterday.setDate(yesterday.getDate() - 1);
-    return yesterday;
-  }
-  
-  const slashMatch = dateStr.match(/(\d{2})\/(\d{2})\/(\d{4})/);
-  if (slashMatch) {
-    return new Date(parseInt(slashMatch[3]), parseInt(slashMatch[2]) - 1, parseInt(slashMatch[1]));
-  }
-  
-  const dotTimeMatch = dateStr.match(/(\d{2})\.(\d{2})\.\s*(\d{2}):(\d{2})/);
-  if (dotTimeMatch) {
-    return new Date(now.getFullYear(), parseInt(dotTimeMatch[2]) - 1, parseInt(dotTimeMatch[1]),
-      parseInt(dotTimeMatch[3]), parseInt(dotTimeMatch[4]));
-  }
-  
-  const fullDotMatch = dateStr.match(/(\d{2})\.(\d{2})\.(\d{4})/);
-  if (fullDotMatch) {
-    return new Date(parseInt(fullDotMatch[3]), parseInt(fullDotMatch[2]) - 1, parseInt(fullDotMatch[1]));
-  }
-  
-  return now;
-};
-
-const getWeekBounds = (weekOffset: number): { start: Date; end: Date } => {
-  const now = new Date();
-  const dayOfWeek = now.getDay();
-  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-  
-  const monday = new Date(now);
-  monday.setDate(now.getDate() + mondayOffset + (weekOffset * 7));
-  monday.setHours(0, 0, 0, 0);
-  
-  const sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 6);
-  sunday.setHours(23, 59, 59, 999);
-  
-  return { start: monday, end: sunday };
-};
-
-const formatWeekLabel = (weekOffset: number): string => {
-  if (weekOffset === 0) {
-    return "Diese Woche";
-  }
-  const { start, end } = getWeekBounds(weekOffset);
-  const formatDay = (d: Date) => `${d.getDate().toString().padStart(2, '0')}.${(d.getMonth() + 1).toString().padStart(2, '0')}`;
-  return `${formatDay(start)} - ${formatDay(end)}`;
-};
-
-const calculateWeeklySpending = (transactions: Transaction[], weekOffset: number): WeeklySpending[] => {
-  const { start, end } = getWeekBounds(weekOffset);
-  const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  const dailyAmounts = [0, 0, 0, 0, 0, 0, 0];
-  
-  transactions.forEach((tx) => {
-    if (tx.amount >= 0) return;
-    
-    const txDate = parseFormattedDate(tx.date);
-    if (txDate >= start && txDate <= end) {
-      const dayIndex = txDate.getDay() === 0 ? 6 : txDate.getDay() - 1;
-      dailyAmounts[dayIndex] += Math.abs(tx.amount);
-    }
-  });
-  
-  const maxAmount = Math.max(...dailyAmounts, 1);
-  
-  return days.map((day, index) => ({
-    day,
-    amount: Math.round(dailyAmounts[index] * 100) / 100,
-    maxAmount,
-  }));
-};
-
-const formatDate = (date: Date): string => {
-  const today = new Date();
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
-
-  if (date.toDateString() === today.toDateString()) {
-    return `Heute, ${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
-  } else if (date.toDateString() === yesterday.toDateString()) {
-    return "Gestern";
-  } else {
-    return `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1).toString().padStart(2, "0")}/${date.getFullYear()}`;
-  }
-};
-
-const INITIAL_INCOME_ENTRIES: IncomeEntry[] = [];
-
-const INITIAL_EXPENSE_ENTRIES: ExpenseEntry[] = [];
-
-const INITIAL_GOALS: Goal[] = [];
-
-const INITIAL_BUDGETS: Budget[] = [];
-
-const INITIAL_TRANSACTIONS: Transaction[] = [];
-
-const CATEGORY_COLORS: Record<string, string> = {
-  "Lebensmittel": "#3B5BDB",
-  "Shopping": "#9D4EDD",
-  "Wohnen": "#C77DFF",
-  "Abonnements": "#7B8CDE",
-  "Hygiene": "#B8C4E9",
-  "Sonstiges": "#6B7280",
-};
+export type {
+  AppContextType,
+  Budget,
+  BudgetExpense,
+  CurrencyCode,
+  ExpenseEntry,
+  Goal,
+  GoalDeposit,
+  IncomeEntry,
+  PersistedData,
+  Transaction,
+} from "@/context/app/types";
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-interface AppProviderProps {
+type AppProviderProps = {
   children: ReactNode;
-}
-
-interface PersistedData {
-  isOnboardingComplete: boolean;
-  currency: CurrencyCode;
-  incomeEntries: IncomeEntry[];
-  expenseEntries: ExpenseEntry[];
-  goals: Goal[];
-  budgets: Budget[];
-  transactions: Transaction[];
-  lastBudgetResetMonth: number;
-}
-
-type BudgetCategoryLookup = {
-  id: string;
-  key: string | null;
-  name: string;
-  icon: string | null;
-  color: string | null;
 };
 
 export function AppProvider({ children }: AppProviderProps) {
@@ -295,14 +93,23 @@ export function AppProvider({ children }: AppProviderProps) {
   const [isOnboardingComplete, setIsOnboardingComplete] = useState(false);
   const [userName, setUserName] = useState<string | null>(null);
   const [currency, setCurrencyState] = useState<CurrencyCode>("EUR");
-  const [incomeEntries, setIncomeEntries] = useState<IncomeEntry[]>(INITIAL_INCOME_ENTRIES);
-  const [expenseEntries, setExpenseEntries] = useState<ExpenseEntry[]>(INITIAL_EXPENSE_ENTRIES);
+  const [incomeEntries, setIncomeEntries] = useState<IncomeEntry[]>(
+    INITIAL_INCOME_ENTRIES,
+  );
+  const [expenseEntries, setExpenseEntries] = useState<ExpenseEntry[]>(
+    INITIAL_EXPENSE_ENTRIES,
+  );
   const [goals, setGoals] = useState<Goal[]>(INITIAL_GOALS);
   const [budgets, setBudgets] = useState<Budget[]>(INITIAL_BUDGETS);
-  const [transactions, setTransactions] = useState<Transaction[]>(INITIAL_TRANSACTIONS);
+  const [transactions, setTransactions] =
+    useState<Transaction[]>(INITIAL_TRANSACTIONS);
   const [selectedWeekOffset, setSelectedWeekOffset] = useState(0);
-  const [lastBudgetResetMonth, setLastBudgetResetMonth] = useState(() => new Date().getMonth());
-  const [budgetCategories, setBudgetCategories] = useState<BudgetCategoryLookup[]>([]);
+  const [lastBudgetResetMonth, setLastBudgetResetMonth] = useState(() =>
+    new Date().getMonth(),
+  );
+  const [budgetCategories, setBudgetCategories] = useState<BudgetCategoryRow[]>(
+    [],
+  );
   const [useLocalFallback, setUseLocalFallback] = useState(false);
 
   const { user } = useAuth();
@@ -310,7 +117,7 @@ export function AppProvider({ children }: AppProviderProps) {
   const canUseDb = Boolean(userId) && !useLocalFallback;
 
   const budgetCategoryByName = useMemo(() => {
-    const map = new Map<string, BudgetCategoryLookup>();
+    const map = new Map<string, BudgetCategoryRow>();
     budgetCategories.forEach((category) => {
       map.set(category.name.toLowerCase(), category);
       if (category.key) {
@@ -340,21 +147,19 @@ export function AppProvider({ children }: AppProviderProps) {
   const loadFromLocal = useCallback(async () => {
     try {
       setUserName(null);
-      const jsonValue = await AsyncStorage.getItem(STORAGE_KEY);
-      if (jsonValue !== null) {
-        const data: PersistedData = JSON.parse(jsonValue);
-        setIsOnboardingComplete(data.isOnboardingComplete ?? false);
-        if (data.currency) {
-          setCurrencyState(data.currency);
-        }
-        setIncomeEntries(data.incomeEntries ?? []);
-        setExpenseEntries(data.expenseEntries ?? []);
-        setGoals(data.goals ?? []);
-        setBudgets(data.budgets ?? []);
-        setTransactions(data.transactions ?? []);
-        if (data.lastBudgetResetMonth !== undefined) {
-          setLastBudgetResetMonth(data.lastBudgetResetMonth);
-        }
+      const data = await loadPersistedData();
+      if (!data) return;
+      setIsOnboardingComplete(data.isOnboardingComplete ?? false);
+      if (data.currency) {
+        setCurrencyState(data.currency);
+      }
+      setIncomeEntries(data.incomeEntries ?? []);
+      setExpenseEntries(data.expenseEntries ?? []);
+      setGoals(data.goals ?? []);
+      setBudgets(data.budgets ?? []);
+      setTransactions(data.transactions ?? []);
+      if (data.lastBudgetResetMonth !== undefined) {
+        setLastBudgetResetMonth(data.lastBudgetResetMonth);
       }
     } catch (e) {
       console.error("Failed to load data from storage:", e);
@@ -362,216 +167,20 @@ export function AppProvider({ children }: AppProviderProps) {
   }, []);
 
   const loadFromDb = useCallback(async (id: string) => {
-    const [
-      onboardingRes,
-      profileRes,
-      userRes,
-      incomeRes,
-      expenseRes,
-      goalsRes,
-      contributionsRes,
-      budgetCategoriesRes,
-      budgetsRes,
-      transactionsRes,
-    ] = await Promise.all([
-      supabase
-        .from("user_onboarding")
-        .select("completed_at, onboarding_version, started_at, skipped_steps")
-        .eq("user_id", id)
-        .maybeSingle(),
-      supabase
-        .from("user_financial_profiles")
-        .select("currency, initial_savings_cents")
-        .eq("user_id", id)
-        .maybeSingle(),
-      supabase.from("users").select("name").eq("id", id).maybeSingle(),
-      supabase.from("income_sources").select("id, name, amount_cents").eq("user_id", id),
-      supabase.from("fixed_expenses").select("id, name, amount_cents").eq("user_id", id),
-      supabase.from("goals").select("id, name, icon, target_amount_cents").eq("user_id", id),
-      supabase
-        .from("goal_contributions")
-        .select("id, goal_id, amount_cents, contribution_type, contribution_at")
-        .eq("user_id", id),
-      supabase
-        .from("budget_categories")
-        .select("id, key, name, icon, color")
-        .eq("active", true),
-      supabase
-        .from("budgets")
-        .select("id, name, category_id, limit_amount_cents")
-        .eq("user_id", id),
-      supabase
-        .from("transactions")
-        .select("id, type, amount_cents, name, category_name, budget_id, budget_category_id, transaction_at")
-        .eq("user_id", id)
-        .order("transaction_at", { ascending: false }),
-    ]);
-
-    const firstError =
-      onboardingRes.error ||
-      profileRes.error ||
-      userRes.error ||
-      incomeRes.error ||
-      expenseRes.error ||
-      goalsRes.error ||
-      contributionsRes.error ||
-      budgetCategoriesRes.error ||
-      budgetsRes.error ||
-      transactionsRes.error;
-    if (firstError) {
-      throw firstError;
+    const data = await fetchAppData(id, ONBOARDING_VERSION);
+    setIsOnboardingComplete(data.isOnboardingComplete);
+    if (data.currency) {
+      setCurrencyState(data.currency);
     }
+    setUserName(data.userName);
+    setBudgetCategories(data.budgetCategories);
+    setIncomeEntries(data.incomeEntries);
+    setExpenseEntries(data.expenseEntries);
+    setGoals(data.goals);
+    setBudgets(data.budgets);
+    setTransactions(data.transactions);
 
-    let onboarding = onboardingRes.data ?? null;
-    if (!onboarding) {
-      const { data, error } = await supabase
-        .from("user_onboarding")
-        .insert({ user_id: id, onboarding_version: ONBOARDING_VERSION })
-        .select()
-        .single();
-      if (error) {
-        throw error;
-      }
-      onboarding = data;
-    }
-    setIsOnboardingComplete(Boolean(onboarding?.completed_at));
-
-    if (profileRes.data?.currency) {
-      setCurrencyState(profileRes.data.currency as CurrencyCode);
-    }
-
-    if (typeof userRes.data?.name === "string") {
-      const trimmed = userRes.data.name.trim();
-      setUserName(trimmed.length ? trimmed : null);
-    } else {
-      setUserName(null);
-    }
-
-    const budgetCategoryRows = (budgetCategoriesRes.data ?? []) as BudgetCategoryLookup[];
-    setBudgetCategories(budgetCategoryRows);
-    const budgetCategoryMap = new Map<string, BudgetCategoryLookup>();
-    budgetCategoryRows.forEach((category) => {
-      budgetCategoryMap.set(category.id, category);
-    });
-
-    const budgetRows = budgetsRes.data ?? [];
-    const budgetMap = new Map<string, { id: string; name: string }>();
-    const budgetsBase = budgetRows.map((row) => {
-      const category = budgetCategoryMap.get(row.category_id);
-      budgetMap.set(row.id, { id: row.id, name: row.name });
-      return {
-        id: row.id,
-        name: row.name,
-        icon: category?.icon ?? "circle",
-        iconColor: category?.color ?? "#6B7280",
-        limit: fromCents(row.limit_amount_cents),
-        current: 0,
-        expenses: [],
-      } as Budget;
-    });
-
-    const income = (incomeRes.data ?? []).map((row) => ({
-      id: row.id,
-      type: row.name,
-      amount: fromCents(row.amount_cents),
-    }));
-    setIncomeEntries(income);
-
-    const expenses = (expenseRes.data ?? []).map((row) => ({
-      id: row.id,
-      type: row.name,
-      amount: fromCents(row.amount_cents),
-    }));
-    setExpenseEntries(expenses);
-
-    const contributions = contributionsRes.data ?? [];
-    const depositsByGoal: Record<string, GoalDeposit[]> = {};
-    const goalBalances: Record<string, number> = {};
-    contributions.forEach((row) => {
-      const amount = fromCents(row.amount_cents);
-      const type = row.contribution_type === "deposit" ? "Einzahlung" : "Rückzahlung";
-      if (!depositsByGoal[row.goal_id]) {
-        depositsByGoal[row.goal_id] = [];
-      }
-      depositsByGoal[row.goal_id].push({
-        id: row.id,
-        date: formatDate(new Date(row.contribution_at)),
-        amount,
-        type,
-      });
-      goalBalances[row.goal_id] = (goalBalances[row.goal_id] ?? 0) + amount;
-    });
-
-    const goalRows = goalsRes.data ?? [];
-    const mappedGoals = goalRows.map((row) => {
-      const target = fromCents(row.target_amount_cents);
-      const current = goalBalances[row.id] ?? 0;
-      return {
-        id: row.id,
-        name: row.name,
-        icon: row.icon ?? "🎯",
-        target,
-        current,
-        remaining: target - current,
-        deposits: depositsByGoal[row.id] ?? [],
-      };
-    });
-    setGoals(mappedGoals);
-
-    const transactionsRows = transactionsRes.data ?? [];
-    const expensesByBudgetId: Record<string, BudgetExpense[]> = {};
-    const budgetTotals: Record<string, number> = {};
-    const now = new Date();
-    const mappedTransactions = transactionsRows.map((row) => {
-      const transactionDate = new Date(row.transaction_at);
-      const amount = row.type === "expense" ? -fromCents(row.amount_cents) : fromCents(row.amount_cents);
-      const budget = row.budget_id ? budgetMap.get(row.budget_id) : null;
-      const budgetCategory = row.budget_category_id ? budgetCategoryMap.get(row.budget_category_id) : null;
-      const category = budget?.name ?? row.category_name ?? row.name;
-      const icon = budgetCategory?.icon ?? "circle";
-      const formattedDate = formatDate(transactionDate);
-
-      if (row.type === "expense" && row.budget_id) {
-        const expense: BudgetExpense = {
-          id: row.id,
-          name: row.name,
-          date: formattedDate,
-          amount: fromCents(row.amount_cents),
-          timestamp: transactionDate.getTime(),
-        };
-        if (!expensesByBudgetId[row.budget_id]) {
-          expensesByBudgetId[row.budget_id] = [];
-        }
-        expensesByBudgetId[row.budget_id].push(expense);
-
-        const isCurrentMonth =
-          transactionDate.getMonth() === now.getMonth() &&
-          transactionDate.getFullYear() === now.getFullYear();
-        if (isCurrentMonth) {
-          budgetTotals[row.budget_id] = (budgetTotals[row.budget_id] ?? 0) + expense.amount;
-        }
-      }
-
-      return {
-        id: row.id,
-        name: row.name,
-        category,
-        date: formattedDate,
-        amount,
-        icon,
-        timestamp: transactionDate.getTime(),
-      };
-    });
-    setTransactions(mappedTransactions);
-
-    const hydratedBudgets = budgetsBase.map((budget) => ({
-      ...budget,
-      expenses: expensesByBudgetId[budget.id] ?? [],
-      current: budgetTotals[budget.id] ?? 0,
-    }));
-    setBudgets(hydratedBudgets);
-
-    if (typeof profileRes.data?.initial_savings_cents === "number") {
+    if (typeof data.initialSavingsCents === "number") {
       // TODO: wire this into UI if initial savings is displayed later.
     }
   }, []);
@@ -594,7 +203,10 @@ export function AppProvider({ children }: AppProviderProps) {
         setUseLocalFallback(false);
         await loadFromDb(userId);
       } catch (e) {
-        console.error("Failed to load data from DB, falling back to local storage:", e);
+        console.error(
+          "Failed to load data from DB, falling back to local storage:",
+          e,
+        );
         setUseLocalFallback(true);
         await loadFromLocal();
       } finally {
@@ -625,11 +237,22 @@ export function AppProvider({ children }: AppProviderProps) {
         transactions,
         lastBudgetResetMonth,
       };
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      await savePersistedData(data);
     } catch (e) {
       console.error("Failed to save data to storage:", e);
     }
-  }, [isAppLoading, useLocalFallback, isOnboardingComplete, currency, incomeEntries, expenseEntries, goals, budgets, transactions, lastBudgetResetMonth]);
+  }, [
+    isAppLoading,
+    useLocalFallback,
+    isOnboardingComplete,
+    currency,
+    incomeEntries,
+    expenseEntries,
+    goals,
+    budgets,
+    transactions,
+    lastBudgetResetMonth,
+  ]);
 
   useEffect(() => {
     saveData();
@@ -685,17 +308,18 @@ export function AppProvider({ children }: AppProviderProps) {
 
   const insightCategories = useMemo(() => {
     const categories: Record<string, number> = {};
-    
+
     budgets.forEach((budget) => {
       const categoryName = budget.name;
-      categories[categoryName] = (categories[categoryName] || 0) + budget.current;
+      categories[categoryName] =
+        (categories[categoryName] || 0) + budget.current;
     });
-    
+
     const fixedCategories: Record<string, string[]> = {
-      "Wohnen": ["Wohnen", "Miete"],
-      "Abonnements": ["Netflix", "Spotify", "Handy", "Disney+", "Amazon Prime"],
+      Wohnen: ["Wohnen", "Miete"],
+      Abonnements: ["Netflix", "Spotify", "Handy", "Disney+", "Amazon Prime"],
     };
-    
+
     expenseEntries.forEach((entry) => {
       let matched = false;
       for (const [category, keywords] of Object.entries(fixedCategories)) {
@@ -709,7 +333,7 @@ export function AppProvider({ children }: AppProviderProps) {
         categories["Sonstiges"] = (categories["Sonstiges"] || 0) + entry.amount;
       }
     });
-    
+
     return Object.entries(categories)
       .filter(([_, amount]) => amount > 0)
       .map(([name, amount]) => ({
@@ -720,32 +344,31 @@ export function AppProvider({ children }: AppProviderProps) {
       .sort((a, b) => b.amount - a.amount);
   }, [budgets, expenseEntries]);
 
-  const GERMAN_MONTHS_SHORT = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
-
   const monthlyTrendData = useMemo(() => {
     const currentMonth = new Date().getMonth();
     const months: { month: string; monthIndex: number; amount: number }[] = [];
-    
+
     for (let i = 5; i >= 0; i--) {
       const monthIndex = (currentMonth - i + 12) % 12;
       let amount: number;
-      
+
       if (i === 0) {
         amount = totalExpenses;
       } else {
         const baseAmount = totalFixedExpenses;
         const variationFactors = [0.92, 1.08, 0.95, 1.12, 0.88, 1.05];
-        const variableBase = totalVariableExpenses * variationFactors[i % variationFactors.length];
+        const variableBase =
+          totalVariableExpenses * variationFactors[i % variationFactors.length];
         amount = baseAmount + variableBase;
       }
-      
+
       months.push({
         month: GERMAN_MONTHS_SHORT[monthIndex],
         monthIndex,
         amount: Math.round(amount * 100) / 100,
       });
     }
-    
+
     return months;
   }, [totalExpenses, totalFixedExpenses, totalVariableExpenses]);
 
@@ -753,10 +376,9 @@ export function AppProvider({ children }: AppProviderProps) {
     setCurrencyState(nextCurrency);
     if (!canUseDb || !userId) return;
     void (async () => {
-      const { error } = await supabase
-        .from("user_financial_profiles")
-        .upsert({ user_id: userId, currency: nextCurrency }, { onConflict: "user_id" });
-      if (error) {
+      try {
+        await upsertUserCurrency(userId, nextCurrency);
+      } catch (error) {
         handleDbError(error, "setCurrency");
       }
     })();
@@ -768,22 +390,19 @@ export function AppProvider({ children }: AppProviderProps) {
 
     if (!canUseDb || !userId) return;
     void (async () => {
-      const { data, error } = await supabase
-        .from("income_sources")
-        .insert({ user_id: userId, name: type, amount_cents: toCents(amount), currency })
-        .select("id, name, amount_cents")
-        .single();
-      if (error || !data) {
-        handleDbError(error ?? new Error("No data returned"), "addIncomeEntry");
-        return;
+      try {
+        const createdEntry = await createIncomeEntry(
+          userId,
+          type,
+          amount,
+          currency,
+        );
+        setIncomeEntries((prev) =>
+          prev.map((entry) => (entry.id === tempId ? createdEntry : entry)),
+        );
+      } catch (error) {
+        handleDbError(error, "addIncomeEntry");
       }
-      setIncomeEntries((prev) =>
-        prev.map((entry) =>
-          entry.id === tempId
-            ? { id: data.id, type: data.name, amount: fromCents(data.amount_cents) }
-            : entry
-        )
-      );
     })();
   };
 
@@ -793,26 +412,25 @@ export function AppProvider({ children }: AppProviderProps) {
 
     if (!canUseDb || !userId) return;
     void (async () => {
-      const { data, error } = await supabase
-        .from("fixed_expenses")
-        .insert({ user_id: userId, name: type, amount_cents: toCents(amount), currency })
-        .select("id, name, amount_cents")
-        .single();
-      if (error || !data) {
-        handleDbError(error ?? new Error("No data returned"), "addExpenseEntry");
-        return;
+      try {
+        const createdEntry = await createExpenseEntry(
+          userId,
+          type,
+          amount,
+          currency,
+        );
+        setExpenseEntries((prev) =>
+          prev.map((entry) => (entry.id === tempId ? createdEntry : entry)),
+        );
+      } catch (error) {
+        handleDbError(error, "addExpenseEntry");
       }
-      setExpenseEntries((prev) =>
-        prev.map((entry) =>
-          entry.id === tempId
-            ? { id: data.id, type: data.name, amount: fromCents(data.amount_cents) }
-            : entry
-        )
-      );
     })();
   };
 
-  const setIncomeEntriesFromOnboarding = (entries: Array<{type: string, amount: number}>) => {
+  const setIncomeEntriesFromOnboarding = (
+    entries: { type: string; amount: number }[],
+  ) => {
     const localEntries: IncomeEntry[] = entries.map((entry) => ({
       id: generateId(),
       type: entry.type,
@@ -822,42 +440,22 @@ export function AppProvider({ children }: AppProviderProps) {
 
     if (!canUseDb || !userId) return;
     void (async () => {
-      const { error: deleteError } = await supabase
-        .from("income_sources")
-        .delete()
-        .eq("user_id", userId);
-      if (deleteError) {
-        handleDbError(deleteError, "setIncomeEntriesFromOnboarding");
-        return;
+      try {
+        const savedEntries = await replaceIncomeEntries(
+          userId,
+          entries,
+          currency,
+        );
+        setIncomeEntries(savedEntries);
+      } catch (error) {
+        handleDbError(error, "setIncomeEntriesFromOnboarding");
       }
-
-      if (entries.length === 0) return;
-      const { data, error } = await supabase
-        .from("income_sources")
-        .insert(
-          entries.map((entry) => ({
-            user_id: userId,
-            name: entry.type,
-            amount_cents: toCents(entry.amount),
-            currency,
-          }))
-        )
-        .select("id, name, amount_cents");
-      if (error || !data) {
-        handleDbError(error ?? new Error("No data returned"), "setIncomeEntriesFromOnboarding");
-        return;
-      }
-      setIncomeEntries(
-        data.map((row) => ({
-          id: row.id,
-          type: row.name,
-          amount: fromCents(row.amount_cents),
-        }))
-      );
     })();
   };
 
-  const setExpenseEntriesFromOnboarding = (entries: Array<{type: string, amount: number}>) => {
+  const setExpenseEntriesFromOnboarding = (
+    entries: { type: string; amount: number }[],
+  ) => {
     const localEntries: ExpenseEntry[] = entries.map((entry) => ({
       id: generateId(),
       type: entry.type,
@@ -867,42 +465,24 @@ export function AppProvider({ children }: AppProviderProps) {
 
     if (!canUseDb || !userId) return;
     void (async () => {
-      const { error: deleteError } = await supabase
-        .from("fixed_expenses")
-        .delete()
-        .eq("user_id", userId);
-      if (deleteError) {
-        handleDbError(deleteError, "setExpenseEntriesFromOnboarding");
-        return;
+      try {
+        const savedEntries = await replaceExpenseEntries(
+          userId,
+          entries,
+          currency,
+        );
+        setExpenseEntries(savedEntries);
+      } catch (error) {
+        handleDbError(error, "setExpenseEntriesFromOnboarding");
       }
-
-      if (entries.length === 0) return;
-      const { data, error } = await supabase
-        .from("fixed_expenses")
-        .insert(
-          entries.map((entry) => ({
-            user_id: userId,
-            name: entry.type,
-            amount_cents: toCents(entry.amount),
-            currency,
-          }))
-        )
-        .select("id, name, amount_cents");
-      if (error || !data) {
-        handleDbError(error ?? new Error("No data returned"), "setExpenseEntriesFromOnboarding");
-        return;
-      }
-      setExpenseEntries(
-        data.map((row) => ({
-          id: row.id,
-          type: row.name,
-          amount: fromCents(row.amount_cents),
-        }))
-      );
     })();
   };
 
-  const addGoalDeposit = (goalId: string, amount: number, customDate?: Date) => {
+  const addGoalDeposit = (
+    goalId: string,
+    amount: number,
+    customDate?: Date,
+  ) => {
     const goal = goals.find((g) => g.id === goalId);
     if (!goal) return;
 
@@ -935,7 +515,7 @@ export function AppProvider({ children }: AppProviderProps) {
           };
         }
         return g;
-      })
+      }),
     );
 
     setTransactions((prev) => [
@@ -952,9 +532,8 @@ export function AppProvider({ children }: AppProviderProps) {
 
     if (!canUseDb || !userId) return;
     void (async () => {
-      const { data: transaction, error: transactionError } = await supabase
-        .from("transactions")
-        .insert({
+      try {
+        const transactionId = await createTransaction({
           user_id: userId,
           type: "expense",
           amount_cents: toCents(amount),
@@ -963,51 +542,49 @@ export function AppProvider({ children }: AppProviderProps) {
           category_name: "Sparziel",
           transaction_at: depositDate.toISOString(),
           source: "manual",
-        })
-        .select("id")
-        .single();
-      if (transactionError || !transaction) {
-        handleDbError(transactionError ?? new Error("No transaction returned"), "addGoalDeposit");
-        return;
-      }
+        });
 
-      const { data: contribution, error: contributionError } = await supabase
-        .from("goal_contributions")
-        .insert({
+        const contributionId = await createGoalContribution({
           user_id: userId,
           goal_id: goalId,
           amount_cents: toCents(amount),
           currency,
           contribution_type: isRepayment ? "repayment" : "deposit",
           contribution_at: depositDate.toISOString(),
-          transaction_id: transaction.id,
-        })
-        .select("id")
-        .single();
-      if (contributionError || !contribution) {
-        handleDbError(contributionError ?? new Error("No contribution returned"), "addGoalDeposit");
-        return;
+          transaction_id: transactionId,
+        });
+
+        setGoals((prev) =>
+          prev.map((g) => {
+            if (g.id !== goalId) return g;
+            return {
+              ...g,
+              deposits: g.deposits.map((deposit) =>
+                deposit.id === tempDepositId
+                  ? { ...deposit, id: contributionId }
+                  : deposit,
+              ),
+            };
+          }),
+        );
+
+        setTransactions((prev) =>
+          prev.map((tx) =>
+            tx.id === tempTransactionId ? { ...tx, id: transactionId } : tx,
+          ),
+        );
+      } catch (error) {
+        handleDbError(error, "addGoalDeposit");
       }
-
-      setGoals((prev) =>
-        prev.map((g) => {
-          if (g.id !== goalId) return g;
-          return {
-            ...g,
-            deposits: g.deposits.map((deposit) =>
-              deposit.id === tempDepositId ? { ...deposit, id: contribution.id } : deposit
-            ),
-          };
-        })
-      );
-
-      setTransactions((prev) =>
-        prev.map((tx) => (tx.id === tempTransactionId ? { ...tx, id: transaction.id } : tx))
-      );
     })();
   };
 
-  const updateGoalDeposit = (goalId: string, depositId: string, amount: number, date?: Date) => {
+  const updateGoalDeposit = (
+    goalId: string,
+    depositId: string,
+    amount: number,
+    date?: Date,
+  ) => {
     setGoals((prev) =>
       prev.map((goal) => {
         if (goal.id === goalId) {
@@ -1043,23 +620,25 @@ export function AppProvider({ children }: AppProviderProps) {
           };
         }
         return goal;
-      })
+      }),
     );
 
     if (!canUseDb) return;
     const existingGoal = goals.find((goal) => goal.id === goalId);
-    const existingDeposit = existingGoal?.deposits.find((deposit) => deposit.id === depositId);
-    const fallbackDate = existingDeposit ? parseFormattedDate(existingDeposit.date) : new Date();
+    const existingDeposit = existingGoal?.deposits.find(
+      (deposit) => deposit.id === depositId,
+    );
+    const fallbackDate = existingDeposit
+      ? parseFormattedDate(existingDeposit.date)
+      : new Date();
     const contributionAt = date || fallbackDate;
     void (async () => {
-      const { error } = await supabase
-        .from("goal_contributions")
-        .update({
+      try {
+        await updateGoalContribution(depositId, {
           amount_cents: toCents(amount),
           contribution_at: contributionAt.toISOString(),
-        })
-        .eq("id", depositId);
-      if (error) {
+        });
+      } catch (error) {
         handleDbError(error, "updateGoalDeposit");
       }
     })();
@@ -1083,34 +662,38 @@ export function AppProvider({ children }: AppProviderProps) {
           };
         }
         return goal;
-      })
+      }),
     );
 
     if (!canUseDb) return;
     void (async () => {
-      const { error } = await supabase
-        .from("goal_contributions")
-        .delete()
-        .eq("id", depositId);
-      if (error) {
+      try {
+        await deleteGoalContribution(depositId);
+      } catch (error) {
         handleDbError(error, "deleteGoalDeposit");
       }
     })();
   };
 
-  const addBudgetExpense = (budgetId: string, amount: number, name: string, customDate?: Date) => {
+  const addBudgetExpense = (
+    budgetId: string,
+    amount: number,
+    name: string,
+    customDate?: Date,
+  ) => {
     const expenseDate = customDate || new Date();
     const currentMonth = new Date().getMonth();
     const currentYear = new Date().getFullYear();
     const expenseMonth = expenseDate.getMonth();
     const expenseYear = expenseDate.getFullYear();
-    const isCurrentMonth = expenseMonth === currentMonth && expenseYear === currentYear;
-    
+    const isCurrentMonth =
+      expenseMonth === currentMonth && expenseYear === currentYear;
+
     const budget = budgets.find((b) => b.id === budgetId);
     if (!budget) return;
 
     const tempExpenseId = generateId();
-    
+
     setBudgets((prev) =>
       prev.map((b) => {
         if (b.id === budgetId) {
@@ -1128,7 +711,7 @@ export function AppProvider({ children }: AppProviderProps) {
           };
         }
         return b;
-      })
+      }),
     );
 
     const newTransaction: Transaction = {
@@ -1146,13 +729,16 @@ export function AppProvider({ children }: AppProviderProps) {
     void (async () => {
       const category = resolveBudgetCategory(budget.name);
       if (!category) {
-        handleDbError(new Error(`Missing budget category for ${budget.name}`), "addBudgetExpense");
+        handleDbError(
+          new Error(`Missing budget category for ${budget.name}`),
+          "addBudgetExpense",
+        );
         return;
       }
 
-      const { data, error } = await supabase
-        .from("transactions")
-        .insert({
+      let transactionId: string;
+      try {
+        transactionId = await createTransaction({
           user_id: userId,
           type: "expense",
           amount_cents: toCents(amount),
@@ -1163,11 +749,9 @@ export function AppProvider({ children }: AppProviderProps) {
           budget_category_id: category.id,
           transaction_at: expenseDate.toISOString(),
           source: "manual",
-        })
-        .select("id")
-        .single();
-      if (error || !data) {
-        handleDbError(error ?? new Error("No transaction returned"), "addBudgetExpense");
+        });
+      } catch (error) {
+        handleDbError(error, "addBudgetExpense");
         return;
       }
 
@@ -1177,14 +761,18 @@ export function AppProvider({ children }: AppProviderProps) {
           return {
             ...b,
             expenses: b.expenses.map((expense) =>
-              expense.id === tempExpenseId ? { ...expense, id: data.id } : expense
+              expense.id === tempExpenseId
+                ? { ...expense, id: transactionId }
+                : expense,
             ),
           };
-        })
+        }),
       );
 
       setTransactions((prev) =>
-        prev.map((tx) => (tx.id === tempExpenseId ? { ...tx, id: data.id } : tx))
+        prev.map((tx) =>
+          tx.id === tempExpenseId ? { ...tx, id: transactionId } : tx,
+        ),
       );
     })();
   };
@@ -1201,10 +789,11 @@ export function AppProvider({ children }: AppProviderProps) {
     void (async () => {
       const isExpense = transaction.amount < 0;
       const transactionAt = parseFormattedDate(transaction.date);
-      const category = isExpense ? resolveBudgetCategory(transaction.category) : null;
-      const { data, error } = await supabase
-        .from("transactions")
-        .insert({
+      const category = isExpense
+        ? resolveBudgetCategory(transaction.category)
+        : null;
+      try {
+        const transactionId = await createTransaction({
           user_id: userId,
           type: isExpense ? "expense" : "income",
           amount_cents: toCents(Math.abs(transaction.amount)),
@@ -1214,16 +803,15 @@ export function AppProvider({ children }: AppProviderProps) {
           budget_category_id: category?.id ?? null,
           transaction_at: transactionAt.toISOString(),
           source: "manual",
-        })
-        .select("id")
-        .single();
-      if (error || !data) {
-        handleDbError(error ?? new Error("No transaction returned"), "addTransaction");
-        return;
+        });
+        setTransactions((prev) =>
+          prev.map((tx) =>
+            tx.id === tempId ? { ...tx, id: transactionId } : tx,
+          ),
+        );
+      } catch (error) {
+        handleDbError(error, "addTransaction");
       }
-      setTransactions((prev) =>
-        prev.map((tx) => (tx.id === tempId ? { ...tx, id: data.id } : tx))
-      );
     })();
   };
 
@@ -1231,17 +819,9 @@ export function AppProvider({ children }: AppProviderProps) {
     setIsOnboardingComplete(true);
     if (!canUseDb || !userId) return;
     void (async () => {
-      const { error } = await supabase
-        .from("user_onboarding")
-        .upsert(
-          {
-            user_id: userId,
-            onboarding_version: ONBOARDING_VERSION,
-            completed_at: new Date().toISOString(),
-          },
-          { onConflict: "user_id" },
-        );
-      if (error) {
+      try {
+        await updateOnboardingComplete(userId, ONBOARDING_VERSION);
+      } catch (error) {
         handleDbError(error, "completeOnboarding");
       }
     })();
@@ -1254,18 +834,14 @@ export function AppProvider({ children }: AppProviderProps) {
           return { ...goal, ...updates };
         }
         return goal;
-      })
+      }),
     );
 
     if (!canUseDb) return;
     void (async () => {
-      const payload: Record<string, unknown> = {};
-      if (typeof updates.name === "string") payload.name = updates.name;
-      if (typeof updates.icon === "string") payload.icon = updates.icon;
-      if (typeof updates.target === "number") payload.target_amount_cents = toCents(updates.target);
-      if (Object.keys(payload).length === 0) return;
-      const { error } = await supabase.from("goals").update(payload).eq("id", goalId);
-      if (error) {
+      try {
+        await updateGoalInDb(goalId, updates);
+      } catch (error) {
         handleDbError(error, "updateGoal");
       }
     })();
@@ -1278,17 +854,14 @@ export function AppProvider({ children }: AppProviderProps) {
           return { ...budget, ...updates };
         }
         return budget;
-      })
+      }),
     );
 
     if (!canUseDb) return;
     void (async () => {
-      const payload: Record<string, unknown> = {};
-      if (typeof updates.name === "string") payload.name = updates.name;
-      if (typeof updates.limit === "number") payload.limit_amount_cents = toCents(updates.limit);
-      if (Object.keys(payload).length === 0) return;
-      const { error } = await supabase.from("budgets").update(payload).eq("id", budgetId);
-      if (error) {
+      try {
+        await updateBudgetInDb(budgetId, updates);
+      } catch (error) {
         handleDbError(error, "updateBudget");
       }
     })();
@@ -1309,29 +882,31 @@ export function AppProvider({ children }: AppProviderProps) {
 
     if (!canUseDb || !userId) return;
     void (async () => {
-      const { data, error } = await supabase
-        .from("goals")
-        .insert({
-          user_id: userId,
+      try {
+        const newGoalId = await createGoalInDb(
+          userId,
           name,
           icon,
-          target_amount_cents: toCents(target),
-          monthly_contribution_cents: null,
-          created_in_onboarding: !isOnboardingComplete,
-        })
-        .select("id")
-        .single();
-      if (error || !data) {
-        handleDbError(error ?? new Error("No goal returned"), "addGoal");
-        return;
+          target,
+          !isOnboardingComplete,
+        );
+        setGoals((prev) =>
+          prev.map((goal) =>
+            goal.id === tempId ? { ...goal, id: newGoalId } : goal,
+          ),
+        );
+      } catch (error) {
+        handleDbError(error, "addGoal");
       }
-      setGoals((prev) =>
-        prev.map((goal) => (goal.id === tempId ? { ...goal, id: data.id } : goal))
-      );
     })();
   };
 
-  const addBudget = (name: string, icon: string, iconColor: string, limit: number) => {
+  const addBudget = (
+    name: string,
+    icon: string,
+    iconColor: string,
+    limit: number,
+  ) => {
     const tempId = generateId();
     const newBudget: Budget = {
       id: tempId,
@@ -1348,12 +923,14 @@ export function AppProvider({ children }: AppProviderProps) {
     void (async () => {
       const category = resolveBudgetCategory(name);
       if (!category) {
-        handleDbError(new Error(`Missing budget category for ${name}`), "addBudget");
+        handleDbError(
+          new Error(`Missing budget category for ${name}`),
+          "addBudget",
+        );
         return;
       }
-      const { data, error } = await supabase
-        .from("budgets")
-        .insert({
+      try {
+        const newBudgetId = await createBudgetInDb({
           user_id: userId,
           category_id: category.id,
           name,
@@ -1361,32 +938,25 @@ export function AppProvider({ children }: AppProviderProps) {
           period: "monthly",
           currency,
           is_active: true,
-        })
-        .select("id")
-        .single();
-      if (error || !data) {
-        handleDbError(error ?? new Error("No budget returned"), "addBudget");
-        return;
+        });
+        setBudgets((prev) =>
+          prev.map((budget) =>
+            budget.id === tempId ? { ...budget, id: newBudgetId } : budget,
+          ),
+        );
+      } catch (error) {
+        handleDbError(error, "addBudget");
       }
-      setBudgets((prev) =>
-        prev.map((budget) => (budget.id === tempId ? { ...budget, id: data.id } : budget))
-      );
     })();
   };
 
-  const addExpenseWithAutobudget = (categoryName: string, icon: string, amount: number, name: string, date: Date) => {
-    const categoryColors: Record<string, string> = {
-      "Lebensmittel": "#3B5BDB",
-      "Transport": "#7B8CDE",
-      "Unterhaltung": "#5C7CFA",
-      "Shopping": "#748FFC",
-      "Restaurant": "#91A7FF",
-      "Gesundheit": "#BAC8FF",
-      "Hygiene": "#B8C4E9",
-      "Feiern": "#9D4EDD",
-      "Sonstiges": "#DBE4FF",
-    };
-
+  const addExpenseWithAutobudget = (
+    categoryName: string,
+    icon: string,
+    amount: number,
+    name: string,
+    date: Date,
+  ) => {
     const dbCategory = canUseDb ? resolveBudgetCategory(categoryName) : null;
     if (canUseDb && !dbCategory) {
       addTransaction({
@@ -1400,7 +970,7 @@ export function AppProvider({ children }: AppProviderProps) {
     }
 
     const existingBudget = budgets.find(
-      (b) => b.name.toLowerCase() === categoryName.toLowerCase()
+      (b) => b.name.toLowerCase() === categoryName.toLowerCase(),
     );
     const tempBudgetId = existingBudget?.id ?? generateId();
     const tempExpenseId = generateId();
@@ -1425,7 +995,7 @@ export function AppProvider({ children }: AppProviderProps) {
         });
       }
 
-      const iconColor = categoryColors[categoryName] || "#7340fd";
+      const iconColor = AUTOBUDGET_CATEGORY_COLORS[categoryName] || "#7340fd";
       const newExpense: BudgetExpense = {
         id: tempExpenseId,
         name,
@@ -1461,9 +1031,8 @@ export function AppProvider({ children }: AppProviderProps) {
     void (async () => {
       let budgetId = existingBudget?.id;
       if (!budgetId) {
-        const { data: budgetData, error: budgetError } = await supabase
-          .from("budgets")
-          .insert({
+        try {
+          const newBudgetId = await createBudgetInDb({
             user_id: userId,
             category_id: dbCategory?.id,
             name: categoryName,
@@ -1471,23 +1040,24 @@ export function AppProvider({ children }: AppProviderProps) {
             period: "monthly",
             currency,
             is_active: true,
-          })
-          .select("id")
-          .single();
-        if (budgetError || !budgetData) {
-          handleDbError(budgetError ?? new Error("No budget returned"), "addExpenseWithAutobudget");
+          });
+          budgetId = newBudgetId;
+          setBudgets((prev) =>
+            prev.map((budget) =>
+              budget.id === tempBudgetId
+                ? { ...budget, id: newBudgetId }
+                : budget,
+            ),
+          );
+        } catch (error) {
+          handleDbError(error, "addExpenseWithAutobudget");
           return;
         }
-        const newBudgetId = budgetData.id;
-        budgetId = newBudgetId;
-        setBudgets((prev) =>
-          prev.map((budget) => (budget.id === tempBudgetId ? { ...budget, id: newBudgetId } : budget))
-        );
       }
 
-      const { data: transaction, error: transactionError } = await supabase
-        .from("transactions")
-        .insert({
+      let transactionId: string;
+      try {
+        transactionId = await createTransaction({
           user_id: userId,
           type: "expense",
           amount_cents: toCents(amount),
@@ -1498,11 +1068,9 @@ export function AppProvider({ children }: AppProviderProps) {
           budget_category_id: dbCategory?.id ?? null,
           transaction_at: date.toISOString(),
           source: "manual",
-        })
-        .select("id")
-        .single();
-      if (transactionError || !transaction) {
-        handleDbError(transactionError ?? new Error("No transaction returned"), "addExpenseWithAutobudget");
+        });
+      } catch (error) {
+        handleDbError(error, "addExpenseWithAutobudget");
         return;
       }
 
@@ -1512,14 +1080,18 @@ export function AppProvider({ children }: AppProviderProps) {
           return {
             ...budget,
             expenses: budget.expenses.map((expense) =>
-              expense.id === tempExpenseId ? { ...expense, id: transaction.id } : expense
+              expense.id === tempExpenseId
+                ? { ...expense, id: transactionId }
+                : expense,
             ),
           };
-        })
+        }),
       );
 
       setTransactions((prev) =>
-        prev.map((tx) => (tx.id === tempExpenseId ? { ...tx, id: transaction.id } : tx))
+        prev.map((tx) =>
+          tx.id === tempExpenseId ? { ...tx, id: transactionId } : tx,
+        ),
       );
     })();
   };
@@ -1531,16 +1103,14 @@ export function AppProvider({ children }: AppProviderProps) {
           return { ...entry, type, amount };
         }
         return entry;
-      })
+      }),
     );
 
     if (!canUseDb) return;
     void (async () => {
-      const { error } = await supabase
-        .from("income_sources")
-        .update({ name: type, amount_cents: toCents(amount) })
-        .eq("id", id);
-      if (error) {
+      try {
+        await updateIncomeEntryInDb(id, type, amount);
+      } catch (error) {
         handleDbError(error, "updateIncomeEntry");
       }
     })();
@@ -1551,8 +1121,9 @@ export function AppProvider({ children }: AppProviderProps) {
 
     if (!canUseDb) return;
     void (async () => {
-      const { error } = await supabase.from("income_sources").delete().eq("id", id);
-      if (error) {
+      try {
+        await deleteIncomeEntryInDb(id);
+      } catch (error) {
         handleDbError(error, "deleteIncomeEntry");
       }
     })();
@@ -1565,16 +1136,14 @@ export function AppProvider({ children }: AppProviderProps) {
           return { ...entry, type, amount };
         }
         return entry;
-      })
+      }),
     );
 
     if (!canUseDb) return;
     void (async () => {
-      const { error } = await supabase
-        .from("fixed_expenses")
-        .update({ name: type, amount_cents: toCents(amount) })
-        .eq("id", id);
-      if (error) {
+      try {
+        await updateExpenseEntryInDb(id, type, amount);
+      } catch (error) {
         handleDbError(error, "updateExpenseEntry");
       }
     })();
@@ -1585,14 +1154,21 @@ export function AppProvider({ children }: AppProviderProps) {
 
     if (!canUseDb) return;
     void (async () => {
-      const { error } = await supabase.from("fixed_expenses").delete().eq("id", id);
-      if (error) {
+      try {
+        await deleteExpenseEntryInDb(id);
+      } catch (error) {
         handleDbError(error, "deleteExpenseEntry");
       }
     })();
   };
 
-  const updateBudgetExpense = (budgetId: string, expenseId: string, amount: number, name: string, date?: Date) => {
+  const updateBudgetExpense = (
+    budgetId: string,
+    expenseId: string,
+    amount: number,
+    name: string,
+    date?: Date,
+  ) => {
     const currentMonth = new Date().getMonth();
     const currentYear = new Date().getFullYear();
 
@@ -1601,14 +1177,20 @@ export function AppProvider({ children }: AppProviderProps) {
         if (budget.id === budgetId) {
           const oldExpense = budget.expenses.find((e) => e.id === expenseId);
           if (!oldExpense) return budget;
-          
-          const oldTimestamp = oldExpense.timestamp || parseFormattedDate(oldExpense.date).getTime();
+
+          const oldTimestamp =
+            oldExpense.timestamp ||
+            parseFormattedDate(oldExpense.date).getTime();
           const oldDate = new Date(oldTimestamp);
-          const wasInCurrentMonth = oldDate.getMonth() === currentMonth && oldDate.getFullYear() === currentYear;
-          
+          const wasInCurrentMonth =
+            oldDate.getMonth() === currentMonth &&
+            oldDate.getFullYear() === currentYear;
+
           const newDate = date || new Date(oldTimestamp);
-          const isInCurrentMonth = newDate.getMonth() === currentMonth && newDate.getFullYear() === currentYear;
-          
+          const isInCurrentMonth =
+            newDate.getMonth() === currentMonth &&
+            newDate.getFullYear() === currentYear;
+
           let currentDiff = 0;
           if (wasInCurrentMonth && isInCurrentMonth) {
             currentDiff = amount - oldExpense.amount;
@@ -1617,7 +1199,7 @@ export function AppProvider({ children }: AppProviderProps) {
           } else if (!wasInCurrentMonth && isInCurrentMonth) {
             currentDiff = amount;
           }
-          
+
           const updatedExpenses = budget.expenses.map((e) => {
             if (e.id === expenseId) {
               return {
@@ -1630,7 +1212,7 @@ export function AppProvider({ children }: AppProviderProps) {
             }
             return e;
           });
-          
+
           return {
             ...budget,
             current: Math.max(0, budget.current + currentDiff),
@@ -1638,34 +1220,42 @@ export function AppProvider({ children }: AppProviderProps) {
           };
         }
         return budget;
-      })
+      }),
     );
 
     setTransactions((prev) =>
       prev.map((tx) => {
         if (tx.id === expenseId) {
-          return { ...tx, amount: -amount, name, date: date ? formatDate(date) : tx.date };
+          return {
+            ...tx,
+            amount: -amount,
+            name,
+            date: date ? formatDate(date) : tx.date,
+          };
         }
         return tx;
-      })
+      }),
     );
 
     if (!canUseDb) return;
     const existingBudget = budgets.find((b) => b.id === budgetId);
-    const existingExpense = existingBudget?.expenses.find((e) => e.id === expenseId);
+    const existingExpense = existingBudget?.expenses.find(
+      (e) => e.id === expenseId,
+    );
     const fallbackTimestamp =
-      existingExpense?.timestamp ?? (existingExpense ? parseFormattedDate(existingExpense.date).getTime() : Date.now());
+      existingExpense?.timestamp ??
+      (existingExpense
+        ? parseFormattedDate(existingExpense.date).getTime()
+        : Date.now());
     const transactionDate = date || new Date(fallbackTimestamp);
     void (async () => {
-      const { error } = await supabase
-        .from("transactions")
-        .update({
+      try {
+        await updateTransactionInDb(expenseId, {
           amount_cents: toCents(amount),
           name,
           transaction_at: transactionDate.toISOString(),
-        })
-        .eq("id", expenseId);
-      if (error) {
+        });
+      } catch (error) {
         handleDbError(error, "updateBudgetExpense");
       }
     })();
@@ -1674,53 +1264,70 @@ export function AppProvider({ children }: AppProviderProps) {
   const deleteBudgetExpense = (budgetId: string, expenseId: string) => {
     const currentMonth = new Date().getMonth();
     const currentYear = new Date().getFullYear();
-    
+
     setBudgets((prev) =>
       prev.map((b) => {
         if (b.id === budgetId) {
           const expenseToDelete = b.expenses.find((e) => e.id === expenseId);
           if (!expenseToDelete) return b;
-          
-          const expenseTimestamp = expenseToDelete.timestamp || parseFormattedDate(expenseToDelete.date).getTime();
+
+          const expenseTimestamp =
+            expenseToDelete.timestamp ||
+            parseFormattedDate(expenseToDelete.date).getTime();
           const expenseDate = new Date(expenseTimestamp);
-          const isCurrentMonth = expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
-          
+          const isCurrentMonth =
+            expenseDate.getMonth() === currentMonth &&
+            expenseDate.getFullYear() === currentYear;
+
           return {
             ...b,
-            current: isCurrentMonth ? Math.max(0, b.current - expenseToDelete.amount) : b.current,
+            current: isCurrentMonth
+              ? Math.max(0, b.current - expenseToDelete.amount)
+              : b.current,
             expenses: b.expenses.filter((e) => e.id !== expenseId),
           };
         }
         return b;
-      })
+      }),
     );
 
     setTransactions((prev) => prev.filter((tx) => tx.id !== expenseId));
 
     if (!canUseDb) return;
     void (async () => {
-      const { error } = await supabase.from("transactions").delete().eq("id", expenseId);
-      if (error) {
+      try {
+        await deleteTransactionInDb(expenseId);
+      } catch (error) {
         handleDbError(error, "deleteBudgetExpense");
       }
     })();
   };
 
-  const updateTransaction = (transactionId: string, updates: Partial<Omit<Transaction, "id">>) => {
+  const updateTransaction = (
+    transactionId: string,
+    updates: Partial<Omit<Transaction, "id">>,
+  ) => {
     setTransactions((prev) =>
       prev.map((tx) => {
         if (tx.id === transactionId) {
           return { ...tx, ...updates };
         }
         return tx;
-      })
+      }),
     );
 
     if (!canUseDb) return;
     void (async () => {
-      const payload: Record<string, unknown> = {};
+      const payload: {
+        amount_cents?: number;
+        category_name?: string | null;
+        name?: string;
+        transaction_at?: string;
+        type?: "income" | "expense";
+      } = {};
       if (typeof updates.name === "string") payload.name = updates.name;
-      if (typeof updates.category === "string") payload.category_name = updates.category;
+      if (typeof updates.category === "string")
+        payload.category_name = updates.category;
       if (typeof updates.amount === "number") {
         payload.amount_cents = toCents(Math.abs(updates.amount));
         payload.type = updates.amount < 0 ? "expense" : "income";
@@ -1730,8 +1337,9 @@ export function AppProvider({ children }: AppProviderProps) {
         payload.transaction_at = transactionDate.toISOString();
       }
       if (Object.keys(payload).length === 0) return;
-      const { error } = await supabase.from("transactions").update(payload).eq("id", transactionId);
-      if (error) {
+      try {
+        await updateTransactionInDb(transactionId, payload);
+      } catch (error) {
         handleDbError(error, "updateTransaction");
       }
     })();
@@ -1742,8 +1350,9 @@ export function AppProvider({ children }: AppProviderProps) {
 
     if (!canUseDb) return;
     void (async () => {
-      const { error } = await supabase.from("transactions").delete().eq("id", transactionId);
-      if (error) {
+      try {
+        await deleteTransactionInDb(transactionId);
+      } catch (error) {
         handleDbError(error, "deleteTransaction");
       }
     })();
@@ -1754,8 +1363,9 @@ export function AppProvider({ children }: AppProviderProps) {
 
     if (!canUseDb) return;
     void (async () => {
-      const { error } = await supabase.from("goals").delete().eq("id", goalId);
-      if (error) {
+      try {
+        await deleteGoalInDb(goalId);
+      } catch (error) {
         handleDbError(error, "deleteGoal");
       }
     })();
@@ -1764,73 +1374,66 @@ export function AppProvider({ children }: AppProviderProps) {
   const deleteBudget = (budgetId: string) => {
     const budget = budgets.find((b) => b.id === budgetId);
     if (budget) {
-      setTransactions((prev) => prev.filter((tx) => tx.category !== budget.name));
+      setTransactions((prev) =>
+        prev.filter((tx) => tx.category !== budget.name),
+      );
     }
     setBudgets((prev) => prev.filter((b) => b.id !== budgetId));
 
     if (!canUseDb) return;
     void (async () => {
-      const { error: txError } = await supabase
-        .from("transactions")
-        .delete()
-        .eq("budget_id", budgetId);
-      if (txError) {
-        handleDbError(txError, "deleteBudget");
-        return;
-      }
-      const { error } = await supabase.from("budgets").delete().eq("id", budgetId);
-      if (error) {
+      try {
+        await deleteTransactionsByBudget(budgetId);
+        await deleteBudgetInDb(budgetId);
+      } catch (error) {
         handleDbError(error, "deleteBudget");
       }
     })();
   };
 
-  const resetMonthlyBudgets = () => {
+  const resetMonthlyBudgets = useCallback(() => {
     const currentMonth = new Date().getMonth();
     const currentYear = new Date().getFullYear();
     if (currentMonth !== lastBudgetResetMonth) {
       setBudgets((prev) =>
         prev.map((budget) => {
           const currentMonthExpenses = budget.expenses.filter((expense) => {
-            const timestamp = expense.timestamp || parseFormattedDate(expense.date).getTime();
+            const timestamp =
+              expense.timestamp || parseFormattedDate(expense.date).getTime();
             const expenseDate = new Date(timestamp);
-            return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
+            return (
+              expenseDate.getMonth() === currentMonth &&
+              expenseDate.getFullYear() === currentYear
+            );
           });
-          const currentMonthTotal = currentMonthExpenses.reduce((sum, e) => sum + e.amount, 0);
+          const currentMonthTotal = currentMonthExpenses.reduce(
+            (sum, e) => sum + e.amount,
+            0,
+          );
           return {
             ...budget,
             current: currentMonthTotal,
           };
-        })
+        }),
       );
       setLastBudgetResetMonth(currentMonth);
     }
-  };
+  }, [lastBudgetResetMonth]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isAppLoading) return;
     const currentMonth = new Date().getMonth();
     if (currentMonth !== lastBudgetResetMonth) {
       resetMonthlyBudgets();
     }
-  }, [lastBudgetResetMonth, isAppLoading]);
+  }, [lastBudgetResetMonth, isAppLoading, resetMonthlyBudgets]);
 
   const resetAllData = async () => {
     try {
       if (canUseDb && userId) {
-        await supabase.from("goal_contributions").delete().eq("user_id", userId);
-        await supabase.from("transactions").delete().eq("user_id", userId);
-        await supabase.from("goals").delete().eq("user_id", userId);
-        await supabase.from("budgets").delete().eq("user_id", userId);
-        await supabase.from("income_sources").delete().eq("user_id", userId);
-        await supabase.from("fixed_expenses").delete().eq("user_id", userId);
-        await supabase.from("user_financial_profiles").delete().eq("user_id", userId);
-        await supabase
-          .from("user_onboarding")
-          .update({ completed_at: null })
-          .eq("user_id", userId);
+        await resetUserData(userId);
       }
-      await AsyncStorage.removeItem(STORAGE_KEY);
+      await clearPersistedData();
       setIsOnboardingComplete(false);
       setCurrencyState("EUR");
       setIncomeEntries([]);
