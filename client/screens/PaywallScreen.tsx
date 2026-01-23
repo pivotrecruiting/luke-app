@@ -4,12 +4,15 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { CommonActions, useNavigation } from "@react-navigation/native";
 import { Spacing, BorderRadius } from "@/constants/theme";
+import { useApp } from "@/context/AppContext";
 
 export default function PaywallScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
+  const { completeOnboarding } = useApp();
 
   const handleContinue = () => {
+    completeOnboarding();
     navigation.dispatch(
       CommonActions.reset({
         index: 0,
