@@ -89,7 +89,7 @@ export interface MonthlyTrendData {
 export interface AppState {
   isOnboardingComplete: boolean;
   isAppLoading: boolean;
-  userName: string;
+  userName: string | null;
   currency: CurrencyCode;
   incomeEntries: IncomeEntry[];
   expenseEntries: ExpenseEntry[];
@@ -293,7 +293,7 @@ type BudgetCategoryLookup = {
 export function AppProvider({ children }: AppProviderProps) {
   const [isAppLoading, setIsAppLoading] = useState(true);
   const [isOnboardingComplete, setIsOnboardingComplete] = useState(false);
-  const [userName] = useState("Deni");
+  const [userName, setUserName] = useState<string | null>(null);
   const [currency, setCurrencyState] = useState<CurrencyCode>("EUR");
   const [incomeEntries, setIncomeEntries] = useState<IncomeEntry[]>(INITIAL_INCOME_ENTRIES);
   const [expenseEntries, setExpenseEntries] = useState<ExpenseEntry[]>(INITIAL_EXPENSE_ENTRIES);
@@ -339,6 +339,7 @@ export function AppProvider({ children }: AppProviderProps) {
 
   const loadFromLocal = useCallback(async () => {
     try {
+      setUserName(null);
       const jsonValue = await AsyncStorage.getItem(STORAGE_KEY);
       if (jsonValue !== null) {
         const data: PersistedData = JSON.parse(jsonValue);
@@ -364,6 +365,7 @@ export function AppProvider({ children }: AppProviderProps) {
     const [
       onboardingRes,
       profileRes,
+      userRes,
       incomeRes,
       expenseRes,
       goalsRes,
@@ -382,6 +384,7 @@ export function AppProvider({ children }: AppProviderProps) {
         .select("currency, initial_savings_cents")
         .eq("user_id", id)
         .maybeSingle(),
+      supabase.from("users").select("name").eq("id", id).maybeSingle(),
       supabase.from("income_sources").select("id, name, amount_cents").eq("user_id", id),
       supabase.from("fixed_expenses").select("id, name, amount_cents").eq("user_id", id),
       supabase.from("goals").select("id, name, icon, target_amount_cents").eq("user_id", id),
@@ -407,6 +410,7 @@ export function AppProvider({ children }: AppProviderProps) {
     const firstError =
       onboardingRes.error ||
       profileRes.error ||
+      userRes.error ||
       incomeRes.error ||
       expenseRes.error ||
       goalsRes.error ||
@@ -434,6 +438,13 @@ export function AppProvider({ children }: AppProviderProps) {
 
     if (profileRes.data?.currency) {
       setCurrencyState(profileRes.data.currency as CurrencyCode);
+    }
+
+    if (typeof userRes.data?.name === "string") {
+      const trimmed = userRes.data.name.trim();
+      setUserName(trimmed.length ? trimmed : null);
+    } else {
+      setUserName(null);
     }
 
     const budgetCategoryRows = (budgetCategoriesRes.data ?? []) as BudgetCategoryLookup[];
@@ -1467,9 +1478,10 @@ export function AppProvider({ children }: AppProviderProps) {
           handleDbError(budgetError ?? new Error("No budget returned"), "addExpenseWithAutobudget");
           return;
         }
-        budgetId = budgetData.id;
+        const newBudgetId = budgetData.id;
+        budgetId = newBudgetId;
         setBudgets((prev) =>
-          prev.map((budget) => (budget.id === tempBudgetId ? { ...budget, id: budgetId } : budget))
+          prev.map((budget) => (budget.id === tempBudgetId ? { ...budget, id: newBudgetId } : budget))
         );
       }
 
