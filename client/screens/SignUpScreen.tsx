@@ -1,31 +1,21 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
   TextInput,
   StyleSheet,
   Pressable,
-  ActivityIndicator,
-  Platform,
+  Modal,
+  TouchableWithoutFeedback,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { OnboardingStackParamList } from "@/navigation/OnboardingNavigator";
-import { AntDesign } from "@expo/vector-icons";
+import { Feather, AntDesign } from "@expo/vector-icons";
 import Svg, { Path } from "react-native-svg";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { Spacing, BorderRadius, Typography, Colors } from "@/constants/theme";
-import * as AppleAuthentication from "expo-apple-authentication";
-import * as Linking from "expo-linking";
-import * as WebBrowser from "expo-web-browser";
-import { makeRedirectUri } from "expo-auth-session";
-import * as QueryParams from "expo-auth-session/build/QueryParams";
-import { supabase } from "@/lib/supabase";
-import { useApp } from "@/context/AppContext";
-import Constants from "expo-constants";
-
-WebBrowser.maybeCompleteAuthSession();
 
 type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
 
@@ -55,208 +45,13 @@ function GoogleLogo({ size = 20 }: { size?: number }) {
 export default function SignUpScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
-  const { isOnboardingComplete } = useApp();
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [infoMessage, setInfoMessage] = useState<string | null>(null);
-  const [appleAvailable, setAppleAvailable] = useState(false);
-
-  const isExpoGo = Constants.appOwnership === "expo";
-  const redirectTo = isExpoGo
-    ? makeRedirectUri()
-    : makeRedirectUri({ scheme: "myapp" });
-  // TODO: Add exp://** (Expo Go) and myapp://** (dev build/standalone) to Supabase Auth redirect URLs.
-
-  useEffect(() => {
-    if (Platform.OS !== "ios") return;
-    AppleAuthentication.isAvailableAsync().then(setAppleAvailable).catch(() => {
-      setAppleAvailable(false);
-    });
-  }, []);
-
-  const handlePostAuth = useCallback(() => {
-    if (!isOnboardingComplete) {
-      navigation.navigate("OnboardingCurrency");
-    }
-  }, [isOnboardingComplete, navigation]);
-
-  const createSessionFromUrl = useCallback(
-    async (url: string) => {
-      const { params, errorCode } = QueryParams.getQueryParams(url);
-      if (errorCode) {
-        throw new Error(errorCode);
-      }
-
-      const accessToken = params.access_token as string | undefined;
-      const refreshToken = params.refresh_token as string | undefined;
-
-      if (!accessToken || !refreshToken) {
-        return;
-      }
-
-      const { error } = await supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken,
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      handlePostAuth();
-    },
-    [handlePostAuth],
-  );
-
-  const url = Linking.useURL();
-  useEffect(() => {
-    if (!url) return;
-    createSessionFromUrl(url).catch((error) => {
-      setErrorMessage(error.message);
-    });
-  }, [url, createSessionFromUrl]);
-
-  const handleEmailSignUp = async () => {
-    if (!email || !password) {
-      setErrorMessage("Bitte Email und Passwort eingeben.");
-      return;
-    }
-
-    setIsLoading(true);
-    setErrorMessage(null);
-    setInfoMessage(null);
-
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectTo,
-      },
-    });
-
-    if (error) {
-      setErrorMessage(error.message);
-    } else if (!data.session) {
-      setInfoMessage("Bitte bestätige deine Email, um fortzufahren.");
-    } else {
-      handlePostAuth();
-    }
-
-    setIsLoading(false);
-  };
-
-  const handleEmailSignIn = async () => {
-    if (!email || !password) {
-      setErrorMessage("Bitte Email und Passwort eingeben.");
-      return;
-    }
-
-    setIsLoading(true);
-    setErrorMessage(null);
-    setInfoMessage(null);
-
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) {
-      setErrorMessage(error.message);
-    } else {
-      handlePostAuth();
-    }
-
-    setIsLoading(false);
-  };
-
-  const handleGoogleSignIn = async () => {
-    setIsLoading(true);
-    setErrorMessage(null);
-    setInfoMessage(null);
-
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo,
-        skipBrowserRedirect: true,
-      },
-    });
-
-    if (error) {
-      setErrorMessage(error.message);
-      setIsLoading(false);
-      return;
-    }
-
-    const result = await WebBrowser.openAuthSessionAsync(
-      data?.url ?? "",
-      redirectTo,
-    );
-
-    if (result.type === "success") {
-      await createSessionFromUrl(result.url);
-    }
-
-    setIsLoading(false);
-  };
-
-  const handleAppleSignIn = async () => {
-    setIsLoading(true);
-    setErrorMessage(null);
-    setInfoMessage(null);
-
-    try {
-      const credential = await AppleAuthentication.signInAsync({
-        requestedScopes: [
-          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
-          AppleAuthentication.AppleAuthenticationScope.EMAIL,
-        ],
-      });
-
-      if (!credential.identityToken) {
-        throw new Error("Apple Sign-In fehlgeschlagen.");
-      }
-
-      const { error } = await supabase.auth.signInWithIdToken({
-        provider: "apple",
-        token: credential.identityToken,
-        nonce: credential.nonce ?? undefined,
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      if (credential.fullName) {
-        const fullNameParts = [
-          credential.fullName.givenName,
-          credential.fullName.familyName,
-        ].filter(Boolean);
-
-        if (fullNameParts.length > 0) {
-          await supabase.auth.updateUser({
-            data: {
-              full_name: fullNameParts.join(" "),
-            },
-          });
-        }
-      }
-
-      handlePostAuth();
-    } catch (error) {
-      setErrorMessage((error as Error).message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const [showWorkshopModal, setShowWorkshopModal] = useState(false);
+  const [workshopCode, setWorkshopCode] = useState("");
+  const [codeStatus, setCodeStatus] = useState<"neutral" | "valid" | "invalid">("neutral");
 
   return (
     <View style={styles.container}>
-      <View style={[styles.tealBlur, { top: -50 - insets.top }]} />
-      <View style={styles.purpleBlur} />
-
       <KeyboardAwareScrollViewCompat
         contentContainerStyle={[
           styles.scrollContent,
@@ -269,9 +64,9 @@ export default function SignUpScreen() {
         <Text style={styles.logo}>Luke</Text>
 
         <View style={styles.formContainer}>
-          <Text style={styles.title}>Create an account</Text>
+          <Text style={styles.title}>Erstelle einen Account</Text>
           <Text style={styles.subtitle}>
-            Enter your email to sign up for this app
+            Melde dich mit deiner E-Mail an, um loszulegen.
           </Text>
 
           <TextInput
@@ -282,88 +77,120 @@ export default function SignUpScreen() {
             onChangeText={setEmail}
             keyboardType="email-address"
             autoCapitalize="none"
-            editable={!isLoading}
           />
-
-          <TextInput
-            style={styles.input}
-            placeholder="Passwort"
-            placeholderTextColor="#9CA3AF"
-            value={password}
-            onChangeText={setPassword}
-            autoCapitalize="none"
-            secureTextEntry
-            editable={!isLoading}
-          />
-
-          {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
-          {infoMessage ? <Text style={styles.infoText}>{infoMessage}</Text> : null}
 
           <Pressable
-            onPress={handleEmailSignUp}
-            disabled={isLoading}
+            onPress={() => navigation.navigate("Onboarding1")}
             style={({ pressed }) => [
               styles.continueButton,
               pressed && styles.buttonPressed,
             ]}
           >
-            {isLoading ? (
-              <ActivityIndicator color={Colors.light.buttonText} />
-            ) : (
-              <Text style={styles.continueButtonText}>Create account</Text>
-            )}
-          </Pressable>
-
-          <Pressable
-            onPress={handleEmailSignIn}
-            disabled={isLoading}
-            style={({ pressed }) => [
-              styles.secondaryButton,
-              pressed && styles.buttonPressed,
-            ]}
-          >
-            <Text style={styles.secondaryButtonText}>Sign in</Text>
+            <Text style={styles.continueButtonText}>Fortfahren</Text>
           </Pressable>
 
           <View style={styles.dividerContainer}>
             <View style={styles.divider} />
-            <Text style={styles.dividerText}>or</Text>
+            <Text style={styles.dividerText}>oder</Text>
             <View style={styles.divider} />
           </View>
 
           <Pressable
-            onPress={handleGoogleSignIn}
-            disabled={isLoading}
+            onPress={() => navigation.navigate("Onboarding1")}
             style={({ pressed }) => [
               styles.socialButton,
               pressed && styles.buttonPressed,
             ]}
           >
             <GoogleLogo size={20} />
-            <Text style={styles.socialButtonText}>Continue with Google</Text>
+            <Text style={styles.socialButtonText}>Anmelden über Google</Text>
           </Pressable>
 
-          {appleAvailable ? (
-            <Pressable
-              onPress={handleAppleSignIn}
-              disabled={isLoading}
-              style={({ pressed }) => [
-                styles.socialButton,
-                pressed && styles.buttonPressed,
-              ]}
-            >
-              <AntDesign name="apple" size={20} color="#000000" />
-              <Text style={styles.socialButtonText}>Continue with Apple</Text>
-            </Pressable>
-          ) : null}
+          <Pressable
+            onPress={() => navigation.navigate("Onboarding1")}
+            style={({ pressed }) => [
+              styles.socialButton,
+              pressed && styles.buttonPressed,
+            ]}
+          >
+            <AntDesign name="apple" size={20} color="#000000" />
+            <Text style={styles.socialButtonText}>Anmelden über Apple</Text>
+          </Pressable>
 
           <Text style={styles.termsText}>
-            By clicking continue, you agree to our{" "}
-            <Text style={styles.termsLink}>Terms of Service</Text> and{" "}
-            <Text style={styles.termsLink}>Privacy Policy</Text>
+            Durch das Fortfahren stimmst du unseren{" "}
+            <Text style={styles.termsLink}>AGB</Text> und dem{" "}
+            <Text style={styles.termsLink}>Datenschutz</Text> zu.
           </Text>
+
+          <Pressable
+            style={styles.workshopCodeButton}
+            onPress={() => setShowWorkshopModal(true)}
+          >
+            <Text style={styles.workshopCodeText}>Du hast einen Workshop-Code?</Text>
+          </Pressable>
         </View>
       </KeyboardAwareScrollViewCompat>
+
+      <Modal
+        visible={showWorkshopModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowWorkshopModal(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setShowWorkshopModal(false)}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={[styles.modalContent, { paddingBottom: insets.bottom + Spacing.xl }]}>
+                <View style={styles.modalHandle} />
+                <Text style={styles.modalTitle}>Workshop-Zugang freischalten</Text>
+                <Text style={styles.modalSubtitle}>Gib dein persönlichen Code ein</Text>
+
+                <TextInput
+                  style={[
+                    styles.modalInput,
+                    codeStatus === "valid" && styles.inputValid,
+                    codeStatus === "invalid" && styles.inputInvalid,
+                  ]}
+                  placeholder="DEIN CODE HIER"
+                  placeholderTextColor="#9CA3AF"
+                  value={workshopCode}
+                  onChangeText={(text) => {
+                    setWorkshopCode(text);
+                    setCodeStatus("neutral");
+                  }}
+                  autoCapitalize="characters"
+                />
+
+                <Pressable
+                  onPress={() => {
+                    const validCodes = ["12345", "LUKE2024", "WORKSHOP"];
+                    if (validCodes.includes(workshopCode.toUpperCase())) {
+                      setCodeStatus("valid");
+                      setTimeout(() => {
+                        setShowWorkshopModal(false);
+                        setWorkshopCode("");
+                        setCodeStatus("neutral");
+                        navigation.navigate("Onboarding1");
+                      }, 600);
+                    } else {
+                      setCodeStatus("invalid");
+                    }
+                  }}
+                  style={({ pressed }) => [
+                    styles.activateButton,
+                    pressed && styles.buttonPressed,
+                  ]}
+                >
+                  <Text style={styles.activateButtonText}>CODE AKTIVIEREN</Text>
+                </Pressable>
+
+                <Text style={styles.modalFooterText}>4 Wochen kostenlos nutzen.</Text>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </View>
   );
 }
@@ -427,7 +254,7 @@ const styles = StyleSheet.create({
     borderColor: "#D1D5DB",
     borderRadius: BorderRadius.xs,
     paddingHorizontal: Spacing.lg,
-    marginTop: Spacing.lg,
+    marginTop: Spacing["3xl"],
     ...Typography.body,
     color: Colors.light.text,
     outlineStyle: "none",
@@ -435,7 +262,7 @@ const styles = StyleSheet.create({
   continueButton: {
     width: "100%",
     height: 48,
-    backgroundColor: Colors.light.primary,
+    backgroundColor: "#1A1A1A",
     borderRadius: BorderRadius.xs,
     alignItems: "center",
     justifyContent: "center",
@@ -444,22 +271,7 @@ const styles = StyleSheet.create({
   continueButtonText: {
     ...Typography.body,
     fontWeight: "600",
-    color: Colors.light.buttonText,
-  },
-  secondaryButton: {
-    width: "100%",
-    height: 48,
-    borderWidth: 1,
-    borderColor: Colors.light.primary,
-    borderRadius: BorderRadius.xs,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: Spacing.sm,
-  },
-  secondaryButtonText: {
-    ...Typography.body,
-    fontWeight: "600",
-    color: Colors.light.primary,
+    color: "#FFFFFF",
   },
   buttonPressed: {
     opacity: 0.8,
@@ -483,8 +295,7 @@ const styles = StyleSheet.create({
   socialButton: {
     width: "100%",
     height: 48,
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
+    backgroundColor: "#F3F4F6",
     borderRadius: BorderRadius.xs,
     flexDirection: "row",
     alignItems: "center",
@@ -495,29 +306,99 @@ const styles = StyleSheet.create({
   socialButtonText: {
     ...Typography.body,
     fontWeight: "500",
-    color: Colors.light.text,
+    color: "#000000",
   },
   termsText: {
     ...Typography.tiny,
-    color: "#6B7280",
+    color: "#9CA3AF",
     textAlign: "center",
     marginTop: Spacing["3xl"],
-    lineHeight: 20,
+    lineHeight: 18,
   },
   termsLink: {
+    color: "#6B7280",
+    fontWeight: "500",
+  },
+  workshopCodeButton: {
+    marginTop: Spacing.xl,
+    borderBottomWidth: 1,
+    borderBottomColor: "#4F46E5",
+    paddingBottom: 2,
+  },
+  workshopCodeText: {
+    ...Typography.small,
+    color: "#4F46E5",
+    fontWeight: "500",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: Spacing["2xl"],
+    paddingTop: Spacing.xl,
+    alignItems: "center",
+  },
+  modalHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: "#E5E7EB",
+    borderRadius: 2,
+    marginBottom: Spacing.xl,
+  },
+  modalTitle: {
+    ...Typography.h3,
     color: Colors.light.text,
-    textDecorationLine: "underline",
-  },
-  errorText: {
-    ...Typography.small,
-    color: "#DC2626",
-    marginTop: Spacing.sm,
     textAlign: "center",
+    fontWeight: "700",
   },
-  infoText: {
+  modalSubtitle: {
     ...Typography.small,
-    color: "#2563EB",
-    marginTop: Spacing.sm,
+    color: "#9CA3AF",
+    textAlign: "center",
+    marginTop: 4,
+  },
+  modalInput: {
+    width: "100%",
+    height: 56,
+    borderWidth: 2,
+    borderColor: "#E5E7EB",
+    borderRadius: 12,
+    marginTop: Spacing["2xl"],
+    paddingHorizontal: Spacing.xl,
+    textAlign: "center",
+    fontSize: 16,
+    color: Colors.light.text,
+    outlineStyle: "none",
+  } as any,
+  inputValid: {
+    borderColor: "#22C55E",
+  },
+  inputInvalid: {
+    borderColor: "#EF4444",
+  },
+  activateButton: {
+    width: "100%",
+    height: 56,
+    backgroundColor: Colors.light.primary,
+    borderRadius: 28,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: Spacing["2xl"],
+  },
+  activateButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  modalFooterText: {
+    ...Typography.tiny,
+    color: "#9CA3AF",
+    marginTop: Spacing.md,
     textAlign: "center",
   },
 });
