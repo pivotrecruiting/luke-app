@@ -45,3 +45,5 @@ app-example
 .env*
 
 AGENTS.md
+# Replit local state
+.local/
