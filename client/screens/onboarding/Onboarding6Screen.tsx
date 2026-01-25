@@ -2,11 +2,11 @@ import React from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
+import ProgressDots from "@/components/ProgressDots";
+import { Spacing, BorderRadius } from "@/constants/theme";
+import { useApp } from "@/context/AppContext";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { OnboardingStackParamList } from "@/navigation/OnboardingNavigator";
-import ProgressDots from "@/components/ProgressDots";
-import { Spacing, BorderRadius, Typography, Colors } from "@/constants/theme";
-import { useApp } from "@/context/AppContext";
 
 type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
 

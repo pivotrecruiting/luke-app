@@ -2,15 +2,14 @@ import React, { useState } from "react";
 import { View, Text, TextInput, StyleSheet, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import type { OnboardingStackParamList } from "@/navigation/OnboardingNavigator";
 import ProgressDots from "@/components/ProgressDots";
 import Chip from "@/components/Chip";
 import CurrencyInput from "@/components/CurrencyInput";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { Spacing, BorderRadius, Typography, Colors } from "@/constants/theme";
-import { Feather } from "@expo/vector-icons";
 import { useApp } from "@/context/AppContext";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { OnboardingStackParamList } from "@/navigation/OnboardingNavigator";
 
 type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
 

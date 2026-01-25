@@ -1,12 +1,12 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, Pressable, ScrollView } from "react-native";
+import { View, Text, StyleSheet, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import type { OnboardingStackParamList } from "@/navigation/OnboardingNavigator";
 import { Image } from "expo-image";
 import ProgressDots from "@/components/ProgressDots";
 import { Spacing, BorderRadius, Typography, Colors } from "@/constants/theme";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { OnboardingStackParamList } from "@/navigation/OnboardingNavigator";
 
 type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
 
