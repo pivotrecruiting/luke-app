@@ -30,7 +30,7 @@ const savingsGoals = [
   "Klarna",
 ];
 
-const emojiKeywords: Array<{ keywords: string[]; emoji: string }> = [
+const emojiKeywords: { keywords: string[]; emoji: string }[] = [
   {
     keywords: [
       "iphone",

@@ -7,11 +7,11 @@ import type { OnboardingStackParamList } from "@/navigation/OnboardingNavigator"
 import { BorderRadius, Colors, Spacing, Typography } from "@/constants/theme";
 import { useApp, type CurrencyCode } from "@/context/AppContext";
 
-const CURRENCIES: Array<{
+const CURRENCIES: {
   code: CurrencyCode;
   label: string;
   description: string;
-}> = [
+}[] = [
   { code: "EUR", label: "Euro", description: "Euro (EUR)" },
   { code: "USD", label: "US Dollar", description: "US Dollar (USD)" },
   {
