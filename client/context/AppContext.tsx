@@ -5,6 +5,7 @@ import React, {
   useMemo,
   useEffect,
   useCallback,
+  useRef,
   ReactNode,
 } from "react";
 import { useAuth } from "@/context/AuthContext";
@@ -51,9 +52,14 @@ import {
   deleteTransaction as deleteTransactionInDb,
   deleteTransactionsByBudget,
   fetchAppData,
+  fetchLatestXpEventAt,
+  fetchXpConfig,
+  fetchXpEventCount,
+  getOrCreateUserProgress,
   replaceExpenseEntries,
   replaceIncomeEntries,
   resetUserData,
+  updateUserProgress,
   updateBudget as updateBudgetInDb,
   updateExpenseEntry as updateExpenseEntryInDb,
   updateGoal as updateGoalInDb,
@@ -62,12 +68,23 @@ import {
   updateOnboardingComplete,
   updateTransaction as updateTransactionInDb,
   upsertUserCurrency,
+  createXpEvent,
 } from "@/services/app-service";
+import type { UserProgressUpdatePayloadT } from "@/services/app-service";
 import type { BudgetCategoryRow } from "@/services/types";
 import { formatDate, formatWeekLabel, parseFormattedDate } from "@/utils/dates";
 import { generateId } from "@/utils/ids";
 import { toCents } from "@/utils/money";
 import { calculateWeeklySpending } from "@/utils/weekly-spending";
+import type {
+  UserProgressT,
+  XpEventRuleT,
+  XpEventTypeT,
+  XpLevelT,
+} from "@/types/xp-types";
+import { getHighestMultiplierForEvent } from "@/features/xp/utils/rules";
+import { resolveLevelByXp } from "@/features/xp/utils/levels";
+import { addDays, getLocalDateKey } from "@/features/xp/utils/dates";
 
 export type {
   AppContextType,
@@ -86,6 +103,16 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 type AppProviderProps = {
   children: ReactNode;
+};
+
+type AwardXpParamsT = {
+  eventKey: string;
+  sourceType?: string | null;
+  sourceId?: string | null;
+  meta?: Record<string, unknown> | null;
+  progressOverride?: UserProgressT | null;
+  progressPatch?: UserProgressUpdatePayloadT;
+  skipCooldownCheck?: boolean;
 };
 
 export function AppProvider({ children }: AppProviderProps) {
@@ -110,11 +137,20 @@ export function AppProvider({ children }: AppProviderProps) {
   const [budgetCategories, setBudgetCategories] = useState<BudgetCategoryRow[]>(
     [],
   );
+  const [levels, setLevels] = useState<XpLevelT[]>([]);
+  const [xpEventTypes, setXpEventTypes] = useState<XpEventTypeT[]>([]);
+  const [xpEventRules, setXpEventRules] = useState<XpEventRuleT[]>([]);
+  const [userProgress, setUserProgress] = useState<UserProgressT | null>(null);
   const [useLocalFallback, setUseLocalFallback] = useState(false);
+  const userProgressRef = useRef<UserProgressT | null>(null);
 
   const { user } = useAuth();
   const userId = user?.id ?? null;
   const canUseDb = Boolean(userId) && !useLocalFallback;
+
+  useEffect(() => {
+    userProgressRef.current = userProgress;
+  }, [userProgress]);
 
   const budgetCategoryByName = useMemo(() => {
     const map = new Map<string, BudgetCategoryRow>();
@@ -127,9 +163,21 @@ export function AppProvider({ children }: AppProviderProps) {
     return map;
   }, [budgetCategories]);
 
+  const xpEventTypeByKey = useMemo(() => {
+    const map = new Map<string, XpEventTypeT>();
+    xpEventTypes.forEach((eventType) => {
+      map.set(eventType.key, eventType);
+    });
+    return map;
+  }, [xpEventTypes]);
+
   const handleDbError = useCallback((error: unknown, context: string) => {
     console.error(`DB error during ${context}:`, error);
     setUseLocalFallback(true);
+  }, []);
+
+  const handleXpError = useCallback((error: unknown, context: string) => {
+    console.error(`XP error during ${context}:`, error);
   }, []);
 
   const resolveBudgetCategory = useCallback(
@@ -144,9 +192,152 @@ export function AppProvider({ children }: AppProviderProps) {
     [budgetCategoryByName],
   );
 
+  const awardXp = useCallback(
+    async (params: AwardXpParamsT): Promise<UserProgressT | null> => {
+      if (!canUseDb || !userId) return null;
+
+      const eventType = xpEventTypeByKey.get(params.eventKey);
+      if (!eventType || !eventType.active) return null;
+
+      const baseProgress =
+        params.progressOverride ?? userProgressRef.current ?? null;
+      if (!baseProgress) return null;
+
+      if (
+        typeof eventType.maxPerUser === "number" &&
+        eventType.maxPerUser > 0
+      ) {
+        try {
+          const count = await fetchXpEventCount(
+            userId,
+            eventType.id,
+            eventType.key,
+          );
+          if (count >= eventType.maxPerUser) return baseProgress;
+        } catch (error) {
+          handleXpError(error, "awardXp.maxPerUser");
+          return baseProgress;
+        }
+      }
+
+      if (
+        !params.skipCooldownCheck &&
+        typeof eventType.cooldownHours === "number" &&
+        eventType.cooldownHours > 0
+      ) {
+        try {
+          const lastEventAt = await fetchLatestXpEventAt(
+            userId,
+            eventType.id,
+            eventType.key,
+          );
+          if (lastEventAt) {
+            const lastDate = new Date(lastEventAt);
+            const diffMs = Date.now() - lastDate.getTime();
+            if (diffMs < eventType.cooldownHours * 60 * 60 * 1000) {
+              return baseProgress;
+            }
+          }
+        } catch (error) {
+          handleXpError(error, "awardXp.cooldown");
+          return baseProgress;
+        }
+      }
+
+      const now = new Date();
+      const appliedMultiplier = getHighestMultiplierForEvent(
+        xpEventRules,
+        eventType.id,
+        now,
+      );
+      const baseXp = eventType.baseXp;
+      const xpDelta = Math.round(baseXp * appliedMultiplier);
+      if (!Number.isFinite(xpDelta) || xpDelta <= 0) {
+        return baseProgress;
+      }
+
+      const nextTotal = baseProgress.xpTotal + xpDelta;
+      const nextLevelId =
+        resolveLevelByXp(levels, nextTotal)?.id ?? baseProgress.currentLevelId;
+
+      try {
+        await createXpEvent({
+          userId,
+          eventTypeId: eventType.id,
+          eventTypeKey: eventType.key,
+          baseXp,
+          appliedMultiplier,
+          xpDelta,
+          sourceType: params.sourceType ?? null,
+          sourceId: params.sourceId ?? null,
+          meta: params.meta ?? null,
+        });
+
+        const updates: UserProgressUpdatePayloadT = {
+          xp_total: nextTotal,
+          current_level_id: nextLevelId,
+          ...(params.progressPatch ?? {}),
+        };
+        const updated = await updateUserProgress(userId, updates);
+        setUserProgress(updated);
+        return updated;
+      } catch (error) {
+        handleXpError(error, "awardXp.persist");
+        return baseProgress;
+      }
+    },
+    [
+      canUseDb,
+      userId,
+      xpEventTypeByKey,
+      xpEventRules,
+      levels,
+      handleXpError,
+    ],
+  );
+
+  const handleDailyLogin = useCallback(async () => {
+    if (!canUseDb || !userId) return;
+    const progress = userProgressRef.current;
+    if (!progress) return;
+
+    const now = new Date();
+    const todayKey = getLocalDateKey(now);
+    if (progress.lastStreakDate === todayKey) return;
+
+    const yesterdayKey = getLocalDateKey(addDays(now, -1));
+    const isContinuing = progress.lastStreakDate === yesterdayKey;
+    const nextStreak = isContinuing ? progress.currentStreak + 1 : 1;
+    const nextLongest = Math.max(progress.longestStreak, nextStreak);
+
+    const updatedProgress = await awardXp({
+      eventKey: "daily_login",
+      progressPatch: {
+        last_login_at: now.toISOString(),
+        last_streak_date: todayKey,
+        current_streak: nextStreak,
+        longest_streak: nextLongest,
+      },
+      skipCooldownCheck: true,
+      meta: { date: todayKey },
+    });
+
+    if (updatedProgress && nextStreak % 7 === 0) {
+      await awardXp({
+        eventKey: "streak_7_bonus",
+        progressOverride: updatedProgress,
+        meta: { streak: nextStreak },
+      });
+    }
+  }, [awardXp, canUseDb, userId]);
+
   const loadFromLocal = useCallback(async () => {
     try {
       setUserName(null);
+      setLevels([]);
+      setXpEventTypes([]);
+      setXpEventRules([]);
+      setUserProgress(null);
       const data = await loadPersistedData();
       if (!data) return;
       setIsOnboardingComplete(data.isOnboardingComplete ?? false);
@@ -182,6 +373,27 @@ export function AppProvider({ children }: AppProviderProps) {
 
     if (typeof data.initialSavingsCents === "number") {
       // TODO: wire this into UI if initial savings is displayed later.
+    }
+
+    try {
+      const xpConfig = await fetchXpConfig();
+      setLevels(xpConfig.levels);
+      setXpEventTypes(xpConfig.eventTypes);
+      setXpEventRules(xpConfig.eventRules);
+      try {
+        const initialLevelId = xpConfig.levels[0]?.id ?? null;
+        const progress = await getOrCreateUserProgress(id, initialLevelId);
+        setUserProgress(progress);
+      } catch (error) {
+        console.error("Failed to load user progress:", error);
+        setUserProgress(null);
+      }
+    } catch (error) {
+      console.error("Failed to load XP config:", error);
+      setLevels([]);
+      setXpEventTypes([]);
+      setXpEventRules([]);
+      setUserProgress(null);
     }
   }, []);
 
@@ -222,6 +434,11 @@ export function AppProvider({ children }: AppProviderProps) {
       active = false;
     };
   }, [loadFromDb, loadFromLocal, userId]);
+
+  useEffect(() => {
+    if (!canUseDb || !userProgress) return;
+    void handleDailyLogin();
+  }, [canUseDb, handleDailyLogin, userProgress]);
 
   // Local storage is a fallback when DB access is unavailable (offline/unauth).
   const saveData = useCallback(async () => {
@@ -478,6 +695,26 @@ export function AppProvider({ children }: AppProviderProps) {
     })();
   };
 
+  const handleSnapXp = useCallback(
+    async (transactionId: string): Promise<UserProgressT | null> => {
+      const updatedProgress = await awardXp({
+        eventKey: "snap_created",
+        sourceType: "transaction",
+        sourceId: transactionId,
+      });
+
+      if (!isOnboardingComplete) return updatedProgress ?? null;
+      const tutorialProgress = await awardXp({
+        eventKey: "first_snap_tutorial",
+        sourceType: "transaction",
+        sourceId: transactionId,
+        progressOverride: updatedProgress ?? null,
+      });
+      return tutorialProgress ?? updatedProgress ?? null;
+    },
+    [awardXp, isOnboardingComplete],
+  );
+
   const addGoalDeposit = (
     goalId: string,
     amount: number,
@@ -490,6 +727,8 @@ export function AppProvider({ children }: AppProviderProps) {
     const isRepayment = goal.name.toLowerCase().includes("klarna");
     const tempDepositId = generateId();
     const tempTransactionId = generateId();
+    const shouldAwardGoalReached =
+      goal.current < goal.target && goal.current + amount >= goal.target;
 
     setGoals((prev) =>
       prev.map((g) => {
@@ -573,6 +812,17 @@ export function AppProvider({ children }: AppProviderProps) {
             tx.id === tempTransactionId ? { ...tx, id: transactionId } : tx,
           ),
         );
+
+        const progressAfterSnap = await handleSnapXp(transactionId);
+        if (shouldAwardGoalReached) {
+          await awardXp({
+            eventKey: "goal_reached",
+            sourceType: "goal",
+            sourceId: goalId,
+            meta: { goalId },
+            progressOverride: progressAfterSnap ?? null,
+          });
+        }
       } catch (error) {
         handleDbError(error, "addGoalDeposit");
       }
@@ -585,6 +835,23 @@ export function AppProvider({ children }: AppProviderProps) {
     amount: number,
     date?: Date,
   ) => {
+    const existingGoal = goals.find((goal) => goal.id === goalId);
+    const existingDeposit = existingGoal?.deposits.find(
+      (deposit) => deposit.id === depositId,
+    );
+    const amountDiff = existingDeposit ? amount - existingDeposit.amount : 0;
+    const nextCurrent =
+      existingGoal && existingDeposit
+        ? existingGoal.current + amountDiff
+        : null;
+    const shouldAwardGoalReached = Boolean(
+      existingGoal &&
+        existingDeposit &&
+        existingGoal.current < existingGoal.target &&
+        typeof nextCurrent === "number" &&
+        nextCurrent >= existingGoal.target,
+    );
+
     setGoals((prev) =>
       prev.map((goal) => {
         if (goal.id === goalId) {
@@ -624,10 +891,6 @@ export function AppProvider({ children }: AppProviderProps) {
     );
 
     if (!canUseDb) return;
-    const existingGoal = goals.find((goal) => goal.id === goalId);
-    const existingDeposit = existingGoal?.deposits.find(
-      (deposit) => deposit.id === depositId,
-    );
     const fallbackDate = existingDeposit
       ? parseFormattedDate(existingDeposit.date)
       : new Date();
@@ -638,6 +901,15 @@ export function AppProvider({ children }: AppProviderProps) {
           amount_cents: toCents(amount),
           contribution_at: contributionAt.toISOString(),
         });
+
+        if (shouldAwardGoalReached) {
+          await awardXp({
+            eventKey: "goal_reached",
+            sourceType: "goal",
+            sourceId: goalId,
+            meta: { goalId },
+          });
+        }
       } catch (error) {
         handleDbError(error, "updateGoalDeposit");
       }
@@ -774,6 +1046,8 @@ export function AppProvider({ children }: AppProviderProps) {
           tx.id === tempExpenseId ? { ...tx, id: transactionId } : tx,
         ),
       );
+
+      await handleSnapXp(transactionId);
     })();
   };
 
@@ -809,6 +1083,7 @@ export function AppProvider({ children }: AppProviderProps) {
             tx.id === tempId ? { ...tx, id: transactionId } : tx,
           ),
         );
+        await handleSnapXp(transactionId);
       } catch (error) {
         handleDbError(error, "addTransaction");
       }
@@ -1093,6 +1368,8 @@ export function AppProvider({ children }: AppProviderProps) {
           tx.id === tempExpenseId ? { ...tx, id: transactionId } : tx,
         ),
       );
+
+      await handleSnapXp(transactionId);
     })();
   };
 
@@ -1428,24 +1705,6 @@ export function AppProvider({ children }: AppProviderProps) {
     }
   }, [lastBudgetResetMonth, isAppLoading, resetMonthlyBudgets]);
 
-  const resetAllData = async () => {
-    try {
-      if (canUseDb && userId) {
-        await resetUserData(userId);
-      }
-      await clearPersistedData();
-      setIsOnboardingComplete(false);
-      setCurrencyState("EUR");
-      setIncomeEntries([]);
-      setExpenseEntries([]);
-      setGoals([]);
-      setBudgets([]);
-      setTransactions([]);
-      setLastBudgetResetMonth(-1);
-    } catch (e) {
-      console.error("Failed to reset data:", e);
-    }
-  };
 
   const value: AppContextType = {
     isOnboardingComplete,
@@ -1469,6 +1728,10 @@ export function AppProvider({ children }: AppProviderProps) {
     monthlyTrendData,
     selectedWeekOffset,
     currentWeekLabel,
+    levels,
+    xpEventTypes,
+    xpEventRules,
+    userProgress,
     addIncomeEntry,
     addExpenseEntry,
     setIncomeEntries: setIncomeEntriesFromOnboarding,
@@ -1499,7 +1762,6 @@ export function AppProvider({ children }: AppProviderProps) {
     goToNextWeek,
     resetMonthlyBudgets,
     lastBudgetResetMonth,
-    resetAllData,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

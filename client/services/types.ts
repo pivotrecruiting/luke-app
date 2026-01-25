@@ -66,3 +66,45 @@ export type TransactionRow = {
   budget_category_id: string | null;
   transaction_at: string;
 };
+
+export type LevelRow = {
+  id: string;
+  level_number: number;
+  name: string;
+  emoji: string;
+  xp_required: number;
+};
+
+export type XpEventTypeRow = {
+  id: string;
+  key: string;
+  label: string;
+  base_xp: number;
+  active: boolean;
+  max_per_user: number | null;
+  cooldown_hours: number | null;
+};
+
+export type XpEventRuleRow = {
+  id: string;
+  event_type_id: string;
+  rule_key: string;
+  multiplier: number | string;
+  conditions: unknown;
+  active: boolean;
+  starts_at: string | null;
+  ends_at: string | null;
+};
+
+export type UserProgressRow = {
+  id: string;
+  user_id: string;
+  xp_total: number;
+  current_level_id: string | null;
+  current_streak: number;
+  longest_streak: number;
+  last_login_at: string | null;
+  last_streak_date: string | null;
+  created_at: string;
+  updated_at: string;
+};

@@ -1,3 +1,10 @@
+import type {
+  UserProgressT,
+  XpEventRuleT,
+  XpEventTypeT,
+  XpLevelT,
+} from "@/types/xp-types";
+
 export type CurrencyCode = "EUR" | "USD" | "CHF";
 
 export type IncomeEntry = {
@@ -97,6 +104,10 @@ export type AppState = {
   monthlyTrendData: MonthlyTrendData[];
   selectedWeekOffset: number;
   currentWeekLabel: string;
+  levels: XpLevelT[];
+  xpEventTypes: XpEventTypeT[];
+  xpEventRules: XpEventRuleT[];
+  userProgress: UserProgressT | null;
 };
 
 export type AppContextType = AppState & {
@@ -160,7 +171,6 @@ export type AppContextType = AppState & {
   goToNextWeek: () => void;
   resetMonthlyBudgets: () => void;
   lastBudgetResetMonth: number;
-  resetAllData: () => void;
 };
 
 export type PersistedData = {
