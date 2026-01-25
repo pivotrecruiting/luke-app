@@ -31,17 +31,17 @@ export const BudgetSummaryCard = ({
     <View style={styles.summaryCard}>
       <View style={styles.summaryHeader}>
         <View
-          style={[
-            styles.iconContainer,
-            { backgroundColor: `${iconColor}20` },
-          ]}
+          style={[styles.iconContainer, { backgroundColor: `${iconColor}20` }]}
         >
           <Feather name={icon as any} size={28} color={iconColor} />
         </View>
         <View style={styles.summaryInfo}>
           <Text style={styles.summaryTitle}>{name}</Text>
           <Text
-            style={[styles.summaryAmount, isOverBudget && styles.overBudgetText]}
+            style={[
+              styles.summaryAmount,
+              isOverBudget && styles.overBudgetText,
+            ]}
           >
             € {formatCurrency(current)} / € {limit}
           </Text>

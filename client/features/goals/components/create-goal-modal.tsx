@@ -60,7 +60,9 @@ export const CreateGoalModal = ({
         style={styles.modalOverlay}
       >
         <Pressable style={styles.modalBackdrop} onPress={onCancel} />
-        <View style={[styles.modalContent, { paddingBottom: bottomInset + 24 }]}>
+        <View
+          style={[styles.modalContent, { paddingBottom: bottomInset + 24 }]}
+        >
           <View style={styles.modalHandle} />
           <Text style={styles.modalTitle}>Ziel erstellen</Text>
 

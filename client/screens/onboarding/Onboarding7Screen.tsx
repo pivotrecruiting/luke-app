@@ -11,7 +11,10 @@ import CurrencyInput from "@/components/CurrencyInput";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { Spacing, BorderRadius, Typography, Colors } from "@/constants/theme";
 import { useApp } from "@/context/AppContext";
-import { BUDGET_CATEGORIES, getCategoryByName } from "@/constants/budgetCategories";
+import {
+  BUDGET_CATEGORIES,
+  getCategoryByName,
+} from "@/constants/budgetCategories";
 
 interface Entry {
   type: string;
@@ -67,7 +70,8 @@ export default function Onboarding7Screen() {
           <Text style={styles.titleBold}>Wofür gibst du aktuell</Text>
           <Text style={styles.titleBold}>am meisten Geld aus?</Text>
           <Text style={styles.subtitle}>
-            Wähle Bereiche die wir gemeinsam zähmen und lege dein monatliches Limit fest.
+            Wähle Bereiche die wir gemeinsam zähmen und lege dein monatliches
+            Limit fest.
           </Text>
         </View>
 
@@ -102,14 +106,27 @@ export default function Onboarding7Screen() {
               const category = getCategoryByName(entry.type);
               return (
                 <View key={index} style={styles.entryRow}>
-                  <View style={[styles.entryIconContainer, { backgroundColor: category?.color ? `${category.color}20` : "#F3E8FF" }]}>
-                    <Feather name={category?.icon as any || "circle"} size={18} color={category?.color || "#7340FE"} />
+                  <View
+                    style={[
+                      styles.entryIconContainer,
+                      {
+                        backgroundColor: category?.color
+                          ? `${category.color}20`
+                          : "#F3E8FF",
+                      },
+                    ]}
+                  >
+                    <Feather
+                      name={(category?.icon as any) || "circle"}
+                      size={18}
+                      color={category?.color || "#7340FE"}
+                    />
                   </View>
                   <View style={styles.entryContent}>
                     <Text style={styles.entryType}>{entry.type}</Text>
                     <Text style={styles.entryAmount}>{entry.amount} €</Text>
                   </View>
-                  <Pressable 
+                  <Pressable
                     style={styles.entryDeleteButton}
                     onPress={() => handleDeleteEntry(index)}
                   >

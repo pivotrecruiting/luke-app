@@ -19,7 +19,11 @@ import { useApp } from "@/context/AppContext";
 import { BUDGET_CATEGORIES } from "@/constants/budgetCategories";
 
 const EXPENSE_CATEGORIES = [
-  ...BUDGET_CATEGORIES.map((cat) => ({ id: cat.id, name: cat.name, icon: cat.icon })),
+  ...BUDGET_CATEGORIES.map((cat) => ({
+    id: cat.id,
+    name: cat.name,
+    icon: cat.icon,
+  })),
   { id: "sonstiges", name: "Sonstiges", icon: "more-horizontal" },
 ];
 
@@ -62,15 +66,18 @@ const formatDateForTransaction = (date: Date): string => {
 export default function AddScreen() {
   const insets = useSafeAreaInsets();
   const { addTransaction, addExpenseWithAutobudget } = useApp();
-  
-  const [activeTab, setActiveTab] = useState<"ausgaben" | "einnahmen">("ausgaben");
+
+  const [activeTab, setActiveTab] = useState<"ausgaben" | "einnahmen">(
+    "ausgaben",
+  );
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
 
-  const categories = activeTab === "ausgaben" ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
+  const categories =
+    activeTab === "ausgaben" ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
 
   const handleDateChange = (event: any, date?: Date) => {
     setShowDatePicker(Platform.OS === "ios");
@@ -92,10 +99,17 @@ export default function AddScreen() {
     if (!category) return;
 
     const transactionName = description.trim() || category.name;
-    const transactionAmount = activeTab === "ausgaben" ? -parsedAmount : parsedAmount;
+    const transactionAmount =
+      activeTab === "ausgaben" ? -parsedAmount : parsedAmount;
 
     if (activeTab === "ausgaben") {
-      addExpenseWithAutobudget(category.name, category.icon, parsedAmount, transactionName, selectedDate);
+      addExpenseWithAutobudget(
+        category.name,
+        category.icon,
+        parsedAmount,
+        transactionName,
+        selectedDate,
+      );
     } else {
       addTransaction({
         name: transactionName,
@@ -113,7 +127,7 @@ export default function AddScreen() {
 
     Alert.alert(
       activeTab === "ausgaben" ? "Ausgabe gespeichert" : "Einnahme gespeichert",
-      `${transactionName}: € ${parsedAmount.toLocaleString("de-DE", { minimumFractionDigits: 2 })}`
+      `${transactionName}: € ${parsedAmount.toLocaleString("de-DE", { minimumFractionDigits: 2 })}`,
     );
   };
 
@@ -209,8 +223,14 @@ export default function AddScreen() {
             }}
           >
             <Feather name="calendar" size={20} color="#7340fd" />
-            <Text style={styles.dateButtonText}>{formatDateDisplay(selectedDate)}</Text>
-            <Feather name={showDatePicker ? "chevron-up" : "chevron-down"} size={20} color="#6B7280" />
+            <Text style={styles.dateButtonText}>
+              {formatDateDisplay(selectedDate)}
+            </Text>
+            <Feather
+              name={showDatePicker ? "chevron-up" : "chevron-down"}
+              size={20}
+              color="#6B7280"
+            />
           </Pressable>
           {showDatePicker && Platform.OS !== "web" && (
             <DateTimePicker
@@ -256,19 +276,23 @@ export default function AddScreen() {
                 <View
                   style={[
                     styles.categoryIcon,
-                    selectedCategory === category.id && styles.categoryIconActive,
+                    selectedCategory === category.id &&
+                      styles.categoryIconActive,
                   ]}
                 >
                   <Feather
                     name={category.icon as any}
                     size={20}
-                    color={selectedCategory === category.id ? "#FFFFFF" : "#6B7280"}
+                    color={
+                      selectedCategory === category.id ? "#FFFFFF" : "#6B7280"
+                    }
                   />
                 </View>
                 <Text
                   style={[
                     styles.categoryName,
-                    selectedCategory === category.id && styles.categoryNameActive,
+                    selectedCategory === category.id &&
+                      styles.categoryNameActive,
                   ]}
                 >
                   {category.name}
@@ -287,7 +311,9 @@ export default function AddScreen() {
           disabled={!amount || !selectedCategory}
         >
           <Text style={styles.saveButtonText}>
-            {activeTab === "ausgaben" ? "Ausgabe speichern" : "Einnahme speichern"}
+            {activeTab === "ausgaben"
+              ? "Ausgabe speichern"
+              : "Einnahme speichern"}
           </Text>
         </Pressable>
       </ScrollView>

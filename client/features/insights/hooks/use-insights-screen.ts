@@ -2,10 +2,23 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { RefObject } from "react";
 import { ScrollView } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
-import { useApp, type ExpenseEntry, type IncomeEntry } from "@/context/AppContext";
-import { CATEGORY_COLORS, EXPENSE_TYPES, INCOME_TYPES } from "../constants/insights-constants";
+import {
+  useApp,
+  type ExpenseEntry,
+  type IncomeEntry,
+} from "@/context/AppContext";
+import {
+  CATEGORY_COLORS,
+  EXPENSE_TYPES,
+  INCOME_TYPES,
+} from "../constants/insights-constants";
 import { getDateRangeForFilter, parseGermanDate } from "../utils/date";
-import type { CategoryT, InsightsFilterT, InsightsTabT, TimeFilterT } from "../types/insights-types";
+import type {
+  CategoryT,
+  InsightsFilterT,
+  InsightsTabT,
+  TimeFilterT,
+} from "../types/insights-types";
 
 type UseInsightsScreenReturnT = {
   appData: {
@@ -187,12 +200,16 @@ export const useInsightsScreen = (): UseInsightsScreenReturnT => {
     selectedCostFilters.length + (selectedTimeFilter !== "thisMonth" ? 1 : 0);
 
   const handleCategoryPress = useCallback((categoryName: string) => {
-    setSelectedCategory((prev) => (prev === categoryName ? null : categoryName));
+    setSelectedCategory((prev) =>
+      prev === categoryName ? null : categoryName,
+    );
   }, []);
 
   const toggleCostFilter = useCallback((value: string) => {
     setSelectedCostFilters((prev) =>
-      prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value],
+      prev.includes(value)
+        ? prev.filter((item) => item !== value)
+        : [...prev, value],
     );
   }, []);
 

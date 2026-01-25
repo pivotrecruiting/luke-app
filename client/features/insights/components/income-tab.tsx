@@ -99,7 +99,10 @@ export const IncomeTab = ({
                 <Text style={styles.incomeAmount}>
                   € {formatCurrency(entry.amount)}
                 </Text>
-                <Pressable onPress={() => onRequestDelete(entry.id)} hitSlop={8}>
+                <Pressable
+                  onPress={() => onRequestDelete(entry.id)}
+                  hitSlop={8}
+                >
                   <Feather name="trash-2" size={18} color="#9CA3AF" />
                 </Pressable>
               </View>

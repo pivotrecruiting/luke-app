@@ -22,7 +22,11 @@ export const BudgetItem = ({ budget, onPress }: BudgetItemPropsT) => {
               { backgroundColor: `${budget.iconColor}20` },
             ]}
           >
-            <Feather name={budget.icon as any} size={20} color={budget.iconColor} />
+            <Feather
+              name={budget.icon as any}
+              size={20}
+              color={budget.iconColor}
+            />
           </View>
           <View>
             <Text style={styles.budgetName}>{budget.name}</Text>

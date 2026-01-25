@@ -48,7 +48,9 @@ export default function SignUpScreen() {
   const [email, setEmail] = useState("");
   const [showWorkshopModal, setShowWorkshopModal] = useState(false);
   const [workshopCode, setWorkshopCode] = useState("");
-  const [codeStatus, setCodeStatus] = useState<"neutral" | "valid" | "invalid">("neutral");
+  const [codeStatus, setCodeStatus] = useState<"neutral" | "valid" | "invalid">(
+    "neutral",
+  );
 
   return (
     <View style={styles.container}>
@@ -127,7 +129,9 @@ export default function SignUpScreen() {
             style={styles.workshopCodeButton}
             onPress={() => setShowWorkshopModal(true)}
           >
-            <Text style={styles.workshopCodeText}>Du hast einen Workshop-Code?</Text>
+            <Text style={styles.workshopCodeText}>
+              Du hast einen Workshop-Code?
+            </Text>
           </Pressable>
         </View>
       </KeyboardAwareScrollViewCompat>
@@ -141,10 +145,19 @@ export default function SignUpScreen() {
         <TouchableWithoutFeedback onPress={() => setShowWorkshopModal(false)}>
           <View style={styles.modalOverlay}>
             <TouchableWithoutFeedback>
-              <View style={[styles.modalContent, { paddingBottom: insets.bottom + Spacing.xl }]}>
+              <View
+                style={[
+                  styles.modalContent,
+                  { paddingBottom: insets.bottom + Spacing.xl },
+                ]}
+              >
                 <View style={styles.modalHandle} />
-                <Text style={styles.modalTitle}>Workshop-Zugang freischalten</Text>
-                <Text style={styles.modalSubtitle}>Gib dein persönlichen Code ein</Text>
+                <Text style={styles.modalTitle}>
+                  Workshop-Zugang freischalten
+                </Text>
+                <Text style={styles.modalSubtitle}>
+                  Gib dein persönlichen Code ein
+                </Text>
 
                 <TextInput
                   style={[
@@ -185,7 +198,9 @@ export default function SignUpScreen() {
                   <Text style={styles.activateButtonText}>CODE AKTIVIEREN</Text>
                 </Pressable>
 
-                <Text style={styles.modalFooterText}>4 Wochen kostenlos nutzen.</Text>
+                <Text style={styles.modalFooterText}>
+                  4 Wochen kostenlos nutzen.
+                </Text>
               </View>
             </TouchableWithoutFeedback>
           </View>

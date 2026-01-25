@@ -1,11 +1,5 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  Pressable,
-} from "react-native";
+import { View, Text, TextInput, StyleSheet, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -38,35 +32,258 @@ const savingsGoals = [
 ];
 
 const emojiKeywords: Array<{ keywords: string[]; emoji: string }> = [
-  { keywords: ["iphone", "handy", "smartphone", "telefon", "phone", "samsung", "pixel", "xiaomi"], emoji: "📱" },
-  { keywords: ["laptop", "macbook", "notebook", "computer", "pc", "imac", "mac"], emoji: "💻" },
-  { keywords: ["bildschirm", "monitor", "tv", "fernseher", "display", "screen"], emoji: "🖥️" },
-  { keywords: ["auto", "car", "fahrzeug", "wagen", "tesla", "bmw", "mercedes", "audi", "vw"], emoji: "🚗" },
-  { keywords: ["vespa", "roller", "motorrad", "moped", "bike", "fahrrad", "ebike", "e-bike"], emoji: "🛵" },
-  { keywords: ["urlaub", "reise", "ferien", "travel", "trip", "strand", "meer", "vacation"], emoji: "🏖️" },
+  {
+    keywords: [
+      "iphone",
+      "handy",
+      "smartphone",
+      "telefon",
+      "phone",
+      "samsung",
+      "pixel",
+      "xiaomi",
+    ],
+    emoji: "📱",
+  },
+  {
+    keywords: [
+      "laptop",
+      "macbook",
+      "notebook",
+      "computer",
+      "pc",
+      "imac",
+      "mac",
+    ],
+    emoji: "💻",
+  },
+  {
+    keywords: ["bildschirm", "monitor", "tv", "fernseher", "display", "screen"],
+    emoji: "🖥️",
+  },
+  {
+    keywords: [
+      "auto",
+      "car",
+      "fahrzeug",
+      "wagen",
+      "tesla",
+      "bmw",
+      "mercedes",
+      "audi",
+      "vw",
+    ],
+    emoji: "🚗",
+  },
+  {
+    keywords: [
+      "vespa",
+      "roller",
+      "motorrad",
+      "moped",
+      "bike",
+      "fahrrad",
+      "ebike",
+      "e-bike",
+    ],
+    emoji: "🛵",
+  },
+  {
+    keywords: [
+      "urlaub",
+      "reise",
+      "ferien",
+      "travel",
+      "trip",
+      "strand",
+      "meer",
+      "vacation",
+    ],
+    emoji: "🏖️",
+  },
   { keywords: ["führerschein", "lizenz", "license", "prüfung"], emoji: "🎓" },
-  { keywords: ["wohnung", "haus", "home", "apartment", "immobilie", "miete", "eigentum", "zimmer"], emoji: "🏠" },
-  { keywords: ["hochzeit", "heirat", "wedding", "ring", "verlobung", "ehe"], emoji: "💍" },
-  { keywords: ["schulden", "kredit", "loan", "abbezahlen", "tilgung", "raten", "klarna"], emoji: "💳" },
-  { keywords: ["notgroschen", "reserve", "emergency", "rücklage", "sicherheit"], emoji: "🛡️" },
-  { keywords: ["uhr", "watch", "armbanduhr", "rolex", "smartwatch", "apple watch"], emoji: "⌚" },
-  { keywords: ["weihnachten", "christmas", "geschenk", "gift", "geburtstag", "birthday", "present"], emoji: "🎁" },
-  { keywords: ["paypal", "zahlung", "payment", "rechnung", "bill"], emoji: "💵" },
-  { keywords: ["kamera", "camera", "foto", "photo", "gopro", "dslr"], emoji: "📷" },
-  { keywords: ["musik", "music", "kopfhörer", "headphones", "airpods", "spotify", "instrument", "gitarre"], emoji: "🎧" },
-  { keywords: ["fitness", "gym", "sport", "training", "workout", "mitgliedschaft"], emoji: "💪" },
-  { keywords: ["buch", "book", "bücher", "kindle", "lesen", "reading"], emoji: "📚" },
-  { keywords: ["kurs", "course", "ausbildung", "studium", "uni", "schule", "lernen", "education"], emoji: "🎓" },
-  { keywords: ["flug", "flight", "flugzeug", "plane", "airline", "fliegen"], emoji: "✈️" },
-  { keywords: ["möbel", "furniture", "sofa", "couch", "tisch", "stuhl", "bett", "schrank"], emoji: "🛋️" },
-  { keywords: ["kleidung", "clothes", "mode", "fashion", "schuhe", "shoes", "jacke", "anzug"], emoji: "👗" },
-  { keywords: ["spiel", "game", "playstation", "xbox", "nintendo", "switch", "ps5", "gaming", "konsole"], emoji: "🎮" },
+  {
+    keywords: [
+      "wohnung",
+      "haus",
+      "home",
+      "apartment",
+      "immobilie",
+      "miete",
+      "eigentum",
+      "zimmer",
+    ],
+    emoji: "🏠",
+  },
+  {
+    keywords: ["hochzeit", "heirat", "wedding", "ring", "verlobung", "ehe"],
+    emoji: "💍",
+  },
+  {
+    keywords: [
+      "schulden",
+      "kredit",
+      "loan",
+      "abbezahlen",
+      "tilgung",
+      "raten",
+      "klarna",
+    ],
+    emoji: "💳",
+  },
+  {
+    keywords: ["notgroschen", "reserve", "emergency", "rücklage", "sicherheit"],
+    emoji: "🛡️",
+  },
+  {
+    keywords: [
+      "uhr",
+      "watch",
+      "armbanduhr",
+      "rolex",
+      "smartwatch",
+      "apple watch",
+    ],
+    emoji: "⌚",
+  },
+  {
+    keywords: [
+      "weihnachten",
+      "christmas",
+      "geschenk",
+      "gift",
+      "geburtstag",
+      "birthday",
+      "present",
+    ],
+    emoji: "🎁",
+  },
+  {
+    keywords: ["paypal", "zahlung", "payment", "rechnung", "bill"],
+    emoji: "💵",
+  },
+  {
+    keywords: ["kamera", "camera", "foto", "photo", "gopro", "dslr"],
+    emoji: "📷",
+  },
+  {
+    keywords: [
+      "musik",
+      "music",
+      "kopfhörer",
+      "headphones",
+      "airpods",
+      "spotify",
+      "instrument",
+      "gitarre",
+    ],
+    emoji: "🎧",
+  },
+  {
+    keywords: [
+      "fitness",
+      "gym",
+      "sport",
+      "training",
+      "workout",
+      "mitgliedschaft",
+    ],
+    emoji: "💪",
+  },
+  {
+    keywords: ["buch", "book", "bücher", "kindle", "lesen", "reading"],
+    emoji: "📚",
+  },
+  {
+    keywords: [
+      "kurs",
+      "course",
+      "ausbildung",
+      "studium",
+      "uni",
+      "schule",
+      "lernen",
+      "education",
+    ],
+    emoji: "🎓",
+  },
+  {
+    keywords: ["flug", "flight", "flugzeug", "plane", "airline", "fliegen"],
+    emoji: "✈️",
+  },
+  {
+    keywords: [
+      "möbel",
+      "furniture",
+      "sofa",
+      "couch",
+      "tisch",
+      "stuhl",
+      "bett",
+      "schrank",
+    ],
+    emoji: "🛋️",
+  },
+  {
+    keywords: [
+      "kleidung",
+      "clothes",
+      "mode",
+      "fashion",
+      "schuhe",
+      "shoes",
+      "jacke",
+      "anzug",
+    ],
+    emoji: "👗",
+  },
+  {
+    keywords: [
+      "spiel",
+      "game",
+      "playstation",
+      "xbox",
+      "nintendo",
+      "switch",
+      "ps5",
+      "gaming",
+      "konsole",
+    ],
+    emoji: "🎮",
+  },
   { keywords: ["tablet", "ipad", "surface"], emoji: "📱" },
-  { keywords: ["schmuck", "jewelry", "kette", "armband", "ohrringe", "gold", "silber"], emoji: "💎" },
+  {
+    keywords: [
+      "schmuck",
+      "jewelry",
+      "kette",
+      "armband",
+      "ohrringe",
+      "gold",
+      "silber",
+    ],
+    emoji: "💎",
+  },
   { keywords: ["baby", "kind", "child", "familie", "family"], emoji: "👶" },
-  { keywords: ["hund", "katze", "haustier", "pet", "tier", "animal"], emoji: "🐕" },
-  { keywords: ["garten", "garden", "pflanzen", "plants", "balkon"], emoji: "🌱" },
-  { keywords: ["küche", "kitchen", "kochen", "cooking", "thermomix", "kaffeemaschine"], emoji: "☕" },
+  {
+    keywords: ["hund", "katze", "haustier", "pet", "tier", "animal"],
+    emoji: "🐕",
+  },
+  {
+    keywords: ["garten", "garden", "pflanzen", "plants", "balkon"],
+    emoji: "🌱",
+  },
+  {
+    keywords: [
+      "küche",
+      "kitchen",
+      "kochen",
+      "cooking",
+      "thermomix",
+      "kaffeemaschine",
+    ],
+    emoji: "☕",
+  },
 ];
 
 function getEmojiForText(text: string): string {
@@ -132,7 +349,9 @@ export default function Onboarding3Screen() {
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Name</Text>
             <View style={styles.nameInputContainer}>
-              <Text style={styles.inputEmoji}>{getEmojiForText(selectedGoal)}</Text>
+              <Text style={styles.inputEmoji}>
+                {getEmojiForText(selectedGoal)}
+              </Text>
               <TextInput
                 style={styles.nameInput}
                 value={selectedGoal}

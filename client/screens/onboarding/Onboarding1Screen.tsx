@@ -1,11 +1,5 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  ScrollView,
-} from "react-native";
+import { View, Text, StyleSheet, Pressable, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -76,11 +70,14 @@ export default function Onboarding1Screen() {
 
   const toggleSelection = (id: string) => {
     setSelected((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
     );
   };
 
-  const renderGoalCard = (goal: typeof topLeftGoals[0] | typeof topRightGoals[0], isBottom = false) => (
+  const renderGoalCard = (
+    goal: (typeof topLeftGoals)[0] | (typeof topRightGoals)[0],
+    isBottom = false,
+  ) => (
     <Pressable
       key={goal.id}
       onPress={() => toggleSelection(goal.id)}
@@ -153,7 +150,12 @@ export default function Onboarding1Screen() {
         {bottomGoals.map((goal) => renderGoalCard(goal, true))}
       </View>
 
-      <View style={[styles.buttonContainer, { paddingBottom: insets.bottom + Spacing.md }]}>
+      <View
+        style={[
+          styles.buttonContainer,
+          { paddingBottom: insets.bottom + Spacing.md },
+        ]}
+      >
         <Pressable
           onPress={() => navigation.navigate("Onboarding2")}
           style={({ pressed }) => [

@@ -17,7 +17,8 @@ import { styles } from "./styles/goals-screen.styles";
 
 export default function GoalsScreen() {
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { data, state, derived, actions, refs } = useGoalsScreen();
 
   return (
@@ -39,10 +40,12 @@ export default function GoalsScreen() {
       >
         <LevelCard />
 
-        <View style={styles.sectionHeader}
-        >
+        <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Goals</Text>
-          <Pressable style={styles.addButton} onPress={actions.openCreateGoalModal}>
+          <Pressable
+            style={styles.addButton}
+            onPress={actions.openCreateGoalModal}
+          >
             <Feather name="plus" size={20} color="#FFFFFF" />
           </Pressable>
         </View>
@@ -51,7 +54,9 @@ export default function GoalsScreen() {
           <GoalItem
             key={goal.id}
             goal={goal}
-            onPress={() => navigation.navigate("GoalDetail", { goalId: goal.id })}
+            onPress={() =>
+              navigation.navigate("GoalDetail", { goalId: goal.id })
+            }
           />
         ))}
 

@@ -36,8 +36,8 @@ export default function Onboarding4Screen() {
   const { setIncomeEntries, incomeEntries } = useApp();
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
-  const [entries, setEntries] = useState<Entry[]>(() => 
-    incomeEntries.map(e => ({ type: e.type, amount: e.amount.toString() }))
+  const [entries, setEntries] = useState<Entry[]>(() =>
+    incomeEntries.map((e) => ({ type: e.type, amount: e.amount.toString() })),
   );
 
   const handleAddEntry = () => {
@@ -116,7 +116,7 @@ export default function Onboarding4Screen() {
                   <Text style={styles.entryType}>{entry.type}</Text>
                   <Text style={styles.entryAmount}>{entry.amount} €</Text>
                 </View>
-                <Pressable 
+                <Pressable
                   style={styles.entryDeleteButton}
                   onPress={() => handleDeleteEntry(index)}
                 >

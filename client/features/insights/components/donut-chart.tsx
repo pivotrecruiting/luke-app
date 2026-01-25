@@ -91,7 +91,9 @@ export const DonutChart = ({
         </G>
       </Svg>
       <View style={styles.chartCenter}>
-        <Text style={styles.chartAmount}>€ {formatCurrency(displayAmount)}</Text>
+        <Text style={styles.chartAmount}>
+          € {formatCurrency(displayAmount)}
+        </Text>
         <Text style={styles.chartLabel}>{displayLabel}</Text>
         {selectedCategoryData ? (
           <Text style={styles.chartPercentage}>

@@ -53,9 +53,7 @@ export const DepositsSection = ({
       ))}
       {!hasDeposits ? (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyStateText}>
-            Noch keine {depositTitle}en
-          </Text>
+          <Text style={styles.emptyStateText}>Noch keine {depositTitle}en</Text>
         </View>
       ) : null}
     </>

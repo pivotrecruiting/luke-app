@@ -134,12 +134,7 @@ export const useGoalsScreen = (): UseGoalsScreenReturnT => {
     addBudget(category.name, category.icon, category.color, limit);
     resetAndCloseBudgetModal();
     setSuccessToast("budget");
-  }, [
-    addBudget,
-    budgetLimit,
-    resetAndCloseBudgetModal,
-    selectedCategory,
-  ]);
+  }, [addBudget, budgetLimit, resetAndCloseBudgetModal, selectedCategory]);
 
   return {
     data: { goals, budgets },

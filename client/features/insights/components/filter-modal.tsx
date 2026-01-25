@@ -107,7 +107,10 @@ export const FilterModal = ({
           </View>
 
           {selectedCostFilters.length > 0 ? (
-            <Pressable style={styles.clearFiltersButton} onPress={onClearCostFilters}>
+            <Pressable
+              style={styles.clearFiltersButton}
+              onPress={onClearCostFilters}
+            >
               <Feather name="x" size={14} color="#6B7280" />
               <Text style={styles.clearFiltersText}>Filter zurücksetzen</Text>
             </Pressable>

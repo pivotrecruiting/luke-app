@@ -17,7 +17,7 @@ export default function PaywallScreen() {
       CommonActions.reset({
         index: 0,
         routes: [{ name: "Main" }],
-      })
+      }),
     );
   };
 

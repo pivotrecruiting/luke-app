@@ -88,7 +88,9 @@ export const useGoalDetailScreen = ({
   const [depositAmount, setDepositAmount] = useState("");
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [editingDeposit, setEditingDeposit] = useState<GoalDeposit | null>(null);
+  const [editingDeposit, setEditingDeposit] = useState<GoalDeposit | null>(
+    null,
+  );
   const [editDepositModalVisible, setEditDepositModalVisible] = useState(false);
   const [editDepositAmount, setEditDepositAmount] = useState("");
   const [editDepositDate, setEditDepositDate] = useState(new Date());

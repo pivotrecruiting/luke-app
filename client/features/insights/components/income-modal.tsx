@@ -44,10 +44,7 @@ export const IncomeModal = ({
     >
       <View style={styles.incomeModalOverlay}>
         <View
-          style={[
-            styles.incomeModalContent,
-            { paddingBottom: bottomInset },
-          ]}
+          style={[styles.incomeModalContent, { paddingBottom: bottomInset }]}
         >
           <View style={styles.incomeModalHeader}>
             <Text style={styles.incomeModalTitle}>

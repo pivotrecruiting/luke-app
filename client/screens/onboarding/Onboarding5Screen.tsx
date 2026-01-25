@@ -39,7 +39,7 @@ export default function Onboarding5Screen() {
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
   const [entries, setEntries] = useState<Entry[]>(() =>
-    expenseEntries.map(e => ({ type: e.type, amount: e.amount.toString() }))
+    expenseEntries.map((e) => ({ type: e.type, amount: e.amount.toString() })),
   );
 
   const handleAddEntry = () => {
@@ -118,7 +118,7 @@ export default function Onboarding5Screen() {
                   <Text style={styles.entryType}>{entry.type}</Text>
                   <Text style={styles.entryAmount}>{entry.amount} €</Text>
                 </View>
-                <Pressable 
+                <Pressable
                   style={styles.entryDeleteButton}
                   onPress={() => handleDeleteEntry(index)}
                 >

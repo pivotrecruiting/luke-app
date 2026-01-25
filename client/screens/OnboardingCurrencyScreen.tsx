@@ -7,10 +7,18 @@ import type { OnboardingStackParamList } from "@/navigation/OnboardingNavigator"
 import { BorderRadius, Colors, Spacing, Typography } from "@/constants/theme";
 import { useApp, type CurrencyCode } from "@/context/AppContext";
 
-const CURRENCIES: Array<{ code: CurrencyCode; label: string; description: string }> = [
+const CURRENCIES: Array<{
+  code: CurrencyCode;
+  label: string;
+  description: string;
+}> = [
   { code: "EUR", label: "Euro", description: "Euro (EUR)" },
   { code: "USD", label: "US Dollar", description: "US Dollar (USD)" },
-  { code: "CHF", label: "Schweizer Franken", description: "Schweizer Franken (CHF)" },
+  {
+    code: "CHF",
+    label: "Schweizer Franken",
+    description: "Schweizer Franken (CHF)",
+  },
 ];
 
 type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
@@ -19,7 +27,8 @@ export default function OnboardingCurrencyScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
   const { currency, setCurrency } = useApp();
-  const [selectedCurrency, setSelectedCurrency] = useState<CurrencyCode>(currency);
+  const [selectedCurrency, setSelectedCurrency] =
+    useState<CurrencyCode>(currency);
 
   const handleContinue = () => {
     setCurrency(selectedCurrency);
@@ -30,9 +39,7 @@ export default function OnboardingCurrencyScreen() {
     <View style={[styles.container, { paddingTop: insets.top + Spacing.xl }]}>
       <View style={styles.headerContainer}>
         <Text style={styles.titleBold}>Welche Währung nutzt du?</Text>
-        <Text style={styles.subtitle}>
-          Wähle deine Standardwährung.
-        </Text>
+        <Text style={styles.subtitle}>Wähle deine Standardwährung.</Text>
       </View>
 
       <View style={styles.optionsContainer}>
@@ -52,16 +59,26 @@ export default function OnboardingCurrencyScreen() {
                 <Text style={styles.optionLabel}>{item.label}</Text>
                 <Text style={styles.optionDescription}>{item.description}</Text>
               </View>
-              <View style={[styles.radio, isSelected && styles.radioSelected]} />
+              <View
+                style={[styles.radio, isSelected && styles.radioSelected]}
+              />
             </Pressable>
           );
         })}
       </View>
 
-      <View style={[styles.buttonContainer, { paddingBottom: insets.bottom + Spacing.xl }]}>
+      <View
+        style={[
+          styles.buttonContainer,
+          { paddingBottom: insets.bottom + Spacing.xl },
+        ]}
+      >
         <Pressable
           onPress={handleContinue}
-          style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
+          style={({ pressed }) => [
+            styles.button,
+            pressed && styles.buttonPressed,
+          ]}
         >
           <Text style={styles.buttonText}>WEITER</Text>
         </Pressable>

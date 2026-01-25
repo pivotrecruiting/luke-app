@@ -1,8 +1,6 @@
 import type { DepositDateInfoT } from "../types/goal-detail-types";
 
-export const parseDepositDate = (
-  dateStr: string,
-): DepositDateInfoT | null => {
+export const parseDepositDate = (dateStr: string): DepositDateInfoT | null => {
   const now = new Date();
   if (dateStr.startsWith("Heute")) {
     return { month: now.getMonth(), year: now.getFullYear(), date: now };

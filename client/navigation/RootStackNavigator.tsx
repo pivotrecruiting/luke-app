@@ -33,7 +33,7 @@ export default function RootStackNavigator() {
   if (isLoading || isAppLoading) {
     return null;
   }
-  
+
   return (
     <Stack.Navigator
       screenOptions={{
@@ -47,38 +47,38 @@ export default function RootStackNavigator() {
       )}
       {isAuthenticated && (
         <>
-          <Stack.Screen 
-            name="GoalDetail" 
+          <Stack.Screen
+            name="GoalDetail"
             component={GoalDetailScreen}
-            options={{ 
+            options={{
               presentation: "transparentModal",
               animation: "fade_from_bottom",
               animationDuration: 200,
               contentStyle: { backgroundColor: "transparent" },
             }}
           />
-          <Stack.Screen 
-            name="BudgetDetail" 
+          <Stack.Screen
+            name="BudgetDetail"
             component={BudgetDetailScreen}
-            options={{ 
+            options={{
               presentation: "transparentModal",
               animation: "fade_from_bottom",
               animationDuration: 200,
               contentStyle: { backgroundColor: "transparent" },
             }}
           />
-          <Stack.Screen 
-            name="Income" 
+          <Stack.Screen
+            name="Income"
             component={IncomeScreen}
-            options={{ 
+            options={{
               headerShown: false,
               animation: "slide_from_right",
             }}
           />
-          <Stack.Screen 
-            name="Expenses" 
+          <Stack.Screen
+            name="Expenses"
             component={ExpensesScreen}
-            options={{ 
+            options={{
               headerShown: false,
               animation: "slide_from_right",
             }}
