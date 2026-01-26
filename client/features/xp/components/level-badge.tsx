@@ -13,10 +13,12 @@ type LevelBadgeProps = {
 export const LevelBadge = ({ level }: LevelBadgeProps) => {
   return (
     <View style={styles.container}>
-      <View style={styles.badge}>
-        <Text style={styles.badgeText}>
-          Level {level.levelNumber}: {level.name}
-        </Text>
+      <View style={styles.badgeGlow}>
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>
+            Level {level.levelNumber}: {level.name}
+          </Text>
+        </View>
       </View>
     </View>
   );
@@ -28,15 +30,23 @@ const styles = StyleSheet.create({
     overflow: "visible",
     marginTop: Spacing.sm,
   },
-  badge: {
-    backgroundColor: "rgba(255, 255, 255, 0.85)",
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.lg,
+  badgeGlow: {
     borderRadius: BorderRadius.full,
     shadowColor: "#FFFFFF",
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 1,
-    shadowRadius: 60,
+    shadowRadius: 80,
+    elevation: 0,
+  },
+  badge: {
+    backgroundColor: "rgba(255, 255, 255, 0.87)",
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.full,
+    shadowColor: "#FFFFFF",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 80,
     elevation: 0,
   },
   badgeText: {
