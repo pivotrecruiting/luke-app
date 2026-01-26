@@ -33,9 +33,7 @@ export const XpProgressDisplay = ({
     <View style={styles.container}>
       <Text style={styles.xpGained}>+{xpGained} XP</Text>
       <View style={styles.progressBarContainer}>
-        <View
-          style={[styles.progressBar, { width: `${progress * 100}%` }]}
-        />
+        <View style={[styles.progressBar, { width: `${progress * 100}%` }]} />
       </View>
       <Text style={styles.progressText}>
         {currentXp} / {nextLevelXp} bis Level {nextLevel?.levelNumber ?? "?"}
@@ -55,17 +53,22 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   progressBarContainer: {
-    width: "100%",
-    height: 8,
+    width: "80%",
+    height: 6,
     backgroundColor: "rgba(255, 255, 255, 0.3)",
     borderRadius: BorderRadius.xs,
-    overflow: "hidden",
+    overflow: "visible",
     marginBottom: Spacing.sm,
   },
   progressBar: {
     height: "100%",
     backgroundColor: "#FFFFFF",
     borderRadius: BorderRadius.xs,
+    shadowColor: "#FFFFFF",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 25,
+    elevation: 0,
   },
   progressText: {
     ...Typography.small,
