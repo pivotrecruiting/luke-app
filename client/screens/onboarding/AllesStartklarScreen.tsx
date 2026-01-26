@@ -85,15 +85,18 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     marginTop: Spacing["2xl"],
+    alignItems: "center",
   },
   titleBold: {
     ...Typography.h1,
     color: Colors.light.text,
+    textAlign: "center",
   },
   subtitle: {
     ...Typography.body,
     color: Colors.light.textSecondary,
     marginTop: Spacing.md,
+    textAlign: "center",
   },
   imageContainer: {
     flex: 1,
@@ -103,8 +106,8 @@ const styles = StyleSheet.create({
     marginBottom: Spacing["2xl"],
   },
   image: {
-    width: 306,
-    height: 424,
+    width: 320,
+    height: 450,
     maxWidth: "100%",
   },
   buttonContainer: {
