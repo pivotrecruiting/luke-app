@@ -23,13 +23,15 @@ export const styles = StyleSheet.create({
   // ============================================
   header: {
     paddingHorizontal: Spacing.xl,
-    paddingBottom: Spacing["4xl"],
+    paddingBottom: Spacing["4xl"] * 1.5, // 50% größer (60px statt 40px)
+    minHeight: 180, // Größere Mindesthöhe
   },
   headerTitle: {
     // Used for: Main header title "Profil"
     ...Typography.h1,
     fontWeight: "700",
     color: "#FFFFFF",
+    marginTop: Spacing.xl,
   },
   headerSubtitle: {
     // Used for: Header subtitle "Einstellungen & mehr"
