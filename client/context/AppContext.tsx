@@ -3,7 +3,6 @@ import React, {
   useContext,
   useState,
   useMemo,
-  useEffect,
   useCallback,
   ReactNode,
 } from "react";
@@ -26,13 +25,7 @@ import type {
   PersistedData,
   Transaction,
 } from "@/context/app/types";
-import {
-  updateOnboardingComplete,
-  upsertUserCurrency,
-} from "@/services/app-service";
 import type { BudgetCategoryRow } from "@/services/types";
-import { parseFormattedDate } from "@/utils/dates";
-import type { UserProgressT } from "@/types/xp-types";
 import { useAppDerivedState } from "@/context/app/hooks/use-app-derived-state";
 import { useEntryActions } from "@/context/app/hooks/use-entry-actions";
 import { useTransactionActions } from "@/context/app/hooks/use-transaction-actions";
@@ -41,6 +34,12 @@ import { useBudgetActions } from "@/context/app/hooks/use-budget-actions";
 import { useAppDataLoader } from "@/context/app/hooks/use-app-data-loader";
 import { useAppPersistence } from "@/context/app/hooks/use-app-persistence";
 import { useXp } from "@/context/app/hooks/use-xp";
+import { useBudgetCategoryResolver } from "@/context/app/hooks/use-budget-category-resolver";
+import { useWeekNavigation } from "@/context/app/hooks/use-week-navigation";
+import { useCurrencyActions } from "@/context/app/hooks/use-currency-actions";
+import { useOnboardingActions } from "@/context/app/hooks/use-onboarding-actions";
+import { useSnapXp } from "@/context/app/hooks/use-snap-xp";
+import { useMonthlyBudgetReset } from "@/context/app/hooks/use-monthly-budget-reset";
 
 export type {
   AppContextType,
@@ -108,33 +107,13 @@ export function AppProvider({ children }: AppProviderProps) {
     canUseDb,
   });
 
-  const budgetCategoryByName = useMemo(() => {
-    const map = new Map<string, BudgetCategoryRow>();
-    budgetCategories.forEach((category) => {
-      map.set(category.name.toLowerCase(), category);
-      if (category.key) {
-        map.set(category.key.toLowerCase(), category);
-      }
-    });
-    return map;
-  }, [budgetCategories]);
-
   const handleDbError = useCallback((error: unknown, context: string) => {
     console.error(`DB error during ${context}:`, error);
     setUseLocalFallback(true);
   }, []);
-
-  const resolveBudgetCategory = useCallback(
-    (name: string) => {
-      const normalized = name.trim().toLowerCase();
-      return (
-        budgetCategoryByName.get(normalized) ||
-        budgetCategoryByName.get("sonstiges") ||
-        null
-      );
-    },
-    [budgetCategoryByName],
-  );
+  const { resolveBudgetCategory } = useBudgetCategoryResolver({
+    budgetCategories,
+  });
 
   const {
     weeklySpending,
@@ -185,59 +164,29 @@ export function AppProvider({ children }: AppProviderProps) {
     data: persistedData,
   });
 
-  const goToPreviousWeek = () => {
-    setSelectedWeekOffset((prev) => prev - 1);
-  };
+  const { goToPreviousWeek, goToNextWeek } = useWeekNavigation({
+    selectedWeekOffset,
+    setSelectedWeekOffset,
+  });
 
-  const goToNextWeek = () => {
-    if (selectedWeekOffset < 0) {
-      setSelectedWeekOffset((prev) => prev + 1);
-    }
-  };
+  const { setCurrency } = useCurrencyActions({
+    userId,
+    canUseDb,
+    setCurrencyState,
+    handleDbError,
+  });
 
-  const setCurrency = (nextCurrency: CurrencyCode) => {
-    setCurrencyState(nextCurrency);
-    if (!canUseDb || !userId) return;
-    void (async () => {
-      try {
-        await upsertUserCurrency(userId, nextCurrency);
-      } catch (error) {
-        handleDbError(error, "setCurrency");
-      }
-    })();
-  };
+  const { completeOnboarding } = useOnboardingActions({
+    userId,
+    canUseDb,
+    setIsOnboardingComplete,
+    handleDbError,
+  });
 
-  const completeOnboarding = useCallback(() => {
-    setIsOnboardingComplete(true);
-    if (!canUseDb || !userId) return;
-    void (async () => {
-      try {
-        await updateOnboardingComplete(userId, ONBOARDING_VERSION);
-      } catch (error) {
-        handleDbError(error, "completeOnboarding");
-      }
-    })();
-  }, [canUseDb, handleDbError, userId]);
-
-  const handleSnapXp = useCallback(
-    async (transactionId: string): Promise<UserProgressT | null> => {
-      const updatedProgress = await awardXp({
-        eventKey: "snap_created",
-        sourceType: "transaction",
-        sourceId: transactionId,
-      });
-
-      if (!isOnboardingComplete) return updatedProgress ?? null;
-      const tutorialProgress = await awardXp({
-        eventKey: "first_snap_tutorial",
-        sourceType: "transaction",
-        sourceId: transactionId,
-        progressOverride: updatedProgress ?? null,
-      });
-      return tutorialProgress ?? updatedProgress ?? null;
-    },
-    [awardXp, isOnboardingComplete],
-  );
+  const { handleSnapXp } = useSnapXp({
+    isOnboardingComplete,
+    awardXp,
+  });
 
   const {
     addIncomeEntry,
@@ -309,42 +258,13 @@ export function AppProvider({ children }: AppProviderProps) {
     addTransaction,
   });
 
-  const resetMonthlyBudgets = useCallback(() => {
-    const currentMonth = new Date().getMonth();
-    const currentYear = new Date().getFullYear();
-    if (currentMonth !== lastBudgetResetMonth) {
-      setBudgets((prev) =>
-        prev.map((budget) => {
-          const currentMonthExpenses = budget.expenses.filter((expense) => {
-            const timestamp =
-              expense.timestamp || parseFormattedDate(expense.date).getTime();
-            const expenseDate = new Date(timestamp);
-            return (
-              expenseDate.getMonth() === currentMonth &&
-              expenseDate.getFullYear() === currentYear
-            );
-          });
-          const currentMonthTotal = currentMonthExpenses.reduce(
-            (sum, e) => sum + e.amount,
-            0,
-          );
-          return {
-            ...budget,
-            current: currentMonthTotal,
-          };
-        }),
-      );
-      setLastBudgetResetMonth(currentMonth);
-    }
-  }, [lastBudgetResetMonth]);
-
-  useEffect(() => {
-    if (isAppLoading) return;
-    const currentMonth = new Date().getMonth();
-    if (currentMonth !== lastBudgetResetMonth) {
-      resetMonthlyBudgets();
-    }
-  }, [lastBudgetResetMonth, isAppLoading, resetMonthlyBudgets]);
+  const { resetMonthlyBudgets } = useMonthlyBudgetReset({
+    budgets,
+    isAppLoading,
+    lastBudgetResetMonth,
+    setBudgets,
+    setLastBudgetResetMonth,
+  });
 
 
   const value: AppContextType = {
