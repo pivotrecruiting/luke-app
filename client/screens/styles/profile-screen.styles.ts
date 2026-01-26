@@ -50,7 +50,7 @@ export const styles = StyleSheet.create({
     padding: Spacing.lg,
     marginTop: -70, // Etwas weiter nach unten verschoben
     marginHorizontal: Spacing.xl,
-    marginBottom: Spacing["2xl"],
+    // marginBottom: Spacing.xs, // Reduzierter Abstand zum Account Titel
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
@@ -124,7 +124,7 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: Spacing.md,
-    marginTop: Spacing.lg,
+    marginTop: Spacing.sm, // Reduzierter Abstand von oben
   },
   sectionTitleIcon: {
     // Used for: Icon spacing in section title
