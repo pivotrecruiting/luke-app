@@ -17,7 +17,8 @@ export const LevelUpTitle = ({ userName }: LevelUpTitleProps) => {
 
 const styles = StyleSheet.create({
   title: {
-    ...Typography.h2,
+    fontSize: 30,
+    fontWeight: "800",
     color: "#FFFFFF",
     textAlign: "center",
   },

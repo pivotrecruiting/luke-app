@@ -20,7 +20,8 @@ export const LevelUpDescription = ({
 
 const styles = StyleSheet.create({
   description: {
-    ...Typography.body,
+    fontSize: 17,
+    fontWeight: "400",
     color: "rgba(255, 255, 255, 0.9)",
     textAlign: "center",
   },

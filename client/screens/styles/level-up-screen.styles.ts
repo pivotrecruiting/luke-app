@@ -21,7 +21,7 @@ export const styles = StyleSheet.create({
     paddingVertical: Spacing["3xl"],
   },
   titleContainer: {
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing["3xl"],
   },
   descriptionContainer: {
     // No margin - aligned to start via space-between
