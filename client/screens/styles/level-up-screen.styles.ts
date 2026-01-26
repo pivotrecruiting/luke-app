@@ -28,7 +28,7 @@ export const styles = StyleSheet.create({
   },
   badgeContainer: {
     alignItems: "center",
-    marginTop: Spacing.md,
+    marginTop: Spacing.lg,
     marginBottom: 0,
   },
   middleSection: {

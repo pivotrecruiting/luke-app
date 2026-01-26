@@ -1,6 +1,5 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import { Typography, Spacing, BorderRadius } from "@/constants/theme";
 import type { XpLevelT } from "@/types/xp-types";
 
@@ -9,21 +8,16 @@ type LevelBadgeProps = {
 };
 
 /**
- * Displays a pill-shaped badge with gradient glow effect showing the level information.
+ * Displays a pill-shaped badge with white background and glow effect showing the level information.
  */
 export const LevelBadge = ({ level }: LevelBadgeProps) => {
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={["rgba(255, 255, 255, 0.9)", "rgba(115, 64, 253, 0.8)"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.gradient}
-      >
+      <View style={styles.badge}>
         <Text style={styles.badgeText}>
           Level {level.levelNumber}: {level.name}
         </Text>
-      </LinearGradient>
+      </View>
     </View>
   );
 };
@@ -31,12 +25,19 @@ export const LevelBadge = ({ level }: LevelBadgeProps) => {
 const styles = StyleSheet.create({
   container: {
     borderRadius: BorderRadius.full,
-    overflow: "hidden",
+    overflow: "visible",
+    marginTop: Spacing.sm,
   },
-  gradient: {
+  badge: {
+    backgroundColor: "rgba(255, 255, 255, 0.85)",
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.lg,
     borderRadius: BorderRadius.full,
+    shadowColor: "#FFFFFF",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 60,
+    elevation: 0,
   },
   badgeText: {
     fontSize: 20,
