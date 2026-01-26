@@ -12,8 +12,6 @@ import { AppState } from "react-native";
 import { useAuth } from "@/context/AuthContext";
 import {
   AUTOBUDGET_CATEGORY_COLORS,
-  CATEGORY_COLORS,
-  GERMAN_MONTHS_SHORT,
   INITIAL_BUDGETS,
   INITIAL_EXPENSE_ENTRIES,
   INITIAL_GOALS,
@@ -73,10 +71,9 @@ import {
 } from "@/services/app-service";
 import type { UserProgressUpdatePayloadT } from "@/services/app-service";
 import type { BudgetCategoryRow } from "@/services/types";
-import { formatDate, formatWeekLabel, parseFormattedDate } from "@/utils/dates";
+import { formatDate, parseFormattedDate } from "@/utils/dates";
 import { generateId } from "@/utils/ids";
 import { toCents } from "@/utils/money";
-import { calculateWeeklySpending } from "@/utils/weekly-spending";
 import type {
   UserProgressT,
   XpEventRuleT,
@@ -86,6 +83,7 @@ import type {
 import { getHighestMultiplierForEvent } from "@/features/xp/utils/rules";
 import { resolveLevelByXp } from "@/features/xp/utils/levels";
 import { addDays, getLocalDateKey } from "@/features/xp/utils/dates";
+import { useAppDerivedState } from "@/context/app/hooks/use-app-derived-state";
 
 export type {
   AppContextType,
@@ -494,13 +492,25 @@ export function AppProvider({ children }: AppProviderProps) {
     saveData();
   }, [saveData]);
 
-  const weeklySpending = useMemo(() => {
-    return calculateWeeklySpending(transactions, selectedWeekOffset);
-  }, [transactions, selectedWeekOffset]);
-
-  const currentWeekLabel = useMemo(() => {
-    return formatWeekLabel(selectedWeekOffset);
-  }, [selectedWeekOffset]);
+  const {
+    weeklySpending,
+    currentWeekLabel,
+    totalIncome,
+    totalFixedExpenses,
+    totalVariableExpenses,
+    totalExpenses,
+    monthlyBudget,
+    balance,
+    savingsRate,
+    insightCategories,
+    monthlyTrendData,
+  } = useAppDerivedState({
+    incomeEntries,
+    expenseEntries,
+    budgets,
+    transactions,
+    selectedWeekOffset,
+  });
 
   const goToPreviousWeek = () => {
     setSelectedWeekOffset((prev) => prev - 1);
@@ -511,102 +521,6 @@ export function AppProvider({ children }: AppProviderProps) {
       setSelectedWeekOffset((prev) => prev + 1);
     }
   };
-
-  const totalIncome = useMemo(() => {
-    return incomeEntries.reduce((sum, entry) => sum + entry.amount, 0);
-  }, [incomeEntries]);
-
-  const totalFixedExpenses = useMemo(() => {
-    return expenseEntries.reduce((sum, entry) => sum + entry.amount, 0);
-  }, [expenseEntries]);
-
-  const monthlyBudget = useMemo(() => {
-    return totalIncome - totalFixedExpenses;
-  }, [totalIncome, totalFixedExpenses]);
-
-  const totalVariableExpenses = useMemo(() => {
-    return budgets.reduce((sum, budget) => sum + budget.current, 0);
-  }, [budgets]);
-
-  const totalExpenses = useMemo(() => {
-    return totalFixedExpenses + totalVariableExpenses;
-  }, [totalFixedExpenses, totalVariableExpenses]);
-
-  const balance = useMemo(() => {
-    return monthlyBudget - totalVariableExpenses;
-  }, [monthlyBudget, totalVariableExpenses]);
-
-  const savingsRate = useMemo(() => {
-    if (totalIncome <= 0) return 0;
-    const savings = totalIncome - totalExpenses;
-    return (savings / totalIncome) * 100;
-  }, [totalIncome, totalExpenses]);
-
-  const insightCategories = useMemo(() => {
-    const categories: Record<string, number> = {};
-
-    budgets.forEach((budget) => {
-      const categoryName = budget.name;
-      categories[categoryName] =
-        (categories[categoryName] || 0) + budget.current;
-    });
-
-    const fixedCategories: Record<string, string[]> = {
-      Wohnen: ["Wohnen", "Miete"],
-      Abonnements: ["Netflix", "Spotify", "Handy", "Disney+", "Amazon Prime"],
-    };
-
-    expenseEntries.forEach((entry) => {
-      let matched = false;
-      for (const [category, keywords] of Object.entries(fixedCategories)) {
-        if (keywords.some((keyword) => entry.type.includes(keyword))) {
-          categories[category] = (categories[category] || 0) + entry.amount;
-          matched = true;
-          break;
-        }
-      }
-      if (!matched) {
-        categories["Sonstiges"] = (categories["Sonstiges"] || 0) + entry.amount;
-      }
-    });
-
-    return Object.entries(categories)
-      .filter(([_, amount]) => amount > 0)
-      .map(([name, amount]) => ({
-        name,
-        amount,
-        color: CATEGORY_COLORS[name] || "#6B7280",
-      }))
-      .sort((a, b) => b.amount - a.amount);
-  }, [budgets, expenseEntries]);
-
-  const monthlyTrendData = useMemo(() => {
-    const currentMonth = new Date().getMonth();
-    const months: { month: string; monthIndex: number; amount: number }[] = [];
-
-    for (let i = 5; i >= 0; i--) {
-      const monthIndex = (currentMonth - i + 12) % 12;
-      let amount: number;
-
-      if (i === 0) {
-        amount = totalExpenses;
-      } else {
-        const baseAmount = totalFixedExpenses;
-        const variationFactors = [0.92, 1.08, 0.95, 1.12, 0.88, 1.05];
-        const variableBase =
-          totalVariableExpenses * variationFactors[i % variationFactors.length];
-        amount = baseAmount + variableBase;
-      }
-
-      months.push({
-        month: GERMAN_MONTHS_SHORT[monthIndex],
-        monthIndex,
-        amount: Math.round(amount * 100) / 100,
-      });
-    }
-
-    return months;
-  }, [totalExpenses, totalFixedExpenses, totalVariableExpenses]);
 
   const setCurrency = (nextCurrency: CurrencyCode) => {
     setCurrencyState(nextCurrency);
