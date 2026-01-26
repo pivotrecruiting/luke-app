@@ -44,11 +44,11 @@ export const styles = StyleSheet.create({
   // Profile Card Styles
   // ============================================
   profileCard: {
-    // Used for: Main user profile card container - positioned 50% over the header
+    // Used for: Main user profile card container - positioned over the header
     backgroundColor: "#FFFFFF",
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
-    marginTop: -90, // 50% über dem Header positioniert (ca. 180px Header / 2)
+    marginTop: -70, // Etwas weiter nach unten verschoben
     marginHorizontal: Spacing.xl,
     marginBottom: Spacing["2xl"],
     shadowColor: "#000",
