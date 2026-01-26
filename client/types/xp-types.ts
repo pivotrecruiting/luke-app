@@ -7,6 +7,11 @@ export type XpLevelT = {
   xpRequired: number;
 };
 
+export type XpLevelUpPayloadT = {
+  levelId: string;
+  xpGained: number;
+};
+
 export type XpEventTypeT = {
   id: string;
   key: string;

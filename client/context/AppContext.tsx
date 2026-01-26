@@ -26,6 +26,7 @@ import type {
   Transaction,
 } from "@/context/app/types";
 import type { BudgetCategoryRow } from "@/services/types";
+import type { XpLevelUpPayloadT } from "@/types/xp-types";
 import { useAppDerivedState } from "@/context/app/hooks/use-app-derived-state";
 import { useEntryActions } from "@/context/app/hooks/use-entry-actions";
 import { useTransactionActions } from "@/context/app/hooks/use-transaction-actions";
@@ -82,6 +83,9 @@ export function AppProvider({ children }: AppProviderProps) {
   const [budgetCategories, setBudgetCategories] = useState<BudgetCategoryRow[]>(
     [],
   );
+  const [pendingLevelUps, setPendingLevelUps] = useState<XpLevelUpPayloadT[]>(
+    [],
+  );
 
   const { user } = useAuth();
   const userId = user?.id ?? null;
@@ -102,9 +106,18 @@ export function AppProvider({ children }: AppProviderProps) {
   });
   const canUseDb = Boolean(userId) && !useLocalFallback;
 
+  const enqueueLevelUp = useCallback((payload: XpLevelUpPayloadT) => {
+    setPendingLevelUps((prev) => [...prev, payload]);
+  }, []);
+
+  const consumeNextLevelUp = useCallback(() => {
+    setPendingLevelUps((prev) => prev.slice(1));
+  }, []);
+
   const { levels, xpEventTypes, xpEventRules, userProgress, awardXp } = useXp({
     userId,
     canUseDb,
+    onLevelUp: enqueueLevelUp,
   });
 
   const handleDbError = useCallback((error: unknown, context: string) => {
@@ -293,6 +306,7 @@ export function AppProvider({ children }: AppProviderProps) {
     xpEventTypes,
     xpEventRules,
     userProgress,
+    pendingLevelUps,
     addIncomeEntry,
     addExpenseEntry,
     setIncomeEntries: setIncomeEntriesFromOnboarding,
@@ -323,6 +337,8 @@ export function AppProvider({ children }: AppProviderProps) {
     goToNextWeek,
     resetMonthlyBudgets,
     lastBudgetResetMonth,
+    enqueueLevelUp,
+    consumeNextLevelUp,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

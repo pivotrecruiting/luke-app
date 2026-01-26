@@ -3,6 +3,7 @@ import type {
   XpEventRuleT,
   XpEventTypeT,
   XpLevelT,
+  XpLevelUpPayloadT,
 } from "@/types/xp-types";
 
 export type CurrencyCode = "EUR" | "USD" | "CHF";
@@ -108,6 +109,7 @@ export type AppState = {
   xpEventTypes: XpEventTypeT[];
   xpEventRules: XpEventRuleT[];
   userProgress: UserProgressT | null;
+  pendingLevelUps: XpLevelUpPayloadT[];
 };
 
 export type AppContextType = AppState & {
@@ -171,6 +173,8 @@ export type AppContextType = AppState & {
   goToNextWeek: () => void;
   resetMonthlyBudgets: () => void;
   lastBudgetResetMonth: number;
+  enqueueLevelUp: (payload: XpLevelUpPayloadT) => void;
+  consumeNextLevelUp: () => void;
 };
 
 export type PersistedData = {

@@ -14,6 +14,7 @@ import type {
   XpEventRuleT,
   XpEventTypeT,
   XpLevelT,
+  XpLevelUpPayloadT,
 } from "@/types/xp-types";
 import { getHighestMultiplierForEvent } from "@/features/xp/utils/rules";
 import { resolveLevelByXp } from "@/features/xp/utils/levels";
@@ -32,22 +33,30 @@ type AwardXpParamsT = {
 type UseXpParamsT = {
   userId: string | null;
   canUseDb: boolean;
+  onLevelUp?: (payload: XpLevelUpPayloadT) => void;
 };
 
 /**
  * Manages XP state, rules, and awarding logic.
  */
-export const useXp = ({ userId, canUseDb }: UseXpParamsT) => {
+export const useXp = ({ userId, canUseDb, onLevelUp }: UseXpParamsT) => {
   const [levels, setLevels] = useState<XpLevelT[]>([]);
   const [xpEventTypes, setXpEventTypes] = useState<XpEventTypeT[]>([]);
   const [xpEventRules, setXpEventRules] = useState<XpEventRuleT[]>([]);
   const [userProgress, setUserProgress] = useState<UserProgressT | null>(null);
   const userProgressRef = useRef<UserProgressT | null>(null);
+  const onLevelUpRef = useRef<((payload: XpLevelUpPayloadT) => void) | null>(
+    onLevelUp ?? null,
+  );
   const appStateRef = useRef(AppState.currentState);
 
   useEffect(() => {
     userProgressRef.current = userProgress;
   }, [userProgress]);
+
+  useEffect(() => {
+    onLevelUpRef.current = onLevelUp ?? null;
+  }, [onLevelUp]);
 
   const handleXpError = useCallback((error: unknown, context: string) => {
     console.error(`XP error during ${context}:`, error);
@@ -165,8 +174,9 @@ export const useXp = ({ userId, canUseDb }: UseXpParamsT) => {
       }
 
       const nextTotal = baseProgress.xpTotal + xpDelta;
-      const nextLevelId =
-        resolveLevelByXp(levels, nextTotal)?.id ?? baseProgress.currentLevelId;
+      const previousLevel = resolveLevelByXp(levels, baseProgress.xpTotal);
+      const nextLevel = resolveLevelByXp(levels, nextTotal);
+      const nextLevelId = nextLevel?.id ?? baseProgress.currentLevelId;
 
       try {
         await createXpEvent({
@@ -188,6 +198,12 @@ export const useXp = ({ userId, canUseDb }: UseXpParamsT) => {
         };
         const updated = await updateUserProgress(userId, updates);
         setUserProgress(updated);
+        if (nextLevel && previousLevel?.id !== nextLevel.id) {
+          onLevelUpRef.current?.({
+            levelId: nextLevel.id,
+            xpGained: xpDelta,
+          });
+        }
         return updated;
       } catch (error) {
         handleXpError(error, "awardXp.persist");
