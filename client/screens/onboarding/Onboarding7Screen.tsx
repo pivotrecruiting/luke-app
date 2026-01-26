@@ -53,7 +53,7 @@ export default function Onboarding7Screen() {
         addBudget(entry.type, icon, color, parsedAmount);
       });
     }
-    navigation.navigate("Paywall");
+    navigation.navigate("AllesStartklar");
   };
 
   return (
