@@ -38,19 +38,19 @@ const styles = StyleSheet.create({
     minHeight: 160,
   },
   emoji: {
-    fontSize: 80,
+    fontSize: 108,
   },
   ornament: {
     position: "absolute",
-    width: 52,
-    height: 52,
+    width: 48,
+    height: 48,
   },
   ornamentTopRight: {
     top: 20,
-    right: 0,
+    right: 35,
   },
   ornamentBottomLeft: {
     bottom: -10,
-    left: 0,
+    left: 35,
   },
 });
