@@ -39,6 +39,7 @@ export const styles = StyleSheet.create({
   },
   progressContainer: {
     width: "100%",
+    marginTop: Spacing["4xl"],
   },
   buttonContainer: {
     width: "100%",
