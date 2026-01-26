@@ -649,7 +649,7 @@ export const fetchXpConfig = async (): Promise<XpConfigPayloadT> => {
   const [levelsRes, typesRes, rulesRes] = await Promise.all([
     supabase
       .from("levels")
-      .select("id, level_number, name, emoji, xp_required")
+      .select("id, level_number, name, description, emoji, xp_required")
       .order("xp_required", { ascending: true }),
     supabase
       .from("xp_event_types")

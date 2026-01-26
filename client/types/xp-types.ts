@@ -2,6 +2,7 @@ export type XpLevelT = {
   id: string;
   levelNumber: number;
   name: string;
+  description: string;
   emoji: string;
   xpRequired: number;
 };

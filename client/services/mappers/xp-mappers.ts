@@ -22,6 +22,7 @@ export const mapLevels = (rows: LevelRow[]): XpLevelT[] =>
     id: row.id,
     levelNumber: row.level_number,
     name: row.name,
+    description: row.description,
     emoji: row.emoji,
     xpRequired: row.xp_required,
   }));

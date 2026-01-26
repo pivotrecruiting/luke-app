@@ -105,7 +105,7 @@ export default function LevelUpScreen() {
               </View>
 
               <View style={styles.descriptionContainer}>
-                <LevelUpDescription />
+                <LevelUpDescription description={currentLevel.description} />
               </View>
 
               <View style={styles.badgeContainer}>

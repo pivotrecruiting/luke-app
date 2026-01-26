@@ -71,6 +71,7 @@ export type LevelRow = {
   id: string;
   level_number: number;
   name: string;
+  description: string;
   emoji: string;
   xp_required: number;
 };
