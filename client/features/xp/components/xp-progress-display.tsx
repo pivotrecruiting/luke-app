@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
   },
   progressBarContainer: {
     width: "80%",
-    height: 6,
+    height: 8,
     backgroundColor: "rgba(255, 255, 255, 0.3)",
     borderRadius: BorderRadius.xs,
     overflow: "visible",
@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
     elevation: 0,
   },
   progressText: {
-    ...Typography.small,
+    ...Typography.body,
     color: "#FFFFFF",
     marginTop: Spacing.sm,
     marginBottom: Spacing.xl,

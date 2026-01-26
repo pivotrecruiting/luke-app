@@ -34,23 +34,23 @@ const styles = StyleSheet.create({
     position: "relative",
     alignItems: "center",
     justifyContent: "center",
-    minWidth: 160,
-    minHeight: 160,
+    minWidth: 192,
+    minHeight: 192,
   },
   emoji: {
-    fontSize: 108,
+    fontSize: 130,
   },
   ornament: {
     position: "absolute",
-    width: 48,
-    height: 48,
+    width: 58,
+    height: 58,
   },
   ornamentTopRight: {
     top: 20,
-    right: 35,
+    right: 15,
   },
   ornamentBottomLeft: {
     bottom: -10,
-    left: 35,
+    left: 15,
   },
 });

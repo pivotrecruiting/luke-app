@@ -38,8 +38,8 @@ export default function LevelUpScreen() {
     );
     const xpTotalValue = userProgress?.xpTotal ?? 0;
     const resolvedLevel = levelId
-      ? sortedLevels.find((l) => l.id === levelId) ??
-        resolveLevelByXp(sortedLevels, xpTotalValue)
+      ? (sortedLevels.find((l) => l.id === levelId) ??
+        resolveLevelByXp(sortedLevels, xpTotalValue))
       : resolveLevelByXp(sortedLevels, xpTotalValue);
 
     const current = resolvedLevel ?? sortedLevels[0] ?? null;
@@ -107,13 +107,13 @@ export default function LevelUpScreen() {
               <View style={styles.descriptionContainer}>
                 <LevelUpDescription />
               </View>
-            </View>
 
-            <View>
               <View style={styles.badgeContainer}>
                 <LevelBadge level={currentLevel} />
               </View>
+            </View>
 
+            <View style={styles.middleSection}>
               <View style={styles.iconContainer}>
                 <LevelIcon emoji={currentLevel.emoji} />
               </View>

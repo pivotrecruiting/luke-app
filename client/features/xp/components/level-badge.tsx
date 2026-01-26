@@ -34,14 +34,14 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   gradient: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.lg,
     borderRadius: BorderRadius.full,
   },
   badgeText: {
-    ...Typography.h4,
-    color: "#000000",
+    fontSize: 20,
     fontWeight: "600",
+    color: "#000000",
     textAlign: "center",
   },
 });

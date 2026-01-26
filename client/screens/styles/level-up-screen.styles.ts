@@ -10,7 +10,7 @@ export const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    justifyContent: "space-between",
+    justifyContent: "flex-start",
     paddingHorizontal: Spacing.xl,
     paddingTop: Spacing["3xl"],
     paddingBottom: Spacing["3xl"],
@@ -24,10 +24,15 @@ export const styles = StyleSheet.create({
     marginBottom: Spacing["3xl"],
   },
   descriptionContainer: {
-    // No margin - aligned to start via space-between
+    marginBottom: Spacing.md,
   },
   badgeContainer: {
     alignItems: "center",
+    marginTop: Spacing.md,
+    marginBottom: 0,
+  },
+  middleSection: {
+    marginTop: Spacing.xl,
   },
   iconContainer: {
     // Centered in middle section
@@ -37,6 +42,6 @@ export const styles = StyleSheet.create({
   },
   buttonContainer: {
     width: "100%",
-    // No margin - aligned to end via space-between
+    marginTop: "auto",
   },
 });
