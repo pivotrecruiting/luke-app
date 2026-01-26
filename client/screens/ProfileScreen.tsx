@@ -22,6 +22,7 @@ export default function ProfileScreen() {
   const navigation = useNavigation<NavigationProp>();
   const { levels } = useApp();
   const [manageModalVisible, setManageModalVisible] = useState(false);
+  const [deleteAccountModalVisible, setDeleteAccountModalVisible] = useState(false);
 
   // Mock data - no functionality
   const userName = "Deni";
@@ -34,6 +35,11 @@ export default function ProfileScreen() {
   const handleLogout = () => {
     // TODO: Implement logout functionality
     setManageModalVisible(false);
+  };
+
+  const handleDeleteAccount = () => {
+    // TODO: Implement delete account functionality
+    setDeleteAccountModalVisible(false);
   };
 
   return (
@@ -270,6 +276,7 @@ export default function ProfileScreen() {
             styles.deleteButton,
             { opacity: pressed ? 0.7 : 1 },
           ]}
+          onPress={() => setDeleteAccountModalVisible(true)}
         >
           <Feather
             name="trash-2"
@@ -358,6 +365,64 @@ export default function ProfileScreen() {
                 Ausloggen
               </ThemedText>
             </Pressable>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Delete Account Modal */}
+      <Modal
+        visible={deleteAccountModalVisible}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setDeleteAccountModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <Pressable
+            style={styles.modalBackdrop}
+            onPress={() => setDeleteAccountModalVisible(false)}
+          />
+          <View
+            style={[
+              styles.modalContent,
+              { paddingBottom: insets.bottom + Spacing.lg },
+            ]}
+          >
+            <View style={styles.modalHeader}>
+              <ThemedText style={styles.modalTitle}>Account löschen</ThemedText>
+              <Pressable onPress={() => setDeleteAccountModalVisible(false)}>
+                <Feather name="x" size={24} color="#6B7280" />
+              </Pressable>
+            </View>
+
+            <ThemedText style={styles.deleteModalDescription}>
+              Möchtest du wirklich deinen Account löschen? Diese Aktion kann nicht
+              rückgängig gemacht werden.
+            </ThemedText>
+
+            <View style={styles.deleteModalButtons}>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.deleteModalCancelButton,
+                  { opacity: pressed ? 0.7 : 1 },
+                ]}
+                onPress={() => setDeleteAccountModalVisible(false)}
+              >
+                <ThemedText style={styles.deleteModalCancelText}>
+                  Abbrechen
+                </ThemedText>
+              </Pressable>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.deleteModalConfirmButton,
+                  { opacity: pressed ? 0.7 : 1 },
+                ]}
+                onPress={handleDeleteAccount}
+              >
+                <ThemedText style={styles.deleteModalConfirmText}>
+                  Löschen
+                </ThemedText>
+              </Pressable>
+            </View>
           </View>
         </View>
       </Modal>

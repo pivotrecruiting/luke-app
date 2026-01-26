@@ -326,4 +326,50 @@ export const styles = StyleSheet.create({
     color: "#EF4444",
     marginLeft: Spacing.sm,
   },
+
+  // ============================================
+  // Delete Account Modal Styles
+  // ============================================
+  deleteModalDescription: {
+    // Used for: Delete account modal description text
+    ...Typography.body,
+    color: "#000000",
+    marginBottom: Spacing.xl,
+    lineHeight: 22,
+  },
+  deleteModalButtons: {
+    // Used for: Delete modal buttons container
+    flexDirection: "row",
+  },
+  deleteModalCancelButton: {
+    // Used for: Cancel button in delete modal
+    flex: 1,
+    backgroundColor: "#F3F4F6",
+    borderRadius: BorderRadius.md,
+    paddingVertical: Spacing.lg,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: Spacing.md,
+  },
+  deleteModalCancelText: {
+    // Used for: Cancel button text - black color
+    ...Typography.body,
+    fontWeight: "600",
+    color: "#000000",
+  },
+  deleteModalConfirmButton: {
+    // Used for: Confirm delete button in delete modal
+    flex: 1,
+    backgroundColor: "#EF4444",
+    borderRadius: BorderRadius.md,
+    paddingVertical: Spacing.lg,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  deleteModalConfirmText: {
+    // Used for: Confirm delete button text - white color
+    ...Typography.body,
+    fontWeight: "600",
+    color: "#FFFFFF",
+  },
 });
