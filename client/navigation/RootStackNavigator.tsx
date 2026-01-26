@@ -1,5 +1,7 @@
 import React from "react";
+import { Platform } from "react-native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { isLiquidGlassAvailable } from "expo-glass-effect";
 import OnboardingNavigator from "@/navigation/OnboardingNavigator";
 import MainTabNavigator from "@/navigation/MainTabNavigator";
 import GoalDetailScreen from "@/screens/GoalDetailScreen";
@@ -34,6 +36,20 @@ export default function RootStackNavigator() {
   const { session, isLoading } = useAuth();
   const isAuthenticated = Boolean(session);
   const showOnboarding = !isAuthenticated || !isOnboardingComplete;
+  const liquidGlassAvailable = isLiquidGlassAvailable();
+
+  // Base glass effect configuration for iOS 18+
+  // Use 'regular' for iOS 18+ Liquid Glass, fallback to custom header for older versions
+  const glassBlurEffect = liquidGlassAvailable
+    ? ("regular" as const)
+    : Platform.select({
+        ios: "light" as const,
+        default: undefined,
+      });
+
+  // Only use native header if iOS 18+ Liquid Glass is available
+  // Otherwise, screens will use their custom headers
+  const useNativeHeader = liquidGlassAvailable && Platform.OS === "ios";
 
   if (isLoading || isAppLoading) {
     return null;
@@ -76,7 +92,19 @@ export default function RootStackNavigator() {
             name="Income"
             component={IncomeScreen}
             options={{
-              headerShown: false,
+              headerShown: useNativeHeader,
+              headerTitle: useNativeHeader ? "Einnahmen" : undefined,
+              headerTransparent: useNativeHeader ? true : undefined,
+              headerBlurEffect: useNativeHeader ? glassBlurEffect : undefined,
+              headerTitleAlign: useNativeHeader ? "center" : undefined,
+              headerStyle: useNativeHeader
+                ? {
+                    backgroundColor: Platform.select({
+                      ios: undefined,
+                      default: "#FFFFFF",
+                    }),
+                  }
+                : undefined,
               animation: "slide_from_right",
             }}
           />
@@ -84,7 +112,19 @@ export default function RootStackNavigator() {
             name="Expenses"
             component={ExpensesScreen}
             options={{
-              headerShown: false,
+              headerShown: useNativeHeader,
+              headerTitle: useNativeHeader ? "Ausgaben" : undefined,
+              headerTransparent: useNativeHeader ? true : undefined,
+              headerBlurEffect: useNativeHeader ? glassBlurEffect : undefined,
+              headerTitleAlign: useNativeHeader ? "center" : undefined,
+              headerStyle: useNativeHeader
+                ? {
+                    backgroundColor: Platform.select({
+                      ios: undefined,
+                      default: "#FFFFFF",
+                    }),
+                  }
+                : undefined,
               animation: "slide_from_right",
             }}
           />

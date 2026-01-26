@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useLayoutEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -6,10 +6,13 @@ import {
   ScrollView,
   Modal,
   TextInput,
+  Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useHeaderHeight } from "@react-navigation/elements";
 import { Feather } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
+import { isLiquidGlassAvailable } from "expo-glass-effect";
 import { useApp } from "@/context/AppContext";
 import { Spacing } from "@/constants/theme";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
@@ -36,6 +39,7 @@ function formatCurrency(value: number): string {
 
 export default function IncomeScreen() {
   const insets = useSafeAreaInsets();
+  const headerHeight = useHeaderHeight();
   const navigation = useNavigation();
   const {
     incomeEntries,
@@ -45,6 +49,9 @@ export default function IncomeScreen() {
     deleteIncomeEntry,
   } = useApp();
 
+  // Check if native header with Liquid Glass is available
+  const useNativeHeader = isLiquidGlassAvailable() && Platform.OS === "ios";
+
   const [modalVisible, setModalVisible] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState<string | null>(null);
@@ -52,13 +59,13 @@ export default function IncomeScreen() {
   const [amount, setAmount] = useState("");
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
-  const openAddModal = () => {
+  const openAddModal = useCallback(() => {
     setEditingId(null);
     setSelectedType(null);
     setCustomType("");
     setAmount("");
     setModalVisible(true);
-  };
+  }, []);
 
   const openEditModal = (entry: {
     id: string;
@@ -118,24 +125,52 @@ export default function IncomeScreen() {
     return matchingType?.icon || "plus-circle";
   };
 
+  // Set header right button for adding income (only if native header is used)
+  useLayoutEffect(() => {
+    if (useNativeHeader) {
+      navigation.setOptions({
+        headerRight: () => (
+          <Pressable
+            onPress={openAddModal}
+            style={{ marginRight: 16 }}
+            hitSlop={8}
+          >
+            <Feather name="plus" size={24} color="#7340fd" />
+          </Pressable>
+        ),
+      });
+    }
+  }, [navigation, openAddModal, useNativeHeader]);
+
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <Animated.View entering={FadeIn.duration(300)} style={styles.header}>
-        <Pressable
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
+    <View style={styles.container}>
+      {/* Custom header for non-iOS 18 devices */}
+      {!useNativeHeader && (
+        <Animated.View
+          entering={FadeIn.duration(300)}
+          style={[styles.header, { paddingTop: insets.top }]}
         >
-          <Feather name="arrow-left" size={24} color="#111827" />
-        </Pressable>
-        <Text style={styles.headerTitle}>Einnahmen</Text>
-        <Pressable onPress={openAddModal} style={styles.addButton}>
-          <Feather name="plus" size={24} color="#7340fd" />
-        </Pressable>
-      </Animated.View>
+          <Pressable
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}
+          >
+            <Feather name="arrow-left" size={24} color="#111827" />
+          </Pressable>
+          <Text style={styles.headerTitle}>Einnahmen</Text>
+          <Pressable onPress={openAddModal} style={styles.addButton}>
+            <Feather name="plus" size={24} color="#7340fd" />
+          </Pressable>
+        </Animated.View>
+      )}
 
       <ScrollView
         style={styles.content}
-        contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.xl }}
+        contentContainerStyle={{
+          paddingTop: useNativeHeader
+            ? headerHeight + Spacing.md
+            : Spacing.md,
+          paddingBottom: insets.bottom + Spacing.xl,
+        }}
         showsVerticalScrollIndicator={false}
       >
         <Animated.View

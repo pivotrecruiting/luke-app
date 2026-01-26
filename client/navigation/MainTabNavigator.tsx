@@ -1,6 +1,8 @@
 import React from "react";
-import { View, StyleSheet, Text } from "react-native";
+import { View, StyleSheet, Text, Platform } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { BlurView } from "expo-blur";
+import { isLiquidGlassAvailable } from "expo-glass-effect";
 import { Feather } from "@expo/vector-icons";
 import HomeScreen from "@/screens/HomeScreen";
 import InsightsScreen from "@/screens/InsightsScreen";
@@ -19,22 +21,35 @@ export type MainTabParamList = {
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 export default function MainTabNavigator() {
+  const liquidGlassAvailable = isLiquidGlassAvailable();
+  const useGlassEffect = liquidGlassAvailable && Platform.OS === "ios";
+
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: "#FFFFFF",
+          backgroundColor: useGlassEffect ? "transparent" : "#FFFFFF",
           borderTopWidth: 0,
           height: 80,
           paddingBottom: 20,
           paddingTop: 10,
-          shadowColor: "#000",
+          position: "absolute",
+          shadowColor: useGlassEffect ? "transparent" : "#000",
           shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.08,
+          shadowOpacity: useGlassEffect ? 0 : 0.08,
           shadowRadius: 8,
           elevation: 10,
         },
+        tabBarBackground: useGlassEffect
+          ? () => (
+              <BlurView
+                intensity={liquidGlassAvailable ? 80 : 60}
+                tint="light"
+                style={StyleSheet.absoluteFill}
+              />
+            )
+          : undefined,
         tabBarActiveTintColor: "#3B82F6",
         tabBarInactiveTintColor: "#9CA3AF",
         tabBarLabelStyle: {
