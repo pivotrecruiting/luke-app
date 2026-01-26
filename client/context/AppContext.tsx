@@ -8,6 +8,7 @@ import React, {
   useRef,
   ReactNode,
 } from "react";
+import { AppState } from "react-native";
 import { useAuth } from "@/context/AuthContext";
 import {
   AUTOBUDGET_CATEGORY_COLORS,
@@ -143,6 +144,7 @@ export function AppProvider({ children }: AppProviderProps) {
   const [userProgress, setUserProgress] = useState<UserProgressT | null>(null);
   const [useLocalFallback, setUseLocalFallback] = useState(false);
   const userProgressRef = useRef<UserProgressT | null>(null);
+  const appStateRef = useRef(AppState.currentState);
 
   const { user } = useAuth();
   const userId = user?.id ?? null;
@@ -439,6 +441,23 @@ export function AppProvider({ children }: AppProviderProps) {
     if (!canUseDb || !userProgress) return;
     void handleDailyLogin();
   }, [canUseDb, handleDailyLogin, userProgress]);
+
+  useEffect(() => {
+    if (!canUseDb) return;
+    const subscription = AppState.addEventListener("change", (nextState) => {
+      if (
+        appStateRef.current !== "active" &&
+        nextState === "active"
+      ) {
+        void handleDailyLogin();
+      }
+      appStateRef.current = nextState;
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [canUseDb, handleDailyLogin]);
 
   // Local storage is a fallback when DB access is unavailable (offline/unauth).
   const saveData = useCallback(async () => {
