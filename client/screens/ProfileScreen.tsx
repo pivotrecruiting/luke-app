@@ -55,6 +55,55 @@ export default function ProfileScreen() {
         </ThemedText>
       </LinearGradient>
 
+      {/* User Profile Card - positioned over header */}
+      <View style={styles.profileCard}>
+        <View style={styles.profileHeader}>
+          <ThemedText style={styles.profileAvatar}>🦊</ThemedText>
+          <ThemedText style={styles.profileName}>{userName}</ThemedText>
+        </View>
+        <View style={styles.profileStats}>
+          <View style={styles.statColumn}>
+            <ThemedText
+              type="small"
+              style={styles.statLabel}
+              lightColor="#9CA3AF"
+              darkColor="#9BA1A6"
+            >
+              Gespart
+            </ThemedText>
+            <ThemedText type="body" style={styles.statValue}>
+              {savedAmount}
+            </ThemedText>
+          </View>
+          <View style={styles.statColumn}>
+            <ThemedText
+              type="small"
+              style={styles.statLabel}
+              lightColor="#9CA3AF"
+              darkColor="#9BA1A6"
+            >
+              seit
+            </ThemedText>
+            <ThemedText type="body" style={styles.statValue}>
+              {daysSince}
+            </ThemedText>
+          </View>
+          <View style={styles.statColumn}>
+            <ThemedText
+              type="small"
+              style={styles.statLabel}
+              lightColor="#9CA3AF"
+              darkColor="#9BA1A6"
+            >
+              Höchste Streak
+            </ThemedText>
+            <ThemedText type="body" style={styles.statValue}>
+              {highestStreak}
+            </ThemedText>
+          </View>
+        </View>
+      </View>
+
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={[
@@ -63,54 +112,6 @@ export default function ProfileScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* User Profile Card */}
-        <View style={styles.profileCard}>
-          <View style={styles.profileHeader}>
-            <ThemedText style={styles.profileAvatar}>🦊</ThemedText>
-            <ThemedText style={styles.profileName}>{userName}</ThemedText>
-          </View>
-          <View style={styles.profileStats}>
-            <View style={styles.statColumn}>
-              <ThemedText
-                type="small"
-                style={styles.statLabel}
-                lightColor="#9CA3AF"
-                darkColor="#9BA1A6"
-              >
-                Gespart
-              </ThemedText>
-              <ThemedText type="body" style={styles.statValue}>
-                {savedAmount}
-              </ThemedText>
-            </View>
-            <View style={styles.statColumn}>
-              <ThemedText
-                type="small"
-                style={styles.statLabel}
-                lightColor="#9CA3AF"
-                darkColor="#9BA1A6"
-              >
-                seit
-              </ThemedText>
-              <ThemedText type="body" style={styles.statValue}>
-                {daysSince}
-              </ThemedText>
-            </View>
-            <View style={styles.statColumn}>
-              <ThemedText
-                type="small"
-                style={styles.statLabel}
-                lightColor="#9CA3AF"
-                darkColor="#9BA1A6"
-              >
-                Höchste Streak
-              </ThemedText>
-              <ThemedText type="body" style={styles.statValue}>
-                {highestStreak}
-              </ThemedText>
-            </View>
-          </View>
-        </View>
 
         {/* Account Section */}
         <View style={styles.sectionTitleWithIcon}>

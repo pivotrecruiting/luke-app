@@ -14,7 +14,7 @@ export const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.lg,
+    paddingTop: Spacing.lg, // Padding für Content nach der Card
     paddingBottom: Spacing["5xl"],
   },
 
@@ -44,17 +44,19 @@ export const styles = StyleSheet.create({
   // Profile Card Styles
   // ============================================
   profileCard: {
-    // Used for: Main user profile card container
+    // Used for: Main user profile card container - positioned 50% over the header
     backgroundColor: "#FFFFFF",
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
-    marginTop: -Spacing["3xl"],
+    marginTop: -90, // 50% über dem Header positioniert (ca. 180px Header / 2)
+    marginHorizontal: Spacing.xl,
     marginBottom: Spacing["2xl"],
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 3,
+    zIndex: 10, // Über dem Header liegen
   },
   profileHeader: {
     // Used for: Profile header row (avatar + name)
