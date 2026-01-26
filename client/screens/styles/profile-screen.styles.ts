@@ -267,4 +267,59 @@ export const styles = StyleSheet.create({
     fontWeight: "600",
     // Color set via ThemedText lightColor="#FFFFFF" (white for button text)
   },
+
+  // ============================================
+  // Modal Styles
+  // ============================================
+  modalOverlay: {
+    // Used for: Modal overlay container
+    flex: 1,
+    justifyContent: "flex-end",
+  },
+  modalBackdrop: {
+    // Used for: Modal backdrop (clickable area to close)
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  modalContent: {
+    // Used for: Modal content container
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
+    paddingTop: Spacing.lg,
+    paddingHorizontal: Spacing.xl,
+    maxHeight: "70%",
+  },
+  modalHeader: {
+    // Used for: Modal header row (title + close button)
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: Spacing.xl,
+  },
+  modalTitle: {
+    // Used for: Modal title text - black color
+    ...Typography.h3,
+    fontWeight: "600",
+    color: "#000000",
+  },
+  logoutButton: {
+    // Used for: Logout button container
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#EF4444",
+    borderRadius: BorderRadius.md,
+    paddingVertical: Spacing.lg,
+    marginTop: Spacing.md,
+  },
+  logoutButtonText: {
+    // Used for: Logout button text - red color
+    ...Typography.body,
+    fontWeight: "600",
+    color: "#EF4444",
+    marginLeft: Spacing.sm,
+  },
 });

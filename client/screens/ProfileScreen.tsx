@@ -1,5 +1,5 @@
-import React from "react";
-import { View, ScrollView, Pressable } from "react-native";
+import React, { useState } from "react";
+import { View, ScrollView, Pressable, Modal } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -21,6 +21,7 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
   const { levels } = useApp();
+  const [manageModalVisible, setManageModalVisible] = useState(false);
 
   // Mock data - no functionality
   const userName = "Deni";
@@ -29,6 +30,11 @@ export default function ProfileScreen() {
   const highestStreak = "26 Tage";
   const loginMethod = "Google Account";
   const appVersion = "1.0.0";
+
+  const handleLogout = () => {
+    // TODO: Implement logout functionality
+    setManageModalVisible(false);
+  };
 
   return (
     <View style={styles.container}>
@@ -131,6 +137,7 @@ export default function ProfileScreen() {
                 styles.loginMethodButton,
                 { opacity: pressed ? 0.7 : 1 },
               ]}
+              onPress={() => setManageModalVisible(true)}
             >
               <ThemedText type="small" style={styles.loginMethodButtonText}>
                 Manage
@@ -312,6 +319,47 @@ export default function ProfileScreen() {
           </>
         )}
       </ScrollView>
+
+      {/* Manage Account Modal */}
+      <Modal
+        visible={manageModalVisible}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setManageModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <Pressable
+            style={styles.modalBackdrop}
+            onPress={() => setManageModalVisible(false)}
+          />
+          <View
+            style={[
+              styles.modalContent,
+              { paddingBottom: insets.bottom + Spacing.lg },
+            ]}
+          >
+            <View style={styles.modalHeader}>
+              <ThemedText style={styles.modalTitle}>Account verwalten</ThemedText>
+              <Pressable onPress={() => setManageModalVisible(false)}>
+                <Feather name="x" size={24} color="#6B7280" />
+              </Pressable>
+            </View>
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.logoutButton,
+                { opacity: pressed ? 0.7 : 1 },
+              ]}
+              onPress={handleLogout}
+            >
+              <Feather name="log-out" size={20} color="#EF4444" />
+              <ThemedText style={styles.logoutButtonText}>
+                Ausloggen
+              </ThemedText>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
