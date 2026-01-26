@@ -9,6 +9,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { Spacing } from "@/constants/theme";
 import { useApp } from "@/context/AppContext";
+import { getUserFirstName } from "@/utils/user";
 import { styles } from "./styles/home-screen.styles";
 const businessmanFigure = require("../../assets/images/businessman-figure.png");
 
@@ -39,16 +40,7 @@ export default function HomeScreen() {
     goToPreviousWeek,
     goToNextWeek,
   } = useApp();
-  const firstName = useMemo(() => {
-    if (typeof userName !== "string") {
-      return null;
-    }
-    const trimmed = userName.trim();
-    if (!trimmed) {
-      return null;
-    }
-    return trimmed.split(" ")[0] ?? null;
-  }, [userName]);
+  const firstName = useMemo(() => getUserFirstName(userName), [userName]);
 
   // Parse various date formats to Date object for sorting
   const parseTransactionDate = (dateStr: string): Date => {

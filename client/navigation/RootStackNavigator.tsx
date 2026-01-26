@@ -6,6 +6,7 @@ import GoalDetailScreen from "@/screens/GoalDetailScreen";
 import BudgetDetailScreen from "@/screens/BudgetDetailScreen";
 import IncomeScreen from "@/screens/IncomeScreen";
 import ExpensesScreen from "@/screens/ExpensesScreen";
+import LevelUpScreen from "@/screens/LevelUpScreen";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 
@@ -20,6 +21,10 @@ export type RootStackParamList = {
   };
   Income: undefined;
   Expenses: undefined;
+  LevelUp: {
+    levelId?: string;
+    xpGained?: number;
+  };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -81,6 +86,15 @@ export default function RootStackNavigator() {
             options={{
               headerShown: false,
               animation: "slide_from_right",
+            }}
+          />
+          <Stack.Screen
+            name="LevelUp"
+            component={LevelUpScreen}
+            options={{
+              presentation: "modal",
+              animation: "fade_from_bottom",
+              animationDuration: 300,
             }}
           />
         </>

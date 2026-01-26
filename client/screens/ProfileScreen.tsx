@@ -1,11 +1,19 @@
 import React from "react";
-import { View, Text, StyleSheet, ScrollView } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Spacing } from "@/constants/theme";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { RootStackParamList } from "@/navigation/RootStackNavigator";
+import { Spacing, BorderRadius } from "@/constants/theme";
+import { useApp } from "@/context/AppContext";
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<NavigationProp>();
+  const { levels } = useApp();
 
   return (
     <View style={styles.container}>
@@ -38,6 +46,110 @@ export default function ProfileScreen() {
 
         <Text style={styles.sectionTitle}>Budgets</Text>
         <View style={styles.placeholderBox} />
+
+        {__DEV__ && (
+          <>
+            <Text style={styles.sectionTitle}>Development Tools</Text>
+            <View style={styles.devSection}>
+              <Text style={styles.devSectionSubtitle}>Test Level Up Screen</Text>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.testButton,
+                  pressed && styles.testButtonPressed,
+                ]}
+                onPress={() => {
+                  const level = levels.find((l) => l.levelNumber === 1);
+                  if (level) {
+                    navigation.navigate("LevelUp", {
+                      levelId: level.id,
+                      xpGained: 100,
+                    });
+                  }
+                }}
+              >
+                <Text style={styles.testButtonText}>
+                  Level 1 (Sparfuchs 🦊) - 100 XP
+                </Text>
+              </Pressable>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.testButton,
+                  pressed && styles.testButtonPressed,
+                ]}
+                onPress={() => {
+                  const level = levels.find((l) => l.levelNumber === 2);
+                  if (level) {
+                    navigation.navigate("LevelUp", {
+                      levelId: level.id,
+                      xpGained: 200,
+                    });
+                  }
+                }}
+              >
+                <Text style={styles.testButtonText}>
+                  Level 2 (Aktiv ✨) - 200 XP
+                </Text>
+              </Pressable>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.testButton,
+                  pressed && styles.testButtonPressed,
+                ]}
+                onPress={() => {
+                  const level = levels.find((l) => l.levelNumber === 3);
+                  if (level) {
+                    navigation.navigate("LevelUp", {
+                      levelId: level.id,
+                      xpGained: 150,
+                    });
+                  }
+                }}
+              >
+                <Text style={styles.testButtonText}>
+                  Level 3 (Pro 💎) - 150 XP
+                </Text>
+              </Pressable>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.testButton,
+                  pressed && styles.testButtonPressed,
+                ]}
+                onPress={() => {
+                  const level = levels.find((l) => l.levelNumber === 4);
+                  if (level) {
+                    navigation.navigate("LevelUp", {
+                      levelId: level.id,
+                      xpGained: 25,
+                    });
+                  }
+                }}
+              >
+                <Text style={styles.testButtonText}>
+                  Level 4 (Elite 🛡️) - 25 XP
+                </Text>
+              </Pressable>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.testButton,
+                  pressed && styles.testButtonPressed,
+                ]}
+                onPress={() => {
+                  const level = levels.find((l) => l.levelNumber === 5);
+                  if (level) {
+                    navigation.navigate("LevelUp", {
+                      levelId: level.id,
+                      xpGained: 5,
+                    });
+                  }
+                }}
+              >
+                <Text style={styles.testButtonText}>
+                  Level 5 (Icon 👑) - 5 XP
+                </Text>
+              </Pressable>
+            </View>
+          </>
+        )}
       </ScrollView>
     </View>
   );
@@ -102,5 +214,35 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     height: 120,
     marginBottom: 24,
+  },
+  devSection: {
+    backgroundColor: "#FFF4E6",
+    borderRadius: BorderRadius.md,
+    padding: Spacing.lg,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: "#FFE0B2",
+  },
+  devSectionSubtitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#E65100",
+    marginBottom: Spacing.md,
+  },
+  testButton: {
+    backgroundColor: "#7340fd",
+    borderRadius: BorderRadius.sm,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing.sm,
+    alignItems: "center",
+  },
+  testButtonPressed: {
+    opacity: 0.8,
+  },
+  testButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#FFFFFF",
   },
 });
