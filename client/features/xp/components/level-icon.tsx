@@ -1,35 +1,56 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { Spacing } from "@/constants/theme";
+import { Image } from "expo-image";
+
+const ornamentImage = require("@assets/images/lvlup-ornament.svg");
 
 type LevelIconProps = {
   emoji: string;
 };
 
 /**
- * Displays a large emoji icon with decorative star icons on the sides.
+ * Displays a large emoji icon with decorative star ornaments positioned at top-right and bottom-left.
  */
 export const LevelIcon = ({ emoji }: LevelIconProps) => {
   return (
     <View style={styles.container}>
-      <Text style={styles.star}>⭐</Text>
+      <Image
+        source={ornamentImage}
+        style={[styles.ornament, styles.ornamentTopRight]}
+        contentFit="contain"
+      />
       <Text style={styles.emoji}>{emoji}</Text>
-      <Text style={styles.star}>⭐</Text>
+      <Image
+        source={ornamentImage}
+        style={[styles.ornament, styles.ornamentBottomLeft]}
+        contentFit="contain"
+      />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: "row",
+    position: "relative",
     alignItems: "center",
     justifyContent: "center",
-    gap: Spacing.lg,
+    minWidth: 160,
+    minHeight: 160,
   },
   emoji: {
     fontSize: 80,
   },
-  star: {
-    fontSize: 24,
+  ornament: {
+    position: "absolute",
+    width: 52,
+    height: 52,
+  },
+  ornamentTopRight: {
+    top: 20,
+    right: 0,
+  },
+  ornamentBottomLeft: {
+    bottom: -10,
+    left: 0,
   },
 });
