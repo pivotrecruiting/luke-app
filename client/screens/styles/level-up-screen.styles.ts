@@ -10,9 +10,10 @@ export const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    justifyContent: "center",
+    justifyContent: "space-between",
     paddingHorizontal: Spacing.xl,
-    paddingBottom: Spacing.lg,
+    paddingTop: Spacing["3xl"],
+    paddingBottom: Spacing["3xl"],
   },
   scrollContent: {
     flexGrow: 1,
@@ -20,24 +21,22 @@ export const styles = StyleSheet.create({
     paddingVertical: Spacing["3xl"],
   },
   titleContainer: {
-    marginBottom: Spacing["2xl"],
+    marginBottom: Spacing.lg,
   },
   descriptionContainer: {
-    marginBottom: Spacing["2xl"],
+    // No margin - aligned to start via space-between
   },
   badgeContainer: {
-    marginBottom: Spacing["3xl"],
     alignItems: "center",
   },
   iconContainer: {
-    marginBottom: Spacing["3xl"],
+    // Centered in middle section
   },
   progressContainer: {
-    marginBottom: Spacing["3xl"],
     width: "100%",
   },
   buttonContainer: {
     width: "100%",
-    marginTop: Spacing["2xl"],
+    // No margin - aligned to end via space-between
   },
 });

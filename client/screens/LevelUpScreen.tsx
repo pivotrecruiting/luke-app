@@ -99,30 +99,34 @@ export default function LevelUpScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.content}>
-            <View style={styles.titleContainer}>
-              <LevelUpTitle userName={displayName} />
+            <View>
+              <View style={styles.titleContainer}>
+                <LevelUpTitle userName={displayName} />
+              </View>
+
+              <View style={styles.descriptionContainer}>
+                <LevelUpDescription />
+              </View>
             </View>
 
-            <View style={styles.descriptionContainer}>
-              <LevelUpDescription />
-            </View>
+            <View>
+              <View style={styles.badgeContainer}>
+                <LevelBadge level={currentLevel} />
+              </View>
 
-            <View style={styles.badgeContainer}>
-              <LevelBadge level={currentLevel} />
-            </View>
+              <View style={styles.iconContainer}>
+                <LevelIcon emoji={currentLevel.emoji} />
+              </View>
 
-            <View style={styles.iconContainer}>
-              <LevelIcon emoji={currentLevel.emoji} />
-            </View>
-
-            <View style={styles.progressContainer}>
-              <XpProgressDisplay
-                xpGained={xpGained}
-                currentXp={currentXp}
-                nextLevelXp={nextLevelXp}
-                currentLevel={currentLevel}
-                nextLevel={nextLevel}
-              />
+              <View style={styles.progressContainer}>
+                <XpProgressDisplay
+                  xpGained={xpGained}
+                  currentXp={currentXp}
+                  nextLevelXp={nextLevelXp}
+                  currentLevel={currentLevel}
+                  nextLevel={nextLevel}
+                />
+              </View>
             </View>
 
             <View style={styles.buttonContainer}>
