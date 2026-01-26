@@ -48,9 +48,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   xpGained: {
-    ...Typography.h3,
+    fontSize: 32,
+    fontWeight: "700",
     color: "#FFFFFF",
-    marginBottom: Spacing.md,
+    marginBottom: Spacing["2xl"],
   },
   progressBarContainer: {
     width: "80%",
@@ -73,5 +74,7 @@ const styles = StyleSheet.create({
   progressText: {
     ...Typography.small,
     color: "#FFFFFF",
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.xl,
   },
 });
