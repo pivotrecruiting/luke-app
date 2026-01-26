@@ -1,152 +1,313 @@
 import React from "react";
-import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
+import { View, ScrollView, Pressable } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
+import { Feather } from "@expo/vector-icons";
+import { ThemedText } from "@/components/ThemedText";
+import { SettingsRow } from "@/components/SettingsRow";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { useApp } from "@/context/AppContext";
+import { styles } from "./styles/profile-screen.styles";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
+/**
+ * Profile screen displaying user information, settings, and account options.
+ */
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
   const { levels } = useApp();
 
+  // Mock data - no functionality
+  const userName = "Deni";
+  const savedAmount = "€ 2.478,23";
+  const daysSince = "83 Tagen";
+  const highestStreak = "26 Tage";
+  const loginMethod = "Google Account";
+  const appVersion = "1.0.0";
+
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={["rgba(42, 58, 230, 0.69)", "rgba(23, 32, 128, 0.69)"]}
+        colors={["rgba(115, 64, 253, 0.9)", "rgba(115, 64, 253, 0.7)"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
         style={[styles.header, { paddingTop: insets.top + Spacing.lg }]}
       >
-        <Text style={styles.headerTitle}>Profil</Text>
-        <Text style={styles.headerSubtitle}>Einstellungen & mehr</Text>
+        <ThemedText style={styles.headerTitle} lightColor="#FFFFFF">
+          Profil
+        </ThemedText>
+        <ThemedText
+          style={styles.headerSubtitle}
+          lightColor="rgba(255,255,255,0.8)"
+        >
+          Einstellungen & mehr
+        </ThemedText>
       </LinearGradient>
 
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingBottom: insets.bottom + 100 },
+          { paddingBottom: insets.bottom + Spacing["5xl"] },
         ]}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
       >
+        {/* User Profile Card */}
         <View style={styles.profileCard}>
-          <Text style={styles.foxEmoji}>🦊</Text>
-          <Text style={styles.profileName}>Deni</Text>
+          <View style={styles.profileHeader}>
+            <ThemedText style={styles.profileAvatar}>🦊</ThemedText>
+            <ThemedText style={styles.profileName}>{userName}</ThemedText>
+          </View>
+          <View style={styles.profileStats}>
+            <View style={styles.statColumn}>
+              <ThemedText
+                type="small"
+                style={styles.statLabel}
+                lightColor="#9CA3AF"
+                darkColor="#9BA1A6"
+              >
+                Gespart
+              </ThemedText>
+              <ThemedText type="body" style={styles.statValue}>
+                {savedAmount}
+              </ThemedText>
+            </View>
+            <View style={styles.statColumn}>
+              <ThemedText
+                type="small"
+                style={styles.statLabel}
+                lightColor="#9CA3AF"
+                darkColor="#9BA1A6"
+              >
+                seit
+              </ThemedText>
+              <ThemedText type="body" style={styles.statValue}>
+                {daysSince}
+              </ThemedText>
+            </View>
+            <View style={styles.statColumn}>
+              <ThemedText
+                type="small"
+                style={styles.statLabel}
+                lightColor="#9CA3AF"
+                darkColor="#9BA1A6"
+              >
+                Höchste Streak
+              </ThemedText>
+              <ThemedText type="body" style={styles.statValue}>
+                {highestStreak}
+              </ThemedText>
+            </View>
+          </View>
         </View>
 
-        <Text style={styles.sectionTitle}>Goals</Text>
-        <View style={styles.placeholderBox} />
+        {/* Account Section */}
+        <View style={styles.sectionTitleWithIcon}>
+          <Feather
+            name="settings"
+            size={20}
+            color="#000000"
+            style={styles.sectionTitleIcon}
+          />
+          <ThemedText style={styles.sectionTitle}>Account</ThemedText>
+        </View>
+        <View style={styles.sectionCard}>
+          <View style={styles.loginMethodRow}>
+            <View style={styles.loginMethodContent}>
+              <ThemedText type="body" style={styles.loginMethodLabel}>
+                Login Methode
+              </ThemedText>
+              <ThemedText type="small" style={styles.loginMethodValue}>
+                {loginMethod}
+              </ThemedText>
+            </View>
+            <Pressable
+              style={({ pressed }) => [
+                styles.loginMethodButton,
+                { opacity: pressed ? 0.7 : 1 },
+              ]}
+            >
+              <ThemedText type="small" style={styles.loginMethodButtonText}>
+                Manage
+              </ThemedText>
+            </Pressable>
+          </View>
+          <View style={styles.bankConnectRow}>
+            <View style={styles.bankConnectContent}>
+              <ThemedText
+                type="body"
+                style={styles.bankConnectLabel}
+                lightColor="#9CA3AF"
+                darkColor="#9BA1A6"
+              >
+                Bank verbinden
+              </ThemedText>
+              <ThemedText
+                type="small"
+                style={styles.bankConnectSubtext}
+                lightColor="#9CA3AF"
+                darkColor="#9BA1A6"
+              >
+                Bald verfügbar
+              </ThemedText>
+            </View>
+            <Pressable
+              style={({ pressed }) => [
+                styles.bankConnectIconButton,
+                { opacity: pressed ? 0.7 : 1 },
+              ]}
+            >
+              <Feather name="link" size={16} color="#9CA3AF" />
+            </Pressable>
+          </View>
+        </View>
 
-        <Text style={styles.sectionTitle}>Budgets</Text>
-        <View style={styles.placeholderBox} />
+        {/* Benachrichtigungen Section */}
+        <View style={styles.sectionTitleWithIcon}>
+          <Feather
+            name="bell"
+            size={20}
+            color="#000000"
+            style={styles.sectionTitleIcon}
+          />
+          <ThemedText style={styles.sectionTitle}>
+            Benachrichtigungen
+          </ThemedText>
+        </View>
+        <View style={styles.sectionCard}>
+          <SettingsRow
+            label="Täglicher Reminder"
+            action={{
+              type: "toggle",
+              value: false,
+            }}
+            showDivider={true}
+          />
+          <SettingsRow
+            label="Wochen Report"
+            action={{
+              type: "toggle",
+              value: false,
+            }}
+            showDivider={true}
+          />
+          <SettingsRow
+            label="Monatlicher Reminder"
+            action={{
+              type: "toggle",
+              value: false,
+            }}
+            showDivider={false}
+          />
+        </View>
 
+        {/* Support & Rechtliches Section */}
+        <View style={styles.sectionTitleWithIcon}>
+          <Feather
+            name="file-text"
+            size={20}
+            color="#000000"
+            style={styles.sectionTitleIcon}
+          />
+          <ThemedText style={styles.sectionTitle}>
+            Support & Rechtliches
+          </ThemedText>
+        </View>
+        <View style={styles.sectionCard}>
+          <SettingsRow label="Hilfecenter" showDivider={true} />
+          <SettingsRow label="Datenschutz" showDivider={true} />
+          <SettingsRow
+            label="Allgemeine Geschäftsbedingungen"
+            showDivider={false}
+          />
+        </View>
+
+        {/* Präferenzen Section */}
+        <ThemedText style={styles.sectionTitle}>Präferenzen</ThemedText>
+        <View style={styles.sectionCard}>
+          <SettingsRow label="Theme" showDivider={true} />
+          <SettingsRow label="Währung" showDivider={true} />
+          <SettingsRow label="Monatlicher Reminder" showDivider={false} />
+        </View>
+
+        {/* Über Luke Section */}
+        <ThemedText style={styles.sectionTitle}>Über Luke</ThemedText>
+        <View style={styles.sectionCard}>
+          <SettingsRow
+            label="App Version"
+            action={{
+              type: "text",
+              value: appVersion,
+            }}
+            showDivider={true}
+          />
+          <SettingsRow
+            label="Feedback geben"
+            action={{
+              type: "icon",
+              iconName: "message-circle",
+            }}
+            showDivider={false}
+          />
+        </View>
+
+        {/* Account löschen Button */}
+        <Pressable
+          style={({ pressed }) => [
+            styles.deleteButton,
+            { opacity: pressed ? 0.7 : 1 },
+          ]}
+        >
+          <Feather
+            name="trash-2"
+            size={20}
+            color="#EF4444"
+            style={styles.deleteButtonIcon}
+          />
+          <ThemedText style={styles.deleteButtonText} lightColor="#EF4444">
+            Account löschen
+          </ThemedText>
+        </Pressable>
+
+        {/* Development Tools Section */}
         {__DEV__ && (
           <>
-            <Text style={styles.sectionTitle}>Development Tools</Text>
-            <View style={styles.devSection}>
-              <Text style={styles.devSectionSubtitle}>Test Level Up Screen</Text>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.testButton,
-                  pressed && styles.testButtonPressed,
-                ]}
-                onPress={() => {
-                  const level = levels.find((l) => l.levelNumber === 1);
-                  if (level) {
+            <ThemedText style={styles.sectionTitle}>
+              Development Tools
+            </ThemedText>
+            <View style={styles.devToolsCard}>
+              <ThemedText style={styles.devToolsTitle}>
+                Test Level Up Screen
+              </ThemedText>
+              {levels.map((level) => (
+                <Pressable
+                  key={level.id}
+                  style={({ pressed }) => [
+                    styles.devToolsButton,
+                    { opacity: pressed ? 0.8 : 1 },
+                  ]}
+                  onPress={() => {
                     navigation.navigate("LevelUp", {
                       levelId: level.id,
                       xpGained: 100,
                     });
-                  }
-                }}
-              >
-                <Text style={styles.testButtonText}>
-                  Level 1 (Sparfuchs 🦊) - 100 XP
-                </Text>
-              </Pressable>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.testButton,
-                  pressed && styles.testButtonPressed,
-                ]}
-                onPress={() => {
-                  const level = levels.find((l) => l.levelNumber === 2);
-                  if (level) {
-                    navigation.navigate("LevelUp", {
-                      levelId: level.id,
-                      xpGained: 200,
-                    });
-                  }
-                }}
-              >
-                <Text style={styles.testButtonText}>
-                  Level 2 (Aktiv ✨) - 200 XP
-                </Text>
-              </Pressable>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.testButton,
-                  pressed && styles.testButtonPressed,
-                ]}
-                onPress={() => {
-                  const level = levels.find((l) => l.levelNumber === 3);
-                  if (level) {
-                    navigation.navigate("LevelUp", {
-                      levelId: level.id,
-                      xpGained: 150,
-                    });
-                  }
-                }}
-              >
-                <Text style={styles.testButtonText}>
-                  Level 3 (Pro 💎) - 150 XP
-                </Text>
-              </Pressable>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.testButton,
-                  pressed && styles.testButtonPressed,
-                ]}
-                onPress={() => {
-                  const level = levels.find((l) => l.levelNumber === 4);
-                  if (level) {
-                    navigation.navigate("LevelUp", {
-                      levelId: level.id,
-                      xpGained: 25,
-                    });
-                  }
-                }}
-              >
-                <Text style={styles.testButtonText}>
-                  Level 4 (Elite 🛡️) - 25 XP
-                </Text>
-              </Pressable>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.testButton,
-                  pressed && styles.testButtonPressed,
-                ]}
-                onPress={() => {
-                  const level = levels.find((l) => l.levelNumber === 5);
-                  if (level) {
-                    navigation.navigate("LevelUp", {
-                      levelId: level.id,
-                      xpGained: 5,
-                    });
-                  }
-                }}
-              >
-                <Text style={styles.testButtonText}>
-                  Level 5 (Icon 👑) - 5 XP
-                </Text>
-              </Pressable>
+                  }}
+                >
+                  <ThemedText
+                    type="small"
+                    style={styles.devToolsButtonText}
+                    lightColor="#FFFFFF"
+                  >
+                    Level {level.levelNumber} ({level.name} {level.emoji}) - 100
+                    XP
+                  </ThemedText>
+                </Pressable>
+              ))}
             </View>
           </>
         )}
@@ -154,95 +315,3 @@ export default function ProfileScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
-  },
-  headerTitle: {
-    fontSize: 32,
-    fontWeight: "700",
-    color: "#FFFFFF",
-  },
-  headerSubtitle: {
-    fontSize: 16,
-    color: "rgba(255,255,255,0.8)",
-    marginTop: 4,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 20,
-    paddingTop: 24,
-  },
-  profileCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    marginBottom: 24,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  foxEmoji: {
-    fontSize: 32,
-  },
-  profileName: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#000000",
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#000000",
-    marginBottom: 12,
-  },
-  placeholderBox: {
-    backgroundColor: "#E5E7EB",
-    borderRadius: 12,
-    height: 120,
-    marginBottom: 24,
-  },
-  devSection: {
-    backgroundColor: "#FFF4E6",
-    borderRadius: BorderRadius.md,
-    padding: Spacing.lg,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: "#FFE0B2",
-  },
-  devSectionSubtitle: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#E65100",
-    marginBottom: Spacing.md,
-  },
-  testButton: {
-    backgroundColor: "#7340fd",
-    borderRadius: BorderRadius.sm,
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.lg,
-    marginBottom: Spacing.sm,
-    alignItems: "center",
-  },
-  testButtonPressed: {
-    opacity: 0.8,
-  },
-  testButtonText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#FFFFFF",
-  },
-});
