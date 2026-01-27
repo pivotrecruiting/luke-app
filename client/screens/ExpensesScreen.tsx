@@ -168,9 +168,7 @@ export default function ExpensesScreen() {
       <ScrollView
         style={styles.content}
         contentContainerStyle={{
-          paddingTop: useNativeHeader
-            ? headerHeight + Spacing.md
-            : Spacing.md,
+          paddingTop: useNativeHeader ? headerHeight + Spacing.md : Spacing.md,
           paddingBottom: insets.bottom + Spacing.xl,
         }}
         showsVerticalScrollIndicator={false}
@@ -298,78 +296,77 @@ export default function ExpensesScreen() {
           </Pressable>
         </View>
 
-            <KeyboardAwareScrollViewCompat
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: 40 }}
-            >
-              <Text style={styles.modalLabel}>Art der Ausgabe</Text>
-              <View style={styles.typeGrid}>
-                {EXPENSE_TYPES.map((type) => (
-                  <Pressable
-                    key={type.id}
-                    style={[
-                      styles.typeButton,
-                      selectedType === type.id && styles.typeButtonSelected,
-                    ]}
-                    onPress={() => setSelectedType(type.id)}
-                  >
-                    <Feather
-                      name={type.icon as any}
-                      size={20}
-                      color={selectedType === type.id ? "#EF4444" : "#6B7280"}
-                    />
-                    <Text
-                      style={[
-                        styles.typeButtonText,
-                        selectedType === type.id &&
-                          styles.typeButtonTextSelected,
-                      ]}
-                    >
-                      {type.name}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-
-              {selectedType === "sonstiges" && (
-                <View style={styles.customTypeContainer}>
-                  <Text style={styles.modalLabel}>Bezeichnung</Text>
-                  <TextInput
-                    style={styles.textInput}
-                    value={customType}
-                    onChangeText={setCustomType}
-                    placeholder="z.B. Strom"
-                    placeholderTextColor="#9CA3AF"
-                  />
-                </View>
-              )}
-
-              <Text style={styles.modalLabel}>Betrag (monatlich)</Text>
-              <View style={styles.amountInputContainer}>
-                <Text style={styles.currencySymbol}>€</Text>
-                <TextInput
-                  style={styles.amountInput}
-                  value={amount}
-                  onChangeText={setAmount}
-                  placeholder="0,00"
-                  placeholderTextColor="#9CA3AF"
-                  keyboardType="decimal-pad"
-                />
-              </View>
-
+        <KeyboardAwareScrollViewCompat
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 40 }}
+        >
+          <Text style={styles.modalLabel}>Art der Ausgabe</Text>
+          <View style={styles.typeGrid}>
+            {EXPENSE_TYPES.map((type) => (
               <Pressable
+                key={type.id}
                 style={[
-                  styles.saveButton,
-                  (!selectedType || !amount) && styles.saveButtonDisabled,
+                  styles.typeButton,
+                  selectedType === type.id && styles.typeButtonSelected,
                 ]}
-                onPress={handleSave}
-                disabled={!selectedType || !amount}
+                onPress={() => setSelectedType(type.id)}
               >
-                <Text style={styles.saveButtonText}>
-                  {editingId ? "Speichern" : "Hinzufügen"}
+                <Feather
+                  name={type.icon as any}
+                  size={20}
+                  color={selectedType === type.id ? "#EF4444" : "#6B7280"}
+                />
+                <Text
+                  style={[
+                    styles.typeButtonText,
+                    selectedType === type.id && styles.typeButtonTextSelected,
+                  ]}
+                >
+                  {type.name}
                 </Text>
               </Pressable>
-            </KeyboardAwareScrollViewCompat>
+            ))}
+          </View>
+
+          {selectedType === "sonstiges" && (
+            <View style={styles.customTypeContainer}>
+              <Text style={styles.modalLabel}>Bezeichnung</Text>
+              <TextInput
+                style={styles.textInput}
+                value={customType}
+                onChangeText={setCustomType}
+                placeholder="z.B. Strom"
+                placeholderTextColor="#9CA3AF"
+              />
+            </View>
+          )}
+
+          <Text style={styles.modalLabel}>Betrag (monatlich)</Text>
+          <View style={styles.amountInputContainer}>
+            <Text style={styles.currencySymbol}>€</Text>
+            <TextInput
+              style={styles.amountInput}
+              value={amount}
+              onChangeText={setAmount}
+              placeholder="0,00"
+              placeholderTextColor="#9CA3AF"
+              keyboardType="decimal-pad"
+            />
+          </View>
+
+          <Pressable
+            style={[
+              styles.saveButton,
+              (!selectedType || !amount) && styles.saveButtonDisabled,
+            ]}
+            onPress={handleSave}
+            disabled={!selectedType || !amount}
+          >
+            <Text style={styles.saveButtonText}>
+              {editingId ? "Speichern" : "Hinzufügen"}
+            </Text>
+          </Pressable>
+        </KeyboardAwareScrollViewCompat>
       </AppModal>
     </View>
   );

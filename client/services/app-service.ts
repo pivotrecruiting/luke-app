@@ -75,9 +75,7 @@ export type AppDataPayload = {
   initialSavingsCents?: number | null;
 };
 
-const mapMonthlyTrendData = (
-  rows: MonthlyTrendRow[],
-): MonthlyTrendData[] => {
+const mapMonthlyTrendData = (rows: MonthlyTrendRow[]): MonthlyTrendData[] => {
   return rows.map((row) => {
     const monthDate = new Date(`${row.month_start}T00:00:00Z`);
     const monthIndex = monthDate.getUTCMonth();
@@ -101,7 +99,15 @@ const ensureUserRow = async (userId: string): Promise<void> => {
 
 const getMonthBounds = (date: Date): { start: Date; end: Date } => {
   const start = new Date(date.getFullYear(), date.getMonth(), 1, 0, 0, 0, 0);
-  const end = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999);
+  const end = new Date(
+    date.getFullYear(),
+    date.getMonth() + 1,
+    0,
+    23,
+    59,
+    59,
+    999,
+  );
   return { start, end };
 };
 
@@ -198,12 +204,7 @@ const ensureRecurringTransactionsForMonth = async ({
   incomeSources.forEach((source) => {
     if (source.amount_cents <= 0) return;
     if (
-      !isActiveInMonth(
-        monthStart,
-        monthEnd,
-        source.start_date,
-        source.end_date,
-      )
+      !isActiveInMonth(monthStart, monthEnd, source.start_date, source.end_date)
     )
       return;
     const key = `income:${normalizeName(source.name)}`;
@@ -914,9 +915,7 @@ export const fetchXpConfig = async (): Promise<XpConfigPayloadT> => {
       .order("xp_required", { ascending: true }),
     supabase
       .from("xp_event_types")
-      .select(
-        "id, key, label, base_xp, active, max_per_user, cooldown_hours",
-      )
+      .select("id, key, label, base_xp, active, max_per_user, cooldown_hours")
       .eq("active", true),
     supabase
       .from("xp_event_rules")
@@ -932,12 +931,8 @@ export const fetchXpConfig = async (): Promise<XpConfigPayloadT> => {
   }
 
   const levels = mapLevels((levelsRes.data ?? []) as LevelRow[]);
-  const eventTypes = mapXpEventTypes(
-    (typesRes.data ?? []) as XpEventTypeRow[],
-  );
-  const eventRules = mapXpEventRules(
-    (rulesRes.data ?? []) as XpEventRuleRow[],
-  );
+  const eventTypes = mapXpEventTypes((typesRes.data ?? []) as XpEventTypeRow[]);
+  const eventRules = mapXpEventRules((rulesRes.data ?? []) as XpEventRuleRow[]);
 
   return { levels, eventTypes, eventRules };
 };
@@ -961,20 +956,18 @@ export const getOrCreateUserProgress = async (
     return mapUserProgress(data as UserProgressRow);
   }
 
-  const { error: upsertError } = await supabase
-    .from("user_progress")
-    .upsert(
-      {
-        user_id: userId,
-        xp_total: 0,
-        current_level_id: initialLevelId,
-        current_streak: 0,
-        longest_streak: 0,
-        last_login_at: null,
-        last_streak_date: null,
-      },
-      { onConflict: "user_id", ignoreDuplicates: true },
-    );
+  const { error: upsertError } = await supabase.from("user_progress").upsert(
+    {
+      user_id: userId,
+      xp_total: 0,
+      current_level_id: initialLevelId,
+      current_streak: 0,
+      longest_streak: 0,
+      last_login_at: null,
+      last_streak_date: null,
+    },
+    { onConflict: "user_id", ignoreDuplicates: true },
+  );
   if (upsertError) {
     throw upsertError;
   }

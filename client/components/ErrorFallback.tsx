@@ -1,12 +1,6 @@
 import React, { useState } from "react";
 import { reloadAppAsync } from "expo";
-import {
-  StyleSheet,
-  View,
-  Pressable,
-  ScrollView,
-  Text,
-} from "react-native";
+import { StyleSheet, View, Pressable, ScrollView, Text } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";

@@ -47,8 +47,7 @@ export const TrendView = ({
   const averageBase = monthlyData.filter((d) => d.amount > 0);
   const average =
     averageBase.length > 0
-      ? averageBase.reduce((sum, d) => sum + d.amount, 0) /
-        averageBase.length
+      ? averageBase.reduce((sum, d) => sum + d.amount, 0) / averageBase.length
       : 0;
   const currentMonthData = monthlyData[monthlyData.length - 1];
   const previousMonthData =

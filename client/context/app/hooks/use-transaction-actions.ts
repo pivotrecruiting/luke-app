@@ -128,9 +128,9 @@ export const useTransactionActions = ({
             const isExpense = resolvedAmount < 0;
             payload.income_category_id = isExpense
               ? null
-              : resolveIncomeCategory(updates.category)?.id ?? null;
+              : (resolveIncomeCategory(updates.category)?.id ?? null);
             payload.budget_category_id = isExpense
-              ? resolveBudgetCategory(updates.category)?.id ?? null
+              ? (resolveBudgetCategory(updates.category)?.id ?? null)
               : null;
           }
         }

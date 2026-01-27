@@ -52,63 +52,61 @@ export const ExpenseModal = ({
         </Pressable>
       </View>
 
-          <Text style={styles.incomeModalLabel}>Art der Ausgabe</Text>
-          <View style={styles.incomeTypeGrid}>
-            {EXPENSE_TYPES.map((type) => (
-              <Pressable
-                key={type.id}
-                style={[
-                  styles.incomeTypeButton,
-                  selectedExpenseType === type.id &&
-                    styles.expenseTypeButtonSelected,
-                ]}
-                onPress={() => onSelectExpenseType(type.id)}
-              >
-                <Feather
-                  name={type.icon as any}
-                  size={20}
-                  color={
-                    selectedExpenseType === type.id ? "#EF4444" : "#6B7280"
-                  }
-                />
-                <Text
-                  style={[
-                    styles.incomeTypeButtonText,
-                    selectedExpenseType === type.id &&
-                      styles.expenseTypeButtonTextSelected,
-                  ]}
-                >
-                  {type.name}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-
-          {selectedExpenseType === "sonstiges" && (
-            <View style={styles.customTypeContainer}>
-              <Text style={styles.incomeModalLabel}>Bezeichnung</Text>
-              <TextInput
-                style={styles.incomeTextInput}
-                value={customExpenseType}
-                onChangeText={onChangeCustomExpenseType}
-                placeholder="z.B. Strom"
-                placeholderTextColor="#9CA3AF"
-              />
-            </View>
-          )}
-
-          <Text style={styles.incomeModalLabel}>Betrag (monatlich)</Text>
-          <View style={styles.incomeAmountInputContainer}>
-            <Text style={styles.incomeCurrencySymbol}>€</Text>
-            <TextInput
-              style={styles.incomeAmountInput}
-              value={expenseAmount}
-              onChangeText={onChangeExpenseAmount}
-              placeholder="0,00"
-              placeholderTextColor="#9CA3AF"
-              keyboardType="decimal-pad"
+      <Text style={styles.incomeModalLabel}>Art der Ausgabe</Text>
+      <View style={styles.incomeTypeGrid}>
+        {EXPENSE_TYPES.map((type) => (
+          <Pressable
+            key={type.id}
+            style={[
+              styles.incomeTypeButton,
+              selectedExpenseType === type.id &&
+                styles.expenseTypeButtonSelected,
+            ]}
+            onPress={() => onSelectExpenseType(type.id)}
+          >
+            <Feather
+              name={type.icon as any}
+              size={20}
+              color={selectedExpenseType === type.id ? "#EF4444" : "#6B7280"}
             />
-          </View>
+            <Text
+              style={[
+                styles.incomeTypeButtonText,
+                selectedExpenseType === type.id &&
+                  styles.expenseTypeButtonTextSelected,
+              ]}
+            >
+              {type.name}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+
+      {selectedExpenseType === "sonstiges" && (
+        <View style={styles.customTypeContainer}>
+          <Text style={styles.incomeModalLabel}>Bezeichnung</Text>
+          <TextInput
+            style={styles.incomeTextInput}
+            value={customExpenseType}
+            onChangeText={onChangeCustomExpenseType}
+            placeholder="z.B. Strom"
+            placeholderTextColor="#9CA3AF"
+          />
+        </View>
+      )}
+
+      <Text style={styles.incomeModalLabel}>Betrag (monatlich)</Text>
+      <View style={styles.incomeAmountInputContainer}>
+        <Text style={styles.incomeCurrencySymbol}>€</Text>
+        <TextInput
+          style={styles.incomeAmountInput}
+          value={expenseAmount}
+          onChangeText={onChangeExpenseAmount}
+          placeholder="0,00"
+          placeholderTextColor="#9CA3AF"
+          keyboardType="decimal-pad"
+        />
+      </View>
 
       <Pressable
         style={[

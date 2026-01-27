@@ -163,7 +163,13 @@ export const useBudgetActions = ({
   );
 
   const updateBudgetExpense = useCallback(
-    (budgetId: string, expenseId: string, amount: number, name: string, date?: Date) => {
+    (
+      budgetId: string,
+      expenseId: string,
+      amount: number,
+      name: string,
+      date?: Date,
+    ) => {
       const currentMonth = new Date().getMonth();
       const currentYear = new Date().getFullYear();
 
@@ -255,13 +261,7 @@ export const useBudgetActions = ({
         }
       })();
     },
-    [
-      budgets,
-      canUseDb,
-      handleDbError,
-      setBudgets,
-      setTransactions,
-    ],
+    [budgets, canUseDb, handleDbError, setBudgets, setTransactions],
   );
 
   const deleteBudgetExpense = useCallback(
@@ -376,11 +376,24 @@ export const useBudgetActions = ({
         }
       })();
     },
-    [canUseDb, currency, handleDbError, resolveBudgetCategory, setBudgets, userId],
+    [
+      canUseDb,
+      currency,
+      handleDbError,
+      resolveBudgetCategory,
+      setBudgets,
+      userId,
+    ],
   );
 
   const addExpenseWithAutobudget = useCallback(
-    (categoryName: string, icon: string, amount: number, name: string, date: Date) => {
+    (
+      categoryName: string,
+      icon: string,
+      amount: number,
+      name: string,
+      date: Date,
+    ) => {
       const dbCategory = canUseDb ? resolveBudgetCategory(categoryName) : null;
       if (canUseDb && !dbCategory) {
         addTransaction({

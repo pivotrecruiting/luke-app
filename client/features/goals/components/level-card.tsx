@@ -15,41 +15,36 @@ type LevelCardPropsT = {
 export const LevelCard = ({ onPress }: LevelCardPropsT) => {
   const { levels, userProgress } = useApp();
 
-  const {
-    currentLevel,
-    nextLevel,
-    xpTotal,
-    xpToNextLevel,
-    progress,
-  } = useMemo(() => {
-    const sortedLevels = [...levels].sort(
-      (a, b) => a.xpRequired - b.xpRequired,
-    );
-    const xpTotalValue = userProgress?.xpTotal ?? 0;
-    const resolvedLevel =
-      resolveLevelByXp(sortedLevels, xpTotalValue) ?? sortedLevels[0] ?? null;
-    const currentIndex = resolvedLevel
-      ? sortedLevels.findIndex((level) => level.id === resolvedLevel.id)
-      : -1;
-    const next =
-      currentIndex >= 0 && currentIndex < sortedLevels.length - 1
-        ? sortedLevels[currentIndex + 1]
-        : null;
-    const baseXp = resolvedLevel?.xpRequired ?? 0;
-    const nextXp = next?.xpRequired ?? baseXp;
-    const span = Math.max(1, nextXp - baseXp);
-    const filled = Math.max(0, xpTotalValue - baseXp);
-    const progressValue = next ? Math.min(1, filled / span) : 1;
-    const remaining = next ? Math.max(0, nextXp - xpTotalValue) : 0;
+  const { currentLevel, nextLevel, xpTotal, xpToNextLevel, progress } =
+    useMemo(() => {
+      const sortedLevels = [...levels].sort(
+        (a, b) => a.xpRequired - b.xpRequired,
+      );
+      const xpTotalValue = userProgress?.xpTotal ?? 0;
+      const resolvedLevel =
+        resolveLevelByXp(sortedLevels, xpTotalValue) ?? sortedLevels[0] ?? null;
+      const currentIndex = resolvedLevel
+        ? sortedLevels.findIndex((level) => level.id === resolvedLevel.id)
+        : -1;
+      const next =
+        currentIndex >= 0 && currentIndex < sortedLevels.length - 1
+          ? sortedLevels[currentIndex + 1]
+          : null;
+      const baseXp = resolvedLevel?.xpRequired ?? 0;
+      const nextXp = next?.xpRequired ?? baseXp;
+      const span = Math.max(1, nextXp - baseXp);
+      const filled = Math.max(0, xpTotalValue - baseXp);
+      const progressValue = next ? Math.min(1, filled / span) : 1;
+      const remaining = next ? Math.max(0, nextXp - xpTotalValue) : 0;
 
-    return {
-      currentLevel: resolvedLevel,
-      nextLevel: next,
-      xpTotal: xpTotalValue,
-      xpToNextLevel: remaining,
-      progress: progressValue,
-    };
-  }, [levels, userProgress]);
+      return {
+        currentLevel: resolvedLevel,
+        nextLevel: next,
+        xpTotal: xpTotalValue,
+        xpToNextLevel: remaining,
+        progress: progressValue,
+      };
+    }, [levels, userProgress]);
 
   const isPressable = Boolean(onPress);
 

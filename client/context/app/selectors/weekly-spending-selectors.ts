@@ -5,7 +5,8 @@ import { calculateWeeklySpending } from "@/utils/weekly-spending";
 export const getWeeklySpending = (
   transactions: Transaction[],
   selectedWeekOffset: number,
-): WeeklySpending[] => calculateWeeklySpending(transactions, selectedWeekOffset);
+): WeeklySpending[] =>
+  calculateWeeklySpending(transactions, selectedWeekOffset);
 
 export const getCurrentWeekLabel = (selectedWeekOffset: number): string =>
   formatWeekLabel(selectedWeekOffset);

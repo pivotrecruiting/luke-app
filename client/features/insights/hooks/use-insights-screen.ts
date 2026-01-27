@@ -231,10 +231,7 @@ export const useInsightsScreen = (): UseInsightsScreenReturnT => {
       income: variableIncome,
       expenses: variableExpenses,
     };
-  }, [
-    selectedTimeFilter,
-    transactions,
-  ]);
+  }, [selectedTimeFilter, transactions]);
 
   const openAddIncomeModal = useCallback(() => {
     setEditingIncomeId(null);

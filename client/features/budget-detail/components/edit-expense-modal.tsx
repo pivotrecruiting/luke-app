@@ -56,60 +56,60 @@ export const EditExpenseModal = ({
         <View style={styles.modalHandle} />
         <Text style={styles.modalTitle}>Ausgabe bearbeiten</Text>
 
-          <Text style={styles.modalLabel}>Name</Text>
+        <Text style={styles.modalLabel}>Name</Text>
+        <TextInput
+          style={styles.modalInput}
+          value={editExpenseName}
+          onChangeText={onChangeName}
+          placeholder="Beschreibung"
+          placeholderTextColor="#9CA3AF"
+        />
+
+        <Text style={styles.modalLabel}>Betrag</Text>
+        <View style={styles.currencyInputContainer}>
+          <Text style={styles.currencyPrefix}>€</Text>
           <TextInput
-            style={styles.modalInput}
-            value={editExpenseName}
-            onChangeText={onChangeName}
-            placeholder="Beschreibung"
+            style={styles.currencyInput}
+            value={editExpenseAmount}
+            onChangeText={onChangeAmount}
+            placeholder="0,00"
             placeholderTextColor="#9CA3AF"
+            keyboardType="decimal-pad"
           />
+        </View>
 
-          <Text style={styles.modalLabel}>Betrag</Text>
-          <View style={styles.currencyInputContainer}>
-            <Text style={styles.currencyPrefix}>€</Text>
-            <TextInput
-              style={styles.currencyInput}
-              value={editExpenseAmount}
-              onChangeText={onChangeAmount}
-              placeholder="0,00"
-              placeholderTextColor="#9CA3AF"
-              keyboardType="decimal-pad"
+        <Text style={styles.modalLabel}>Datum</Text>
+        <Pressable style={styles.datePickerButton} onPress={onOpenDatePicker}>
+          <Feather name="calendar" size={20} color="#7340FE" />
+          <Text style={styles.datePickerText}>
+            {formatDisplayDate(editExpenseDate)}
+          </Text>
+        </Pressable>
+
+        {showDatePicker ? (
+          <View style={styles.datePickerContainer}>
+            <DateTimePicker
+              value={editExpenseDate}
+              mode="date"
+              display="spinner"
+              onChange={onDateChange}
+              maximumDate={new Date()}
+              locale="de-DE"
+              textColor="#000000"
+              themeVariant="light"
             />
+            <Pressable
+              style={styles.datePickerDoneButton}
+              onPress={onCloseDatePicker}
+            >
+              <Text style={styles.datePickerDoneText}>Fertig</Text>
+            </Pressable>
           </View>
+        ) : null}
 
-          <Text style={styles.modalLabel}>Datum</Text>
-          <Pressable style={styles.datePickerButton} onPress={onOpenDatePicker}>
-            <Feather name="calendar" size={20} color="#7340FE" />
-            <Text style={styles.datePickerText}>
-              {formatDisplayDate(editExpenseDate)}
-            </Text>
-          </Pressable>
-
-          {showDatePicker ? (
-            <View style={styles.datePickerContainer}>
-              <DateTimePicker
-                value={editExpenseDate}
-                mode="date"
-                display="spinner"
-                onChange={onDateChange}
-                maximumDate={new Date()}
-                locale="de-DE"
-                textColor="#000000"
-                themeVariant="light"
-              />
-              <Pressable
-                style={styles.datePickerDoneButton}
-                onPress={onCloseDatePicker}
-              >
-                <Text style={styles.datePickerDoneText}>Fertig</Text>
-              </Pressable>
-            </View>
-          ) : null}
-
-          <Pressable style={styles.modalSaveButton} onPress={onSave}>
-            <Text style={styles.modalSaveButtonText}>Speichern</Text>
-          </Pressable>
+        <Pressable style={styles.modalSaveButton} onPress={onSave}>
+          <Text style={styles.modalSaveButtonText}>Speichern</Text>
+        </Pressable>
 
         <Pressable style={styles.modalCancelButton} onPress={onCancel}>
           <Text style={styles.modalCancelButtonText}>Abbrechen</Text>

@@ -24,11 +24,13 @@ type UseAppDataLoaderParamsT = {
   setGoals: React.Dispatch<React.SetStateAction<Goal[]>>;
   setBudgets: React.Dispatch<React.SetStateAction<Budget[]>>;
   setTransactions: React.Dispatch<React.SetStateAction<Transaction[]>>;
-  setMonthlyTrendData: React.Dispatch<
-    React.SetStateAction<MonthlyTrendData[]>
+  setMonthlyTrendData: React.Dispatch<React.SetStateAction<MonthlyTrendData[]>>;
+  setBudgetCategories: React.Dispatch<
+    React.SetStateAction<BudgetCategoryRow[]>
   >;
-  setBudgetCategories: React.Dispatch<React.SetStateAction<BudgetCategoryRow[]>>;
-  setIncomeCategories: React.Dispatch<React.SetStateAction<IncomeCategoryRow[]>>;
+  setIncomeCategories: React.Dispatch<
+    React.SetStateAction<IncomeCategoryRow[]>
+  >;
   setLastBudgetResetMonth: React.Dispatch<React.SetStateAction<number>>;
 };
 

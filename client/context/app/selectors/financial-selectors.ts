@@ -8,9 +8,8 @@ import type {
 export const getTotalIncome = (incomeEntries: IncomeEntry[]): number =>
   incomeEntries.reduce((sum, entry) => sum + entry.amount, 0);
 
-export const getTotalFixedExpenses = (
-  expenseEntries: ExpenseEntry[],
-): number => expenseEntries.reduce((sum, entry) => sum + entry.amount, 0);
+export const getTotalFixedExpenses = (expenseEntries: ExpenseEntry[]): number =>
+  expenseEntries.reduce((sum, entry) => sum + entry.amount, 0);
 
 export const getTotalVariableExpenses = (budgets: Budget[]): number =>
   budgets.reduce((sum, budget) => sum + budget.current, 0);

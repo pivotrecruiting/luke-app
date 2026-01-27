@@ -1,5 +1,10 @@
 import { useCallback } from "react";
-import type { CurrencyCode, Goal, GoalDeposit, Transaction } from "@/context/app/types";
+import type {
+  CurrencyCode,
+  Goal,
+  GoalDeposit,
+  Transaction,
+} from "@/context/app/types";
 import {
   createGoal as createGoalInDb,
   createGoalContribution,

@@ -122,7 +122,12 @@ type GoalCardPropsT = {
   onToggle: (id: string) => void;
 };
 
-const GoalCard = ({ goal, isSelected, flexValue, onToggle }: GoalCardPropsT) => {
+const GoalCard = ({
+  goal,
+  isSelected,
+  flexValue,
+  onToggle,
+}: GoalCardPropsT) => {
   const opacity = useSharedValue(isSelected ? 1 : 0.7);
 
   useEffect(() => {
@@ -137,11 +142,7 @@ const GoalCard = ({ goal, isSelected, flexValue, onToggle }: GoalCardPropsT) => 
 
   return (
     <Animated.View
-      style={[
-        animatedOpacityStyle,
-        styles.cardWrapper,
-        { flex: flexValue },
-      ]}
+      style={[animatedOpacityStyle, styles.cardWrapper, { flex: flexValue }]}
     >
       <Pressable
         onPress={() => onToggle(goal.id)}

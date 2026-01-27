@@ -1,4 +1,8 @@
-import type { Budget, ExpenseEntry, InsightCategory } from "@/context/app/types";
+import type {
+  Budget,
+  ExpenseEntry,
+  InsightCategory,
+} from "@/context/app/types";
 import { CATEGORY_COLORS, GERMAN_MONTHS_SHORT } from "@/context/app/constants";
 
 export type MonthlyTrendDatumT = {
@@ -34,8 +38,7 @@ export const getInsightCategories = (
       }
     }
     if (!matched) {
-      categories["Sonstiges"] =
-        (categories["Sonstiges"] || 0) + entry.amount;
+      categories["Sonstiges"] = (categories["Sonstiges"] || 0) + entry.amount;
     }
   });
 

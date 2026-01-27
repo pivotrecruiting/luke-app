@@ -59,7 +59,6 @@ export const CategoriesPanel = ({
           );
         })}
       </View>
-
     </View>
   );
 };

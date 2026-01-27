@@ -5,7 +5,9 @@
  * @param userName - The full user name (can be null or undefined)
  * @returns The first name or null if not available
  */
-export const getUserFirstName = (userName: string | null | undefined): string | null => {
+export const getUserFirstName = (
+  userName: string | null | undefined,
+): string | null => {
   if (typeof userName !== "string") {
     return null;
   }

@@ -30,7 +30,8 @@ export default function ProfileScreen() {
     useApp();
   const { user } = useAuth();
   const [manageModalVisible, setManageModalVisible] = useState(false);
-  const [deleteAccountModalVisible, setDeleteAccountModalVisible] = useState(false);
+  const [deleteAccountModalVisible, setDeleteAccountModalVisible] =
+    useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const profileCardOverlap = Spacing["4xl"];
@@ -196,7 +197,6 @@ export default function ProfileScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-
         {/* Account Section */}
         <View style={styles.sectionTitleWithIcon}>
           <Feather

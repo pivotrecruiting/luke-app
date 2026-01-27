@@ -322,7 +322,10 @@ export default function HomeScreen() {
         visible={allTransactionsVisible}
         onClose={() => setAllTransactionsVisible(false)}
         maxHeightPercent={80}
-        contentStyle={[styles.modalContent, { paddingBottom: insets.bottom + 24 }]}
+        contentStyle={[
+          styles.modalContent,
+          { paddingBottom: insets.bottom + 24 },
+        ]}
       >
         <View style={styles.modalHandle} />
         <View style={styles.modalHeader}>

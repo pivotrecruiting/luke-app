@@ -85,7 +85,8 @@ export default function AddScreen() {
 
   const categories =
     activeTab === "ausgaben" ? expenseCategories : incomeCategoryOptions;
-  const isSaveDisabled = !amount || !selectedCategory || categories.length === 0;
+  const isSaveDisabled =
+    !amount || !selectedCategory || categories.length === 0;
 
   const handleDateChange = (event: any, date?: Date) => {
     setShowDatePicker(Platform.OS === "ios");
@@ -289,7 +290,8 @@ export default function AddScreen() {
                   key={category.id}
                   style={[
                     styles.categoryItem,
-                    selectedCategory === category.id && styles.categoryItemActive,
+                    selectedCategory === category.id &&
+                      styles.categoryItemActive,
                   ]}
                   onPress={() => {
                     Keyboard.dismiss();

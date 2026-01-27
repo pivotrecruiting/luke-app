@@ -11,8 +11,12 @@ type LevelUpGateProps = {
  * Navigates to the LevelUp screen when a queued level-up is ready to be shown.
  */
 export const LevelUpGate = ({ currentRouteName }: LevelUpGateProps) => {
-  const { pendingLevelUps, consumeNextLevelUp, isOnboardingComplete, isAppLoading } =
-    useApp();
+  const {
+    pendingLevelUps,
+    consumeNextLevelUp,
+    isOnboardingComplete,
+    isAppLoading,
+  } = useApp();
   const isNavigatingRef = useRef(false);
 
   useEffect(() => {

@@ -1,5 +1,12 @@
 import React, { useState } from "react";
-import { Alert, View, Text, TextInput, StyleSheet, Pressable } from "react-native";
+import {
+  Alert,
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  Pressable,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { AntDesign } from "@expo/vector-icons";
@@ -62,10 +69,7 @@ export default function SignUpScreen() {
     const trimmedEmail = email.trim().toLowerCase();
 
     if (!trimmedEmail || !password) {
-      Alert.alert(
-        "Fehlende Angaben",
-        "Bitte E-Mail und Passwort ausfüllen.",
-      );
+      Alert.alert("Fehlende Angaben", "Bitte E-Mail und Passwort ausfüllen.");
       return;
     }
 
@@ -260,9 +264,7 @@ export default function SignUpScreen() {
       >
         <View style={styles.modalHandle} />
         <Text style={styles.modalTitle}>Workshop-Zugang freischalten</Text>
-        <Text style={styles.modalSubtitle}>
-          Gib dein persönlichen Code ein
-        </Text>
+        <Text style={styles.modalSubtitle}>Gib dein persönlichen Code ein</Text>
 
         <TextInput
           style={[
