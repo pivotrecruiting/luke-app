@@ -3,10 +3,11 @@ import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { styles } from "@/screens/styles/insights-screen.styles";
 import { formatCurrency } from "../utils/format";
-import type { MonthlyTrendT } from "../types/insights-types";
+import type { MonthlyTrendT, TimeFilterT } from "../types/insights-types";
 
 type TrendViewPropsT = {
   monthlyData: MonthlyTrendT[];
+  timeFilter: TimeFilterT;
   selectedMonth: number | null;
   onSelectMonth: (index: number | null) => void;
 };
@@ -16,6 +17,7 @@ type TrendViewPropsT = {
  */
 export const TrendView = ({
   monthlyData,
+  timeFilter,
   selectedMonth,
   onSelectMonth,
 }: TrendViewPropsT) => {
@@ -47,8 +49,24 @@ export const TrendView = ({
 
   const displayedData =
     selectedMonth !== null ? monthlyData[selectedMonth] : currentMonthData;
+  const timeFilterLabel = (() => {
+    switch (timeFilter) {
+      case "thisMonth":
+        return "Dieser Monat";
+      case "lastMonth":
+        return "Letzter Monat";
+      case "last3Months":
+        return "3 Monate";
+      case "last6Months":
+        return "6 Monate";
+      case "thisYear":
+        return "Dieses Jahr";
+      default:
+        return "Dieser Monat";
+    }
+  })();
   const displayLabel =
-    selectedMonth !== null ? monthlyData[selectedMonth].month : "Diesen Monat";
+    selectedMonth !== null ? monthlyData[selectedMonth].month : timeFilterLabel;
 
   const changePercent =
     previousMonthData && previousMonthData.amount > 0
@@ -72,7 +90,7 @@ export const TrendView = ({
       <View style={styles.summaryCard}>
         <View style={styles.trendHeader}>
           <Text style={styles.summaryTitle}>Ausgaben-Entwicklung</Text>
-          <Text style={styles.trendSubtitle}>Letzte 6 Monate</Text>
+          <Text style={styles.trendSubtitle}>{timeFilterLabel}</Text>
         </View>
 
         <View style={styles.trendStatsRow}>
@@ -118,8 +136,8 @@ export const TrendView = ({
               const isActive =
                 !isZero && (isSelected || (isCurrentMonth && !hasSelection));
               const barColors = isActive
-                ? ["#5B6BBE", "#3B4B9E"]
-                : ["#A5B4FC", "#7B8CDE"];
+                ? (["#5B6BBE", "#3B4B9E"] as const)
+                : (["#A5B4FC", "#7B8CDE"] as const);
 
               return (
                 <Pressable

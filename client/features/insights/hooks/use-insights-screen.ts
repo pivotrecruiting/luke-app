@@ -35,7 +35,6 @@ type UseInsightsScreenReturnT = {
     selectedCategory: string | null;
     selectedTrendMonth: number | null;
     selectedTimeFilter: TimeFilterT;
-    selectedCostFilters: string[];
     filterModalVisible: boolean;
     incomeModalVisible: boolean;
     expenseModalVisible: boolean;
@@ -54,6 +53,7 @@ type UseInsightsScreenReturnT = {
     filteredCategories: CategoryT[];
     totalCategoryExpenses: number;
     activeFilterCount: number;
+    filteredMonthlyTrendData: ReturnType<typeof useApp>["monthlyTrendData"];
   };
   actions: {
     setActiveTab: (value: InsightsTabT) => void;
@@ -61,9 +61,6 @@ type UseInsightsScreenReturnT = {
     setSelectedCategory: (value: string | null) => void;
     setSelectedTrendMonth: (value: number | null) => void;
     setSelectedTimeFilter: (value: TimeFilterT) => void;
-    setSelectedCostFilters: (value: string[]) => void;
-    toggleCostFilter: (value: string) => void;
-    clearCostFilters: () => void;
     setFilterModalVisible: (value: boolean) => void;
     setIncomeModalVisible: (value: boolean) => void;
     setExpenseModalVisible: (value: boolean) => void;
@@ -88,7 +85,7 @@ type UseInsightsScreenReturnT = {
     getIconForExpenseType: (typeName: string) => string;
   };
   refs: {
-    scrollViewRef: RefObject<ScrollView>;
+    scrollViewRef: RefObject<ScrollView | null>;
   };
 };
 
@@ -118,7 +115,6 @@ export const useInsightsScreen = (): UseInsightsScreenReturnT => {
   );
   const [selectedTimeFilter, setSelectedTimeFilter] =
     useState<TimeFilterT>("thisMonth");
-  const [selectedCostFilters, setSelectedCostFilters] = useState<string[]>([]);
   const [incomeModalVisible, setIncomeModalVisible] = useState(false);
   const [editingIncomeId, setEditingIncomeId] = useState<string | null>(null);
   const [selectedIncomeType, setSelectedIncomeType] = useState<string | null>(
@@ -168,20 +164,13 @@ export const useInsightsScreen = (): UseInsightsScreenReturnT => {
       }
     });
 
-    let categories = Object.entries(categoryTotals).map(([name, amount]) => ({
+    const categories = Object.entries(categoryTotals).map(([name, amount]) => ({
       name,
       amount,
       color: CATEGORY_COLORS[name] || "#7B8CDE",
     }));
-
-    if (selectedCostFilters.length > 0) {
-      categories = categories.filter((cat) =>
-        selectedCostFilters.includes(cat.name),
-      );
-    }
-
     return categories;
-  }, [budgets, selectedCostFilters, selectedTimeFilter]);
+  }, [budgets, selectedTimeFilter]);
 
   useEffect(() => {
     if (
@@ -196,8 +185,7 @@ export const useInsightsScreen = (): UseInsightsScreenReturnT => {
     return filteredCategories.reduce((sum, cat) => sum + cat.amount, 0);
   }, [filteredCategories]);
 
-  const activeFilterCount =
-    selectedCostFilters.length + (selectedTimeFilter !== "thisMonth" ? 1 : 0);
+  const activeFilterCount = selectedTimeFilter !== "thisMonth" ? 1 : 0;
 
   const handleCategoryPress = useCallback((categoryName: string) => {
     setSelectedCategory((prev) =>
@@ -205,17 +193,23 @@ export const useInsightsScreen = (): UseInsightsScreenReturnT => {
     );
   }, []);
 
-  const toggleCostFilter = useCallback((value: string) => {
-    setSelectedCostFilters((prev) =>
-      prev.includes(value)
-        ? prev.filter((item) => item !== value)
-        : [...prev, value],
-    );
-  }, []);
+  const filteredMonthlyTrendData = useMemo(() => {
+    if (monthlyTrendData.length === 0) return [];
+    const { start, end } = getDateRangeForFilter(selectedTimeFilter);
+    return monthlyTrendData.filter((item) => {
+      const monthStart = new Date(`${item.monthStart}T00:00:00Z`);
+      return monthStart >= start && monthStart <= end;
+    });
+  }, [monthlyTrendData, selectedTimeFilter]);
 
-  const clearCostFilters = useCallback(() => {
-    setSelectedCostFilters([]);
-  }, []);
+  useEffect(() => {
+    if (
+      selectedTrendMonth !== null &&
+      selectedTrendMonth >= filteredMonthlyTrendData.length
+    ) {
+      setSelectedTrendMonth(null);
+    }
+  }, [filteredMonthlyTrendData.length, selectedTrendMonth]);
 
   const openAddIncomeModal = useCallback(() => {
     setEditingIncomeId(null);
@@ -378,7 +372,6 @@ export const useInsightsScreen = (): UseInsightsScreenReturnT => {
       selectedCategory,
       selectedTrendMonth,
       selectedTimeFilter,
-      selectedCostFilters,
       filterModalVisible,
       incomeModalVisible,
       expenseModalVisible,
@@ -397,6 +390,7 @@ export const useInsightsScreen = (): UseInsightsScreenReturnT => {
       filteredCategories,
       totalCategoryExpenses,
       activeFilterCount,
+      filteredMonthlyTrendData,
     },
     actions: {
       setActiveTab,
@@ -404,9 +398,6 @@ export const useInsightsScreen = (): UseInsightsScreenReturnT => {
       setSelectedCategory,
       setSelectedTrendMonth,
       setSelectedTimeFilter,
-      setSelectedCostFilters,
-      toggleCostFilter,
-      clearCostFilters,
       setFilterModalVisible,
       setIncomeModalVisible,
       setExpenseModalVisible,

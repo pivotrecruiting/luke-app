@@ -10,10 +10,11 @@ import type {
   CategoryT,
   InsightsFilterT,
   MonthlyTrendT,
+  TimeFilterT,
 } from "../types/insights-types";
 
 type ExpensesTabPropsT = {
-  scrollViewRef: RefObject<ScrollView>;
+  scrollViewRef: RefObject<ScrollView | null>;
   bottomInset: number;
   activeFilter: InsightsFilterT;
   activeFilterCount: number;
@@ -25,6 +26,7 @@ type ExpensesTabPropsT = {
   onSelectCategory: (name: string | null) => void;
   onToggleCategory: (name: string) => void;
   monthlyTrendData: MonthlyTrendT[];
+  selectedTimeFilter: TimeFilterT;
   selectedTrendMonth: number | null;
   onSelectTrendMonth: (index: number | null) => void;
   totalIncome: number;
@@ -47,6 +49,7 @@ export const ExpensesTab = ({
   onSelectCategory,
   onToggleCategory,
   monthlyTrendData,
+  selectedTimeFilter,
   selectedTrendMonth,
   onSelectTrendMonth,
   totalIncome,
@@ -195,6 +198,7 @@ export const ExpensesTab = ({
         <View key="trend" style={styles.pagerPage}>
           <TrendView
             monthlyData={monthlyTrendData}
+            timeFilter={selectedTimeFilter}
             selectedMonth={selectedTrendMonth}
             onSelectMonth={onSelectTrendMonth}
           />

@@ -82,6 +82,7 @@ const mapMonthlyTrendData = (
     return {
       month: GERMAN_MONTHS_SHORT[monthIndex] ?? "",
       monthIndex,
+      monthStart: row.month_start,
       amount: fromCents(row.amount_cents),
     };
   });
@@ -148,7 +149,7 @@ export const fetchAppData = async (
       .order("transaction_at", { ascending: false }),
     supabase.rpc("get_monthly_expense_trend", {
       target_user_id: userId,
-      months_back: 6,
+      months_back: 12,
     }),
   ]);
 

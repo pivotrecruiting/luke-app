@@ -4,6 +4,7 @@ import { CATEGORY_COLORS, GERMAN_MONTHS_SHORT } from "@/context/app/constants";
 export type MonthlyTrendDatumT = {
   month: string;
   monthIndex: number;
+  monthStart: string;
   amount: number;
 };
 
@@ -54,10 +55,12 @@ export const getMonthlyTrendData = (
   totalVariableExpenses: number,
 ): MonthlyTrendDatumT[] => {
   const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
   const months: MonthlyTrendDatumT[] = [];
 
   for (let i = 5; i >= 0; i--) {
-    const monthIndex = (currentMonth - i + 12) % 12;
+    const monthDate = new Date(currentYear, currentMonth - i, 1);
+    const monthIndex = monthDate.getMonth();
     let amount: number;
 
     if (i === 0) {
@@ -73,6 +76,7 @@ export const getMonthlyTrendData = (
     months.push({
       month: GERMAN_MONTHS_SHORT[monthIndex],
       monthIndex,
+      monthStart: monthDate.toISOString().slice(0, 10),
       amount: Math.round(amount * 100) / 100,
     });
   }

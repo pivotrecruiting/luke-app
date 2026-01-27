@@ -571,23 +571,6 @@ export const styles = StyleSheet.create({
   filterOptionTextSelected: {
     color: "#7340fd",
   },
-  filterOptionDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  clearFiltersButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    paddingVertical: 12,
-    marginBottom: 16,
-  },
-  clearFiltersText: {
-    fontSize: 14,
-    color: "#6B7280",
-  },
   modalDoneButton: {
     backgroundColor: "#7340fd",
     borderRadius: 28,

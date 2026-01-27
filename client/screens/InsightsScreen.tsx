@@ -39,7 +39,8 @@ export default function InsightsScreen() {
           selectedCategory={state.selectedCategory}
           onSelectCategory={actions.setSelectedCategory}
           onToggleCategory={actions.handleCategoryPress}
-          monthlyTrendData={appData.monthlyTrendData}
+          monthlyTrendData={derived.filteredMonthlyTrendData}
+          selectedTimeFilter={state.selectedTimeFilter}
           selectedTrendMonth={state.selectedTrendMonth}
           onSelectTrendMonth={actions.setSelectedTrendMonth}
           totalIncome={appData.totalIncome}
@@ -64,12 +65,8 @@ export default function InsightsScreen() {
         visible={state.filterModalVisible}
         bottomInset={insets.bottom}
         selectedTimeFilter={state.selectedTimeFilter}
-        selectedCostFilters={state.selectedCostFilters}
-        budgets={appData.budgets}
         onClose={() => actions.setFilterModalVisible(false)}
         onSelectTimeFilter={actions.setSelectedTimeFilter}
-        onToggleCostFilter={actions.toggleCostFilter}
-        onClearCostFilters={actions.clearCostFilters}
       />
 
       <IncomeModal

@@ -80,6 +80,7 @@ export type InsightCategory = {
 export type MonthlyTrendData = {
   month: string;
   monthIndex: number;
+  monthStart: string;
   amount: number;
 };
 
