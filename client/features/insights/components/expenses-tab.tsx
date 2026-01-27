@@ -190,11 +190,6 @@ export const ExpensesTab = ({
 
         <View key="income" style={styles.pagerPage}>
           <IncomeExpensesView income={totalIncome} expenses={totalExpenses} />
-          <View style={styles.pageIndicatorStandalone}>
-            <View style={styles.pageDot} />
-            <View style={[styles.pageDot, styles.pageDotActive]} />
-            <View style={styles.pageDot} />
-          </View>
         </View>
 
         <View key="trend" style={styles.pagerPage}>
@@ -203,11 +198,6 @@ export const ExpensesTab = ({
             selectedMonth={selectedTrendMonth}
             onSelectMonth={onSelectTrendMonth}
           />
-          <View style={styles.pageIndicatorStandalone}>
-            <View style={styles.pageDot} />
-            <View style={styles.pageDot} />
-            <View style={[styles.pageDot, styles.pageDotActive]} />
-          </View>
         </View>
       </PagerView>
     </ScrollView>

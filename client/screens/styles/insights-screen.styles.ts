@@ -179,28 +179,6 @@ export const styles = StyleSheet.create({
   pagerPage: {
     flex: 1,
   },
-  pageIndicator: {
-    flexDirection: "row",
-    gap: 6,
-    marginTop: 20,
-    justifyContent: "center",
-  },
-  pageIndicatorStandalone: {
-    flexDirection: "row",
-    gap: 6,
-    marginTop: 20,
-    justifyContent: "center",
-    alignSelf: "center",
-  },
-  pageDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#E5E7EB",
-  },
-  pageDotActive: {
-    backgroundColor: "#3B5BDB",
-  },
   incomeExpensesContainer: {
     gap: 16,
   },

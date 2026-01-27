@@ -60,11 +60,6 @@ export const CategoriesPanel = ({
         })}
       </View>
 
-      <View style={styles.pageIndicator}>
-        <View style={[styles.pageDot, styles.pageDotActive]} />
-        <View style={styles.pageDot} />
-        <View style={styles.pageDot} />
-      </View>
     </View>
   );
 };
