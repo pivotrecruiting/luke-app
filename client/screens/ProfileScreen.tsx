@@ -26,7 +26,8 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
-  const { levels, userProgress, balance, currency, userName } = useApp();
+  const { levels, userProgress, transactionBalance, currency, userName } =
+    useApp();
   const { user } = useAuth();
   const [manageModalVisible, setManageModalVisible] = useState(false);
   const [deleteAccountModalVisible, setDeleteAccountModalVisible] = useState(false);
@@ -64,8 +65,8 @@ export default function ProfileScreen() {
   const fallbackLevel = currentLevel?.levelNumber ?? 1;
   const profileName = firstName ?? `Level ${fallbackLevel}`;
   const levelEmoji = currentLevel?.emoji ?? "🦊";
-  const savingsLabel = balance >= 0 ? "Gespart" : "Ausgegeben";
-  const savingsAmount = formatCurrency(Math.abs(balance));
+  const savingsLabel = transactionBalance >= 0 ? "Gespart" : "Ausgegeben";
+  const savingsAmount = formatCurrency(Math.abs(transactionBalance));
   const daysSince = formatDaysSince(user?.created_at);
   const highestStreakValue = userProgress?.longestStreak ?? 0;
   const highestStreak = `${highestStreakValue} ${

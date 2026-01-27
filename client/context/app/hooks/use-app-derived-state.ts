@@ -16,6 +16,9 @@ import {
   getTotalFixedExpenses,
   getTotalIncome,
   getTotalVariableExpenses,
+  getTransactionBalance,
+  getTransactionExpenseTotal,
+  getTransactionIncomeTotal,
 } from "@/context/app/selectors/financial-selectors";
 import {
   getInsightCategories,
@@ -43,6 +46,9 @@ type DerivedStateT = {
   totalExpenses: number;
   monthlyBudget: number;
   balance: number;
+  transactionIncomeTotal: number;
+  transactionExpenseTotal: number;
+  transactionBalance: number;
   savingsRate: number;
   insightCategories: InsightCategory[];
   monthlyTrendData: MonthlyTrendData[];
@@ -95,6 +101,21 @@ export const useAppDerivedState = ({
     [monthlyBudget, totalVariableExpenses],
   );
 
+  const transactionIncomeTotal = useMemo(
+    () => getTransactionIncomeTotal(transactions),
+    [transactions],
+  );
+
+  const transactionExpenseTotal = useMemo(
+    () => getTransactionExpenseTotal(transactions),
+    [transactions],
+  );
+
+  const transactionBalance = useMemo(
+    () => getTransactionBalance(transactions),
+    [transactions],
+  );
+
   const savingsRate = useMemo(
     () => getSavingsRate(totalIncome, totalExpenses),
     [totalIncome, totalExpenses],
@@ -124,6 +145,9 @@ export const useAppDerivedState = ({
     totalExpenses,
     monthlyBudget,
     balance,
+    transactionIncomeTotal,
+    transactionExpenseTotal,
+    transactionBalance,
     savingsRate,
     insightCategories,
     monthlyTrendData,

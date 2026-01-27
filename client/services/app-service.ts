@@ -99,6 +99,178 @@ const ensureUserRow = async (userId: string): Promise<void> => {
   }
 };
 
+const getMonthBounds = (date: Date): { start: Date; end: Date } => {
+  const start = new Date(date.getFullYear(), date.getMonth(), 1, 0, 0, 0, 0);
+  const end = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999);
+  return { start, end };
+};
+
+const clampDayOfMonth = (year: number, month: number, day: number): number => {
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  return Math.min(day, daysInMonth);
+};
+
+const buildRecurringTransactionDate = (
+  monthStart: Date,
+  startDate?: string | null,
+): Date => {
+  const targetDay = startDate ? new Date(startDate).getDate() : 1;
+  const day = clampDayOfMonth(
+    monthStart.getFullYear(),
+    monthStart.getMonth(),
+    targetDay,
+  );
+  const date = new Date(
+    monthStart.getFullYear(),
+    monthStart.getMonth(),
+    day,
+    12,
+    0,
+    0,
+    0,
+  );
+  return date;
+};
+
+const isActiveInMonth = (
+  monthStart: Date,
+  monthEnd: Date,
+  startDate?: string | null,
+  endDate?: string | null,
+): boolean => {
+  if (startDate) {
+    const start = new Date(startDate);
+    if (start > monthEnd) return false;
+  }
+  if (endDate) {
+    const end = new Date(endDate);
+    if (end < monthStart) return false;
+  }
+  return true;
+};
+
+const ensureRecurringTransactionsForMonth = async ({
+  userId,
+  incomeSources,
+  fixedExpenses,
+  incomeCategories,
+  existingTransactions,
+  defaultCurrency,
+}: {
+  userId: string;
+  incomeSources: IncomeSourceRow[];
+  fixedExpenses: FixedExpenseRow[];
+  incomeCategories: IncomeCategoryRow[];
+  existingTransactions: TransactionRow[];
+  defaultCurrency: CurrencyCode;
+}): Promise<TransactionRow[]> => {
+  const now = new Date();
+  const { start: monthStart, end: monthEnd } = getMonthBounds(now);
+  const normalizeName = (value: string) => value.trim().toLowerCase();
+
+  const recurringKeys = new Set(
+    existingTransactions
+      .filter((tx) => {
+        if (tx.source !== "recurring") return false;
+        const txDate = new Date(tx.transaction_at);
+        return txDate >= monthStart && txDate <= monthEnd;
+      })
+      .map((tx) => `${tx.type}:${normalizeName(tx.name)}`),
+  );
+
+  const incomeCategoryMap = new Map<string, string>();
+  incomeCategories.forEach((category) => {
+    incomeCategoryMap.set(normalizeName(category.name), category.id);
+  });
+
+  const payloads: {
+    user_id: string;
+    type: "income" | "expense";
+    amount_cents: number;
+    currency: CurrencyCode;
+    name: string;
+    category_name: string | null;
+    income_category_id?: string | null;
+    transaction_at: string;
+    source: "recurring";
+  }[] = [];
+
+  incomeSources.forEach((source) => {
+    if (source.amount_cents <= 0) return;
+    if (
+      !isActiveInMonth(
+        monthStart,
+        monthEnd,
+        source.start_date,
+        source.end_date,
+      )
+    )
+      return;
+    const key = `income:${normalizeName(source.name)}`;
+    if (recurringKeys.has(key)) return;
+    const transactionDate = buildRecurringTransactionDate(
+      monthStart,
+      source.start_date,
+    );
+    const incomeCategoryId =
+      incomeCategoryMap.get(normalizeName(source.name)) ?? null;
+    payloads.push({
+      user_id: userId,
+      type: "income",
+      amount_cents: source.amount_cents,
+      currency: (source.currency as CurrencyCode | null) ?? defaultCurrency,
+      name: source.name,
+      category_name: source.name,
+      income_category_id: incomeCategoryId,
+      transaction_at: transactionDate.toISOString(),
+      source: "recurring",
+    });
+  });
+
+  fixedExpenses.forEach((expense) => {
+    if (expense.amount_cents <= 0) return;
+    if (
+      !isActiveInMonth(
+        monthStart,
+        monthEnd,
+        expense.start_date,
+        expense.end_date,
+      )
+    )
+      return;
+    const key = `expense:${normalizeName(expense.name)}`;
+    if (recurringKeys.has(key)) return;
+    const transactionDate = buildRecurringTransactionDate(
+      monthStart,
+      expense.start_date,
+    );
+    payloads.push({
+      user_id: userId,
+      type: "expense",
+      amount_cents: expense.amount_cents,
+      currency: (expense.currency as CurrencyCode | null) ?? defaultCurrency,
+      name: expense.name,
+      category_name: expense.name,
+      transaction_at: transactionDate.toISOString(),
+      source: "recurring",
+    });
+  });
+
+  if (payloads.length === 0) return [];
+
+  const { data, error } = await supabase
+    .from("transactions")
+    .insert(payloads)
+    .select(
+      "id, type, amount_cents, name, category_name, budget_id, budget_category_id, transaction_at, source",
+    );
+  if (error || !data) {
+    throw error ?? new Error("No recurring transactions returned");
+  }
+
+  return data as TransactionRow[];
+};
+
 export const fetchAppData = async (
   userId: string,
   onboardingVersion: string,
@@ -131,11 +303,11 @@ export const fetchAppData = async (
     supabase.from("users").select("name").eq("id", userId).maybeSingle(),
     supabase
       .from("income_sources")
-      .select("id, name, amount_cents")
+      .select("id, name, amount_cents, currency, start_date, end_date")
       .eq("user_id", userId),
     supabase
       .from("fixed_expenses")
-      .select("id, name, amount_cents")
+      .select("id, name, amount_cents, currency, start_date, end_date")
       .eq("user_id", userId),
     supabase
       .from("goals")
@@ -160,7 +332,7 @@ export const fetchAppData = async (
     supabase
       .from("transactions")
       .select(
-        "id, type, amount_cents, name, category_name, budget_id, budget_category_id, transaction_at",
+        "id, type, amount_cents, name, category_name, budget_id, budget_category_id, transaction_at, source",
       )
       .eq("user_id", userId)
       .order("transaction_at", { ascending: false }),
@@ -206,27 +378,61 @@ export const fetchAppData = async (
   const incomeCategories = (incomeCategoriesRes.data ??
     []) as IncomeCategoryRow[];
 
-  const incomeEntries = mapIncomeEntries(
-    (incomeRes.data ?? []) as IncomeSourceRow[],
-  );
-  const expenseEntries = mapExpenseEntries(
-    (expenseRes.data ?? []) as FixedExpenseRow[],
-  );
+  const incomeSources = (incomeRes.data ?? []) as IncomeSourceRow[];
+  const fixedExpenses = (expenseRes.data ?? []) as FixedExpenseRow[];
+  const incomeEntries = mapIncomeEntries(incomeSources);
+  const expenseEntries = mapExpenseEntries(fixedExpenses);
   const goals = mapGoals(
     (goalsRes.data ?? []) as GoalRow[],
     (contributionsRes.data ?? []) as GoalContributionRow[],
   );
+  let recurringTransactions: TransactionRow[] = [];
+  try {
+    recurringTransactions = await ensureRecurringTransactionsForMonth({
+      userId,
+      incomeSources,
+      fixedExpenses,
+      incomeCategories,
+      existingTransactions: (transactionsRes.data ?? []) as TransactionRow[],
+      defaultCurrency: (profile?.currency as CurrencyCode | null) ?? "EUR",
+    });
+  } catch (error) {
+    console.warn("Failed to ensure recurring transactions:", error);
+  }
+
+  const combinedTransactions = [
+    ...((transactionsRes.data ?? []) as TransactionRow[]),
+    ...recurringTransactions,
+  ].sort(
+    (a, b) =>
+      new Date(b.transaction_at).getTime() -
+      new Date(a.transaction_at).getTime(),
+  );
+
   const { budgets, transactions } = mapBudgetsAndTransactions(
     (budgetsRes.data ?? []) as BudgetRow[],
     budgetCategories,
-    (transactionsRes.data ?? []) as TransactionRow[],
+    combinedTransactions,
   );
+  let monthlyTrendRows = (monthlyTrendRes.data ?? []) as MonthlyTrendRow[];
   if (monthlyTrendRes.error) {
     console.warn("Failed to load monthly trend data:", monthlyTrendRes.error);
   }
-  const monthlyTrendData = mapMonthlyTrendData(
-    (monthlyTrendRes.data ?? []) as MonthlyTrendRow[],
-  );
+  if (recurringTransactions.length > 0) {
+    const { data: refreshedTrend, error: refreshedError } = await supabase.rpc(
+      "get_monthly_expense_trend",
+      {
+        target_user_id: userId,
+        months_back: 12,
+      },
+    );
+    if (refreshedError) {
+      console.warn("Failed to refresh monthly trend data:", refreshedError);
+    } else if (refreshedTrend) {
+      monthlyTrendRows = refreshedTrend as MonthlyTrendRow[];
+    }
+  }
+  const monthlyTrendData = mapMonthlyTrendData(monthlyTrendRows);
 
   const userName =
     typeof user?.name === "string" ? user.name.trim() || null : null;
@@ -549,7 +755,7 @@ export const createTransaction = async (payload: {
   budget_category_id?: string | null;
   income_category_id?: string | null;
   transaction_at: string;
-  source: "manual";
+  source: "manual" | "recurring";
 }): Promise<string> => {
   const { data, error } = await supabase
     .from("transactions")

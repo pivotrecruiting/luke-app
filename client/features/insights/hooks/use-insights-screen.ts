@@ -211,12 +211,6 @@ export const useInsightsScreen = (): UseInsightsScreenReturnT => {
 
   const filteredComparisonTotals = useMemo(() => {
     const { start, end } = getDateRangeForFilter(selectedTimeFilter);
-    const monthCount =
-      (end.getFullYear() - start.getFullYear()) * 12 +
-      (end.getMonth() - start.getMonth()) +
-      1;
-    const normalizedMonths = Math.max(monthCount, 1);
-
     const { variableIncome, variableExpenses } = transactions.reduce(
       (acc, tx) => {
         const txDate = tx.timestamp
@@ -233,25 +227,11 @@ export const useInsightsScreen = (): UseInsightsScreenReturnT => {
       { variableIncome: 0, variableExpenses: 0 },
     );
 
-    const fixedIncome = incomeEntries.reduce(
-      (sum, entry) => sum + entry.amount,
-      0,
-    );
-    const fixedExpenses = expenseEntries.reduce(
-      (sum, entry) => sum + entry.amount,
-      0,
-    );
-
-    const totalIncome = variableIncome + fixedIncome * normalizedMonths;
-    const totalExpenses = variableExpenses + fixedExpenses * normalizedMonths;
-
     return {
-      income: totalIncome,
-      expenses: totalExpenses,
+      income: variableIncome,
+      expenses: variableExpenses,
     };
   }, [
-    expenseEntries,
-    incomeEntries,
     selectedTimeFilter,
     transactions,
   ]);

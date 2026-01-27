@@ -31,9 +31,9 @@ export default function HomeScreen() {
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const {
     userName,
-    balance,
-    totalIncome,
-    totalExpenses,
+    transactionBalance,
+    transactionIncomeTotal,
+    transactionExpenseTotal,
     weeklySpending,
     transactions,
     selectedWeekOffset,
@@ -149,10 +149,13 @@ export default function HomeScreen() {
           <Text
             style={[
               styles.balanceAmount,
-              balance < 0 && styles.balanceAmountNegative,
+              transactionBalance < 0 && styles.balanceAmountNegative,
             ]}
           >
-            € {balance.toLocaleString("de-DE", { minimumFractionDigits: 2 })}
+            €{" "}
+            {transactionBalance.toLocaleString("de-DE", {
+              minimumFractionDigits: 2,
+            })}
           </Text>
         </View>
 
@@ -184,7 +187,7 @@ export default function HomeScreen() {
             <Text style={styles.cardLabel}>Einnahmen</Text>
             <Text style={styles.incomeAmount}>
               €{" "}
-              {totalIncome.toLocaleString("de-DE", {
+              {transactionIncomeTotal.toLocaleString("de-DE", {
                 minimumFractionDigits: 2,
               })}
             </Text>
@@ -200,7 +203,7 @@ export default function HomeScreen() {
             <Text style={styles.cardLabel}>Ausgaben</Text>
             <Text style={styles.expenseAmount}>
               €{" "}
-              {totalExpenses.toLocaleString("de-DE", {
+              {transactionExpenseTotal.toLocaleString("de-DE", {
                 minimumFractionDigits: 2,
               })}
             </Text>

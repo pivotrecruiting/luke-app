@@ -105,6 +105,9 @@ export type AppState = {
   totalExpenses: number;
   monthlyBudget: number;
   balance: number;
+  transactionIncomeTotal: number;
+  transactionExpenseTotal: number;
+  transactionBalance: number;
   savingsRate: number;
   monthlyTrendData: MonthlyTrendData[];
   selectedWeekOffset: number;

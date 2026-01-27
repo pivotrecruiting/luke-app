@@ -18,12 +18,18 @@ export type IncomeSourceRow = {
   id: string;
   name: string;
   amount_cents: number;
+  currency?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
 };
 
 export type FixedExpenseRow = {
   id: string;
   name: string;
   amount_cents: number;
+  currency?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
 };
 
 export type GoalRow = {
@@ -71,6 +77,7 @@ export type TransactionRow = {
   category_name: string | null;
   budget_id: string | null;
   budget_category_id: string | null;
+  source?: string | null;
   transaction_at: string;
 };
 

@@ -1,4 +1,9 @@
-import type { Budget, ExpenseEntry, IncomeEntry } from "@/context/app/types";
+import type {
+  Budget,
+  ExpenseEntry,
+  IncomeEntry,
+  Transaction,
+} from "@/context/app/types";
 
 export const getTotalIncome = (incomeEntries: IncomeEntry[]): number =>
   incomeEntries.reduce((sum, entry) => sum + entry.amount, 0);
@@ -9,6 +14,27 @@ export const getTotalFixedExpenses = (
 
 export const getTotalVariableExpenses = (budgets: Budget[]): number =>
   budgets.reduce((sum, budget) => sum + budget.current, 0);
+
+export const getTransactionIncomeTotal = (
+  transactions: Transaction[],
+): number =>
+  transactions.reduce(
+    (sum, transaction) =>
+      transaction.amount > 0 ? sum + transaction.amount : sum,
+    0,
+  );
+
+export const getTransactionExpenseTotal = (
+  transactions: Transaction[],
+): number =>
+  transactions.reduce(
+    (sum, transaction) =>
+      transaction.amount < 0 ? sum + Math.abs(transaction.amount) : sum,
+    0,
+  );
+
+export const getTransactionBalance = (transactions: Transaction[]): number =>
+  transactions.reduce((sum, transaction) => sum + transaction.amount, 0);
 
 export const getMonthlyBudget = (
   totalIncome: number,
