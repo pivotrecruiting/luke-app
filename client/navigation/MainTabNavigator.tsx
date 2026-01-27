@@ -76,7 +76,7 @@ const ui = {
   },
   metrics: {
     tabBarHeight: 60,
-    tabItemMinWidth: 80,
+    tabItemMinWidth: 70,
     iconSize: 18,
     addIconSize: 28,
     addItemSize: 56,
