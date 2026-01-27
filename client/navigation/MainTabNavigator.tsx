@@ -4,6 +4,7 @@ import {
   createBottomTabNavigator,
   type BottomTabBarProps,
 } from "@react-navigation/bottom-tabs";
+import { BlurView } from "expo-blur";
 import { Feather } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import HomeScreen from "@/screens/HomeScreen";
@@ -45,37 +46,45 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
  */
 const SimpleTabBar = ({ state, navigation }: BottomTabBarProps) => {
   return (
-    <SafeAreaView edges={["bottom"]} style={styles.tabBar}>
-      {state.routes.map((route, index) => {
-        const isFocused = state.index === index;
-        const routeName = route.name as keyof MainTabParamList;
-        const iconName = TAB_ICONS[routeName];
-        const label = TAB_LABELS[routeName];
+    <SafeAreaView edges={["bottom"]} style={styles.safeArea}>
+      <View style={styles.tabBar}>
+        <BlurView intensity={35} tint="light" style={StyleSheet.absoluteFill} />
+        <View style={styles.glassTint} pointerEvents="none" />
+        <View style={styles.tabRow}>
+          {state.routes.map((route, index) => {
+            const isFocused = state.index === index;
+            const routeName = route.name as keyof MainTabParamList;
+            const iconName = TAB_ICONS[routeName];
+            const label = TAB_LABELS[routeName];
 
-        const handlePress = () => {
-          if (isFocused) return;
-          navigation.navigate(route.name as never);
-        };
+            const handlePress = () => {
+              if (isFocused) return;
+              navigation.navigate(route.name as never);
+            };
 
-        return (
-          <TouchableOpacity
-            key={route.key}
-            accessibilityRole="button"
-            accessibilityState={isFocused ? { selected: true } : {}}
-            onPress={handlePress}
-            style={styles.tabItem}
-          >
-            <Feather
-              name={iconName}
-              size={18}
-              color={isFocused ? "#111827" : "#6B7280"}
-            />
-            <Text style={[styles.tabLabel, isFocused && styles.tabLabelActive]}>
-              {label}
-            </Text>
-          </TouchableOpacity>
-        );
-      })}
+            return (
+              <TouchableOpacity
+                key={route.key}
+                accessibilityRole="button"
+                accessibilityState={isFocused ? { selected: true } : {}}
+                onPress={handlePress}
+                style={styles.tabItem}
+              >
+                <Feather
+                  name={iconName}
+                  size={18}
+                  color={isFocused ? "#0F172A" : "#64748B"}
+                />
+                <Text
+                  style={[styles.tabLabel, isFocused && styles.tabLabelActive]}
+                >
+                  {label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </View>
     </SafeAreaView>
   );
 };
@@ -101,29 +110,50 @@ export default function MainTabNavigatorNew() {
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    backgroundColor: "transparent",
+  },
   tabBar: {
+    height: 60,
+    borderRadius: 30,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.5)",
+    backgroundColor: "rgba(255, 255, 255, 0.4)",
+    shadowColor: "#0B1220",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
+    elevation: 12,
+  },
+  glassTint: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(255, 255, 255, 0.25)",
+  },
+  tabRow: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-around",
-    borderTopWidth: 1,
-    borderTopColor: "#E5E7EB",
-    backgroundColor: "#FFFFFF",
-    paddingTop: 8,
-    paddingBottom: 8,
+    paddingHorizontal: 10,
   },
   tabItem: {
     alignItems: "center",
     justifyContent: "center",
     minWidth: 60,
     paddingVertical: 6,
+    backgroundColor: "transparent",
+    borderRadius: 24,
   },
   tabLabel: {
     fontSize: 11,
     fontWeight: "500",
-    color: "#6B7280",
-    marginTop: 4,
+    color: "#64748B",
+    marginTop: 3,
   },
   tabLabelActive: {
-    color: "#111827",
+    color: "#0F172A",
   },
 });
