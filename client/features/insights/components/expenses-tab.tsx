@@ -1,6 +1,7 @@
-import type { RefObject } from "react";
+import { useEffect, useMemo, useRef, type RefObject } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import PagerView from "react-native-pager-view";
 import { styles } from "@/screens/styles/insights-screen.styles";
 import { CategoriesPanel } from "./categories-panel";
 import { IncomeExpensesView } from "./income-expenses-view";
@@ -51,6 +52,36 @@ export const ExpensesTab = ({
   totalIncome,
   totalExpenses,
 }: ExpensesTabPropsT) => {
+  const pagerRef = useRef<PagerView>(null);
+
+  const filterOrder = useMemo<InsightsFilterT[]>(
+    () => ["kategorien", "income", "trend"],
+    [],
+  );
+
+  const filterToIndex = (filter: InsightsFilterT) => {
+    return filterOrder.indexOf(filter);
+  };
+
+  const indexToFilter = (index: number) => {
+    return filterOrder[index] ?? "kategorien";
+  };
+
+  useEffect(() => {
+    const targetIndex = filterToIndex(activeFilter);
+    if (targetIndex >= 0) {
+      pagerRef.current?.setPage(targetIndex);
+    }
+  }, [activeFilter]);
+
+  const handleTabPress = (filter: InsightsFilterT) => {
+    onChangeFilter(filter);
+    const targetIndex = filterToIndex(filter);
+    if (targetIndex >= 0) {
+      pagerRef.current?.setPage(targetIndex);
+    }
+  };
+
   return (
     <ScrollView
       ref={scrollViewRef}
@@ -91,7 +122,7 @@ export const ExpensesTab = ({
             styles.tabButton,
             activeFilter === "kategorien" && styles.tabButtonActive,
           ]}
-          onPress={() => onChangeFilter("kategorien")}
+          onPress={() => handleTabPress("kategorien")}
         >
           <Text
             style={[
@@ -107,7 +138,7 @@ export const ExpensesTab = ({
             styles.tabButton,
             activeFilter === "income" && styles.tabButtonActive,
           ]}
-          onPress={() => onChangeFilter("income")}
+          onPress={() => handleTabPress("income")}
         >
           <Text
             style={[
@@ -123,7 +154,7 @@ export const ExpensesTab = ({
             styles.tabButton,
             activeFilter === "trend" && styles.tabButtonActive,
           ]}
-          onPress={() => onChangeFilter("trend")}
+          onPress={() => handleTabPress("trend")}
         >
           <Text
             style={[
@@ -136,45 +167,49 @@ export const ExpensesTab = ({
         </Pressable>
       </View>
 
-      <View style={styles.pagerView}>
-        {activeFilter === "kategorien" && (
-          <View style={styles.pagerPage}>
-            <CategoriesPanel
-              categories={categories}
-              total={totalCategoryExpenses}
-              selectedCategory={selectedCategory}
-              onSelectCategory={onSelectCategory}
-              onToggleCategory={onToggleCategory}
-            />
-          </View>
-        )}
+      <PagerView
+        ref={pagerRef}
+        style={styles.pagerView}
+        initialPage={filterToIndex(activeFilter)}
+        onPageSelected={(event) => {
+          const nextFilter = indexToFilter(event.nativeEvent.position);
+          if (nextFilter !== activeFilter) {
+            onChangeFilter(nextFilter);
+          }
+        }}
+      >
+        <View key="kategorien" style={styles.pagerPage}>
+          <CategoriesPanel
+            categories={categories}
+            total={totalCategoryExpenses}
+            selectedCategory={selectedCategory}
+            onSelectCategory={onSelectCategory}
+            onToggleCategory={onToggleCategory}
+          />
+        </View>
 
-        {activeFilter === "income" && (
-          <View style={styles.pagerPage}>
-            <IncomeExpensesView income={totalIncome} expenses={totalExpenses} />
-            <View style={styles.pageIndicatorStandalone}>
-              <View style={styles.pageDot} />
-              <View style={[styles.pageDot, styles.pageDotActive]} />
-              <View style={styles.pageDot} />
-            </View>
+        <View key="income" style={styles.pagerPage}>
+          <IncomeExpensesView income={totalIncome} expenses={totalExpenses} />
+          <View style={styles.pageIndicatorStandalone}>
+            <View style={styles.pageDot} />
+            <View style={[styles.pageDot, styles.pageDotActive]} />
+            <View style={styles.pageDot} />
           </View>
-        )}
+        </View>
 
-        {activeFilter === "trend" && (
-          <View style={styles.pagerPage}>
-            <TrendView
-              monthlyData={monthlyTrendData}
-              selectedMonth={selectedTrendMonth}
-              onSelectMonth={onSelectTrendMonth}
-            />
-            <View style={styles.pageIndicatorStandalone}>
-              <View style={styles.pageDot} />
-              <View style={styles.pageDot} />
-              <View style={[styles.pageDot, styles.pageDotActive]} />
-            </View>
+        <View key="trend" style={styles.pagerPage}>
+          <TrendView
+            monthlyData={monthlyTrendData}
+            selectedMonth={selectedTrendMonth}
+            onSelectMonth={onSelectTrendMonth}
+          />
+          <View style={styles.pageIndicatorStandalone}>
+            <View style={styles.pageDot} />
+            <View style={styles.pageDot} />
+            <View style={[styles.pageDot, styles.pageDotActive]} />
           </View>
-        )}
-      </View>
+        </View>
+      </PagerView>
     </ScrollView>
   );
 };
