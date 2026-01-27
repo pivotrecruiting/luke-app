@@ -7,6 +7,7 @@ import {
 import { BlurView } from "expo-blur";
 import { Feather } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Svg, { Line } from "react-native-svg";
 
 import HomeScreen from "@/screens/HomeScreen";
 import InsightsScreen from "@/screens/InsightsScreen";
@@ -80,7 +81,7 @@ const ui = {
     addIconSize: 24,
     addItemSize: 56,
     addItemElevation: 8,
-    addItemTopOffset: 20,
+    addItemTopOffset: 16,
     labelTopGap: 3,
     safe: {
       bottomInset: 16, // Abstand unterhalb der Tabbar (innerhalb SafeAreaView)
@@ -90,7 +91,7 @@ const ui = {
       innerHorizontalPadding: 10, // padding innerhalb der Tabbar
     },
     blur: {
-      intensity: 35,
+      intensity: 50,
       tint: "light" as const,
     },
   },
@@ -187,13 +188,34 @@ const SimpleTabBar = memo(({ state, navigation }: BottomTabBarProps) => {
             style={[s.addItem, isAddFocused && s.addItemActive]}
             activeOpacity={0.75}
           >
-            <Feather
-              name={TAB_ICONS.Add}
-              size={ui.metrics.addIconSize}
-              color={
-                isAddFocused ? ui.color.text.active : ui.color.text.inactive
-              }
-            />
+            <Svg
+              width={ui.metrics.addIconSize}
+              height={ui.metrics.addIconSize}
+              viewBox="0 0 24 24"
+            >
+              <Line
+                x1="12"
+                y1="5"
+                x2="12"
+                y2="19"
+                stroke={
+                  isAddFocused ? ui.color.text.active : ui.color.text.inactive
+                }
+                strokeWidth="3"
+                strokeLinecap="round"
+              />
+              <Line
+                x1="5"
+                y1="12"
+                x2="19"
+                y2="12"
+                stroke={
+                  isAddFocused ? ui.color.text.active : ui.color.text.inactive
+                }
+                strokeWidth="3"
+                strokeLinecap="round"
+              />
+            </Svg>
           </TouchableOpacity>
         )}
       </View>
@@ -241,14 +263,13 @@ function makeStyles(theme: typeof ui) {
       borderWidth: 1,
       borderColor: theme.color.border,
       backgroundColor: theme.color.surface,
-
       ...theme.shadow.ios,
       ...theme.shadow.android,
     },
 
     glassTint: {
       ...StyleSheet.absoluteFillObject,
-      backgroundColor: theme.color.tintOverlay,
+      backgroundColor: "transparent",
     },
 
     tabRow: {
