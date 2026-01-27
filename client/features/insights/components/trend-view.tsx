@@ -97,15 +97,6 @@ export const TrendView = ({
               height={chartHeight + 30}
               style={{ position: "absolute", top: 0, left: 0 }}
             >
-              <Line
-                x1={0}
-                y1={chartHeight - (average / maxAmount) * chartHeight}
-                x2={chartWidth}
-                y2={chartHeight - (average / maxAmount) * chartHeight}
-                stroke="#9CA3AF"
-                strokeWidth={1}
-                strokeDasharray="5,5"
-              />
               {monthlyData.map((data, index) => {
                 const barHeight = (data.amount / maxAmount) * chartHeight;
                 const x = index * (chartWidth / monthlyData.length) + 6;
