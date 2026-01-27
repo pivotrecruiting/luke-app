@@ -76,7 +76,7 @@ const ui = {
   },
   metrics: {
     tabBarHeight: 60,
-    tabItemMinWidth: 60,
+    tabItemMinWidth: 80,
     iconSize: 18,
     addIconSize: 28,
     addItemSize: 56,
@@ -85,10 +85,10 @@ const ui = {
     labelTopGap: 3,
     safe: {
       bottomInset: 16, // Abstand unterhalb der Tabbar (innerhalb SafeAreaView)
-      topMargin: 20, // Margin oben für die Tab Bar, damit Content nicht überlappt
+      contentInset: 30, // Content kann bis zur Hälfte der Tab Bar Höhe sichtbar sein (tabBarHeight / 2)
     },
     layout: {
-      horizontalInset: 16, // links/rechts Außenabstand der gesamten Tabbar
+      horizontalInset: 4, // links/rechts Außenabstand der gesamten Tabbar (minimal für fast volle Breite)
       innerHorizontalPadding: 10, // padding innerhalb der Tabbar
     },
     blur: {
@@ -127,7 +127,7 @@ const SimpleTabBar = memo(({ state, navigation }: BottomTabBarProps) => {
 
   return (
     <SafeAreaView edges={["bottom"]} style={s.safeArea}>
-      <View style={s.tabBarContainer}>
+      <View style={s.tabBarContainer} pointerEvents="box-none">
         <View style={s.tabBar}>
           <BlurView
             intensity={ui.metrics.blur.intensity}
@@ -229,7 +229,16 @@ SimpleTabBar.displayName = "SimpleTabBar";
 export default function MainTabNavigatorNew() {
   return (
     <Tab.Navigator
-      screenOptions={{ headerShown: false }}
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle: {
+          position: "absolute",
+          bottom: 0,
+        },
+        sceneStyle: {
+          paddingBottom: ui.metrics.tabBarHeight / 2,
+        },
+      }}
       tabBar={(props) => <SimpleTabBar {...props} />}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
@@ -249,13 +258,17 @@ function makeStyles(theme: typeof ui) {
   return StyleSheet.create({
     safeArea: {
       backgroundColor: "transparent",
-      paddingHorizontal: theme.metrics.layout.horizontalInset,
-      paddingBottom: theme.metrics.safe.bottomInset,
+      paddingHorizontal: 0,
+      paddingBottom: 0,
     },
 
     tabBarContainer: {
-      position: "relative",
-      marginTop: theme.metrics.safe.topMargin,
+      position: "absolute",
+      bottom: 0,
+      left: theme.metrics.layout.horizontalInset,
+      right: theme.metrics.layout.horizontalInset,
+      paddingBottom: theme.metrics.safe.bottomInset,
+      alignItems: "center",
     },
 
     tabBar: {
