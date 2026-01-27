@@ -13,10 +13,7 @@ export const ContinueButton = ({ onPress }: ContinueButtonProps) => {
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [
-        styles.button,
-        pressed && styles.buttonPressed,
-      ]}
+      style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
     >
       <Text style={styles.buttonText}>WEITER 🚀</Text>
     </Pressable>
@@ -27,13 +24,13 @@ const styles = StyleSheet.create({
   button: {
     width: "100%",
     height: Spacing.buttonHeight,
-    backgroundColor: "#8E97FD",
+    backgroundColor: "#8258f5",
     borderRadius: BorderRadius.md,
     alignItems: "center",
     justifyContent: "center",
   },
   buttonPressed: {
-    opacity: 0.8,
+    backgroundColor: "#7340FD",
   },
   buttonText: {
     ...Typography.button,
