@@ -139,7 +139,7 @@ export default function HomeScreen() {
             <Text style={styles.welcomeText}>
               {firstName ? `Willkommen, ${firstName}!` : "Wilkommen bei Luke!"}
             </Text>
-            <Text style={styles.subtitleText}>hier der aktuelle Monat</Text>
+            <Text style={styles.subtitleText}>so stehst du aktuell</Text>
           </View>
         </LinearGradient>
 
