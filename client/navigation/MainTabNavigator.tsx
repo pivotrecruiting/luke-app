@@ -80,6 +80,7 @@ const ui = {
     addIconSize: 24,
     addItemSize: 56,
     addItemElevation: 8,
+    addItemTopOffset: 20,
     labelTopGap: 3,
     safe: {
       bottomInset: 16, // Abstand unterhalb der Tabbar (innerhalb SafeAreaView)
@@ -119,7 +120,8 @@ const SimpleTabBar = memo(({ state, navigation }: BottomTabBarProps) => {
   // Separate routes: Add Item wird separat behandelt
   const regularRoutes = state.routes.filter((route) => route.name !== "Add");
   const addRoute = state.routes.find((route) => route.name === "Add");
-  const isAddFocused = addRoute && state.index === state.routes.indexOf(addRoute);
+  const isAddFocused =
+    addRoute && state.index === state.routes.indexOf(addRoute);
 
   return (
     <SafeAreaView edges={["bottom"]} style={s.safeArea}>
@@ -159,7 +161,9 @@ const SimpleTabBar = memo(({ state, navigation }: BottomTabBarProps) => {
                       name={TAB_ICONS[routeName]}
                       size={ui.metrics.iconSize}
                       color={
-                        isFocused ? ui.color.text.active : ui.color.text.inactive
+                        isFocused
+                          ? ui.color.text.active
+                          : ui.color.text.inactive
                       }
                     />
                     <Text style={[s.tabLabel, isFocused && s.tabLabelActive]}>
@@ -286,7 +290,7 @@ function makeStyles(theme: typeof ui) {
 
     addItem: {
       position: "absolute",
-      top: -theme.metrics.addItemElevation,
+      top: -theme.metrics.addItemTopOffset,
       alignSelf: "center",
       width: theme.metrics.addItemSize,
       height: theme.metrics.addItemSize,
