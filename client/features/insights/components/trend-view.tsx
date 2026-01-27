@@ -1,6 +1,6 @@
-import { Pressable, Text, View, Dimensions } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import Svg, { G, Line, Rect } from "react-native-svg";
+import { LinearGradient } from "expo-linear-gradient";
 import { styles } from "@/screens/styles/insights-screen.styles";
 import { formatCurrency } from "../utils/format";
 import type { MonthlyTrendT } from "../types/insights-types";
@@ -19,14 +19,28 @@ export const TrendView = ({
   selectedMonth,
   onSelectMonth,
 }: TrendViewPropsT) => {
-  const screenWidth = Dimensions.get("window").width;
-  const maxAmount = Math.max(...monthlyData.map((d) => d.amount), 1);
-  const chartHeight = 180;
-  const chartWidth = screenWidth - 80;
-  const barWidth = chartWidth / monthlyData.length - 12;
+  if (monthlyData.length === 0) {
+    return (
+      <View style={styles.trendContainer}>
+        <View style={styles.summaryCard}>
+          <View style={styles.trendHeader}>
+            <Text style={styles.summaryTitle}>Ausgaben-Entwicklung</Text>
+            <Text style={styles.trendSubtitle}>Keine Daten</Text>
+          </View>
+          <Text style={styles.trendHint}>Keine Trenddaten verfügbar</Text>
+        </View>
+      </View>
+    );
+  }
 
+  const maxAmount = Math.max(...monthlyData.map((d) => d.amount), 1);
+
+  const averageBase = monthlyData.filter((d) => d.amount > 0);
   const average =
-    monthlyData.reduce((sum, d) => sum + d.amount, 0) / monthlyData.length;
+    averageBase.length > 0
+      ? averageBase.reduce((sum, d) => sum + d.amount, 0) /
+        averageBase.length
+      : 0;
   const currentMonthData = monthlyData[monthlyData.length - 1];
   const previousMonthData =
     monthlyData.length > 1 ? monthlyData[monthlyData.length - 2] : null;
@@ -85,95 +99,55 @@ export const TrendView = ({
         </View>
 
         <View style={styles.chartContainer}>
-          <View
-            style={{
-              position: "relative",
-              width: chartWidth,
-              height: chartHeight + 30,
-            }}
-          >
-            <Svg
-              width={chartWidth}
-              height={chartHeight + 30}
-              style={{ position: "absolute", top: 0, left: 0 }}
-            >
-              {monthlyData.map((data, index) => {
-                const barHeight = (data.amount / maxAmount) * chartHeight;
-                const x = index * (chartWidth / monthlyData.length) + 6;
-                const y = chartHeight - barHeight;
-                const isCurrentMonth = index === monthlyData.length - 1;
-                const isSelected = selectedMonth === index;
-                const hasSelection = selectedMonth !== null;
-
-                return (
-                  <G key={index}>
-                    <Rect
-                      x={x}
-                      y={y}
-                      width={barWidth}
-                      height={barHeight}
-                      rx={6}
-                      fill={
-                        isSelected
-                          ? "#3B5BDB"
-                          : isCurrentMonth && !hasSelection
-                            ? "#3B5BDB"
-                            : "#E5E7EB"
-                      }
-                      opacity={hasSelection && !isSelected ? 0.5 : 1}
-                    />
-                  </G>
-                );
-              })}
-            </Svg>
-            <View
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                flexDirection: "row",
-                width: chartWidth,
-                height: chartHeight,
-              }}
-            >
-              {monthlyData.map((data, index) => {
-                const barHeight = (data.amount / maxAmount) * chartHeight;
-                const x = index * (chartWidth / monthlyData.length) + 6;
-                const isSelected = selectedMonth === index;
-
-                return (
-                  <Pressable
-                    key={index}
-                    style={{
-                      position: "absolute",
-                      left: x,
-                      top: chartHeight - barHeight,
-                      width: barWidth,
-                      height: barHeight,
-                    }}
-                    onPress={() => onSelectMonth(isSelected ? null : index)}
-                  />
-                );
-              })}
+          {selectedMonth !== null ? (
+            <View style={styles.trendChartSelectedAmount}>
+              <Text style={styles.trendChartSelectedAmountText}>
+                € {formatCurrency(displayedData.amount)}
+              </Text>
             </View>
-          </View>
-          <View style={styles.chartLabels}>
+          ) : null}
+          <View style={styles.trendChartBars}>
             {monthlyData.map((data, index) => {
+              const isZero = data.amount <= 0;
+              const barHeight = isZero
+                ? 6
+                : Math.max((data.amount / maxAmount) * 100, 8);
               const isSelected = selectedMonth === index;
               const isCurrentMonth = index === monthlyData.length - 1;
               const hasSelection = selectedMonth !== null;
+              const isActive =
+                !isZero && (isSelected || (isCurrentMonth && !hasSelection));
+              const barColors = isActive
+                ? ["#5B6BBE", "#3B4B9E"]
+                : ["#A5B4FC", "#7B8CDE"];
 
               return (
                 <Pressable
                   key={index}
-                  style={styles.chartLabelPressable}
+                  style={styles.trendBarContainer}
                   onPress={() => onSelectMonth(isSelected ? null : index)}
                 >
+                  <View style={styles.trendBarWrapper}>
+                    <LinearGradient
+                      colors={barColors}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 0, y: 1 }}
+                      style={[
+                        styles.trendBar,
+                        { height: barHeight },
+                        isActive && styles.trendBarSelected,
+                        hasSelection &&
+                          !isSelected &&
+                          !isZero &&
+                          styles.trendBarDimmed,
+                        isZero && styles.trendBarZero,
+                      ]}
+                    />
+                  </View>
                   <Text
                     style={[
-                      styles.chartMonthLabel,
-                      (isSelected || (isCurrentMonth && !hasSelection)) &&
-                        styles.chartMonthLabelActive,
+                      styles.trendBarLabel,
+                      isActive && styles.trendBarLabelSelected,
                     ]}
                   >
                     {data.month}

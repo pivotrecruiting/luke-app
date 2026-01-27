@@ -5,6 +5,7 @@ import type {
   ExpenseEntry,
   Goal,
   IncomeEntry,
+  MonthlyTrendData,
   Transaction,
 } from "@/context/app/types";
 import { fetchAppData } from "@/services/app-service";
@@ -23,6 +24,9 @@ type UseAppDataLoaderParamsT = {
   setGoals: React.Dispatch<React.SetStateAction<Goal[]>>;
   setBudgets: React.Dispatch<React.SetStateAction<Budget[]>>;
   setTransactions: React.Dispatch<React.SetStateAction<Transaction[]>>;
+  setMonthlyTrendData: React.Dispatch<
+    React.SetStateAction<MonthlyTrendData[]>
+  >;
   setBudgetCategories: React.Dispatch<React.SetStateAction<BudgetCategoryRow[]>>;
   setLastBudgetResetMonth: React.Dispatch<React.SetStateAction<number>>;
 };
@@ -42,6 +46,7 @@ export const useAppDataLoader = ({
   setGoals,
   setBudgets,
   setTransactions,
+  setMonthlyTrendData,
   setBudgetCategories,
   setLastBudgetResetMonth,
 }: UseAppDataLoaderParamsT) => {
@@ -61,6 +66,7 @@ export const useAppDataLoader = ({
       setGoals(data.goals ?? []);
       setBudgets(data.budgets ?? []);
       setTransactions(data.transactions ?? []);
+      setMonthlyTrendData([]);
       if (data.lastBudgetResetMonth !== undefined) {
         setLastBudgetResetMonth(data.lastBudgetResetMonth);
       }
@@ -93,6 +99,7 @@ export const useAppDataLoader = ({
       setGoals(data.goals);
       setBudgets(data.budgets);
       setTransactions(data.transactions);
+      setMonthlyTrendData(data.monthlyTrendData ?? []);
 
       if (typeof data.initialSavingsCents === "number") {
         // TODO: wire this into UI if initial savings is displayed later.
@@ -107,6 +114,7 @@ export const useAppDataLoader = ({
       setGoals,
       setIncomeEntries,
       setIsOnboardingComplete,
+      setMonthlyTrendData,
       setTransactions,
       setUserName,
     ],

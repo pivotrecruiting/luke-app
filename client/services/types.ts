@@ -67,6 +67,11 @@ export type TransactionRow = {
   transaction_at: string;
 };
 
+export type MonthlyTrendRow = {
+  month_start: string;
+  amount_cents: number;
+};
+
 export type LevelRow = {
   id: string;
   level_number: number;

@@ -4,8 +4,10 @@ import type {
   ExpenseEntry,
   Goal,
   IncomeEntry,
+  MonthlyTrendData,
   Transaction,
 } from "@/context/app/types";
+import { GERMAN_MONTHS_SHORT } from "@/context/app/constants";
 import type {
   UserProgressT,
   XpEventRuleT,
@@ -31,6 +33,7 @@ import type {
   GoalContributionRow,
   GoalRow,
   IncomeSourceRow,
+  MonthlyTrendRow,
   LevelRow,
   TransactionRow,
   UserProgressRow,
@@ -40,7 +43,7 @@ import type {
   XpEventRuleRow,
   XpEventTypeRow,
 } from "@/services/types";
-import { toCents } from "@/utils/money";
+import { fromCents, toCents } from "@/utils/money";
 
 export type AppDataPayload = {
   isOnboardingComplete: boolean;
@@ -65,8 +68,23 @@ export type AppDataPayload = {
     }[];
   }[];
   transactions: Transaction[];
+  monthlyTrendData: MonthlyTrendData[];
   budgetCategories: BudgetCategoryRow[];
   initialSavingsCents?: number | null;
+};
+
+const mapMonthlyTrendData = (
+  rows: MonthlyTrendRow[],
+): MonthlyTrendData[] => {
+  return rows.map((row) => {
+    const monthDate = new Date(`${row.month_start}T00:00:00Z`);
+    const monthIndex = monthDate.getUTCMonth();
+    return {
+      month: GERMAN_MONTHS_SHORT[monthIndex] ?? "",
+      monthIndex,
+      amount: fromCents(row.amount_cents),
+    };
+  });
 };
 
 export const fetchAppData = async (
@@ -84,6 +102,7 @@ export const fetchAppData = async (
     budgetCategoriesRes,
     budgetsRes,
     transactionsRes,
+    monthlyTrendRes,
   ] = await Promise.all([
     supabase
       .from("user_onboarding")
@@ -127,6 +146,10 @@ export const fetchAppData = async (
       )
       .eq("user_id", userId)
       .order("transaction_at", { ascending: false }),
+    supabase.rpc("get_monthly_expense_trend", {
+      target_user_id: userId,
+      months_back: 6,
+    }),
   ]);
 
   const firstError =
@@ -177,6 +200,12 @@ export const fetchAppData = async (
     budgetCategories,
     (transactionsRes.data ?? []) as TransactionRow[],
   );
+  if (monthlyTrendRes.error) {
+    console.warn("Failed to load monthly trend data:", monthlyTrendRes.error);
+  }
+  const monthlyTrendData = mapMonthlyTrendData(
+    (monthlyTrendRes.data ?? []) as MonthlyTrendRow[],
+  );
 
   const userName =
     typeof user?.name === "string" ? user.name.trim() || null : null;
@@ -190,6 +219,7 @@ export const fetchAppData = async (
     goals,
     budgets,
     transactions,
+    monthlyTrendData,
     budgetCategories,
     initialSavingsCents: profile?.initial_savings_cents ?? null,
   };

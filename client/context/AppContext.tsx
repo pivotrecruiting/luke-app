@@ -22,6 +22,7 @@ import type {
   ExpenseEntry,
   Goal,
   IncomeEntry,
+  MonthlyTrendData,
   PersistedData,
   Transaction,
 } from "@/context/app/types";
@@ -51,6 +52,7 @@ export type {
   Goal,
   GoalDeposit,
   IncomeEntry,
+  MonthlyTrendData,
   PersistedData,
   Transaction,
 } from "@/context/app/types";
@@ -76,6 +78,9 @@ export function AppProvider({ children }: AppProviderProps) {
   const [budgets, setBudgets] = useState<Budget[]>(INITIAL_BUDGETS);
   const [transactions, setTransactions] =
     useState<Transaction[]>(INITIAL_TRANSACTIONS);
+  const [monthlyTrendData, setMonthlyTrendData] = useState<MonthlyTrendData[]>(
+    [],
+  );
   const [selectedWeekOffset, setSelectedWeekOffset] = useState(0);
   const [lastBudgetResetMonth, setLastBudgetResetMonth] = useState(() =>
     new Date().getMonth(),
@@ -101,6 +106,7 @@ export function AppProvider({ children }: AppProviderProps) {
     setGoals,
     setBudgets,
     setTransactions,
+    setMonthlyTrendData,
     setBudgetCategories,
     setLastBudgetResetMonth,
   });
@@ -139,7 +145,6 @@ export function AppProvider({ children }: AppProviderProps) {
     balance,
     savingsRate,
     insightCategories,
-    monthlyTrendData,
   } = useAppDerivedState({
     incomeEntries,
     expenseEntries,

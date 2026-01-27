@@ -376,26 +376,56 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 16,
   },
-  chartLabels: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    width: "100%",
-    marginTop: 8,
+  trendChartSelectedAmount: {
+    backgroundColor: "#5B6BBE",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    alignSelf: "center",
+    marginBottom: 12,
   },
-  chartMonthLabel: {
-    fontSize: 12,
-    color: "#9CA3AF",
-    flex: 1,
-    textAlign: "center",
-  },
-  chartMonthLabelActive: {
-    color: "#3B5BDB",
+  trendChartSelectedAmountText: {
+    color: "#FFFFFF",
+    fontSize: 14,
     fontWeight: "600",
   },
-  chartLabelPressable: {
-    flex: 1,
+  trendChartBars: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-end",
+    height: 130,
+    width: "100%",
+  },
+  trendBarContainer: {
     alignItems: "center",
-    paddingVertical: 8,
+    flex: 1,
+  },
+  trendBarWrapper: {
+    height: 100,
+    justifyContent: "flex-end",
+  },
+  trendBar: {
+    width: 28,
+    borderRadius: 8,
+  },
+  trendBarZero: {
+    width: 20,
+    borderRadius: 6,
+  },
+  trendBarSelected: {
+    width: 32,
+  },
+  trendBarDimmed: {
+    opacity: 0.5,
+  },
+  trendBarLabel: {
+    fontSize: 12,
+    color: "#9CA3AF",
+    marginTop: 8,
+  },
+  trendBarLabelSelected: {
+    color: "#5B6BBE",
+    fontWeight: "600",
   },
   trendHint: {
     fontSize: 12,
