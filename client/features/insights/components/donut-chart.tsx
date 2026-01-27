@@ -29,20 +29,24 @@ export const DonutChart = ({
 
   let currentAngle = -90;
 
-  const segments = categories.map((category) => {
-    const percentage = category.amount / total;
-    const segmentLength = circumference * percentage - gap;
-    const strokeDasharray = `${segmentLength} ${circumference - segmentLength}`;
-    const rotation = currentAngle;
-    currentAngle += percentage * 360;
+  const hasTotal = total > 0;
 
-    return {
-      ...category,
-      strokeDasharray,
-      rotation,
-      percentage,
-    };
-  });
+  const segments = hasTotal
+    ? categories.map((category) => {
+        const percentage = category.amount / total;
+        const segmentLength = circumference * percentage - gap;
+        const strokeDasharray = `${segmentLength} ${circumference - segmentLength}`;
+        const rotation = currentAngle;
+        currentAngle += percentage * 360;
+
+        return {
+          ...category,
+          strokeDasharray,
+          rotation,
+          percentage,
+        };
+      })
+    : [];
 
   const selectedCategoryData = selectedCategory
     ? categories.find((c) => c.name === selectedCategory)
@@ -62,6 +66,14 @@ export const DonutChart = ({
     >
       <Svg width={size} height={size}>
         <G rotation={0} origin={`${center}, ${center}`}>
+          <Circle
+            cx={center}
+            cy={center}
+            r={radius}
+            stroke="#E5E7EB"
+            strokeWidth={strokeWidth}
+            fill="transparent"
+          />
           {segments.map((segment, index) => {
             const isSelected = selectedCategory === segment.name;
             const hasSelection = selectedCategory !== null;
@@ -95,7 +107,7 @@ export const DonutChart = ({
           € {formatCurrency(displayAmount)}
         </Text>
         <Text style={styles.chartLabel}>{displayLabel}</Text>
-        {selectedCategoryData ? (
+        {selectedCategoryData && hasTotal ? (
           <Text style={styles.chartPercentage}>
             {((selectedCategoryData.amount / total) * 100).toFixed(1)}%
           </Text>
