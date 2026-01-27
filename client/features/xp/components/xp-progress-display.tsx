@@ -4,7 +4,7 @@ import { Typography, Spacing, BorderRadius } from "@/constants/theme";
 import type { XpLevelT } from "@/types/xp-types";
 
 type XpProgressDisplayProps = {
-  xpGained: number;
+  xpGained?: number;
   currentXp: number;
   nextLevelXp: number;
   currentLevel: XpLevelT;
@@ -21,6 +21,7 @@ export const XpProgressDisplay = ({
   currentLevel,
   nextLevel,
 }: XpProgressDisplayProps) => {
+  const showXpGained = typeof xpGained === "number";
   const progress = useMemo(() => {
     if (!nextLevel) return 1;
     const baseXp = currentLevel.xpRequired;
@@ -31,7 +32,9 @@ export const XpProgressDisplay = ({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.xpGained}>+{xpGained} XP</Text>
+      {showXpGained ? (
+        <Text style={styles.xpGained}>+{xpGained} XP</Text>
+      ) : null}
       <View style={styles.progressBarContainer}>
         <View style={[styles.progressBar, { width: `${progress * 100}%` }]} />
       </View>

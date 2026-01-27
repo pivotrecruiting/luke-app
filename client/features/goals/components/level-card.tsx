@@ -1,13 +1,18 @@
-import { Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { useMemo } from "react";
 import { styles } from "@/screens/styles/goals-screen.styles";
 import { useApp } from "@/context/AppContext";
 import { resolveLevelByXp } from "@/features/xp/utils/levels";
+import type { XpLevelT } from "@/types/xp-types";
+
+type LevelCardPropsT = {
+  onPress?: (level: XpLevelT | null) => void;
+};
 
 /**
  * Displays the current level progress card.
  */
-export const LevelCard = () => {
+export const LevelCard = ({ onPress }: LevelCardPropsT) => {
   const { levels, userProgress } = useApp();
 
   const {
@@ -46,8 +51,19 @@ export const LevelCard = () => {
     };
   }, [levels, userProgress]);
 
+  const isPressable = Boolean(onPress);
+
   return (
-    <View style={styles.levelCard}>
+    <Pressable
+      style={({ pressed }) => [
+        styles.levelCard,
+        isPressable && pressed ? styles.levelCardPressed : null,
+      ]}
+      onPress={isPressable ? () => onPress?.(currentLevel) : undefined}
+      accessibilityRole={isPressable ? "button" : undefined}
+      accessibilityLabel={isPressable ? "Level up details" : undefined}
+      disabled={!isPressable}
+    >
       <View style={styles.levelHeader}>
         <View style={styles.levelLeft}>
           <Text style={styles.foxEmoji}>{currentLevel?.emoji ?? "⭐"}</Text>
@@ -75,6 +91,6 @@ export const LevelCard = () => {
           <Text style={styles.xpLabel}>Max Level erreicht</Text>
         )}
       </View>
-    </View>
+    </Pressable>
   );
 };

@@ -29,7 +29,7 @@ export default function LevelUpScreen() {
   const { levels, userProgress, userName } = useApp();
 
   const params = (route.params as LevelUpScreenRouteParams) || {};
-  const xpGained = params.xpGained ?? 100;
+  const xpGained = params.xpGained;
   const levelId = params.levelId;
 
   const { currentLevel, nextLevel, currentXp, nextLevelXp } = useMemo(() => {
@@ -76,8 +76,7 @@ export default function LevelUpScreen() {
     return null;
   }
 
-  const firstName = getUserFirstName(userName);
-  const displayName = firstName || "User";
+  const firstName = getUserFirstName(userName) ?? undefined;
 
   return (
     <View style={styles.container}>
@@ -101,7 +100,7 @@ export default function LevelUpScreen() {
           <View style={styles.content}>
             <View>
               <View style={styles.titleContainer}>
-                <LevelUpTitle userName={displayName} />
+                <LevelUpTitle userName={firstName} />
               </View>
 
               <View style={styles.descriptionContainer}>

@@ -38,7 +38,15 @@ export default function GoalsScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <LevelCard />
+        <LevelCard
+          onPress={(level) => {
+            if (level?.id) {
+              navigation.navigate("LevelUp", { levelId: level.id });
+              return;
+            }
+            navigation.navigate("LevelUp", {});
+          }}
+        />
 
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Goals</Text>

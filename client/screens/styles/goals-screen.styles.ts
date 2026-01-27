@@ -68,6 +68,9 @@ export const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
+  levelCardPressed: {
+    opacity: 0.85,
+  },
   levelHeader: {
     flexDirection: "row",
     justifyContent: "space-between",

@@ -3,16 +3,19 @@ import { Text, StyleSheet } from "react-native";
 import { Typography } from "@/constants/theme";
 
 type LevelUpTitleProps = {
-  userName: string;
+  userName?: string;
 };
 
 /**
  * Displays the welcome title for the level up screen.
  */
 export const LevelUpTitle = ({ userName }: LevelUpTitleProps) => {
-  return (
-    <Text style={styles.title}>Willkommen im Club, {userName}!</Text>
-  );
+  const normalizedName = userName?.trim();
+  const title = normalizedName
+    ? `Willkommen im Club, ${normalizedName}!`
+    : "Willkommen im Club!";
+
+  return <Text style={styles.title}>{title}</Text>;
 };
 
 const styles = StyleSheet.create({
