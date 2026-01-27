@@ -277,27 +277,12 @@ export const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#000000",
   },
-  modalOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  modalGradient: {
-    flex: 1,
-  },
   modalContent: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
     backgroundColor: "#FFFFFF",
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 20,
     paddingTop: 12,
-    maxHeight: "80%",
   },
   modalHandle: {
     width: 40,

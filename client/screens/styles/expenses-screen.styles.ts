@@ -213,7 +213,6 @@ export const styles = StyleSheet.create({
     borderTopLeftRadius: BorderRadius.xl,
     borderTopRightRadius: BorderRadius.xl,
     padding: Spacing.lg,
-    maxHeight: "80%",
   },
   modalHeader: {
     flexDirection: "row",

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, ScrollView, Pressable, Modal } from "react-native";
+import { Alert, View, ScrollView, Pressable } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -8,9 +8,11 @@ import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { Feather } from "@expo/vector-icons";
 import { ThemedText } from "@/components/ThemedText";
 import { SettingsRow } from "@/components/SettingsRow";
-import { Spacing, BorderRadius } from "@/constants/theme";
+import { Spacing } from "@/constants/theme";
 import { useApp } from "@/context/AppContext";
+import { supabase } from "@/lib/supabase";
 import { styles } from "./styles/profile-screen.styles";
+import { AppModal } from "@/components/ui/app-modal";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -23,6 +25,7 @@ export default function ProfileScreen() {
   const { levels } = useApp();
   const [manageModalVisible, setManageModalVisible] = useState(false);
   const [deleteAccountModalVisible, setDeleteAccountModalVisible] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   // Mock data - no functionality
   const userName = "Deni";
@@ -32,9 +35,23 @@ export default function ProfileScreen() {
   const loginMethod = "Google Account";
   const appVersion = "1.0.0";
 
-  const handleLogout = () => {
-    // TODO: Implement logout functionality
-    setManageModalVisible(false);
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error("Logout failed:", error);
+        Alert.alert("Logout fehlgeschlagen", "Bitte versuche es erneut.");
+        return;
+      }
+      setManageModalVisible(false);
+    } catch (error) {
+      console.error("Logout failed:", error);
+      Alert.alert("Logout fehlgeschlagen", "Bitte versuche es erneut.");
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   const handleDeleteAccount = () => {
@@ -329,103 +346,82 @@ export default function ProfileScreen() {
       </ScrollView>
 
       {/* Manage Account Modal */}
-      <Modal
+      <AppModal
         visible={manageModalVisible}
-        animationType="fade"
-        transparent={true}
-        onRequestClose={() => setManageModalVisible(false)}
+        onClose={() => setManageModalVisible(false)}
+        maxHeightPercent={70}
+        contentStyle={[
+          styles.modalContent,
+          { paddingBottom: insets.bottom + Spacing.lg },
+        ]}
       >
-        <View style={styles.modalOverlay}>
-          <Pressable
-            style={styles.modalBackdrop}
-            onPress={() => setManageModalVisible(false)}
-          />
-          <View
-            style={[
-              styles.modalContent,
-              { paddingBottom: insets.bottom + Spacing.lg },
-            ]}
-          >
-            <View style={styles.modalHeader}>
-              <ThemedText style={styles.modalTitle}>Account verwalten</ThemedText>
-              <Pressable onPress={() => setManageModalVisible(false)}>
-                <Feather name="x" size={24} color="#6B7280" />
-              </Pressable>
-            </View>
-
-            <Pressable
-              style={({ pressed }) => [
-                styles.logoutButton,
-                { opacity: pressed ? 0.7 : 1 },
-              ]}
-              onPress={handleLogout}
-            >
-              <Feather name="log-out" size={20} color="#EF4444" />
-              <ThemedText style={styles.logoutButtonText}>
-                Ausloggen
-              </ThemedText>
-            </Pressable>
-          </View>
+        <View style={styles.modalHeader}>
+          <ThemedText style={styles.modalTitle}>Account verwalten</ThemedText>
+          <Pressable onPress={() => setManageModalVisible(false)}>
+            <Feather name="x" size={24} color="#6B7280" />
+          </Pressable>
         </View>
-      </Modal>
+
+        <Pressable
+          style={({ pressed }) => [
+            styles.logoutButton,
+            { opacity: pressed || isLoggingOut ? 0.7 : 1 },
+          ]}
+          onPress={handleLogout}
+          disabled={isLoggingOut}
+        >
+          <Feather name="log-out" size={20} color="#EF4444" />
+          <ThemedText style={styles.logoutButtonText}>Ausloggen</ThemedText>
+        </Pressable>
+      </AppModal>
 
       {/* Delete Account Modal */}
-      <Modal
+      <AppModal
         visible={deleteAccountModalVisible}
-        animationType="fade"
-        transparent={true}
-        onRequestClose={() => setDeleteAccountModalVisible(false)}
+        onClose={() => setDeleteAccountModalVisible(false)}
+        maxHeightPercent={70}
+        contentStyle={[
+          styles.modalContent,
+          { paddingBottom: insets.bottom + Spacing.lg },
+        ]}
       >
-        <View style={styles.modalOverlay}>
-          <Pressable
-            style={styles.modalBackdrop}
-            onPress={() => setDeleteAccountModalVisible(false)}
-          />
-          <View
-            style={[
-              styles.modalContent,
-              { paddingBottom: insets.bottom + Spacing.lg },
-            ]}
-          >
-            <View style={styles.modalHeader}>
-              <ThemedText style={styles.modalTitle}>Account löschen</ThemedText>
-              <Pressable onPress={() => setDeleteAccountModalVisible(false)}>
-                <Feather name="x" size={24} color="#6B7280" />
-              </Pressable>
-            </View>
-
-            <ThemedText style={styles.deleteModalDescription}>
-              Möchtest du wirklich deinen Account löschen? Diese Aktion kann nicht
-              rückgängig gemacht werden.
-            </ThemedText>
-
-            <View style={styles.deleteModalButtons}>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.deleteModalCancelButton,
-                  { opacity: pressed ? 0.7 : 1 },
-                ]}
-                onPress={() => setDeleteAccountModalVisible(false)}
-              >
-                <ThemedText style={styles.deleteModalCancelText}>
-                  Abbrechen
-                </ThemedText>
-              </Pressable>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.deleteModalConfirmButton,
-                  { opacity: pressed ? 0.7 : 1 },
-                ]}
-                onPress={handleDeleteAccount}
-              >
-                <ThemedText style={styles.deleteModalConfirmText}>
-                  Löschen
-                </ThemedText>
-              </Pressable>
-            </View>
-          </View>
+        <View style={styles.modalHeader}>
+          <ThemedText style={styles.modalTitle}>Account löschen</ThemedText>
+          <Pressable onPress={() => setDeleteAccountModalVisible(false)}>
+            <Feather name="x" size={24} color="#6B7280" />
+          </Pressable>
         </View>
-      </Modal>
+
+        <ThemedText style={styles.deleteModalDescription}>
+          Möchtest du wirklich deinen Account löschen? Diese Aktion kann nicht
+          rückgängig gemacht werden.
+        </ThemedText>
+
+        <View style={styles.deleteModalButtons}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.deleteModalCancelButton,
+              { opacity: pressed ? 0.7 : 1 },
+            ]}
+            onPress={() => setDeleteAccountModalVisible(false)}
+          >
+            <ThemedText style={styles.deleteModalCancelText}>
+              Abbrechen
+            </ThemedText>
+          </Pressable>
+          <Pressable
+            style={({ pressed }) => [
+              styles.deleteModalConfirmButton,
+              { opacity: pressed ? 0.7 : 1 },
+            ]}
+            onPress={handleDeleteAccount}
+          >
+            <ThemedText style={styles.deleteModalConfirmText}>
+              Löschen
+            </ThemedText>
+          </Pressable>
+        </View>
+      </AppModal>
     </View>
   );
 }

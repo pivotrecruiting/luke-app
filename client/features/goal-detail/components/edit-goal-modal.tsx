@@ -1,13 +1,6 @@
-import {
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { Pressable, Text, TextInput, View } from "react-native";
 import { styles } from "@/screens/styles/goal-detail-screen.styles";
+import { AppModal } from "@/components/ui/app-modal";
 
 type EditGoalModalPropsT = {
   visible: boolean;
@@ -30,37 +23,27 @@ export const EditGoalModal = ({
   onCancel,
 }: EditGoalModalPropsT) => {
   return (
-    <Modal
+    <AppModal
       visible={visible}
-      transparent
-      animationType="none"
-      onRequestClose={onCancel}
+      onClose={onCancel}
+      contentStyle={[styles.modalContent, { paddingBottom: bottomInset + 24 }]}
+      keyboardAvoidingEnabled
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.modalOverlay}
-      >
-        <Pressable style={styles.modalBackdrop} onPress={onCancel} />
-        <View
-          style={[styles.modalContent, { paddingBottom: bottomInset + 24 }]}
-        >
-          <View style={styles.modalHandle} />
-          <Text style={styles.modalTitle}>Goal bearbeiten</Text>
+      <View style={styles.modalHandle} />
+      <Text style={styles.modalTitle}>Goal bearbeiten</Text>
 
-          <Text style={styles.modalLabel}>Name</Text>
-          <TextInput
-            style={styles.modalInput}
-            value={tempName}
-            onChangeText={onChangeName}
-            placeholder="Goal Name"
-            placeholderTextColor="#9CA3AF"
-          />
+      <Text style={styles.modalLabel}>Name</Text>
+      <TextInput
+        style={styles.modalInput}
+        value={tempName}
+        onChangeText={onChangeName}
+        placeholder="Goal Name"
+        placeholderTextColor="#9CA3AF"
+      />
 
-          <Pressable style={styles.modalSaveButton} onPress={onSave}>
-            <Text style={styles.modalSaveButtonText}>Speichern</Text>
-          </Pressable>
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
+      <Pressable style={styles.modalSaveButton} onPress={onSave}>
+        <Text style={styles.modalSaveButtonText}>Speichern</Text>
+      </Pressable>
+    </AppModal>
   );
 };

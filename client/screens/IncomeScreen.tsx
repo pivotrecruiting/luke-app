@@ -4,7 +4,6 @@ import {
   Text,
   Pressable,
   ScrollView,
-  Modal,
   TextInput,
   Platform,
 } from "react-native";
@@ -18,6 +17,7 @@ import { Spacing } from "@/constants/theme";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { styles } from "./styles/income-screen.styles";
+import { AppModal } from "@/components/ui/app-modal";
 
 const INCOME_TYPES = [
   { id: "gehalt", name: "Gehalt", icon: "briefcase" },
@@ -278,31 +278,23 @@ export default function IncomeScreen() {
         </Animated.View>
       </ScrollView>
 
-      <Modal
+      <AppModal
         visible={modalVisible}
-        animationType="fade"
-        transparent={true}
-        onRequestClose={() => setModalVisible(false)}
+        onClose={() => setModalVisible(false)}
+        maxHeightPercent={80}
+        contentStyle={[
+          styles.modalContent,
+          { paddingBottom: insets.bottom + Spacing.lg },
+        ]}
       >
-        <View style={styles.modalOverlay}>
-          <Pressable
-            style={styles.modalBackdrop}
-            onPress={() => setModalVisible(false)}
-          />
-          <View
-            style={[
-              styles.modalContent,
-              { paddingBottom: insets.bottom + Spacing.lg },
-            ]}
-          >
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
-                {editingId ? "Einnahme bearbeiten" : "Neue Einnahme"}
-              </Text>
-              <Pressable onPress={() => setModalVisible(false)}>
-                <Feather name="x" size={24} color="#6B7280" />
-              </Pressable>
-            </View>
+        <View style={styles.modalHeader}>
+          <Text style={styles.modalTitle}>
+            {editingId ? "Einnahme bearbeiten" : "Neue Einnahme"}
+          </Text>
+          <Pressable onPress={() => setModalVisible(false)}>
+            <Feather name="x" size={24} color="#6B7280" />
+          </Pressable>
+        </View>
 
             <KeyboardAwareScrollViewCompat
               showsVerticalScrollIndicator={false}
@@ -376,9 +368,7 @@ export default function IncomeScreen() {
                 </Text>
               </Pressable>
             </KeyboardAwareScrollViewCompat>
-          </View>
-        </View>
-      </Modal>
+      </AppModal>
     </View>
   );
 }

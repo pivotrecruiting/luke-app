@@ -292,7 +292,6 @@ export const styles = StyleSheet.create({
     borderTopRightRadius: BorderRadius.xl,
     paddingTop: Spacing.lg,
     paddingHorizontal: Spacing.xl,
-    maxHeight: "70%",
   },
   modalHeader: {
     // Used for: Modal header row (title + close button)

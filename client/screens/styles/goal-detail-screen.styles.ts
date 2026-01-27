@@ -238,6 +238,9 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 12,
   },
+  modalScrollView: {
+    maxHeight: "100%",
+  },
   modalHandle: {
     width: 40,
     height: 4,

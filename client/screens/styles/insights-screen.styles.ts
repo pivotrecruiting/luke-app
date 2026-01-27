@@ -512,6 +512,9 @@ export const styles = StyleSheet.create({
     paddingTop: 12,
     minHeight: 350,
   },
+  modalScrollView: {
+    maxHeight: "100%",
+  },
   modalHandle: {
     width: 40,
     height: 4,
@@ -775,7 +778,6 @@ export const styles = StyleSheet.create({
     borderTopLeftRadius: BorderRadius.xl,
     borderTopRightRadius: BorderRadius.xl,
     padding: Spacing.lg,
-    maxHeight: "90%",
   },
   incomeModalHeader: {
     flexDirection: "row",

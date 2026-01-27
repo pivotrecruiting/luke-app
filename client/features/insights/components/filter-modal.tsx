@@ -1,8 +1,9 @@
-import { Modal, Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { styles } from "@/screens/styles/insights-screen.styles";
 import { TIME_FILTER_OPTIONS } from "../constants/insights-constants";
 import type { TimeFilterT } from "../types/insights-types";
+import { AppModal } from "@/components/ui/app-modal";
 
 type FilterModalPropsT = {
   visible: boolean;
@@ -31,23 +32,19 @@ export const FilterModal = ({
   onClearCostFilters,
 }: FilterModalPropsT) => {
   return (
-    <Modal
+    <AppModal
       visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
+      onClose={onClose}
+      maxHeightPercent={80}
+      contentStyle={styles.modalContent}
     >
-      <View style={styles.modalOverlay}>
-        <Pressable style={styles.modalBackdrop} onPress={onClose} />
-        <ScrollView
-          style={[
-            styles.modalContent,
-            { paddingBottom: bottomInset + 24, maxHeight: "80%" },
-          ]}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.modalHandle} />
-          <Text style={styles.modalTitle}>Filter</Text>
+      <ScrollView
+        style={styles.modalScrollView}
+        contentContainerStyle={{ paddingBottom: bottomInset + 24 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.modalHandle} />
+        <Text style={styles.modalTitle}>Filter</Text>
 
           <Text style={styles.modalSectionTitle}>Zeitspanne</Text>
           <View style={styles.filterOptionsGrid}>
@@ -116,11 +113,10 @@ export const FilterModal = ({
             </Pressable>
           ) : null}
 
-          <Pressable style={styles.modalDoneButton} onPress={onClose}>
-            <Text style={styles.modalDoneButtonText}>Fertig</Text>
-          </Pressable>
-        </ScrollView>
-      </View>
-    </Modal>
+        <Pressable style={styles.modalDoneButton} onPress={onClose}>
+          <Text style={styles.modalDoneButtonText}>Fertig</Text>
+        </Pressable>
+      </ScrollView>
+    </AppModal>
   );
 };

@@ -1,7 +1,8 @@
-import { Modal, Pressable, Text, TextInput, View } from "react-native";
+import { Pressable, Text, TextInput, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { styles } from "@/screens/styles/insights-screen.styles";
 import { EXPENSE_TYPES } from "../constants/insights-constants";
+import { AppModal } from "@/components/ui/app-modal";
 
 type ExpenseModalPropsT = {
   visible: boolean;
@@ -36,24 +37,20 @@ export const ExpenseModal = ({
   const isDisabled = !selectedExpenseType || !expenseAmount;
 
   return (
-    <Modal
+    <AppModal
       visible={visible}
-      animationType="slide"
-      transparent
-      onRequestClose={onClose}
+      onClose={onClose}
+      maxHeightPercent={90}
+      contentStyle={[styles.incomeModalContent, { paddingBottom: bottomInset }]}
     >
-      <View style={styles.incomeModalOverlay}>
-        <View
-          style={[styles.incomeModalContent, { paddingBottom: bottomInset }]}
-        >
-          <View style={styles.incomeModalHeader}>
-            <Text style={styles.incomeModalTitle}>
-              {editingExpenseId ? "Ausgabe bearbeiten" : "Neue Ausgabe"}
-            </Text>
-            <Pressable onPress={onClose}>
-              <Feather name="x" size={24} color="#6B7280" />
-            </Pressable>
-          </View>
+      <View style={styles.incomeModalHeader}>
+        <Text style={styles.incomeModalTitle}>
+          {editingExpenseId ? "Ausgabe bearbeiten" : "Neue Ausgabe"}
+        </Text>
+        <Pressable onPress={onClose}>
+          <Feather name="x" size={24} color="#6B7280" />
+        </Pressable>
+      </View>
 
           <Text style={styles.incomeModalLabel}>Art der Ausgabe</Text>
           <View style={styles.incomeTypeGrid}>
@@ -113,20 +110,18 @@ export const ExpenseModal = ({
             />
           </View>
 
-          <Pressable
-            style={[
-              styles.expenseSaveButton,
-              isDisabled && styles.incomeSaveButtonDisabled,
-            ]}
-            onPress={onSave}
-            disabled={isDisabled}
-          >
-            <Text style={styles.incomeSaveButtonText}>
-              {editingExpenseId ? "Speichern" : "Hinzufügen"}
-            </Text>
-          </Pressable>
-        </View>
-      </View>
-    </Modal>
+      <Pressable
+        style={[
+          styles.expenseSaveButton,
+          isDisabled && styles.incomeSaveButtonDisabled,
+        ]}
+        onPress={onSave}
+        disabled={isDisabled}
+      >
+        <Text style={styles.incomeSaveButtonText}>
+          {editingExpenseId ? "Speichern" : "Hinzufügen"}
+        </Text>
+      </Pressable>
+    </AppModal>
   );
 };

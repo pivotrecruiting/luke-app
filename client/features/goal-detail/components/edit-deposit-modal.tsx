@@ -1,17 +1,9 @@
-import {
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { styles } from "@/screens/styles/goal-detail-screen.styles";
 import { formatDisplayDate } from "../utils/date";
+import { AppModal } from "@/components/ui/app-modal";
 
 type EditDepositModalPropsT = {
   visible: boolean;
@@ -46,25 +38,21 @@ export const EditDepositModal = ({
   onCancel,
 }: EditDepositModalPropsT) => {
   return (
-    <Modal
+    <AppModal
       visible={visible}
-      transparent
-      animationType="none"
-      onRequestClose={onCancel}
+      onClose={onCancel}
+      maxHeightPercent={80}
+      contentStyle={styles.modalContent}
+      keyboardAvoidingEnabled
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.modalOverlay}
+      <ScrollView
+        style={styles.modalScrollView}
+        contentContainerStyle={{ paddingBottom: bottomInset + 24 }}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
-        <Pressable style={styles.modalBackdrop} onPress={onCancel} />
-        <ScrollView
-          style={[styles.modalContent, { maxHeight: "80%" }]}
-          contentContainerStyle={{ paddingBottom: bottomInset + 24 }}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          <View style={styles.modalHandle} />
-          <Text style={styles.modalTitle}>{depositTitle} bearbeiten</Text>
+        <View style={styles.modalHandle} />
+        <Text style={styles.modalTitle}>{depositTitle} bearbeiten</Text>
 
           <Text style={styles.modalLabel}>Betrag</Text>
           <View style={styles.currencyInputContainer}>
@@ -112,11 +100,10 @@ export const EditDepositModal = ({
             <Text style={styles.modalSaveButtonText}>Speichern</Text>
           </Pressable>
 
-          <Pressable style={styles.modalCancelButton} onPress={onCancel}>
-            <Text style={styles.modalCancelButtonText}>Abbrechen</Text>
-          </Pressable>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </Modal>
+        <Pressable style={styles.modalCancelButton} onPress={onCancel}>
+          <Text style={styles.modalCancelButtonText}>Abbrechen</Text>
+        </Pressable>
+      </ScrollView>
+    </AppModal>
   );
 };

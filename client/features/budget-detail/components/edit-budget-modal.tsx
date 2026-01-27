@@ -1,13 +1,6 @@
-import {
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { Pressable, Text, TextInput, View } from "react-native";
 import { styles } from "@/screens/styles/budget-detail-screen.styles";
+import { AppModal } from "@/components/ui/app-modal";
 
 type EditBudgetModalPropsT = {
   visible: boolean;
@@ -30,46 +23,36 @@ export const EditBudgetModal = ({
   onCancel,
 }: EditBudgetModalPropsT) => {
   return (
-    <Modal
+    <AppModal
       visible={visible}
-      transparent
-      animationType="none"
-      onRequestClose={onCancel}
+      onClose={onCancel}
+      contentStyle={[styles.modalContent, { paddingBottom: bottomInset + 24 }]}
+      keyboardAvoidingEnabled
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.modalOverlay}
-      >
-        <Pressable style={styles.modalBackdrop} onPress={onCancel} />
-        <View
-          style={[styles.modalContent, { paddingBottom: bottomInset + 24 }]}
-        >
-          <View style={styles.modalHandle} />
-          <Text style={styles.modalTitle}>Budget bearbeiten</Text>
+      <View style={styles.modalHandle} />
+      <Text style={styles.modalTitle}>Budget bearbeiten</Text>
 
-          <Text style={styles.modalLabel}>Monatliches Limit</Text>
-          <View style={styles.currencyInputContainer}>
-            <Text style={styles.currencyPrefix}>€</Text>
-            <TextInput
-              style={styles.currencyInput}
-              value={budgetLimit}
-              onChangeText={onChangeLimit}
-              placeholder="0,00"
-              placeholderTextColor="#9CA3AF"
-              keyboardType="decimal-pad"
-              autoFocus
-            />
-          </View>
+      <Text style={styles.modalLabel}>Monatliches Limit</Text>
+      <View style={styles.currencyInputContainer}>
+        <Text style={styles.currencyPrefix}>€</Text>
+        <TextInput
+          style={styles.currencyInput}
+          value={budgetLimit}
+          onChangeText={onChangeLimit}
+          placeholder="0,00"
+          placeholderTextColor="#9CA3AF"
+          keyboardType="decimal-pad"
+          autoFocus
+        />
+      </View>
 
-          <Pressable style={styles.modalSaveButton} onPress={onSave}>
-            <Text style={styles.modalSaveButtonText}>Speichern</Text>
-          </Pressable>
+      <Pressable style={styles.modalSaveButton} onPress={onSave}>
+        <Text style={styles.modalSaveButtonText}>Speichern</Text>
+      </Pressable>
 
-          <Pressable style={styles.modalCancelButton} onPress={onCancel}>
-            <Text style={styles.modalCancelButtonText}>Abbrechen</Text>
-          </Pressable>
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
+      <Pressable style={styles.modalCancelButton} onPress={onCancel}>
+        <Text style={styles.modalCancelButtonText}>Abbrechen</Text>
+      </Pressable>
+    </AppModal>
   );
 };

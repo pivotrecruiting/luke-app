@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useCallback } from "react";
-import { View, Text, ScrollView, Pressable, Modal } from "react-native";
+import { View, Text, ScrollView, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "expo-image";
@@ -11,6 +11,7 @@ import { Spacing } from "@/constants/theme";
 import { useApp } from "@/context/AppContext";
 import { getUserFirstName } from "@/utils/user";
 import { styles } from "./styles/home-screen.styles";
+import { AppModal } from "@/components/ui/app-modal";
 const businessmanFigure = require("../../assets/images/businessman-figure.png");
 
 const formatCurrency = (value: number) => {
@@ -314,64 +315,50 @@ export default function HomeScreen() {
         </View>
       </ScrollView>
 
-      <Modal
+      <AppModal
         visible={allTransactionsVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setAllTransactionsVisible(false)}
+        onClose={() => setAllTransactionsVisible(false)}
+        maxHeightPercent={80}
+        contentStyle={[styles.modalContent, { paddingBottom: insets.bottom + 24 }]}
       >
-        <Pressable
-          style={styles.modalOverlay}
-          onPress={() => setAllTransactionsVisible(false)}
-        >
-          <LinearGradient
-            colors={["transparent", "rgba(0,0,0,0.3)", "rgba(0,0,0,0.5)"]}
-            locations={[0, 0.5, 1]}
-            style={styles.modalGradient}
-          />
-        </Pressable>
-        <View
-          style={[styles.modalContent, { paddingBottom: insets.bottom + 24 }]}
-        >
-          <View style={styles.modalHandle} />
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Alle Transaktionen</Text>
-            <Pressable
-              onPress={() => setAllTransactionsVisible(false)}
-              style={styles.closeButton}
-            >
-              <Feather name="x" size={24} color="#000000" />
-            </Pressable>
-          </View>
-          <ScrollView
-            style={styles.modalScrollView}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
+        <View style={styles.modalHandle} />
+        <View style={styles.modalHeader}>
+          <Text style={styles.modalTitle}>Alle Transaktionen</Text>
+          <Pressable
+            onPress={() => setAllTransactionsVisible(false)}
+            style={styles.closeButton}
           >
-            {sortedTransactions.map((transaction) => (
-              <View key={transaction.id} style={styles.transactionItem}>
-                <View style={styles.transactionIconContainer}>
-                  <Feather
-                    name={transaction.icon as any}
-                    size={20}
-                    color="#7B8CDE"
-                  />
-                </View>
-                <View style={styles.transactionDetails}>
-                  <Text style={styles.transactionName}>{transaction.name}</Text>
-                  <Text style={styles.transactionCategory}>
-                    {transaction.category}
-                  </Text>
-                  <Text style={styles.transactionDate}>{transaction.date}</Text>
-                </View>
-                <Text style={styles.transactionAmount}>
-                  {formatCurrency(transaction.amount)}
-                </Text>
-              </View>
-            ))}
-          </ScrollView>
+            <Feather name="x" size={24} color="#000000" />
+          </Pressable>
         </View>
-      </Modal>
+        <ScrollView
+          style={styles.modalScrollView}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {sortedTransactions.map((transaction) => (
+            <View key={transaction.id} style={styles.transactionItem}>
+              <View style={styles.transactionIconContainer}>
+                <Feather
+                  name={transaction.icon as any}
+                  size={20}
+                  color="#7B8CDE"
+                />
+              </View>
+              <View style={styles.transactionDetails}>
+                <Text style={styles.transactionName}>{transaction.name}</Text>
+                <Text style={styles.transactionCategory}>
+                  {transaction.category}
+                </Text>
+                <Text style={styles.transactionDate}>{transaction.date}</Text>
+              </View>
+              <Text style={styles.transactionAmount}>
+                {formatCurrency(transaction.amount)}
+              </Text>
+            </View>
+          ))}
+        </ScrollView>
+      </AppModal>
     </View>
   );
 }

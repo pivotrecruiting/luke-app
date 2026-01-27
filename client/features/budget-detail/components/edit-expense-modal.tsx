@@ -1,17 +1,9 @@
-import {
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { styles } from "@/screens/styles/budget-detail-screen.styles";
 import { formatDisplayDate } from "../utils/date";
+import { AppModal } from "@/components/ui/app-modal";
 
 type EditExpenseModalPropsT = {
   visible: boolean;
@@ -48,25 +40,21 @@ export const EditExpenseModal = ({
   onCancel,
 }: EditExpenseModalPropsT) => {
   return (
-    <Modal
+    <AppModal
       visible={visible}
-      transparent
-      animationType="none"
-      onRequestClose={onCancel}
+      onClose={onCancel}
+      maxHeightPercent={80}
+      contentStyle={styles.modalContent}
+      keyboardAvoidingEnabled
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.modalOverlay}
+      <ScrollView
+        style={styles.modalScrollView}
+        contentContainerStyle={{ paddingBottom: bottomInset + 24 }}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
-        <Pressable style={styles.modalBackdrop} onPress={onCancel} />
-        <ScrollView
-          style={[styles.modalContent, { maxHeight: "80%" }]}
-          contentContainerStyle={{ paddingBottom: bottomInset + 24 }}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          <View style={styles.modalHandle} />
-          <Text style={styles.modalTitle}>Ausgabe bearbeiten</Text>
+        <View style={styles.modalHandle} />
+        <Text style={styles.modalTitle}>Ausgabe bearbeiten</Text>
 
           <Text style={styles.modalLabel}>Name</Text>
           <TextInput
@@ -123,11 +111,10 @@ export const EditExpenseModal = ({
             <Text style={styles.modalSaveButtonText}>Speichern</Text>
           </Pressable>
 
-          <Pressable style={styles.modalCancelButton} onPress={onCancel}>
-            <Text style={styles.modalCancelButtonText}>Abbrechen</Text>
-          </Pressable>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </Modal>
+        <Pressable style={styles.modalCancelButton} onPress={onCancel}>
+          <Text style={styles.modalCancelButtonText}>Abbrechen</Text>
+        </Pressable>
+      </ScrollView>
+    </AppModal>
   );
 };
