@@ -11,7 +11,6 @@ import Onboarding5Screen from "@/screens/onboarding/Onboarding5Screen";
 import Onboarding6Screen from "@/screens/onboarding/Onboarding6Screen";
 import Onboarding7Screen from "@/screens/onboarding/Onboarding7Screen";
 import AllesStartklarScreen from "@/screens/onboarding/AllesStartklarScreen";
-import PaywallScreen from "@/screens/PaywallScreen";
 
 export type OnboardingStackParamList = {
   Welcome: undefined;
@@ -25,7 +24,6 @@ export type OnboardingStackParamList = {
   Onboarding6: undefined;
   Onboarding7: undefined;
   AllesStartklar: undefined;
-  Paywall: undefined;
 };
 
 const Stack = createNativeStackNavigator<OnboardingStackParamList>();
@@ -52,7 +50,6 @@ export default function OnboardingNavigator() {
       <Stack.Screen name="Onboarding6" component={Onboarding6Screen} />
       <Stack.Screen name="Onboarding7" component={Onboarding7Screen} />
       <Stack.Screen name="AllesStartklar" component={AllesStartklarScreen} />
-      <Stack.Screen name="Paywall" component={PaywallScreen} />
     </Stack.Navigator>
   );
 }

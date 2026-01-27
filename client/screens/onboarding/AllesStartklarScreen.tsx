@@ -1,32 +1,20 @@
 import React from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { CommonActions, useNavigation } from "@react-navigation/native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import type { OnboardingStackParamList } from "@/navigation/OnboardingNavigator";
+import { useApp } from "@/context/AppContext";
 import { Image } from "expo-image";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { Spacing, BorderRadius, Typography, Colors } from "@/constants/theme";
-import { useApp } from "@/context/AppContext";
-
-type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
 
 /**
  * Final onboarding screen that displays a completion message and allows users to finish onboarding.
  */
 export default function AllesStartklarScreen() {
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation<NavigationProp>();
   const { completeOnboarding } = useApp();
 
   const handleContinue = () => {
     completeOnboarding();
-    navigation.dispatch(
-      CommonActions.reset({
-        index: 0,
-        routes: [{ name: "Main" }],
-      }),
-    );
   };
 
   return (
