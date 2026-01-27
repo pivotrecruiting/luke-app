@@ -3,13 +3,13 @@ import { View, TextInput, Text, StyleSheet } from "react-native";
 import { Colors, Spacing, BorderRadius, Typography } from "@/constants/theme";
 import { useApp, type CurrencyCode } from "@/context/AppContext";
 
-interface CurrencyInputProps {
+type CurrencyInputProps = {
   value: string;
   onChangeText: (text: string) => void;
   placeholder?: string;
   highlighted?: boolean;
   currency?: CurrencyCode;
-}
+};
 
 export default function CurrencyInput({
   value,
@@ -45,6 +45,12 @@ export default function CurrencyInput({
         placeholder={placeholder}
         placeholderTextColor="#9CA3AF"
         keyboardType="numeric"
+        hitSlop={{
+          top: Spacing.sm,
+          bottom: Spacing.sm,
+          left: Spacing["3xl"],
+          right: Spacing.sm,
+        }}
       />
     </View>
   );
@@ -73,9 +79,11 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
+    height: "100%",
     ...Typography.body,
     color: "#374151",
     padding: 0,
+    textAlignVertical: "center",
     outlineStyle: "none",
   } as any,
 });
