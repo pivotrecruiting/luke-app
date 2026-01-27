@@ -9,7 +9,7 @@ import type {
   Transaction,
 } from "@/context/app/types";
 import { fetchAppData } from "@/services/app-service";
-import type { BudgetCategoryRow } from "@/services/types";
+import type { BudgetCategoryRow, IncomeCategoryRow } from "@/services/types";
 import { loadPersistedData } from "@/services/local-storage";
 
 type UseAppDataLoaderParamsT = {
@@ -28,6 +28,7 @@ type UseAppDataLoaderParamsT = {
     React.SetStateAction<MonthlyTrendData[]>
   >;
   setBudgetCategories: React.Dispatch<React.SetStateAction<BudgetCategoryRow[]>>;
+  setIncomeCategories: React.Dispatch<React.SetStateAction<IncomeCategoryRow[]>>;
   setLastBudgetResetMonth: React.Dispatch<React.SetStateAction<number>>;
 };
 
@@ -48,6 +49,7 @@ export const useAppDataLoader = ({
   setTransactions,
   setMonthlyTrendData,
   setBudgetCategories,
+  setIncomeCategories,
   setLastBudgetResetMonth,
 }: UseAppDataLoaderParamsT) => {
   const [useLocalFallback, setUseLocalFallback] = useState(false);
@@ -67,6 +69,8 @@ export const useAppDataLoader = ({
       setBudgets(data.budgets ?? []);
       setTransactions(data.transactions ?? []);
       setMonthlyTrendData([]);
+      setBudgetCategories([]);
+      setIncomeCategories([]);
       if (data.lastBudgetResetMonth !== undefined) {
         setLastBudgetResetMonth(data.lastBudgetResetMonth);
       }
@@ -94,6 +98,7 @@ export const useAppDataLoader = ({
       }
       setUserName(data.userName);
       setBudgetCategories(data.budgetCategories);
+      setIncomeCategories(data.incomeCategories);
       setIncomeEntries(data.incomeEntries);
       setExpenseEntries(data.expenseEntries);
       setGoals(data.goals);
@@ -113,6 +118,7 @@ export const useAppDataLoader = ({
       setExpenseEntries,
       setGoals,
       setIncomeEntries,
+      setIncomeCategories,
       setIsOnboardingComplete,
       setMonthlyTrendData,
       setTransactions,

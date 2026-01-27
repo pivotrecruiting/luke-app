@@ -3,6 +3,7 @@ import { Feather } from "@expo/vector-icons";
 import { styles } from "@/screens/styles/insights-screen.styles";
 import { INCOME_TYPES } from "../constants/insights-constants";
 import { AppModal } from "@/components/ui/app-modal";
+import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 
 type IncomeModalPropsT = {
   visible: boolean;
@@ -41,85 +42,97 @@ export const IncomeModal = ({
       visible={visible}
       onClose={onClose}
       maxHeightPercent={90}
-      contentStyle={[styles.incomeModalContent, { paddingBottom: bottomInset }]}
+      contentStyle={[
+        styles.incomeModalContent,
+        styles.incomeModalContentNoPadding,
+      ]}
     >
-      <View style={styles.incomeModalHeader}>
-        <Text style={styles.incomeModalTitle}>
-          {editingIncomeId ? "Einnahme bearbeiten" : "Neue Einnahme"}
-        </Text>
-        <Pressable onPress={onClose}>
-          <Feather name="x" size={24} color="#6B7280" />
-        </Pressable>
-      </View>
+      <KeyboardAwareScrollViewCompat
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[
+          styles.incomeModalScrollContent,
+          { paddingBottom: bottomInset },
+        ]}
+      >
+        <View style={styles.incomeModalHeader}>
+          <Text style={styles.incomeModalTitle}>
+            {editingIncomeId ? "Einnahme bearbeiten" : "Neue Einnahme"}
+          </Text>
+          <Pressable onPress={onClose}>
+            <Feather name="x" size={24} color="#6B7280" />
+          </Pressable>
+        </View>
 
-          <Text style={styles.incomeModalLabel}>Art der Einnahme</Text>
-          <View style={styles.incomeTypeGrid}>
-            {INCOME_TYPES.map((type) => (
-              <Pressable
-                key={type.id}
-                style={[
-                  styles.incomeTypeButton,
-                  selectedIncomeType === type.id &&
-                    styles.incomeTypeButtonSelected,
-                ]}
-                onPress={() => onSelectIncomeType(type.id)}
-              >
-                <Feather
-                  name={type.icon as any}
-                  size={20}
-                  color={selectedIncomeType === type.id ? "#7340fd" : "#6B7280"}
-                />
-                <Text
-                  style={[
-                    styles.incomeTypeButtonText,
-                    selectedIncomeType === type.id &&
-                      styles.incomeTypeButtonTextSelected,
-                  ]}
-                >
-                  {type.name}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-
-          {selectedIncomeType === "sonstiges" && (
-            <View style={styles.customTypeContainer}>
-              <Text style={styles.incomeModalLabel}>Bezeichnung</Text>
-              <TextInput
-                style={styles.incomeTextInput}
-                value={customIncomeType}
-                onChangeText={onChangeCustomIncomeType}
-                placeholder="z.B. Unterhalt"
-                placeholderTextColor="#9CA3AF"
+        <Text style={styles.incomeModalLabel}>Art der Einnahme</Text>
+        <View style={styles.incomeTypeGrid}>
+          {INCOME_TYPES.map((type) => (
+            <Pressable
+              key={type.id}
+              style={[
+                styles.incomeTypeButton,
+                selectedIncomeType === type.id &&
+                  styles.incomeTypeButtonSelected,
+              ]}
+              onPress={() => onSelectIncomeType(type.id)}
+            >
+              <Feather
+                name={type.icon as any}
+                size={20}
+                color={selectedIncomeType === type.id ? "#7340fd" : "#6B7280"}
               />
-            </View>
-          )}
+              <Text
+                style={[
+                  styles.incomeTypeButtonText,
+                  selectedIncomeType === type.id &&
+                    styles.incomeTypeButtonTextSelected,
+                ]}
+              >
+                {type.name}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
 
-          <Text style={styles.incomeModalLabel}>Betrag (monatlich)</Text>
-          <View style={styles.incomeAmountInputContainer}>
-            <Text style={styles.incomeCurrencySymbol}>€</Text>
+        {selectedIncomeType === "sonstiges" && (
+          <View style={styles.customTypeContainer}>
+            <Text style={styles.incomeModalLabel}>Bezeichnung</Text>
             <TextInput
-              style={styles.incomeAmountInput}
-              value={incomeAmount}
-              onChangeText={onChangeIncomeAmount}
-              placeholder="0,00"
+              style={styles.incomeTextInput}
+              value={customIncomeType}
+              onChangeText={onChangeCustomIncomeType}
+              placeholder="z.B. Unterhalt"
               placeholderTextColor="#9CA3AF"
-              keyboardType="decimal-pad"
             />
           </View>
+        )}
 
-      <Pressable
-        style={[
-          styles.incomeSaveButton,
-          isDisabled && styles.incomeSaveButtonDisabled,
-        ]}
-        onPress={onSave}
-        disabled={isDisabled}
-      >
-        <Text style={styles.incomeSaveButtonText}>
-          {editingIncomeId ? "Speichern" : "Hinzufügen"}
-        </Text>
-      </Pressable>
+        <Text style={styles.incomeModalLabel}>Betrag (monatlich)</Text>
+        <View style={styles.incomeAmountInputContainer}>
+          <Text style={styles.incomeCurrencySymbol}>€</Text>
+          <TextInput
+            style={styles.incomeAmountInput}
+            value={incomeAmount}
+            onChangeText={onChangeIncomeAmount}
+            placeholder="0,00"
+            placeholderTextColor="#9CA3AF"
+            keyboardType="decimal-pad"
+          />
+        </View>
+
+        <Pressable
+          style={[
+            styles.incomeSaveButton,
+            isDisabled && styles.incomeSaveButtonDisabled,
+          ]}
+          onPress={onSave}
+          disabled={isDisabled}
+        >
+          <Text style={styles.incomeSaveButtonText}>
+            {editingIncomeId ? "Speichern" : "Hinzufügen"}
+          </Text>
+        </Pressable>
+      </KeyboardAwareScrollViewCompat>
     </AppModal>
   );
 };

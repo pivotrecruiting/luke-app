@@ -16,26 +16,22 @@ import { Feather } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Spacing } from "@/constants/theme";
 import { useApp } from "@/context/AppContext";
-import { BUDGET_CATEGORIES } from "@/constants/budgetCategories";
 
-const EXPENSE_CATEGORIES = [
-  ...BUDGET_CATEGORIES.map((cat) => ({
-    id: cat.id,
-    name: cat.name,
-    icon: cat.icon,
-  })),
-];
+type CategoryOptionT = {
+  id: string;
+  name: string;
+  icon: string;
+};
 
-const INCOME_CATEGORIES = [
-  { id: "gehalt", name: "Gehalt", icon: "briefcase" },
-  { id: "lohn", name: "Lohn", icon: "dollar-sign" },
-  { id: "lehre", name: "Lehre", icon: "book-open" },
-  { id: "nebenjob", name: "Nebenjob", icon: "user" },
-  { id: "taschengeld", name: "Taschengeld", icon: "pocket" },
-  { id: "sidehustle", name: "Sidehustle", icon: "trending-up" },
-  { id: "geschenk", name: "Geschenk", icon: "gift" },
-  { id: "sonstiges", name: "Sonstiges", icon: "more-horizontal" },
-];
+const mapCategoryOption = (row: {
+  id: string;
+  name: string;
+  icon: string | null;
+}): CategoryOptionT => ({
+  id: row.id,
+  name: row.name,
+  icon: row.icon ?? "circle",
+});
 
 const formatDateDisplay = (date: Date): string => {
   const today = new Date();
@@ -67,7 +63,13 @@ const formatDateForTransaction = (date: Date): string => {
 
 export default function AddScreen() {
   const insets = useSafeAreaInsets();
-  const { addTransaction, addExpenseWithAutobudget } = useApp();
+  const {
+    addTransaction,
+    addExpenseWithAutobudget,
+    budgetCategories,
+    incomeCategories,
+    isAppLoading,
+  } = useApp();
 
   const [activeTab, setActiveTab] = useState<"ausgaben" | "einnahmen">(
     "ausgaben",
@@ -78,8 +80,12 @@ export default function AddScreen() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
 
+  const expenseCategories = budgetCategories.map(mapCategoryOption);
+  const incomeCategoryOptions = incomeCategories.map(mapCategoryOption);
+
   const categories =
-    activeTab === "ausgaben" ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
+    activeTab === "ausgaben" ? expenseCategories : incomeCategoryOptions;
+  const isSaveDisabled = !amount || !selectedCategory || categories.length === 0;
 
   const handleDateChange = (event: any, date?: Date) => {
     setShowDatePicker(Platform.OS === "ios");
@@ -263,54 +269,70 @@ export default function AddScreen() {
         <View style={styles.inputCard}>
           <Text style={styles.inputLabel}>Kategorie</Text>
           <View style={styles.categoriesGrid}>
-            {categories.map((category) => (
-              <Pressable
-                key={category.id}
-                style={[
-                  styles.categoryItem,
-                  selectedCategory === category.id && styles.categoryItemActive,
-                ]}
-                onPress={() => {
-                  Keyboard.dismiss();
-                  setSelectedCategory(category.id);
-                }}
-              >
-                <View
-                  style={[
-                    styles.categoryIcon,
-                    selectedCategory === category.id &&
-                      styles.categoryIconActive,
-                  ]}
-                >
-                  <Feather
-                    name={category.icon as any}
-                    size={20}
-                    color={
-                      selectedCategory === category.id ? "#FFFFFF" : "#6B7280"
-                    }
-                  />
-                </View>
-                <Text
-                  style={[
-                    styles.categoryName,
-                    selectedCategory === category.id &&
-                      styles.categoryNameActive,
-                  ]}
-                >
-                  {category.name}
+            {categories.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Feather name="inbox" size={20} color="#9CA3AF" />
+                <Text style={styles.emptyStateTitle}>
+                  {isAppLoading
+                    ? "Kategorien werden geladen"
+                    : "Keine Kategorien verfügbar"}
                 </Text>
-              </Pressable>
-            ))}
+                <Text style={styles.emptyStateSubtitle}>
+                  {isAppLoading
+                    ? "Bitte kurz warten."
+                    : "Bitte prüfe deine Datenbank."}
+                </Text>
+              </View>
+            ) : (
+              categories.map((category) => (
+                <Pressable
+                  key={category.id}
+                  style={[
+                    styles.categoryItem,
+                    selectedCategory === category.id && styles.categoryItemActive,
+                  ]}
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setSelectedCategory(category.id);
+                  }}
+                >
+                  <View
+                    style={[
+                      styles.categoryIcon,
+                      selectedCategory === category.id &&
+                        styles.categoryIconActive,
+                    ]}
+                  >
+                    <Feather
+                      name={category.icon as any}
+                      size={20}
+                      color={
+                        selectedCategory === category.id ? "#FFFFFF" : "#6B7280"
+                      }
+                    />
+                  </View>
+                  <Text
+                    style={[
+                      styles.categoryName,
+                      selectedCategory === category.id &&
+                        styles.categoryNameActive,
+                    ]}
+                  >
+                    {category.name}
+                  </Text>
+                </Pressable>
+              ))
+            )}
           </View>
         </View>
 
         <Pressable
           style={[
             styles.saveButton,
-            (!amount || !selectedCategory) && styles.saveButtonDisabled,
+            isSaveDisabled && styles.saveButtonDisabled,
           ]}
           onPress={handleSave}
-          disabled={!amount || !selectedCategory}
+          disabled={isSaveDisabled}
         >
           <Text style={styles.saveButtonText}>
             {activeTab === "ausgaben"
@@ -483,6 +505,24 @@ const styles = StyleSheet.create({
   categoryNameActive: {
     color: "#7340fd",
     fontWeight: "600",
+  },
+  emptyState: {
+    width: "100%",
+    backgroundColor: "#F9FAFB",
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    alignItems: "center",
+    gap: 6,
+  },
+  emptyStateTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#6B7280",
+  },
+  emptyStateSubtitle: {
+    fontSize: 12,
+    color: "#9CA3AF",
   },
   saveButton: {
     backgroundColor: "#7340fd",

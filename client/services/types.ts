@@ -49,6 +49,13 @@ export type BudgetCategoryRow = {
   color: string | null;
 };
 
+export type IncomeCategoryRow = {
+  id: string;
+  key: string | null;
+  name: string;
+  icon: string | null;
+};
+
 export type BudgetRow = {
   id: string;
   name: string;

@@ -26,7 +26,7 @@ import type {
   PersistedData,
   Transaction,
 } from "@/context/app/types";
-import type { BudgetCategoryRow } from "@/services/types";
+import type { BudgetCategoryRow, IncomeCategoryRow } from "@/services/types";
 import type { XpLevelUpPayloadT } from "@/types/xp-types";
 import { useAppDerivedState } from "@/context/app/hooks/use-app-derived-state";
 import { useEntryActions } from "@/context/app/hooks/use-entry-actions";
@@ -42,6 +42,7 @@ import { useCurrencyActions } from "@/context/app/hooks/use-currency-actions";
 import { useOnboardingActions } from "@/context/app/hooks/use-onboarding-actions";
 import { useSnapXp } from "@/context/app/hooks/use-snap-xp";
 import { useMonthlyBudgetReset } from "@/context/app/hooks/use-monthly-budget-reset";
+import { useIncomeCategoryResolver } from "@/context/app/hooks/use-income-category-resolver";
 
 export type {
   AppContextType,
@@ -88,6 +89,9 @@ export function AppProvider({ children }: AppProviderProps) {
   const [budgetCategories, setBudgetCategories] = useState<BudgetCategoryRow[]>(
     [],
   );
+  const [incomeCategories, setIncomeCategories] = useState<IncomeCategoryRow[]>(
+    [],
+  );
   const [pendingLevelUps, setPendingLevelUps] = useState<XpLevelUpPayloadT[]>(
     [],
   );
@@ -108,6 +112,7 @@ export function AppProvider({ children }: AppProviderProps) {
     setTransactions,
     setMonthlyTrendData,
     setBudgetCategories,
+    setIncomeCategories,
     setLastBudgetResetMonth,
   });
   const canUseDb = Boolean(userId) && !useLocalFallback;
@@ -132,6 +137,9 @@ export function AppProvider({ children }: AppProviderProps) {
   }, []);
   const { resolveBudgetCategory } = useBudgetCategoryResolver({
     budgetCategories,
+  });
+  const { resolveIncomeCategory } = useIncomeCategoryResolver({
+    incomeCategories,
   });
 
   const {
@@ -229,8 +237,10 @@ export function AppProvider({ children }: AppProviderProps) {
       userId,
       canUseDb,
       currency,
+      transactions,
       setTransactions,
       resolveBudgetCategory,
+      resolveIncomeCategory,
       handleDbError,
       handleSnapXp,
     });
@@ -284,7 +294,6 @@ export function AppProvider({ children }: AppProviderProps) {
     setLastBudgetResetMonth,
   });
 
-
   const value: AppContextType = {
     isOnboardingComplete,
     isAppLoading,
@@ -305,6 +314,8 @@ export function AppProvider({ children }: AppProviderProps) {
     balance,
     savingsRate,
     monthlyTrendData,
+    budgetCategories,
+    incomeCategories,
     selectedWeekOffset,
     currentWeekLabel,
     levels,

@@ -746,6 +746,13 @@ export const styles = StyleSheet.create({
     borderTopRightRadius: BorderRadius.xl,
     padding: Spacing.lg,
   },
+  incomeModalContentNoPadding: {
+    padding: 0,
+  },
+  incomeModalScrollContent: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.lg,
+  },
   incomeModalHeader: {
     flexDirection: "row",
     alignItems: "center",

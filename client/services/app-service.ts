@@ -32,6 +32,7 @@ import type {
   FixedExpenseRow,
   GoalContributionRow,
   GoalRow,
+  IncomeCategoryRow,
   IncomeSourceRow,
   MonthlyTrendRow,
   LevelRow,
@@ -70,6 +71,7 @@ export type AppDataPayload = {
   transactions: Transaction[];
   monthlyTrendData: MonthlyTrendData[];
   budgetCategories: BudgetCategoryRow[];
+  incomeCategories: IncomeCategoryRow[];
   initialSavingsCents?: number | null;
 };
 
@@ -111,6 +113,7 @@ export const fetchAppData = async (
     goalsRes,
     contributionsRes,
     budgetCategoriesRes,
+    incomeCategoriesRes,
     budgetsRes,
     transactionsRes,
     monthlyTrendRes,
@@ -147,6 +150,10 @@ export const fetchAppData = async (
       .select("id, key, name, icon, color")
       .eq("active", true),
     supabase
+      .from("income_categories")
+      .select("id, key, name, icon")
+      .eq("active", true),
+    supabase
       .from("budgets")
       .select("id, name, category_id, limit_amount_cents")
       .eq("user_id", userId),
@@ -172,6 +179,7 @@ export const fetchAppData = async (
     goalsRes.error ||
     contributionsRes.error ||
     budgetCategoriesRes.error ||
+    incomeCategoriesRes.error ||
     budgetsRes.error ||
     transactionsRes.error;
   if (firstError) {
@@ -195,6 +203,8 @@ export const fetchAppData = async (
   const user = userRes.data as UserRow | null;
   const budgetCategories = (budgetCategoriesRes.data ??
     []) as BudgetCategoryRow[];
+  const incomeCategories = (incomeCategoriesRes.data ??
+    []) as IncomeCategoryRow[];
 
   const incomeEntries = mapIncomeEntries(
     (incomeRes.data ?? []) as IncomeSourceRow[],
@@ -232,6 +242,7 @@ export const fetchAppData = async (
     transactions,
     monthlyTrendData,
     budgetCategories,
+    incomeCategories,
     initialSavingsCents: profile?.initial_savings_cents ?? null,
   };
 };
@@ -536,6 +547,7 @@ export const createTransaction = async (payload: {
   category_name?: string | null;
   budget_id?: string | null;
   budget_category_id?: string | null;
+  income_category_id?: string | null;
   transaction_at: string;
   source: "manual";
 }): Promise<string> => {
@@ -555,6 +567,8 @@ export const updateTransaction = async (
   payload: {
     amount_cents?: number;
     category_name?: string | null;
+    income_category_id?: string | null;
+    budget_category_id?: string | null;
     name?: string;
     transaction_at?: string;
     type?: "income" | "expense";

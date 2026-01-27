@@ -5,6 +5,7 @@ import type {
   XpLevelT,
   XpLevelUpPayloadT,
 } from "@/types/xp-types";
+import type { BudgetCategoryRow, IncomeCategoryRow } from "@/services/types";
 
 export type CurrencyCode = "EUR" | "USD" | "CHF";
 
@@ -93,8 +94,10 @@ export type AppState = {
   expenseEntries: ExpenseEntry[];
   goals: Goal[];
   budgets: Budget[];
+  budgetCategories: BudgetCategoryRow[];
   weeklySpending: WeeklySpending[];
   transactions: Transaction[];
+  incomeCategories: IncomeCategoryRow[];
   insightCategories: InsightCategory[];
   totalIncome: number;
   totalFixedExpenses: number;
