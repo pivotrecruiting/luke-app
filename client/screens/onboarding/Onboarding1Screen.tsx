@@ -1,8 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { Image } from "expo-image";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+  interpolateColor,
+} from "react-native-reanimated";
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 import ProgressDots from "@/components/ProgressDots";
 import { Spacing, BorderRadius, Typography, Colors } from "@/constants/theme";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -10,13 +18,49 @@ import type { OnboardingStackParamList } from "@/navigation/OnboardingNavigator"
 
 type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
 
+/**
+ * Animated text component that transitions color to black when selected
+ */
+const AnimatedGoalLabel = ({
+  label,
+  isSelected,
+}: {
+  label: string;
+  isSelected: boolean;
+}) => {
+  const progress = useSharedValue(isSelected ? 1 : 0);
+
+  useEffect(() => {
+    progress.value = withTiming(isSelected ? 1 : 0, {
+      duration: 200,
+    });
+  }, [isSelected, progress]);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    const color = interpolateColor(
+      progress.value,
+      [0, 1],
+      ["#FFFFFF", "#000000"],
+    );
+
+    return {
+      color,
+    };
+  });
+
+  return (
+    <Animated.Text style={[styles.goalLabel, animatedStyle]}>
+      {label}
+    </Animated.Text>
+  );
+};
+
 const topLeftGoals = [
   {
     id: "overview",
     label: "Überblick\ngewinnen",
     color: "#8E97FD",
     image: require("@assets/images/image_1767540420128.png"),
-    height: 197,
   },
   {
     id: "subscriptions",
@@ -24,7 +68,6 @@ const topLeftGoals = [
     color: "#FEB18F",
     image: require("@assets/images/blob-subscriptions.png"),
     overlayImage: require("@assets/images/image_1767540704833.png"),
-    height: 184,
   },
 ];
 
@@ -35,14 +78,12 @@ const topRightGoals = [
     color: "#FA6E5A",
     image: require("@assets/images/image_1767540791135.png"),
     overlayImage: require("@assets/images/woman-laptop.png"),
-    height: 157,
   },
   {
     id: "savings",
     label: "Notgroschen\naufbauen",
     color: "#FFCF86",
     image: require("@assets/images/image_1767540547771.png"),
-    height: 224,
   },
 ];
 
@@ -52,14 +93,12 @@ const bottomGoals = [
     label: "Sparziel\nerreichen",
     color: "#6CB38E",
     image: require("@assets/images/image_1767540578781.png"),
-    height: 165,
   },
   {
     id: "peace",
     label: "Finanzielle Ruhe",
     color: "#D9A5B5",
     image: require("@assets/images/image_1767540595139.png"),
-    height: 165,
   },
 ];
 
@@ -75,55 +114,83 @@ export default function Onboarding1Screen() {
   };
 
   const renderGoalCard = (
-    goal: (typeof topLeftGoals)[0] | (typeof topRightGoals)[0],
-    isBottom = false,
-  ) => (
-    <Pressable
-      key={goal.id}
-      onPress={() => toggleSelection(goal.id)}
-      style={({ pressed }) => [
-        isBottom ? styles.bottomCard : styles.goalCard,
-        { backgroundColor: goal.color, height: goal.height },
-        selected.includes(goal.id) && styles.goalCardSelected,
-        pressed && styles.goalCardPressed,
-      ]}
-    >
-      {goal.id === "klarna" && "overlayImage" in goal ? (
-        <View style={styles.layeredImageContainer}>
-          <Image
-            source={goal.image}
-            style={styles.goalImageCloud}
-            contentFit="contain"
+    goal:
+      | (typeof topLeftGoals)[0]
+      | (typeof topRightGoals)[0]
+      | (typeof bottomGoals)[0],
+    flexValue?: number,
+  ) => {
+    const isSelected = selected.includes(goal.id);
+    const opacity = useSharedValue(isSelected ? 1 : 0.7);
+
+    useEffect(() => {
+      opacity.value = withTiming(isSelected ? 1 : 0.7, {
+        duration: 200,
+      });
+    }, [isSelected, opacity]);
+
+    const animatedOpacityStyle = useAnimatedStyle(() => ({
+      opacity: opacity.value,
+    }));
+
+    return (
+      <Animated.View
+        style={[
+          animatedOpacityStyle,
+          styles.cardWrapper,
+          flexValue !== undefined ? { flex: flexValue } : { flex: 1 },
+        ]}
+      >
+        <Pressable
+          key={goal.id}
+          onPress={() => toggleSelection(goal.id)}
+          style={({ pressed }) => [
+            styles.goalCard,
+            { backgroundColor: goal.color },
+            pressed && styles.goalCardPressed,
+          ]}
+        >
+          {goal.id === "klarna" && "overlayImage" in goal ? (
+            <View style={styles.layeredImageContainer}>
+              <Image
+                source={goal.image}
+                style={styles.goalImageCloud}
+                contentFit="contain"
+              />
+              <Image
+                source={goal.overlayImage}
+                style={styles.goalImageOverlay}
+                contentFit="contain"
+              />
+            </View>
+          ) : goal.id === "subscriptions" && "overlayImage" in goal ? (
+            <View style={styles.layeredImageContainer}>
+              <Image
+                source={goal.image}
+                style={styles.subscriptionBlob}
+                contentFit="contain"
+              />
+              <Image
+                source={goal.overlayImage}
+                style={styles.subscriptionFigure}
+                contentFit="contain"
+              />
+            </View>
+          ) : (
+            <Image
+              source={goal.image}
+              style={styles.goalImage}
+              contentFit="contain"
+            />
+          )}
+          <AnimatedGoalLabel
+            label={goal.label}
+            isSelected={selected.includes(goal.id)}
           />
-          <Image
-            source={goal.overlayImage}
-            style={styles.goalImageOverlay}
-            contentFit="contain"
-          />
-        </View>
-      ) : goal.id === "subscriptions" && "overlayImage" in goal ? (
-        <View style={styles.layeredImageContainer}>
-          <Image
-            source={goal.image}
-            style={styles.subscriptionBlob}
-            contentFit="contain"
-          />
-          <Image
-            source={goal.overlayImage}
-            style={styles.subscriptionFigure}
-            contentFit="contain"
-          />
-        </View>
-      ) : (
-        <Image
-          source={goal.image}
-          style={styles.goalImage}
-          contentFit="contain"
-        />
-      )}
-      <Text style={styles.goalLabel}>{goal.label}</Text>
-    </Pressable>
-  );
+        </Pressable>
+      </Animated.View>
+    );
+  };
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + Spacing.md }]}>
@@ -137,17 +204,32 @@ export default function Onboarding1Screen() {
         </Text>
       </View>
 
-      <View style={styles.topSection}>
-        <View style={styles.leftColumn}>
-          {topLeftGoals.map((goal) => renderGoalCard(goal))}
+      <View style={styles.goalsContainer}>
+        <View style={styles.topSection}>
+          <View style={styles.leftColumn}>
+            {topLeftGoals.map((goal, index) =>
+              renderGoalCard(goal, index === 0 ? 1.2 : 1.3),
+            )}
+          </View>
+          <View style={styles.rightColumn}>
+            {topRightGoals.map((goal, index) =>
+              renderGoalCard(goal, index === 0 ? 0.8 : 1.3),
+            )}
+          </View>
         </View>
-        <View style={styles.rightColumn}>
-          {topRightGoals.map((goal) => renderGoalCard(goal))}
-        </View>
-      </View>
 
-      <View style={styles.bottomSection}>
-        {bottomGoals.map((goal) => renderGoalCard(goal, true))}
+        <View style={styles.bottomSection}>
+          <View style={styles.leftColumn}>
+            {bottomGoals
+              .filter((_, index) => index % 2 === 0)
+              .map((goal) => renderGoalCard(goal, 0.7))}
+          </View>
+          <View style={styles.rightColumn}>
+            {bottomGoals
+              .filter((_, index) => index % 2 === 1)
+              .map((goal) => renderGoalCard(goal, 0.7))}
+          </View>
+        </View>
       </View>
 
       <View
@@ -197,7 +279,17 @@ const styles = StyleSheet.create({
     color: Colors.light.textSecondary,
     marginTop: Spacing.md,
   },
+  goalsContainer: {
+    flex: 1,
+    gap: Spacing.sm,
+  },
   topSection: {
+    flex: 2,
+    flexDirection: "row",
+    gap: Spacing.md,
+  },
+  bottomSection: {
+    flex: 1.1,
     flexDirection: "row",
     gap: Spacing.md,
   },
@@ -209,42 +301,29 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: Spacing.md,
   },
-  bottomSection: {
-    flexDirection: "row",
-    gap: Spacing.md,
-    marginTop: Spacing.md,
+  cardWrapper: {
+    flex: 1,
   },
   goalCard: {
     width: "100%",
+    height: "100%",
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     justifyContent: "space-between",
     overflow: "hidden",
     borderWidth: 4,
     borderColor: "transparent",
-  },
-  bottomCard: {
-    flex: 1,
-    borderRadius: BorderRadius.md,
-    padding: Spacing.lg,
-    justifyContent: "space-between",
-    overflow: "hidden",
-    borderWidth: 4,
-    borderColor: "transparent",
-  },
-  goalCardSelected: {
-    borderColor: Colors.light.primary,
   },
   goalCardPressed: {
     opacity: 0.9,
   },
   goalImage: {
+    flex: 1,
     width: "100%",
-    height: 80,
   },
   layeredImageContainer: {
+    flex: 1,
     width: "100%",
-    height: 80,
     position: "relative",
   },
   goalImageCloud: {
@@ -262,7 +341,7 @@ const styles = StyleSheet.create({
   subscriptionBlob: {
     position: "absolute",
     width: "100%",
-    height: 95,
+    height: "100%",
     left: 0,
     bottom: 0,
   },
@@ -273,12 +352,11 @@ const styles = StyleSheet.create({
   },
   goalLabel: {
     ...Typography.h4,
-    color: "#FFFFFF",
     fontWeight: "700",
   },
   buttonContainer: {
     marginTop: "auto",
-    paddingTop: Spacing.md,
+    paddingTop: Spacing.xs,
   },
   button: {
     backgroundColor: Colors.light.buttonPrimary,
