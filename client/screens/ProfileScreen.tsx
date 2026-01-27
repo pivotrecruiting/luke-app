@@ -14,6 +14,7 @@ import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { resolveLevelByXp } from "@/features/xp/utils/levels";
 import { formatDaysSince } from "@/utils/dates";
+import { getUserFirstName } from "@/utils/user";
 import { styles } from "./styles/profile-screen.styles";
 import { AppModal } from "@/components/ui/app-modal";
 
@@ -59,7 +60,9 @@ export default function ProfileScreen() {
     typeof user?.user_metadata?.full_name === "string"
       ? user.user_metadata.full_name
       : null;
-  const profileName = userName ?? metadataName ?? "User";
+  const firstName = getUserFirstName(userName ?? metadataName);
+  const fallbackLevel = currentLevel?.levelNumber ?? 1;
+  const profileName = firstName ?? `Level ${fallbackLevel}`;
   const levelEmoji = currentLevel?.emoji ?? "🦊";
   const savingsLabel = balance >= 0 ? "Gespart" : "Ausgegeben";
   const savingsAmount = formatCurrency(Math.abs(balance));
