@@ -1,5 +1,5 @@
 import React from "react";
-import { Switch, StyleSheet, Platform } from "react-native";
+import { Switch, StyleSheet, Platform, View } from "react-native";
 import { useTheme } from "@/hooks/useTheme";
 
 type ToggleProps = {
@@ -19,19 +19,34 @@ export function Toggle({
   const { theme } = useTheme();
 
   return (
-    <Switch
-      value={value}
-      onValueChange={onValueChange}
-      disabled={disabled}
-      trackColor={{
-        false: theme.backgroundTertiary,
-        true: theme.primary,
-      }}
-      thumbColor={Platform.select({
-        ios: "#FFFFFF",
-        android: value ? "#FFFFFF" : "#F4F3F4",
-      })}
-      ios_backgroundColor={theme.backgroundTertiary}
-    />
+    <View style={styles.container}>
+      <Switch
+        value={value}
+        onValueChange={onValueChange}
+        disabled={disabled}
+        trackColor={{
+          false: theme.backgroundSecondary,
+          true: theme.accent,
+        }}
+        thumbColor={Platform.select({
+          ios: "#FFFFFF",
+          android: value ? "#FFFFFF" : "#F4F3F4",
+        })}
+        ios_backgroundColor={theme.backgroundSecondary}
+        style={styles.switch}
+      />
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    minWidth: 52,
+    minHeight: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  switch: {
+    transform: [{ scaleX: 0.85 }, { scaleY: 0.85 }],
+  },
+});
