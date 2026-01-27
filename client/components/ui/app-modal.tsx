@@ -6,6 +6,7 @@ import {
   Platform,
   Pressable,
   StyleSheet,
+  useWindowDimensions,
   View,
   type StyleProp,
   type ViewStyle,
@@ -35,8 +36,10 @@ export const AppModal = ({
   keyboardAvoidingEnabled = false,
   keyboardVerticalOffset = 0,
 }: AppModalPropsT) => {
+  const { height } = useWindowDimensions();
+  const maxHeightValue = Math.min(Math.max(maxHeightPercent, 0), 100);
   const maxHeightStyle = {
-    maxHeight: `${Math.min(Math.max(maxHeightPercent, 0), 100)}%`,
+    maxHeight: (height * maxHeightValue) / 100,
   };
 
   const content = (
@@ -55,8 +58,8 @@ export const AppModal = ({
       <View style={styles.root}>
         <Pressable style={styles.backdrop} onPress={onClose}>
           <LinearGradient
-            colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.25)", "rgba(0,0,0,0.45)"]}
-            locations={[0, 0.6, 1]}
+            colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.35)", "rgba(0,0,0,0.6)"]}
+            locations={[0, 0.8, 1]}
             style={StyleSheet.absoluteFillObject}
           />
         </Pressable>
