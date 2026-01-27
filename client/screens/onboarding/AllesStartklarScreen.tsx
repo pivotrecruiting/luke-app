@@ -67,7 +67,7 @@ export default function AllesStartklarScreen() {
             pressed && styles.buttonPressed,
           ]}
         >
-          <Text style={styles.buttonText}>Los geht's</Text>
+          <Text style={styles.buttonText}>Los geht&apos;s</Text>
         </Pressable>
       </View>
     </View>

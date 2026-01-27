@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useApp } from "@/context/AppContext";
 import { navigationRef } from "@/navigation/navigation-ref";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";

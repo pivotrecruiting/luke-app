@@ -1,6 +1,5 @@
 import React from "react";
 import { Text, StyleSheet } from "react-native";
-import { Typography } from "@/constants/theme";
 
 type LevelUpDescriptionProps = {
   description?: string;
