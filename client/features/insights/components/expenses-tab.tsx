@@ -202,7 +202,11 @@ export const ExpensesTab = ({
         </View>
 
         <View key="income" style={styles.pagerPage}>
-          <IncomeExpensesView income={totalIncome} expenses={totalExpenses} />
+          <IncomeExpensesView
+            income={totalIncome}
+            expenses={totalExpenses}
+            timeFilter={selectedTimeFilter}
+          />
         </View>
 
         <View key="trend" style={styles.pagerPage}>

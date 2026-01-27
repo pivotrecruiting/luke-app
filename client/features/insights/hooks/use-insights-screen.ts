@@ -13,6 +13,7 @@ import {
   INCOME_TYPES,
 } from "../constants/insights-constants";
 import { getDateRangeForFilter, parseGermanDate } from "../utils/date";
+import { parseFormattedDate } from "@/utils/dates";
 import type {
   CategoryT,
   InsightsFilterT,
@@ -26,6 +27,7 @@ type UseInsightsScreenReturnT = {
     totalIncome: number;
     totalExpenses: number;
     monthlyTrendData: ReturnType<typeof useApp>["monthlyTrendData"];
+    transactions: ReturnType<typeof useApp>["transactions"];
     incomeEntries: IncomeEntry[];
     expenseEntries: ExpenseEntry[];
   };
@@ -52,6 +54,7 @@ type UseInsightsScreenReturnT = {
     filteredCategories: CategoryT[];
     totalCategoryExpenses: number;
     filteredMonthlyTrendData: ReturnType<typeof useApp>["monthlyTrendData"];
+    filteredComparisonTotals: { income: number; expenses: number };
   };
   actions: {
     setActiveTab: (value: InsightsTabT) => void;
@@ -92,6 +95,7 @@ export const useInsightsScreen = (): UseInsightsScreenReturnT => {
     totalIncome,
     totalExpenses,
     monthlyTrendData,
+    transactions,
     incomeEntries,
     expenseEntries,
     addIncomeEntry,
@@ -204,6 +208,53 @@ export const useInsightsScreen = (): UseInsightsScreenReturnT => {
       setSelectedTrendMonth(null);
     }
   }, [filteredMonthlyTrendData.length, selectedTrendMonth]);
+
+  const filteredComparisonTotals = useMemo(() => {
+    const { start, end } = getDateRangeForFilter(selectedTimeFilter);
+    const monthCount =
+      (end.getFullYear() - start.getFullYear()) * 12 +
+      (end.getMonth() - start.getMonth()) +
+      1;
+    const normalizedMonths = Math.max(monthCount, 1);
+
+    const { variableIncome, variableExpenses } = transactions.reduce(
+      (acc, tx) => {
+        const txDate = tx.timestamp
+          ? new Date(tx.timestamp)
+          : parseFormattedDate(tx.date);
+        if (txDate < start || txDate > end) return acc;
+        if (tx.amount >= 0) {
+          acc.variableIncome += tx.amount;
+        } else {
+          acc.variableExpenses += Math.abs(tx.amount);
+        }
+        return acc;
+      },
+      { variableIncome: 0, variableExpenses: 0 },
+    );
+
+    const fixedIncome = incomeEntries.reduce(
+      (sum, entry) => sum + entry.amount,
+      0,
+    );
+    const fixedExpenses = expenseEntries.reduce(
+      (sum, entry) => sum + entry.amount,
+      0,
+    );
+
+    const totalIncome = variableIncome + fixedIncome * normalizedMonths;
+    const totalExpenses = variableExpenses + fixedExpenses * normalizedMonths;
+
+    return {
+      income: totalIncome,
+      expenses: totalExpenses,
+    };
+  }, [
+    expenseEntries,
+    incomeEntries,
+    selectedTimeFilter,
+    transactions,
+  ]);
 
   const openAddIncomeModal = useCallback(() => {
     setEditingIncomeId(null);
@@ -357,6 +408,7 @@ export const useInsightsScreen = (): UseInsightsScreenReturnT => {
       totalIncome,
       totalExpenses,
       monthlyTrendData,
+      transactions,
       incomeEntries,
       expenseEntries,
     },
@@ -383,6 +435,7 @@ export const useInsightsScreen = (): UseInsightsScreenReturnT => {
       filteredCategories,
       totalCategoryExpenses,
       filteredMonthlyTrendData,
+      filteredComparisonTotals,
     },
     actions: {
       setActiveTab,

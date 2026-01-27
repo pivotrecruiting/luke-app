@@ -2,10 +2,12 @@ import { Text, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { styles } from "@/screens/styles/insights-screen.styles";
 import { formatCurrency } from "../utils/format";
+import type { TimeFilterT } from "../types/insights-types";
 
 type IncomeExpensesViewPropsT = {
   income: number;
   expenses: number;
+  timeFilter: TimeFilterT;
 };
 
 /**
@@ -14,7 +16,24 @@ type IncomeExpensesViewPropsT = {
 export const IncomeExpensesView = ({
   income,
   expenses,
+  timeFilter,
 }: IncomeExpensesViewPropsT) => {
+  const timeFilterLabel = (() => {
+    switch (timeFilter) {
+      case "thisMonth":
+        return "Dieser Monat";
+      case "lastMonth":
+        return "Letzter Monat";
+      case "last3Months":
+        return "3 Monate";
+      case "last6Months":
+        return "6 Monate";
+      case "thisYear":
+        return "Jahr";
+      default:
+        return "Dieser Monat";
+    }
+  })();
   const difference = income - expenses;
   const isPositive = difference >= 0;
   const maxValue = Math.max(income, expenses);
@@ -26,7 +45,7 @@ export const IncomeExpensesView = ({
     <View style={styles.incomeExpensesContainer}>
       <View style={styles.summaryCard}>
         <View style={styles.summaryHeader}>
-          <Text style={styles.summaryTitle}>Monatliche Bilanz</Text>
+          <Text style={styles.summaryTitle}>Bilanz · {timeFilterLabel}</Text>
           <View
             style={[
               styles.statusBadge,

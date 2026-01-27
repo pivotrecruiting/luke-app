@@ -41,8 +41,8 @@ export default function InsightsScreen() {
           monthlyTrendData={derived.filteredMonthlyTrendData}
           selectedTrendMonth={state.selectedTrendMonth}
           onSelectTrendMonth={actions.setSelectedTrendMonth}
-          totalIncome={appData.totalIncome}
-          totalExpenses={appData.totalExpenses}
+          totalIncome={derived.filteredComparisonTotals.income}
+          totalExpenses={derived.filteredComparisonTotals.expenses}
         />
       ) : (
         <IncomeTab
