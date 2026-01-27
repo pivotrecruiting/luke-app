@@ -23,7 +23,7 @@ export const styles = StyleSheet.create({
   // ============================================
   header: {
     paddingHorizontal: Spacing.xl,
-    paddingBottom: Spacing["4xl"] * 1.5, // 50% größer (60px statt 40px)
+    paddingBottom: Spacing.lg,
     minHeight: 180, // Größere Mindesthöhe
   },
   headerTitle: {
@@ -31,7 +31,6 @@ export const styles = StyleSheet.create({
     ...Typography.h1,
     fontWeight: "700",
     color: "#FFFFFF",
-    marginTop: Spacing.xl,
   },
   headerSubtitle: {
     // Used for: Header subtitle "Einstellungen & mehr"
@@ -48,7 +47,7 @@ export const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
-    marginTop: -70, // Etwas weiter nach unten verschoben
+    marginTop: 0,
     marginHorizontal: Spacing.xl,
     // marginBottom: Spacing.xs, // Reduzierter Abstand zum Account Titel
     shadowColor: "#000",

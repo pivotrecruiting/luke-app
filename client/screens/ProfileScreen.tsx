@@ -31,6 +31,8 @@ export default function ProfileScreen() {
   const [deleteAccountModalVisible, setDeleteAccountModalVisible] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
+  const profileCardOverlap = Spacing["4xl"];
+
   const loginMethod = "Google Account";
   const appVersion = "1.0.0";
 
@@ -97,7 +99,13 @@ export default function ProfileScreen() {
         colors={["rgba(115, 64, 253, 0.9)", "rgba(115, 64, 253, 0.7)"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
-        style={[styles.header, { paddingTop: insets.top + Spacing.lg }]}
+        style={[
+          styles.header,
+          {
+            paddingTop: insets.top + Spacing.lg,
+            paddingBottom: profileCardOverlap + Spacing.lg,
+          },
+        ]}
       >
         <ThemedText style={styles.headerTitle} lightColor="#FFFFFF">
           Profil
@@ -111,7 +119,7 @@ export default function ProfileScreen() {
       </LinearGradient>
 
       {/* User Profile Card - positioned over header */}
-      <View style={styles.profileCard}>
+      <View style={[styles.profileCard, { marginTop: -profileCardOverlap }]}>
         <View style={styles.profileHeader}>
           <Pressable
             style={({ pressed }) => [
