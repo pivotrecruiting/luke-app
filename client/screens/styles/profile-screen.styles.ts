@@ -64,10 +64,16 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: Spacing.lg,
   },
+  profileAvatarButton: {
+    // Used for: Pressable wrapper around the level emoji
+    marginRight: Spacing.md,
+  },
+  profileAvatarButtonPressed: {
+    opacity: 0.8,
+  },
   profileAvatar: {
     // Used for: Profile avatar emoji
     fontSize: 32,
-    marginRight: Spacing.md,
   },
   profileName: {
     // Used for: User name text - black color

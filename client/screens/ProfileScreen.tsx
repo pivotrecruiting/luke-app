@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Alert, View, ScrollView, Pressable } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -10,7 +10,10 @@ import { ThemedText } from "@/components/ThemedText";
 import { SettingsRow } from "@/components/SettingsRow";
 import { Spacing } from "@/constants/theme";
 import { useApp } from "@/context/AppContext";
+import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
+import { resolveLevelByXp } from "@/features/xp/utils/levels";
+import { formatDaysSince } from "@/utils/dates";
 import { styles } from "./styles/profile-screen.styles";
 import { AppModal } from "@/components/ui/app-modal";
 
@@ -22,18 +25,47 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
-  const { levels } = useApp();
+  const { levels, userProgress, balance, currency, userName } = useApp();
+  const { user } = useAuth();
   const [manageModalVisible, setManageModalVisible] = useState(false);
   const [deleteAccountModalVisible, setDeleteAccountModalVisible] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  // Mock data - no functionality
-  const userName = "Deni";
-  const savedAmount = "€ 2.478,23";
-  const daysSince = "83 Tagen";
-  const highestStreak = "26 Tage";
   const loginMethod = "Google Account";
   const appVersion = "1.0.0";
+
+  const formatCurrency = (value: number): string => {
+    return new Intl.NumberFormat("de-DE", {
+      style: "currency",
+      currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value);
+  };
+
+  const currentLevel = useMemo(() => {
+    const sortedLevels = [...levels].sort(
+      (a, b) => a.xpRequired - b.xpRequired,
+    );
+    const xpTotalValue = userProgress?.xpTotal ?? 0;
+    return (
+      resolveLevelByXp(sortedLevels, xpTotalValue) ?? sortedLevels[0] ?? null
+    );
+  }, [levels, userProgress]);
+
+  const metadataName =
+    typeof user?.user_metadata?.full_name === "string"
+      ? user.user_metadata.full_name
+      : null;
+  const profileName = userName ?? metadataName ?? "User";
+  const levelEmoji = currentLevel?.emoji ?? "🦊";
+  const savingsLabel = balance >= 0 ? "Gespart" : "Ausgegeben";
+  const savingsAmount = formatCurrency(Math.abs(balance));
+  const daysSince = formatDaysSince(user?.created_at);
+  const highestStreakValue = userProgress?.longestStreak ?? 0;
+  const highestStreak = `${highestStreakValue} ${
+    highestStreakValue === 1 ? "Tag" : "Tage"
+  }`;
 
   const handleLogout = async () => {
     if (isLoggingOut) return;
@@ -81,8 +113,25 @@ export default function ProfileScreen() {
       {/* User Profile Card - positioned over header */}
       <View style={styles.profileCard}>
         <View style={styles.profileHeader}>
-          <ThemedText style={styles.profileAvatar}>🦊</ThemedText>
-          <ThemedText style={styles.profileName}>{userName}</ThemedText>
+          <Pressable
+            style={({ pressed }) => [
+              styles.profileAvatarButton,
+              pressed ? styles.profileAvatarButtonPressed : null,
+            ]}
+            onPress={() => {
+              if (currentLevel?.id) {
+                navigation.navigate("LevelUp", { levelId: currentLevel.id });
+                return;
+              }
+              navigation.navigate("LevelUp", {});
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Level Up anzeigen"
+            hitSlop={8}
+          >
+            <ThemedText style={styles.profileAvatar}>{levelEmoji}</ThemedText>
+          </Pressable>
+          <ThemedText style={styles.profileName}>{profileName}</ThemedText>
         </View>
         <View style={styles.profileStats}>
           <View style={styles.statColumn}>
@@ -92,10 +141,10 @@ export default function ProfileScreen() {
               lightColor="#9CA3AF"
               darkColor="#9BA1A6"
             >
-              Gespart
+              {savingsLabel}
             </ThemedText>
             <ThemedText type="body" style={styles.statValue}>
-              {savedAmount}
+              {savingsAmount}
             </ThemedText>
           </View>
           <View style={styles.statColumn}>
