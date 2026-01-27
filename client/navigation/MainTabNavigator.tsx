@@ -77,6 +77,9 @@ const ui = {
     tabBarHeight: 60,
     tabItemMinWidth: 60,
     iconSize: 18,
+    addIconSize: 24,
+    addItemSize: 56,
+    addItemElevation: 8,
     labelTopGap: 3,
     safe: {
       bottomInset: 16, // Abstand unterhalb der Tabbar (innerhalb SafeAreaView)
@@ -108,52 +111,87 @@ const ui = {
  * - SafeAreaView ist nur für Außenabstände zuständig
  * - Tabbar ist nur für "Container Look"
  * - Row ist nur für Layout der Items
+ * - Add Item ist absolut positioniert und schwebt über der Tab Bar
  */
 const SimpleTabBar = memo(({ state, navigation }: BottomTabBarProps) => {
   const s = useMemo(() => makeStyles(ui), []);
 
+  // Separate routes: Add Item wird separat behandelt
+  const regularRoutes = state.routes.filter((route) => route.name !== "Add");
+  const addRoute = state.routes.find((route) => route.name === "Add");
+  const isAddFocused = addRoute && state.index === state.routes.indexOf(addRoute);
+
   return (
     <SafeAreaView edges={["bottom"]} style={s.safeArea}>
-      <View style={s.tabBar}>
-        <BlurView
-          intensity={ui.metrics.blur.intensity}
-          tint={ui.metrics.blur.tint}
-          style={StyleSheet.absoluteFill}
-        />
-        <View style={s.glassTint} pointerEvents="none" />
+      <View style={s.tabBarContainer}>
+        <View style={s.tabBar}>
+          <BlurView
+            intensity={ui.metrics.blur.intensity}
+            tint={ui.metrics.blur.tint}
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={s.glassTint} pointerEvents="none" />
 
-        <View style={s.tabRow}>
-          {state.routes.map((route, index) => {
-            const isFocused = state.index === index;
-            const routeName = route.name as keyof MainTabParamList;
+          <View style={s.tabRow}>
+            {regularRoutes.map((route, index) => {
+              const originalIndex = state.routes.indexOf(route);
+              const isFocused = state.index === originalIndex;
+              const routeName = route.name as keyof MainTabParamList;
 
-            const handlePress = () => {
-              if (!isFocused) navigation.navigate(route.name as never);
-            };
+              const handlePress = () => {
+                if (!isFocused) navigation.navigate(route.name as never);
+              };
 
-            return (
-              <TouchableOpacity
-                key={route.key}
-                accessibilityRole="button"
-                accessibilityState={isFocused ? { selected: true } : {}}
-                onPress={handlePress}
-                style={[s.tabItem, isFocused && s.tabItemActive]}
-                activeOpacity={0.75}
-              >
-                <Feather
-                  name={TAB_ICONS[routeName]}
-                  size={ui.metrics.iconSize}
-                  color={
-                    isFocused ? ui.color.text.active : ui.color.text.inactive
-                  }
-                />
-                <Text style={[s.tabLabel, isFocused && s.tabLabelActive]}>
-                  {TAB_LABELS[routeName]}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
+              return (
+                <React.Fragment key={route.key}>
+                  {/* Placeholder spacer in the middle to create space for the floating Add button */}
+                  {index === 2 && (
+                    <View style={s.placeholderSpacer} pointerEvents="none" />
+                  )}
+                  <TouchableOpacity
+                    accessibilityRole="button"
+                    accessibilityState={isFocused ? { selected: true } : {}}
+                    onPress={handlePress}
+                    style={[s.tabItem, isFocused && s.tabItemActive]}
+                    activeOpacity={0.75}
+                  >
+                    <Feather
+                      name={TAB_ICONS[routeName]}
+                      size={ui.metrics.iconSize}
+                      color={
+                        isFocused ? ui.color.text.active : ui.color.text.inactive
+                      }
+                    />
+                    <Text style={[s.tabLabel, isFocused && s.tabLabelActive]}>
+                      {TAB_LABELS[routeName]}
+                    </Text>
+                  </TouchableOpacity>
+                </React.Fragment>
+              );
+            })}
+          </View>
         </View>
+
+        {/* Add Item absolut positioniert über der Tab Bar */}
+        {addRoute && (
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityState={isAddFocused ? { selected: true } : {}}
+            onPress={() => {
+              if (!isAddFocused) navigation.navigate("Add" as never);
+            }}
+            style={[s.addItem, isAddFocused && s.addItemActive]}
+            activeOpacity={0.75}
+          >
+            <Feather
+              name={TAB_ICONS.Add}
+              size={ui.metrics.addIconSize}
+              color={
+                isAddFocused ? ui.color.text.active : ui.color.text.inactive
+              }
+            />
+          </TouchableOpacity>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -188,6 +226,10 @@ function makeStyles(theme: typeof ui) {
       paddingBottom: theme.metrics.safe.bottomInset,
     },
 
+    tabBarContainer: {
+      position: "relative",
+    },
+
     tabBar: {
       height: theme.metrics.tabBarHeight,
       borderRadius: theme.radius.tabBar,
@@ -213,6 +255,11 @@ function makeStyles(theme: typeof ui) {
       paddingHorizontal: theme.metrics.layout.innerHorizontalPadding,
     },
 
+    placeholderSpacer: {
+      width: theme.metrics.addItemSize,
+      height: theme.metrics.addItemSize,
+    },
+
     tabItem: {
       minWidth: theme.metrics.tabItemMinWidth,
       alignItems: "center",
@@ -235,6 +282,28 @@ function makeStyles(theme: typeof ui) {
 
     tabLabelActive: {
       color: theme.color.text.active,
+    },
+
+    addItem: {
+      position: "absolute",
+      top: -theme.metrics.addItemElevation,
+      alignSelf: "center",
+      width: theme.metrics.addItemSize,
+      height: theme.metrics.addItemSize,
+      borderRadius: theme.metrics.addItemSize / 2,
+      backgroundColor: theme.color.surface,
+      borderWidth: 1,
+      borderColor: theme.color.border,
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 10,
+      ...theme.shadow.ios,
+      ...theme.shadow.android,
+      elevation: theme.metrics.addItemElevation + 5,
+    },
+
+    addItemActive: {
+      backgroundColor: theme.color.tabItemActiveBackground,
     },
   });
 }
