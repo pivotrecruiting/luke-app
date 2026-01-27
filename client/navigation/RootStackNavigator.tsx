@@ -1,9 +1,11 @@
 import React from "react";
 import { Platform } from "react-native";
+import type { NavigatorScreenParams } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { isLiquidGlassAvailable } from "expo-glass-effect";
 import OnboardingNavigator from "@/navigation/OnboardingNavigator";
 import MainTabNavigator from "@/navigation/MainTabNavigator";
+import type { MainTabParamList } from "@/navigation/MainTabNavigator";
 import GoalDetailScreen from "@/screens/GoalDetailScreen";
 import BudgetDetailScreen from "@/screens/BudgetDetailScreen";
 import IncomeScreen from "@/screens/IncomeScreen";
@@ -14,7 +16,7 @@ import { useAuth } from "@/context/AuthContext";
 
 export type RootStackParamList = {
   Onboarding: undefined;
-  Main: undefined;
+  Main: NavigatorScreenParams<MainTabParamList> | undefined;
   GoalDetail: {
     goalId: string;
   };
