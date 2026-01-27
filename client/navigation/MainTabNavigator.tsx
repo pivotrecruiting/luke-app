@@ -1,9 +1,11 @@
 import React from "react";
-import { View, StyleSheet, Text, Platform } from "react-native";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { BlurView } from "expo-blur";
-import { isLiquidGlassAvailable } from "expo-glass-effect";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import {
+  createBottomTabNavigator,
+  type BottomTabBarProps,
+} from "@react-navigation/bottom-tabs";
 import { Feather } from "@expo/vector-icons";
+import { SafeAreaView } from "react-native-safe-area-context";
 import HomeScreen from "@/screens/HomeScreen";
 import InsightsScreen from "@/screens/InsightsScreen";
 import AddScreen from "@/screens/AddScreen";
@@ -18,197 +20,110 @@ export type MainTabParamList = {
   Profile: undefined;
 };
 
+type TabIconNameT = keyof typeof Feather.glyphMap;
+
+const TAB_ICONS: Record<keyof MainTabParamList, TabIconNameT> = {
+  Home: "home",
+  Insights: "bar-chart-2",
+  Add: "plus",
+  Goals: "star",
+  Profile: "user",
+};
+
+const TAB_LABELS: Record<keyof MainTabParamList, string> = {
+  Home: "Home",
+  Insights: "Insights",
+  Add: "Add",
+  Goals: "Goals",
+  Profile: "Profil",
+};
+
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
-export default function MainTabNavigator() {
-  const liquidGlassAvailable = isLiquidGlassAvailable();
-  const useGlassEffect = liquidGlassAvailable && Platform.OS === "ios";
+/**
+ * Simple tab bar layout with minimal styling.
+ */
+const SimpleTabBar = ({ state, navigation }: BottomTabBarProps) => {
+  return (
+    <SafeAreaView edges={["bottom"]} style={styles.tabBar}>
+      {state.routes.map((route, index) => {
+        const isFocused = state.index === index;
+        const routeName = route.name as keyof MainTabParamList;
+        const iconName = TAB_ICONS[routeName];
+        const label = TAB_LABELS[routeName];
 
+        const handlePress = () => {
+          if (isFocused) return;
+          navigation.navigate(route.name as never);
+        };
+
+        return (
+          <TouchableOpacity
+            key={route.key}
+            accessibilityRole="button"
+            accessibilityState={isFocused ? { selected: true } : {}}
+            onPress={handlePress}
+            style={styles.tabItem}
+          >
+            <Feather
+              name={iconName}
+              size={18}
+              color={isFocused ? "#111827" : "#6B7280"}
+            />
+            <Text style={[styles.tabLabel, isFocused && styles.tabLabelActive]}>
+              {label}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </SafeAreaView>
+  );
+};
+
+/**
+ * Main tab navigator with a minimal, clean tab bar.
+ */
+export default function MainTabNavigatorNew() {
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarStyle: {
-          backgroundColor: useGlassEffect ? "transparent" : "#FFFFFF",
-          borderTopWidth: 0,
-          height: 80,
-          paddingBottom: 20,
-          paddingTop: 10,
-          position: "absolute",
-          shadowColor: useGlassEffect ? "transparent" : "#000",
-          shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: useGlassEffect ? 0 : 0.08,
-          shadowRadius: 8,
-          elevation: 10,
-        },
-        tabBarBackground: useGlassEffect
-          ? () => (
-              <BlurView
-                intensity={liquidGlassAvailable ? 80 : 60}
-                tint="light"
-                style={StyleSheet.absoluteFill}
-              />
-            )
-          : undefined,
-        tabBarActiveTintColor: "#3B82F6",
-        tabBarInactiveTintColor: "#9CA3AF",
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: "500",
-        },
       }}
+      tabBar={(props) => <SimpleTabBar {...props} />}
     >
-      <Tab.Screen
-        name="Home"
-        component={HomeScreen}
-        options={{
-          tabBarLabel: () => null,
-          tabBarIcon: ({ focused }) => (
-            <View style={[styles.tabButton, focused && styles.tabButtonActive]}>
-              <View
-                style={[styles.homeCircle, focused && styles.homeCircleActive]}
-              />
-              <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>
-                Home
-              </Text>
-            </View>
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Insights"
-        component={InsightsScreen}
-        options={{
-          tabBarLabel: () => null,
-          tabBarIcon: ({ focused }) => (
-            <View style={[styles.tabButton, focused && styles.tabButtonActive]}>
-              <View
-                style={[
-                  styles.insightsCircle,
-                  focused && styles.insightsCircleActive,
-                ]}
-              />
-              <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>
-                Insight
-              </Text>
-            </View>
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Add"
-        component={AddScreen}
-        options={{
-          tabBarLabel: () => null,
-          tabBarIcon: ({ focused }) => (
-            <View style={[styles.tabButton, focused && styles.tabButtonActive]}>
-              <View
-                style={[styles.addCircle, focused && styles.addCircleActive]}
-              >
-                <Feather
-                  name="plus"
-                  size={18}
-                  color={focused ? "#FFFFFF" : "#9CA3AF"}
-                />
-              </View>
-              <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>
-                Add
-              </Text>
-            </View>
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Goals"
-        component={GoalsScreen}
-        options={{
-          tabBarLabel: () => null,
-          tabBarIcon: ({ focused }) => (
-            <View style={[styles.tabButton, focused && styles.tabButtonActive]}>
-              <Feather
-                name="star"
-                size={22}
-                color={focused ? "#6155F5" : "#9CA3AF"}
-              />
-              <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>
-                Goals
-              </Text>
-            </View>
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Profile"
-        component={ProfileScreen}
-        options={{
-          tabBarLabel: () => null,
-          tabBarIcon: ({ focused }) => (
-            <View style={[styles.tabButton, focused && styles.tabButtonActive]}>
-              <Feather
-                name="user"
-                size={22}
-                color={focused ? "#6155F5" : "#9CA3AF"}
-              />
-              <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>
-                Profil
-              </Text>
-            </View>
-          ),
-        }}
-      />
+      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Insights" component={InsightsScreen} />
+      <Tab.Screen name="Add" component={AddScreen} />
+      <Tab.Screen name="Goals" component={GoalsScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
 }
 
 const styles = StyleSheet.create({
-  tabButton: {
+  tabBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-around",
+    borderTopWidth: 1,
+    borderTopColor: "#E5E7EB",
+    backgroundColor: "#FFFFFF",
+    paddingTop: 8,
+    paddingBottom: 8,
+  },
+  tabItem: {
     alignItems: "center",
     justifyContent: "center",
-    paddingTop: 6,
-    paddingBottom: 7,
-    paddingHorizontal: 6,
-    borderRadius: 100,
-    minWidth: 44,
-  },
-  tabButtonActive: {},
-  insightsCircle: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: "#9CA3AF",
-  },
-  insightsCircleActive: {
-    backgroundColor: "#6155F5",
-  },
-  homeCircle: {
-    width: 20,
-    height: 20,
-    borderRadius: 6,
-    backgroundColor: "#9CA3AF",
-    transform: [{ rotate: "45deg" }],
-  },
-  homeCircleActive: {
-    backgroundColor: "#6155F5",
-  },
-  addCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "#E5E7EB",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  addCircleActive: {
-    backgroundColor: "#6155F5",
+    minWidth: 60,
+    paddingVertical: 6,
   },
   tabLabel: {
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: "500",
-    color: "#9CA3AF",
-    marginTop: 2,
-    textAlign: "center",
+    color: "#6B7280",
+    marginTop: 4,
   },
   tabLabelActive: {
-    color: "#3B82F6",
+    color: "#111827",
   },
 });
