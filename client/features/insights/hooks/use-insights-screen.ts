@@ -35,7 +35,6 @@ type UseInsightsScreenReturnT = {
     selectedCategory: string | null;
     selectedTrendMonth: number | null;
     selectedTimeFilter: TimeFilterT;
-    filterModalVisible: boolean;
     incomeModalVisible: boolean;
     expenseModalVisible: boolean;
     editingIncomeId: string | null;
@@ -52,7 +51,6 @@ type UseInsightsScreenReturnT = {
   derived: {
     filteredCategories: CategoryT[];
     totalCategoryExpenses: number;
-    activeFilterCount: number;
     filteredMonthlyTrendData: ReturnType<typeof useApp>["monthlyTrendData"];
   };
   actions: {
@@ -61,7 +59,6 @@ type UseInsightsScreenReturnT = {
     setSelectedCategory: (value: string | null) => void;
     setSelectedTrendMonth: (value: number | null) => void;
     setSelectedTimeFilter: (value: TimeFilterT) => void;
-    setFilterModalVisible: (value: boolean) => void;
     setIncomeModalVisible: (value: boolean) => void;
     setExpenseModalVisible: (value: boolean) => void;
     setSelectedIncomeType: (value: string | null) => void;
@@ -108,7 +105,6 @@ export const useInsightsScreen = (): UseInsightsScreenReturnT => {
   const [activeTab, setActiveTab] = useState<InsightsTabT>("ausgaben");
   const [activeFilter, setActiveFilter] =
     useState<InsightsFilterT>("kategorien");
-  const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedTrendMonth, setSelectedTrendMonth] = useState<number | null>(
     null,
@@ -184,8 +180,6 @@ export const useInsightsScreen = (): UseInsightsScreenReturnT => {
   const totalCategoryExpenses = useMemo(() => {
     return filteredCategories.reduce((sum, cat) => sum + cat.amount, 0);
   }, [filteredCategories]);
-
-  const activeFilterCount = selectedTimeFilter !== "thisMonth" ? 1 : 0;
 
   const handleCategoryPress = useCallback((categoryName: string) => {
     setSelectedCategory((prev) =>
@@ -372,7 +366,6 @@ export const useInsightsScreen = (): UseInsightsScreenReturnT => {
       selectedCategory,
       selectedTrendMonth,
       selectedTimeFilter,
-      filterModalVisible,
       incomeModalVisible,
       expenseModalVisible,
       editingIncomeId,
@@ -389,7 +382,6 @@ export const useInsightsScreen = (): UseInsightsScreenReturnT => {
     derived: {
       filteredCategories,
       totalCategoryExpenses,
-      activeFilterCount,
       filteredMonthlyTrendData,
     },
     actions: {
@@ -398,7 +390,6 @@ export const useInsightsScreen = (): UseInsightsScreenReturnT => {
       setSelectedCategory,
       setSelectedTrendMonth,
       setSelectedTimeFilter,
-      setFilterModalVisible,
       setIncomeModalVisible,
       setExpenseModalVisible,
       setSelectedIncomeType,

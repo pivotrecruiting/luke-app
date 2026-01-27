@@ -31,8 +31,3 @@ export type MonthlyTrendT = {
   month: string;
   amount: number;
 };
-
-export type TimeFilterOptionT = {
-  id: TimeFilterT;
-  label: string;
-};

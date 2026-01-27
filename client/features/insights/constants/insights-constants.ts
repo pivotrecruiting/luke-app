@@ -1,8 +1,4 @@
-import type {
-  ExpenseTypeT,
-  IncomeTypeT,
-  TimeFilterOptionT,
-} from "../types/insights-types";
+import type { ExpenseTypeT, IncomeTypeT } from "../types/insights-types";
 
 export const INCOME_TYPES: IncomeTypeT[] = [
   { id: "gehalt", name: "Gehalt", icon: "briefcase" },
@@ -26,14 +22,6 @@ export const EXPENSE_TYPES: ExpenseTypeT[] = [
   { id: "abos", name: "Abos", icon: "repeat" },
   { id: "fahrticket", name: "Fahrticket", icon: "navigation" },
   { id: "sonstiges", name: "Sonstiges", icon: "plus-circle" },
-];
-
-export const TIME_FILTER_OPTIONS: TimeFilterOptionT[] = [
-  { id: "thisMonth", label: "Dieser Monat" },
-  { id: "lastMonth", label: "Letzter Monat" },
-  { id: "last3Months", label: "3 Monate" },
-  { id: "last6Months", label: "6 Monate" },
-  { id: "thisYear", label: "Dieses Jahr" },
 ];
 
 export const CATEGORY_COLORS: Record<string, string> = {

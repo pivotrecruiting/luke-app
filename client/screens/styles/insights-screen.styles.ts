@@ -53,19 +53,28 @@ export const styles = StyleSheet.create({
   },
   filterRow: {
     flexDirection: "row",
+    flexWrap: "wrap",
     justifyContent: "flex-end",
+    gap: 8,
     marginBottom: 12,
   },
-  filterButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
+  filterBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: "#F3F4F6",
   },
-  filterButtonText: {
-    fontSize: 14,
+  filterBadgeActive: {
+    backgroundColor: "#EDE9FE",
+    borderWidth: 1,
+    borderColor: "#7340fd",
+  },
+  filterBadgeText: {
+    fontSize: 12,
+    fontWeight: "600",
     color: "#6B7280",
   },
-  filterButtonTextActive: {
+  filterBadgeTextActive: {
     color: "#7340fd",
   },
   tabsRow: {
@@ -536,40 +545,6 @@ export const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#000000",
     marginBottom: 32,
-  },
-  modalSectionTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#000000",
-    marginBottom: 16,
-  },
-  filterOptionsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    marginBottom: 24,
-  },
-  filterOption: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    backgroundColor: "#F3F4F6",
-    gap: 8,
-  },
-  filterOptionSelected: {
-    backgroundColor: "#EDE9FE",
-    borderWidth: 1,
-    borderColor: "#7340fd",
-  },
-  filterOptionText: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#6B7280",
-  },
-  filterOptionTextSelected: {
-    color: "#7340fd",
   },
   modalDoneButton: {
     backgroundColor: "#7340fd",

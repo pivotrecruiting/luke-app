@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, type RefObject } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
-import { Feather } from "@expo/vector-icons";
 import PagerView from "react-native-pager-view";
 import { styles } from "@/screens/styles/insights-screen.styles";
 import { CategoriesPanel } from "./categories-panel";
@@ -17,16 +16,15 @@ type ExpensesTabPropsT = {
   scrollViewRef: RefObject<ScrollView | null>;
   bottomInset: number;
   activeFilter: InsightsFilterT;
-  activeFilterCount: number;
   onChangeFilter: (value: InsightsFilterT) => void;
-  onOpenFilterModal: () => void;
+  selectedTimeFilter: TimeFilterT;
+  onSelectTimeFilter: (value: TimeFilterT) => void;
   categories: CategoryT[];
   totalCategoryExpenses: number;
   selectedCategory: string | null;
   onSelectCategory: (name: string | null) => void;
   onToggleCategory: (name: string) => void;
   monthlyTrendData: MonthlyTrendT[];
-  selectedTimeFilter: TimeFilterT;
   selectedTrendMonth: number | null;
   onSelectTrendMonth: (index: number | null) => void;
   totalIncome: number;
@@ -40,22 +38,32 @@ export const ExpensesTab = ({
   scrollViewRef,
   bottomInset,
   activeFilter,
-  activeFilterCount,
   onChangeFilter,
-  onOpenFilterModal,
+  selectedTimeFilter,
+  onSelectTimeFilter,
   categories,
   totalCategoryExpenses,
   selectedCategory,
   onSelectCategory,
   onToggleCategory,
   monthlyTrendData,
-  selectedTimeFilter,
   selectedTrendMonth,
   onSelectTrendMonth,
   totalIncome,
   totalExpenses,
 }: ExpensesTabPropsT) => {
   const pagerRef = useRef<PagerView>(null);
+
+  const timeFilterOptions = useMemo<{ id: TimeFilterT; label: string }[]>(
+    () => [
+      { id: "thisMonth", label: "Dieser Mon." },
+      { id: "lastMonth", label: "Letzter Mon." },
+      { id: "last3Months", label: "3M" },
+      { id: "last6Months", label: "6M" },
+      { id: "thisYear", label: "Y" },
+    ],
+    [],
+  );
 
   const filterOrder = useMemo<InsightsFilterT[]>(
     () => ["kategorien", "income", "trend"],
@@ -97,26 +105,28 @@ export const ExpensesTab = ({
       keyboardShouldPersistTaps="handled"
     >
       <View style={styles.filterRow}>
-        <Pressable style={styles.filterButton} onPress={onOpenFilterModal}>
-          <Feather
-            name="sliders"
-            size={16}
-            color={activeFilterCount > 0 ? "#7340fd" : "#6B7280"}
-          />
-          <Text
-            style={[
-              styles.filterButtonText,
-              activeFilterCount > 0 && styles.filterButtonTextActive,
-            ]}
-          >
-            Filter{activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
-          </Text>
-          <Feather
-            name="chevron-down"
-            size={16}
-            color={activeFilterCount > 0 ? "#7340fd" : "#6B7280"}
-          />
-        </Pressable>
+        {timeFilterOptions.map((option) => {
+          const isSelected = selectedTimeFilter === option.id;
+          return (
+            <Pressable
+              key={option.id}
+              style={[
+                styles.filterBadge,
+                isSelected && styles.filterBadgeActive,
+              ]}
+              onPress={() => onSelectTimeFilter(option.id)}
+            >
+              <Text
+                style={[
+                  styles.filterBadgeText,
+                  isSelected && styles.filterBadgeTextActive,
+                ]}
+              >
+                {option.label}
+              </Text>
+            </Pressable>
+          );
+        })}
       </View>
 
       <View style={styles.tabsRow}>

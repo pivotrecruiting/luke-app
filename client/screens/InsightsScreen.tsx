@@ -6,7 +6,6 @@ import { useInsightsScreen } from "@/features/insights/hooks/use-insights-screen
 import { InsightsHeader } from "@/features/insights/components/insights-header";
 import { ExpensesTab } from "@/features/insights/components/expenses-tab";
 import { IncomeTab } from "@/features/insights/components/income-tab";
-import { FilterModal } from "@/features/insights/components/filter-modal";
 import { IncomeModal } from "@/features/insights/components/income-modal";
 import { ExpenseModal } from "@/features/insights/components/expense-modal";
 import { styles } from "./styles/insights-screen.styles";
@@ -31,16 +30,15 @@ export default function InsightsScreen() {
           scrollViewRef={refs.scrollViewRef}
           bottomInset={insets.bottom}
           activeFilter={state.activeFilter}
-          activeFilterCount={derived.activeFilterCount}
           onChangeFilter={actions.setActiveFilter}
-          onOpenFilterModal={() => actions.setFilterModalVisible(true)}
+          selectedTimeFilter={state.selectedTimeFilter}
+          onSelectTimeFilter={actions.setSelectedTimeFilter}
           categories={derived.filteredCategories}
           totalCategoryExpenses={derived.totalCategoryExpenses}
           selectedCategory={state.selectedCategory}
           onSelectCategory={actions.setSelectedCategory}
           onToggleCategory={actions.handleCategoryPress}
           monthlyTrendData={derived.filteredMonthlyTrendData}
-          selectedTimeFilter={state.selectedTimeFilter}
           selectedTrendMonth={state.selectedTrendMonth}
           onSelectTrendMonth={actions.setSelectedTrendMonth}
           totalIncome={appData.totalIncome}
@@ -60,14 +58,6 @@ export default function InsightsScreen() {
           getIconForIncomeType={actions.getIconForIncomeType}
         />
       )}
-
-      <FilterModal
-        visible={state.filterModalVisible}
-        bottomInset={insets.bottom}
-        selectedTimeFilter={state.selectedTimeFilter}
-        onClose={() => actions.setFilterModalVisible(false)}
-        onSelectTimeFilter={actions.setSelectedTimeFilter}
-      />
 
       <IncomeModal
         visible={state.incomeModalVisible}
