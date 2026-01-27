@@ -3,8 +3,6 @@ import { Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { Spacing } from "@/constants/theme";
 import { useGoalsScreen } from "@/features/goals/hooks/use-goals-screen";
 import { GoalsHeader } from "@/features/goals/components/goals-header";
@@ -14,6 +12,8 @@ import { BudgetItem } from "@/features/goals/components/budget-item";
 import { CreateGoalModal } from "@/features/goals/components/create-goal-modal";
 import { CreateBudgetModal } from "@/features/goals/components/create-budget-modal";
 import { styles } from "./styles/goals-screen.styles";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 
 export default function GoalsScreen() {
   const insets = useSafeAreaInsets();
