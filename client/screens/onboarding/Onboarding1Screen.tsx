@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, Pressable } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  type ImageSourcePropType,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { Image } from "expo-image";
@@ -10,7 +16,6 @@ import Animated, {
   interpolateColor,
 } from "react-native-reanimated";
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 import ProgressDots from "@/components/ProgressDots";
 import { Spacing, BorderRadius, Typography, Colors } from "@/constants/theme";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -55,7 +60,15 @@ const AnimatedGoalLabel = ({
   );
 };
 
-const topLeftGoals = [
+type GoalT = {
+  id: string;
+  label: string;
+  color: string;
+  image: ImageSourcePropType;
+  overlayImage?: ImageSourcePropType;
+};
+
+const topLeftGoals: GoalT[] = [
   {
     id: "overview",
     label: "Überblick\ngewinnen",
@@ -71,7 +84,7 @@ const topLeftGoals = [
   },
 ];
 
-const topRightGoals = [
+const topRightGoals: GoalT[] = [
   {
     id: "klarna",
     label: "Klarna & Raten\nim Griff haben",
@@ -87,7 +100,7 @@ const topRightGoals = [
   },
 ];
 
-const bottomGoals = [
+const bottomGoals: GoalT[] = [
   {
     id: "goals",
     label: "Sparziel\nerreichen",
@@ -102,6 +115,77 @@ const bottomGoals = [
   },
 ];
 
+type GoalCardPropsT = {
+  goal: GoalT;
+  isSelected: boolean;
+  flexValue: number;
+  onToggle: (id: string) => void;
+};
+
+const GoalCard = ({ goal, isSelected, flexValue, onToggle }: GoalCardPropsT) => {
+  const opacity = useSharedValue(isSelected ? 1 : 0.7);
+
+  useEffect(() => {
+    opacity.value = withTiming(isSelected ? 1 : 0.7, {
+      duration: 200,
+    });
+  }, [isSelected, opacity]);
+
+  const animatedOpacityStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+  }));
+
+  return (
+    <Animated.View
+      style={[
+        animatedOpacityStyle,
+        styles.cardWrapper,
+        { flex: flexValue },
+      ]}
+    >
+      <Pressable
+        onPress={() => onToggle(goal.id)}
+        style={[styles.goalCard, { backgroundColor: goal.color }]}
+      >
+        {goal.id === "klarna" && goal.overlayImage ? (
+          <View style={styles.layeredImageContainer}>
+            <Image
+              source={goal.image}
+              style={styles.goalImageCloud}
+              contentFit="contain"
+            />
+            <Image
+              source={goal.overlayImage}
+              style={styles.goalImageOverlay}
+              contentFit="contain"
+            />
+          </View>
+        ) : goal.id === "subscriptions" && goal.overlayImage ? (
+          <View style={styles.layeredImageContainer}>
+            <Image
+              source={goal.image}
+              style={styles.subscriptionBlob}
+              contentFit="contain"
+            />
+            <Image
+              source={goal.overlayImage}
+              style={styles.subscriptionFigure}
+              contentFit="contain"
+            />
+          </View>
+        ) : (
+          <Image
+            source={goal.image}
+            style={styles.goalImage}
+            contentFit="contain"
+          />
+        )}
+        <AnimatedGoalLabel label={goal.label} isSelected={isSelected} />
+      </Pressable>
+    </Animated.View>
+  );
+};
+
 export default function Onboarding1Screen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
@@ -110,84 +194,6 @@ export default function Onboarding1Screen() {
   const toggleSelection = (id: string) => {
     setSelected((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
-    );
-  };
-
-  const renderGoalCard = (
-    goal:
-      | (typeof topLeftGoals)[0]
-      | (typeof topRightGoals)[0]
-      | (typeof bottomGoals)[0],
-    flexValue?: number,
-  ) => {
-    const isSelected = selected.includes(goal.id);
-    const opacity = useSharedValue(isSelected ? 1 : 0.7);
-
-    useEffect(() => {
-      opacity.value = withTiming(isSelected ? 1 : 0.7, {
-        duration: 200,
-      });
-    }, [isSelected, opacity]);
-
-    const animatedOpacityStyle = useAnimatedStyle(() => ({
-      opacity: opacity.value,
-    }));
-
-    return (
-      <Animated.View
-        style={[
-          animatedOpacityStyle,
-          styles.cardWrapper,
-          flexValue !== undefined ? { flex: flexValue } : { flex: 1 },
-        ]}
-      >
-        <Pressable
-          key={goal.id}
-          onPress={() => toggleSelection(goal.id)}
-          style={[
-            styles.goalCard,
-            { backgroundColor: goal.color },
-          ]}
-        >
-          {goal.id === "klarna" && "overlayImage" in goal ? (
-            <View style={styles.layeredImageContainer}>
-              <Image
-                source={goal.image}
-                style={styles.goalImageCloud}
-                contentFit="contain"
-              />
-              <Image
-                source={goal.overlayImage}
-                style={styles.goalImageOverlay}
-                contentFit="contain"
-              />
-            </View>
-          ) : goal.id === "subscriptions" && "overlayImage" in goal ? (
-            <View style={styles.layeredImageContainer}>
-              <Image
-                source={goal.image}
-                style={styles.subscriptionBlob}
-                contentFit="contain"
-              />
-              <Image
-                source={goal.overlayImage}
-                style={styles.subscriptionFigure}
-                contentFit="contain"
-              />
-            </View>
-          ) : (
-            <Image
-              source={goal.image}
-              style={styles.goalImage}
-              contentFit="contain"
-            />
-          )}
-          <AnimatedGoalLabel
-            label={goal.label}
-            isSelected={selected.includes(goal.id)}
-          />
-        </Pressable>
-      </Animated.View>
     );
   };
 
@@ -206,14 +212,26 @@ export default function Onboarding1Screen() {
       <View style={styles.goalsContainer}>
         <View style={styles.topSection}>
           <View style={styles.leftColumn}>
-            {topLeftGoals.map((goal, index) =>
-              renderGoalCard(goal, index === 0 ? 1.2 : 1.3),
-            )}
+            {topLeftGoals.map((goal, index) => (
+              <GoalCard
+                key={goal.id}
+                goal={goal}
+                isSelected={selected.includes(goal.id)}
+                flexValue={index === 0 ? 1.2 : 1.3}
+                onToggle={toggleSelection}
+              />
+            ))}
           </View>
           <View style={styles.rightColumn}>
-            {topRightGoals.map((goal, index) =>
-              renderGoalCard(goal, index === 0 ? 0.8 : 1.3),
-            )}
+            {topRightGoals.map((goal, index) => (
+              <GoalCard
+                key={goal.id}
+                goal={goal}
+                isSelected={selected.includes(goal.id)}
+                flexValue={index === 0 ? 0.8 : 1.3}
+                onToggle={toggleSelection}
+              />
+            ))}
           </View>
         </View>
 
@@ -221,12 +239,28 @@ export default function Onboarding1Screen() {
           <View style={styles.leftColumn}>
             {bottomGoals
               .filter((_, index) => index % 2 === 0)
-              .map((goal) => renderGoalCard(goal, 0.7))}
+              .map((goal) => (
+                <GoalCard
+                  key={goal.id}
+                  goal={goal}
+                  isSelected={selected.includes(goal.id)}
+                  flexValue={0.7}
+                  onToggle={toggleSelection}
+                />
+              ))}
           </View>
           <View style={styles.rightColumn}>
             {bottomGoals
               .filter((_, index) => index % 2 === 1)
-              .map((goal) => renderGoalCard(goal, 0.7))}
+              .map((goal) => (
+                <GoalCard
+                  key={goal.id}
+                  goal={goal}
+                  isSelected={selected.includes(goal.id)}
+                  flexValue={0.7}
+                  onToggle={toggleSelection}
+                />
+              ))}
           </View>
         </View>
       </View>

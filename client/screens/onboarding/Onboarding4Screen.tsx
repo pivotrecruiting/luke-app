@@ -11,6 +11,10 @@ import CurrencyInput from "@/components/CurrencyInput";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { Spacing, BorderRadius, Typography, Colors } from "@/constants/theme";
 import { useApp } from "@/context/AppContext";
+import {
+  formatCurrencyValue,
+  getCurrencySymbol,
+} from "@/utils/currency-format";
 
 type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
 
@@ -33,12 +37,13 @@ const incomeTypes = [
 export default function Onboarding4Screen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
-  const { setIncomeEntries, incomeEntries } = useApp();
+  const { setIncomeEntries, incomeEntries, currency } = useApp();
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
   const [entries, setEntries] = useState<Entry[]>(() =>
     incomeEntries.map((e) => ({ type: e.type, amount: e.amount.toString() })),
   );
+  const currencySymbol = getCurrencySymbol(currency);
 
   const handleAddEntry = () => {
     if (selectedType && amount !== "") {
@@ -55,7 +60,7 @@ export default function Onboarding4Screen() {
   const handleContinue = () => {
     const parsedEntries = entries.map((entry) => ({
       type: entry.type,
-      amount: parseFloat(entry.amount.replace(",", ".")),
+      amount: Number.parseFloat(entry.amount),
     }));
     setIncomeEntries(parsedEntries);
     navigation.navigate("Onboarding5");
@@ -114,7 +119,10 @@ export default function Onboarding4Screen() {
                 </View>
                 <View style={styles.entryContent}>
                   <Text style={styles.entryType}>{entry.type}</Text>
-                  <Text style={styles.entryAmount}>{entry.amount} €</Text>
+                  <Text style={styles.entryAmount}>
+                    {formatCurrencyValue(entry.amount, currency)}{" "}
+                    {currencySymbol}
+                  </Text>
                 </View>
                 <Pressable
                   style={styles.entryDeleteButton}

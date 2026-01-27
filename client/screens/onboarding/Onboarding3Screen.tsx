@@ -307,7 +307,7 @@ export default function Onboarding3Screen() {
 
   const handleContinue = () => {
     if (selectedGoal && amount) {
-      const parsedAmount = parseFloat(amount.replace(",", "."));
+      const parsedAmount = Number.parseFloat(amount);
       if (!isNaN(parsedAmount) && parsedAmount > 0) {
         const emoji = getEmojiForText(selectedGoal);
         addGoal(selectedGoal, emoji, parsedAmount);

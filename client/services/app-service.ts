@@ -88,10 +88,20 @@ const mapMonthlyTrendData = (
   });
 };
 
+const ensureUserRow = async (userId: string): Promise<void> => {
+  const { error } = await supabase
+    .from("users")
+    .upsert({ id: userId }, { onConflict: "id", ignoreDuplicates: true });
+  if (error) {
+    throw error;
+  }
+};
+
 export const fetchAppData = async (
   userId: string,
   onboardingVersion: string,
 ): Promise<AppDataPayload> => {
+  await ensureUserRow(userId);
   const [
     onboardingRes,
     profileRes,
@@ -716,6 +726,7 @@ export const getOrCreateUserProgress = async (
   userId: string,
   initialLevelId: string | null,
 ): Promise<UserProgressT> => {
+  await ensureUserRow(userId);
   const { data, error } = await supabase
     .from("user_progress")
     .select(

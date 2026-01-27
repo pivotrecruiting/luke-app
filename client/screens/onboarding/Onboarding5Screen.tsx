@@ -11,6 +11,10 @@ import CurrencyInput from "@/components/CurrencyInput";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { Spacing, BorderRadius, Typography, Colors } from "@/constants/theme";
 import { useApp } from "@/context/AppContext";
+import {
+  formatCurrencyValue,
+  getCurrencySymbol,
+} from "@/utils/currency-format";
 
 interface Entry {
   type: string;
@@ -35,12 +39,13 @@ type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
 export default function Onboarding5Screen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
-  const { setExpenseEntries, expenseEntries } = useApp();
+  const { setExpenseEntries, expenseEntries, currency } = useApp();
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
   const [entries, setEntries] = useState<Entry[]>(() =>
     expenseEntries.map((e) => ({ type: e.type, amount: e.amount.toString() })),
   );
+  const currencySymbol = getCurrencySymbol(currency);
 
   const handleAddEntry = () => {
     if (selectedType && amount !== "") {
@@ -57,7 +62,7 @@ export default function Onboarding5Screen() {
   const handleContinue = () => {
     const parsedEntries = entries.map((entry) => ({
       type: entry.type,
-      amount: parseFloat(entry.amount.replace(",", ".")),
+      amount: Number.parseFloat(entry.amount),
     }));
     setExpenseEntries(parsedEntries);
     navigation.navigate("Onboarding6");
@@ -116,7 +121,10 @@ export default function Onboarding5Screen() {
                 </View>
                 <View style={styles.entryContent}>
                   <Text style={styles.entryType}>{entry.type}</Text>
-                  <Text style={styles.entryAmount}>{entry.amount} €</Text>
+                  <Text style={styles.entryAmount}>
+                    {formatCurrencyValue(entry.amount, currency)}{" "}
+                    {currencySymbol}
+                  </Text>
                 </View>
                 <Pressable
                   style={styles.entryDeleteButton}

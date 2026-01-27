@@ -15,6 +15,10 @@ import {
   BUDGET_CATEGORIES,
   getCategoryByName,
 } from "@/constants/budgetCategories";
+import {
+  formatCurrencyValue,
+  getCurrencySymbol,
+} from "@/utils/currency-format";
 
 interface Entry {
   type: string;
@@ -26,10 +30,11 @@ type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
 export default function Onboarding7Screen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
-  const { addBudget } = useApp();
+  const { addBudget, currency } = useApp();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
   const [entries, setEntries] = useState<Entry[]>([]);
+  const currencySymbol = getCurrencySymbol(currency);
 
   const handleAddEntry = () => {
     if (selectedCategory && amount !== "") {
@@ -46,7 +51,7 @@ export default function Onboarding7Screen() {
   const handleContinue = () => {
     if (entries.length > 0) {
       entries.forEach((entry) => {
-        const parsedAmount = parseFloat(entry.amount.replace(",", "."));
+        const parsedAmount = Number.parseFloat(entry.amount);
         const category = getCategoryByName(entry.type);
         const icon = category?.icon || "circle";
         const color = category?.color || "#6B7280";
@@ -124,7 +129,10 @@ export default function Onboarding7Screen() {
                   </View>
                   <View style={styles.entryContent}>
                     <Text style={styles.entryType}>{entry.type}</Text>
-                    <Text style={styles.entryAmount}>{entry.amount} €</Text>
+                    <Text style={styles.entryAmount}>
+                      {formatCurrencyValue(entry.amount, currency)}{" "}
+                      {currencySymbol}
+                    </Text>
                   </View>
                   <Pressable
                     style={styles.entryDeleteButton}
