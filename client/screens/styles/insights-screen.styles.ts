@@ -55,7 +55,7 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "flex-end",
-    gap: 8,
+    gap: 6,
     marginBottom: 12,
   },
   filterBadge: {
@@ -63,10 +63,11 @@ export const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 999,
     backgroundColor: "#F3F4F6",
+    borderWidth: 1,
+    borderColor: "transparent",
   },
   filterBadgeActive: {
     backgroundColor: "#EDE9FE",
-    borderWidth: 1,
     borderColor: "#7340fd",
   },
   filterBadgeText: {
