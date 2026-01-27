@@ -1,3 +1,12 @@
+import type {
+  UserProgressT,
+  XpEventRuleT,
+  XpEventTypeT,
+  XpLevelT,
+  XpLevelUpPayloadT,
+} from "@/types/xp-types";
+import type { BudgetCategoryRow, IncomeCategoryRow } from "@/services/types";
+
 export type CurrencyCode = "EUR" | "USD" | "CHF";
 
 export type IncomeEntry = {
@@ -72,6 +81,7 @@ export type InsightCategory = {
 export type MonthlyTrendData = {
   month: string;
   monthIndex: number;
+  monthStart: string;
   amount: number;
 };
 
@@ -84,8 +94,10 @@ export type AppState = {
   expenseEntries: ExpenseEntry[];
   goals: Goal[];
   budgets: Budget[];
+  budgetCategories: BudgetCategoryRow[];
   weeklySpending: WeeklySpending[];
   transactions: Transaction[];
+  incomeCategories: IncomeCategoryRow[];
   insightCategories: InsightCategory[];
   totalIncome: number;
   totalFixedExpenses: number;
@@ -93,10 +105,18 @@ export type AppState = {
   totalExpenses: number;
   monthlyBudget: number;
   balance: number;
+  transactionIncomeTotal: number;
+  transactionExpenseTotal: number;
+  transactionBalance: number;
   savingsRate: number;
   monthlyTrendData: MonthlyTrendData[];
   selectedWeekOffset: number;
   currentWeekLabel: string;
+  levels: XpLevelT[];
+  xpEventTypes: XpEventTypeT[];
+  xpEventRules: XpEventRuleT[];
+  userProgress: UserProgressT | null;
+  pendingLevelUps: XpLevelUpPayloadT[];
 };
 
 export type AppContextType = AppState & {
@@ -160,7 +180,8 @@ export type AppContextType = AppState & {
   goToNextWeek: () => void;
   resetMonthlyBudgets: () => void;
   lastBudgetResetMonth: number;
-  resetAllData: () => void;
+  enqueueLevelUp: (payload: XpLevelUpPayloadT) => void;
+  consumeNextLevelUp: () => void;
 };
 
 export type PersistedData = {

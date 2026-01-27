@@ -1,3 +1,5 @@
+import { differenceInCalendarDays, isValid, startOfDay } from "date-fns";
+
 export const parseFormattedDate = (dateStr: string): Date => {
   const now = new Date();
 
@@ -98,4 +100,26 @@ export const formatDate = (date: Date): string => {
   return `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1)
     .toString()
     .padStart(2, "0")}/${date.getFullYear()}`;
+};
+
+/**
+ * Formats the number of days since a given date.
+ */
+export const formatDaysSince = (
+  value: string | Date | null | undefined,
+): string => {
+  if (!value) return "0 Tage";
+
+  const date = typeof value === "string" ? new Date(value) : value;
+  if (!isValid(date)) return "0 Tage";
+
+  const diffDays = differenceInCalendarDays(
+    startOfDay(new Date()),
+    startOfDay(date),
+  );
+  if (diffDays <= 0) {
+    return "Heute";
+  }
+
+  return diffDays === 1 ? "1 Tag" : `${diffDays} Tage`;
 };
