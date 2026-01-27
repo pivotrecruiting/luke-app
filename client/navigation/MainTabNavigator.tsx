@@ -78,7 +78,7 @@ const ui = {
     tabBarHeight: 60,
     tabItemMinWidth: 60,
     iconSize: 18,
-    addIconSize: 24,
+    addIconSize: 28,
     addItemSize: 56,
     addItemElevation: 8,
     addItemTopOffset: 16,
