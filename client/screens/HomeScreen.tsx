@@ -1,13 +1,5 @@
 import React, { useState, useMemo, useRef, useCallback } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Dimensions,
-  Pressable,
-  Modal,
-} from "react-native";
+import { View, Text, ScrollView, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "expo-image";
@@ -17,9 +9,10 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { Spacing } from "@/constants/theme";
 import { useApp } from "@/context/AppContext";
+import { getUserFirstName } from "@/utils/user";
+import { styles } from "./styles/home-screen.styles";
+import { AppModal } from "@/components/ui/app-modal";
 const businessmanFigure = require("../../assets/images/businessman-figure.png");
-
-const screenWidth = Dimensions.get("window").width;
 
 const formatCurrency = (value: number) => {
   const formatted = Math.abs(value).toLocaleString("de-DE", {
@@ -34,62 +27,80 @@ const formatCurrency = (value: number) => {
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { 
-    userName, balance, totalIncome, totalExpenses, weeklySpending, transactions,
-    selectedWeekOffset, currentWeekLabel, goToPreviousWeek, goToNextWeek 
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const {
+    userName,
+    transactionBalance,
+    transactionIncomeTotal,
+    transactionExpenseTotal,
+    weeklySpending,
+    transactions,
+    selectedWeekOffset,
+    currentWeekLabel,
+    goToPreviousWeek,
+    goToNextWeek,
   } = useApp();
-  const firstName = useMemo(() => {
-    if (typeof userName !== "string") {
-      return null;
-    }
-    const trimmed = userName.trim();
-    if (!trimmed) {
-      return null;
-    }
-    return trimmed.split(" ")[0] ?? null;
-  }, [userName]);
-  
+  const firstName = useMemo(() => getUserFirstName(userName), [userName]);
+
   // Parse various date formats to Date object for sorting
   const parseTransactionDate = (dateStr: string): Date => {
     const now = new Date();
-    
+
     // Handle "Heute, HH:MM"
     if (dateStr.startsWith("Heute")) {
       const timeMatch = dateStr.match(/(\d{2}):(\d{2})/);
       if (timeMatch) {
-        return new Date(now.getFullYear(), now.getMonth(), now.getDate(), 
-          parseInt(timeMatch[1]), parseInt(timeMatch[2]));
+        return new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+          parseInt(timeMatch[1]),
+          parseInt(timeMatch[2]),
+        );
       }
       return now;
     }
-    
+
     // Handle "Gestern"
     if (dateStr === "Gestern" || dateStr.startsWith("Gestern")) {
       const yesterday = new Date(now);
       yesterday.setDate(yesterday.getDate() - 1);
       return yesterday;
     }
-    
+
     // Handle "DD/MM/YYYY" format
     const slashMatch = dateStr.match(/(\d{2})\/(\d{2})\/(\d{4})/);
     if (slashMatch) {
-      return new Date(parseInt(slashMatch[3]), parseInt(slashMatch[2]) - 1, parseInt(slashMatch[1]));
+      return new Date(
+        parseInt(slashMatch[3]),
+        parseInt(slashMatch[2]) - 1,
+        parseInt(slashMatch[1]),
+      );
     }
-    
+
     // Handle "DD.MM. HH:MM" format (e.g., "28.11. 20:14")
     const dotMatch = dateStr.match(/(\d{2})\.(\d{2})\.\s*(\d{2}):(\d{2})/);
     if (dotMatch) {
-      return new Date(now.getFullYear(), parseInt(dotMatch[2]) - 1, parseInt(dotMatch[1]),
-        parseInt(dotMatch[3]), parseInt(dotMatch[4]));
+      return new Date(
+        now.getFullYear(),
+        parseInt(dotMatch[2]) - 1,
+        parseInt(dotMatch[1]),
+        parseInt(dotMatch[3]),
+        parseInt(dotMatch[4]),
+      );
     }
-    
+
     // Handle "DD.MM.YYYY" format
     const fullDotMatch = dateStr.match(/(\d{2})\.(\d{2})\.(\d{4})/);
     if (fullDotMatch) {
-      return new Date(parseInt(fullDotMatch[3]), parseInt(fullDotMatch[2]) - 1, parseInt(fullDotMatch[1]));
+      return new Date(
+        parseInt(fullDotMatch[3]),
+        parseInt(fullDotMatch[2]) - 1,
+        parseInt(fullDotMatch[1]),
+      );
     }
-    
+
     return now;
   };
 
@@ -101,7 +112,7 @@ export default function HomeScreen() {
       return dateB.getTime() - dateA.getTime();
     });
   }, [transactions]);
-  
+
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [allTransactionsVisible, setAllTransactionsVisible] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -109,7 +120,7 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       scrollViewRef.current?.scrollTo({ y: 0, animated: false });
-    }, [])
+    }, []),
   );
 
   const handleBarPress = (day: string) => {
@@ -129,14 +140,22 @@ export default function HomeScreen() {
             <Text style={styles.welcomeText}>
               {firstName ? `Willkommen, ${firstName}!` : "Wilkommen bei Luke!"}
             </Text>
-            <Text style={styles.subtitleText}>hier der aktuelle Monat</Text>
+            <Text style={styles.subtitleText}>so stehst du aktuell</Text>
           </View>
         </LinearGradient>
 
         <View style={[styles.balanceCard, { top: insets.top + 95 }]}>
           <Text style={styles.balanceLabel}>Balance</Text>
-          <Text style={[styles.balanceAmount, balance < 0 && styles.balanceAmountNegative]}>
-            € {balance.toLocaleString("de-DE", { minimumFractionDigits: 2 })}
+          <Text
+            style={[
+              styles.balanceAmount,
+              transactionBalance < 0 && styles.balanceAmountNegative,
+            ]}
+          >
+            €{" "}
+            {transactionBalance.toLocaleString("de-DE", {
+              minimumFractionDigits: 2,
+            })}
           </Text>
         </View>
 
@@ -158,7 +177,7 @@ export default function HomeScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.incomeExpenseRow}>
-          <Pressable 
+          <Pressable
             style={styles.incomeCard}
             onPress={() => navigation.navigate("Income")}
           >
@@ -167,11 +186,14 @@ export default function HomeScreen() {
             </View>
             <Text style={styles.cardLabel}>Einnahmen</Text>
             <Text style={styles.incomeAmount}>
-              € {totalIncome.toLocaleString("de-DE", { minimumFractionDigits: 2 })}
+              €{" "}
+              {transactionIncomeTotal.toLocaleString("de-DE", {
+                minimumFractionDigits: 2,
+              })}
             </Text>
           </Pressable>
 
-          <Pressable 
+          <Pressable
             style={styles.expenseCard}
             onPress={() => navigation.navigate("Expenses")}
           >
@@ -180,7 +202,10 @@ export default function HomeScreen() {
             </View>
             <Text style={styles.cardLabel}>Ausgaben</Text>
             <Text style={styles.expenseAmount}>
-              € {totalExpenses.toLocaleString("de-DE", { minimumFractionDigits: 2 })}
+              €{" "}
+              {transactionExpenseTotal.toLocaleString("de-DE", {
+                minimumFractionDigits: 2,
+              })}
             </Text>
           </Pressable>
         </View>
@@ -193,14 +218,17 @@ export default function HomeScreen() {
                 <Feather name="chevron-left" size={20} color="#6B7280" />
               </Pressable>
               <Text style={styles.weekLabel}>{currentWeekLabel}</Text>
-              <Pressable 
-                onPress={goToNextWeek} 
-                style={[styles.weekArrow, selectedWeekOffset >= 0 && styles.weekArrowDisabled]}
+              <Pressable
+                onPress={goToNextWeek}
+                style={[
+                  styles.weekArrow,
+                  selectedWeekOffset >= 0 && styles.weekArrowDisabled,
+                ]}
               >
-                <Feather 
-                  name="chevron-right" 
-                  size={20} 
-                  color={selectedWeekOffset >= 0 ? "#D1D5DB" : "#6B7280"} 
+                <Feather
+                  name="chevron-right"
+                  size={20}
+                  color={selectedWeekOffset >= 0 ? "#D1D5DB" : "#6B7280"}
                 />
               </Pressable>
             </View>
@@ -208,23 +236,33 @@ export default function HomeScreen() {
           {selectedDay && (
             <View style={styles.selectedAmount}>
               <Text style={styles.selectedAmountText}>
-                € {weeklySpending.find(d => d.day === selectedDay)?.amount.toFixed(2) || "0.00"}
+                €{" "}
+                {weeklySpending
+                  .find((d) => d.day === selectedDay)
+                  ?.amount.toFixed(2) || "0.00"}
               </Text>
             </View>
           )}
           <View style={styles.chartContainer}>
             {weeklySpending.map((item) => {
-              const barHeight = Math.max((item.amount / item.maxAmount) * 100, 8);
+              const barHeight = Math.max(
+                (item.amount / item.maxAmount) * 100,
+                8,
+              );
               const isSelected = selectedDay === item.day;
               return (
-                <Pressable 
-                  key={item.day} 
+                <Pressable
+                  key={item.day}
                   style={styles.barContainer}
                   onPress={() => handleBarPress(item.day)}
                 >
                   <View style={styles.barWrapper}>
                     <LinearGradient
-                      colors={isSelected ? ["#5B6BBE", "#3B4B9E"] : ["#A5B4FC", "#7B8CDE"]}
+                      colors={
+                        isSelected
+                          ? ["#5B6BBE", "#3B4B9E"]
+                          : ["#A5B4FC", "#7B8CDE"]
+                      }
                       start={{ x: 0, y: 0 }}
                       end={{ x: 0, y: 1 }}
                       style={[
@@ -234,7 +272,12 @@ export default function HomeScreen() {
                       ]}
                     />
                   </View>
-                  <Text style={[styles.barLabel, isSelected && styles.barLabelSelected]}>
+                  <Text
+                    style={[
+                      styles.barLabel,
+                      isSelected && styles.barLabelSelected,
+                    ]}
+                  >
                     {item.day}
                   </Text>
                 </Pressable>
@@ -275,385 +318,53 @@ export default function HomeScreen() {
         </View>
       </ScrollView>
 
-      <Modal
+      <AppModal
         visible={allTransactionsVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setAllTransactionsVisible(false)}
+        onClose={() => setAllTransactionsVisible(false)}
+        maxHeightPercent={80}
+        contentStyle={[
+          styles.modalContent,
+          { paddingBottom: insets.bottom + 24 },
+        ]}
       >
-        <Pressable 
-          style={styles.modalOverlay}
-          onPress={() => setAllTransactionsVisible(false)}
+        <View style={styles.modalHandle} />
+        <View style={styles.modalHeader}>
+          <Text style={styles.modalTitle}>Alle Transaktionen</Text>
+          <Pressable
+            onPress={() => setAllTransactionsVisible(false)}
+            style={styles.closeButton}
+          >
+            <Feather name="x" size={24} color="#000000" />
+          </Pressable>
+        </View>
+        <ScrollView
+          style={styles.modalScrollView}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
-          <LinearGradient
-            colors={["transparent", "rgba(0,0,0,0.3)", "rgba(0,0,0,0.5)"]}
-            locations={[0, 0.5, 1]}
-            style={styles.modalGradient}
-          />
-        </Pressable>
-        <View style={[styles.modalContent, { paddingBottom: insets.bottom + 24 }]}>
-          <View style={styles.modalHandle} />
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Alle Transaktionen</Text>
-              <Pressable 
-                onPress={() => setAllTransactionsVisible(false)}
-                style={styles.closeButton}
-              >
-                <Feather name="x" size={24} color="#000000" />
-              </Pressable>
+          {sortedTransactions.map((transaction) => (
+            <View key={transaction.id} style={styles.transactionItem}>
+              <View style={styles.transactionIconContainer}>
+                <Feather
+                  name={transaction.icon as any}
+                  size={20}
+                  color="#7B8CDE"
+                />
+              </View>
+              <View style={styles.transactionDetails}>
+                <Text style={styles.transactionName}>{transaction.name}</Text>
+                <Text style={styles.transactionCategory}>
+                  {transaction.category}
+                </Text>
+                <Text style={styles.transactionDate}>{transaction.date}</Text>
+              </View>
+              <Text style={styles.transactionAmount}>
+                {formatCurrency(transaction.amount)}
+              </Text>
             </View>
-            <ScrollView 
-              style={styles.modalScrollView}
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-            >
-              {sortedTransactions.map((transaction) => (
-                <View key={transaction.id} style={styles.transactionItem}>
-                  <View style={styles.transactionIconContainer}>
-                    <Feather
-                      name={transaction.icon as any}
-                      size={20}
-                      color="#7B8CDE"
-                    />
-                  </View>
-                  <View style={styles.transactionDetails}>
-                    <Text style={styles.transactionName}>{transaction.name}</Text>
-                    <Text style={styles.transactionCategory}>
-                      {transaction.category}
-                    </Text>
-                    <Text style={styles.transactionDate}>{transaction.date}</Text>
-                  </View>
-                  <Text style={styles.transactionAmount}>
-                    {formatCurrency(transaction.amount)}
-                  </Text>
-                </View>
-              ))}
-            </ScrollView>
-          </View>
-      </Modal>
+          ))}
+        </ScrollView>
+      </AppModal>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F5F5F5",
-  },
-  heroSection: {
-    zIndex: 10,
-    overflow: "visible",
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingBottom: 70,
-  },
-  headerTextContainer: {
-    zIndex: 1,
-  },
-  welcomeText: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: "#FFFFFF",
-  },
-  subtitleText: {
-    fontSize: 14,
-    color: "rgba(255,255,255,0.7)",
-    marginTop: 4,
-  },
-  balanceCard: {
-    position: "absolute",
-    left: 20,
-    width: screenWidth - 40,
-    height: 96,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
-    zIndex: 5,
-  },
-  balanceLabel: {
-    fontSize: 14,
-    color: "#6B7280",
-    marginBottom: 4,
-  },
-  balanceAmount: {
-    fontSize: 32,
-    fontWeight: "700",
-    color: "#22C55E",
-  },
-  balanceAmountNegative: {
-    color: "#EF4444",
-  },
-  businessmanFigure: {
-    width: 71,
-    height: 112,
-    position: "absolute",
-    right: 30,
-    zIndex: 20,
-  },
-  scrollView: {
-    flex: 1,
-    marginTop: 60,
-  },
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: Spacing.md,
-  },
-  incomeExpenseRow: {
-    flexDirection: "row",
-    gap: Spacing.md,
-  },
-  incomeCard: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: Spacing.lg,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  expenseCard: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: Spacing.lg,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  incomeIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: "rgba(34, 197, 94, 0.1)",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: Spacing.sm,
-  },
-  expenseIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: "rgba(239, 68, 68, 0.1)",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: Spacing.sm,
-  },
-  cardLabel: {
-    fontSize: 14,
-    color: "#6B7280",
-    marginBottom: 4,
-  },
-  incomeAmount: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#000000",
-  },
-  expenseAmount: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#000000",
-  },
-  chartCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: Spacing.lg,
-    marginTop: Spacing.md,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  chartHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: Spacing.lg,
-  },
-  chartTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#000000",
-  },
-  weekNavigation: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  weekArrow: {
-    padding: 4,
-  },
-  weekArrowDisabled: {
-    opacity: 0.5,
-  },
-  weekLabel: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#6B7280",
-    minWidth: 100,
-    textAlign: "center",
-  },
-  selectedAmount: {
-    backgroundColor: "#5B6BBE",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  selectedAmountText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  chartContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-end",
-    height: 130,
-  },
-  barContainer: {
-    alignItems: "center",
-    flex: 1,
-  },
-  barWrapper: {
-    height: 100,
-    justifyContent: "flex-end",
-  },
-  bar: {
-    width: 28,
-    borderRadius: 8,
-  },
-  barSelected: {
-    width: 32,
-  },
-  barLabel: {
-    fontSize: 12,
-    color: "#9CA3AF",
-    marginTop: Spacing.sm,
-  },
-  barLabelSelected: {
-    color: "#5B6BBE",
-    fontWeight: "600",
-  },
-  transactionsSection: {
-    marginTop: Spacing.lg,
-  },
-  transactionsHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: Spacing.md,
-  },
-  transactionsTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#000000",
-  },
-  transactionsAll: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#3B82F6",
-  },
-  transactionItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: Spacing.md,
-    marginBottom: Spacing.sm,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  transactionIconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: "rgba(123, 140, 222, 0.1)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  transactionDetails: {
-    flex: 1,
-    marginLeft: Spacing.md,
-  },
-  transactionName: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#000000",
-  },
-  transactionCategory: {
-    fontSize: 13,
-    color: "#6B7280",
-    marginTop: 2,
-  },
-  transactionDate: {
-    fontSize: 12,
-    color: "#9CA3AF",
-    marginTop: 2,
-  },
-  transactionAmount: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#000000",
-  },
-  modalOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  modalGradient: {
-    flex: 1,
-  },
-  modalContent: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    maxHeight: "80%",
-  },
-  modalHandle: {
-    width: 40,
-    height: 4,
-    backgroundColor: "#D1D5DB",
-    borderRadius: 2,
-    alignSelf: "center",
-    marginBottom: 16,
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#000000",
-  },
-  closeButton: {
-    padding: 4,
-  },
-  modalScrollView: {
-    flexGrow: 0,
-  },
-});

@@ -18,12 +18,18 @@ export type IncomeSourceRow = {
   id: string;
   name: string;
   amount_cents: number;
+  currency?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
 };
 
 export type FixedExpenseRow = {
   id: string;
   name: string;
   amount_cents: number;
+  currency?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
 };
 
 export type GoalRow = {
@@ -49,6 +55,13 @@ export type BudgetCategoryRow = {
   color: string | null;
 };
 
+export type IncomeCategoryRow = {
+  id: string;
+  key: string | null;
+  name: string;
+  icon: string | null;
+};
+
 export type BudgetRow = {
   id: string;
   name: string;
@@ -64,5 +77,54 @@ export type TransactionRow = {
   category_name: string | null;
   budget_id: string | null;
   budget_category_id: string | null;
+  source?: string | null;
   transaction_at: string;
+};
+
+export type MonthlyTrendRow = {
+  month_start: string;
+  amount_cents: number;
+};
+
+export type LevelRow = {
+  id: string;
+  level_number: number;
+  name: string;
+  description: string;
+  emoji: string;
+  xp_required: number;
+};
+
+export type XpEventTypeRow = {
+  id: string;
+  key: string;
+  label: string;
+  base_xp: number;
+  active: boolean;
+  max_per_user: number | null;
+  cooldown_hours: number | null;
+};
+
+export type XpEventRuleRow = {
+  id: string;
+  event_type_id: string;
+  rule_key: string;
+  multiplier: number | string;
+  conditions: unknown;
+  active: boolean;
+  starts_at: string | null;
+  ends_at: string | null;
+};
+
+export type UserProgressRow = {
+  id: string;
+  user_id: string;
+  xp_total: number;
+  current_level_id: string | null;
+  current_streak: number;
+  longest_streak: number;
+  last_login_at: string | null;
+  last_streak_date: string | null;
+  created_at: string;
+  updated_at: string;
 };

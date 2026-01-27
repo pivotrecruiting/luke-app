@@ -3,13 +3,14 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import WelcomeScreen from "@/screens/WelcomeScreen";
 import SignUpScreen from "@/screens/SignUpScreen";
 import OnboardingCurrencyScreen from "@/screens/OnboardingCurrencyScreen";
-import Onboarding1Screen from "@/screens/Onboarding1Screen";
-import Onboarding2Screen from "@/screens/Onboarding2Screen";
-import Onboarding3Screen from "@/screens/Onboarding3Screen";
-import Onboarding4Screen from "@/screens/Onboarding4Screen";
-import Onboarding5Screen from "@/screens/Onboarding5Screen";
-import Onboarding6Screen from "@/screens/Onboarding6Screen";
-import Onboarding7Screen from "@/screens/Onboarding7Screen";
+import Onboarding1Screen from "@/screens/onboarding/Onboarding1Screen";
+import Onboarding2Screen from "@/screens/onboarding/Onboarding2Screen";
+import Onboarding3Screen from "@/screens/onboarding/Onboarding3Screen";
+import Onboarding4Screen from "@/screens/onboarding/Onboarding4Screen";
+import Onboarding5Screen from "@/screens/onboarding/Onboarding5Screen";
+import Onboarding6Screen from "@/screens/onboarding/Onboarding6Screen";
+import Onboarding7Screen from "@/screens/onboarding/Onboarding7Screen";
+import AllesStartklarScreen from "@/screens/onboarding/AllesStartklarScreen";
 import PaywallScreen from "@/screens/PaywallScreen";
 
 export type OnboardingStackParamList = {
@@ -23,6 +24,7 @@ export type OnboardingStackParamList = {
   Onboarding5: undefined;
   Onboarding6: undefined;
   Onboarding7: undefined;
+  AllesStartklar: undefined;
   Paywall: undefined;
 };
 
@@ -38,7 +40,10 @@ export default function OnboardingNavigator() {
     >
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
       <Stack.Screen name="SignUp" component={SignUpScreen} />
-      <Stack.Screen name="OnboardingCurrency" component={OnboardingCurrencyScreen} />
+      <Stack.Screen
+        name="OnboardingCurrency"
+        component={OnboardingCurrencyScreen}
+      />
       <Stack.Screen name="Onboarding1" component={Onboarding1Screen} />
       <Stack.Screen name="Onboarding2" component={Onboarding2Screen} />
       <Stack.Screen name="Onboarding3" component={Onboarding3Screen} />
@@ -46,6 +51,7 @@ export default function OnboardingNavigator() {
       <Stack.Screen name="Onboarding5" component={Onboarding5Screen} />
       <Stack.Screen name="Onboarding6" component={Onboarding6Screen} />
       <Stack.Screen name="Onboarding7" component={Onboarding7Screen} />
+      <Stack.Screen name="AllesStartklar" component={AllesStartklarScreen} />
       <Stack.Screen name="Paywall" component={PaywallScreen} />
     </Stack.Navigator>
   );

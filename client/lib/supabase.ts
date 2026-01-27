@@ -16,22 +16,31 @@ const secureStoreAvailablePromise =
     ? Promise.resolve(false)
     : SecureStore.isAvailableAsync();
 
+const SECURE_STORE_SIZE_LIMIT = 2048;
+
 const StorageAdapter = {
   getItem: async (key: string) => {
     if (await secureStoreAvailablePromise) {
-      return SecureStore.getItemAsync(key);
+      const secureValue = await SecureStore.getItemAsync(key);
+      if (secureValue !== null && secureValue !== undefined) {
+        return secureValue;
+      }
     }
     return AsyncStorage.getItem(key);
   },
   setItem: async (key: string, value: string) => {
     if (await secureStoreAvailablePromise) {
-      return SecureStore.setItemAsync(key, value);
+      if (value.length <= SECURE_STORE_SIZE_LIMIT) {
+        return SecureStore.setItemAsync(key, value);
+      }
+      await SecureStore.deleteItemAsync(key);
+      return AsyncStorage.setItem(key, value);
     }
     return AsyncStorage.setItem(key, value);
   },
   removeItem: async (key: string) => {
     if (await secureStoreAvailablePromise) {
-      return SecureStore.deleteItemAsync(key);
+      await SecureStore.deleteItemAsync(key);
     }
     return AsyncStorage.removeItem(key);
   },

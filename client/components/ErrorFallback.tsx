@@ -1,18 +1,12 @@
 import React, { useState } from "react";
 import { reloadAppAsync } from "expo";
-import {
-  StyleSheet,
-  View,
-  Pressable,
-  ScrollView,
-  Text,
-  Modal,
-} from "react-native";
+import { StyleSheet, View, Pressable, ScrollView, Text } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Fonts } from "@/constants/theme";
+import { AppModal } from "@/components/ui/app-modal";
 
 export type ErrorFallbackProps = {
   error: Error;
@@ -87,57 +81,53 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
       </View>
 
       {__DEV__ ? (
-        <Modal
+        <AppModal
           visible={isModalVisible}
-          animationType="slide"
-          transparent={true}
-          onRequestClose={() => setIsModalVisible(false)}
+          onClose={() => setIsModalVisible(false)}
+          maxHeightPercent={90}
+          contentStyle={styles.modalContainer}
         >
-          <View style={styles.modalOverlay}>
-            <ThemedView style={styles.modalContainer}>
-              <View style={styles.modalHeader}>
-                <ThemedText type="h2" style={styles.modalTitle}>
-                  Error Details
-                </ThemedText>
-                <Pressable
-                  onPress={() => setIsModalVisible(false)}
-                  style={({ pressed }) => [
-                    styles.closeButton,
-                    { opacity: pressed ? 0.6 : 1 },
-                  ]}
-                >
-                  <Feather name="x" size={24} color={theme.text} />
-                </Pressable>
-              </View>
-
-              <ScrollView
-                style={styles.modalScrollView}
-                contentContainerStyle={styles.modalScrollContent}
-                showsVerticalScrollIndicator
-              >
-                <View
-                  style={[
-                    styles.errorContainer,
-                    { backgroundColor: theme.backgroundDefault },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.errorText,
-                      {
-                        color: theme.text,
-                        fontFamily: Fonts?.mono || "monospace",
-                      },
-                    ]}
-                    selectable
-                  >
-                    {formatErrorDetails()}
-                  </Text>
-                </View>
-              </ScrollView>
-            </ThemedView>
+          <View style={styles.modalHeader}>
+            <ThemedText type="h2" style={styles.modalTitle}>
+              Error Details
+            </ThemedText>
+            <Pressable
+              onPress={() => setIsModalVisible(false)}
+              style={({ pressed }) => [
+                styles.closeButton,
+                { opacity: pressed ? 0.6 : 1 },
+              ]}
+            >
+              <Feather name="x" size={24} color={theme.text} />
+            </Pressable>
           </View>
-        </Modal>
+
+          <ScrollView
+            style={styles.modalScrollView}
+            contentContainerStyle={styles.modalScrollContent}
+            showsVerticalScrollIndicator
+          >
+            <View
+              style={[
+                styles.errorContainer,
+                { backgroundColor: theme.backgroundDefault },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.errorText,
+                  {
+                    color: theme.text,
+                    fontFamily: Fonts?.mono || "monospace",
+                  },
+                ]}
+                selectable
+              >
+                {formatErrorDetails()}
+              </Text>
+            </View>
+          </ScrollView>
+        </AppModal>
       ) : null}
     </ThemedView>
   );
@@ -199,14 +189,8 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 16,
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "flex-end",
-  },
   modalContainer: {
     width: "100%",
-    height: "90%",
     borderTopLeftRadius: BorderRadius.lg,
     borderTopRightRadius: BorderRadius.lg,
   },

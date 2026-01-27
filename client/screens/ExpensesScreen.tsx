@@ -1,20 +1,23 @@
-import React, { useState } from "react";
+import React, { useState, useLayoutEffect, useCallback } from "react";
 import {
   View,
   Text,
-  StyleSheet,
   Pressable,
   ScrollView,
-  Modal,
   TextInput,
+  Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useHeaderHeight } from "@react-navigation/elements";
 import { Feather } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
+import { isLiquidGlassAvailable } from "expo-glass-effect";
 import { useApp } from "@/context/AppContext";
-import { Spacing, BorderRadius } from "@/constants/theme";
+import { Spacing } from "@/constants/theme";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
+import { styles } from "./styles/expenses-screen.styles";
+import { AppModal } from "@/components/ui/app-modal";
 
 const EXPENSE_TYPES = [
   { id: "versicherungen", name: "Versicherungen", icon: "shield" },
@@ -38,6 +41,7 @@ function formatCurrency(value: number): string {
 
 export default function ExpensesScreen() {
   const insets = useSafeAreaInsets();
+  const headerHeight = useHeaderHeight();
   const navigation = useNavigation();
   const {
     expenseEntries,
@@ -47,6 +51,9 @@ export default function ExpensesScreen() {
     deleteExpenseEntry,
   } = useApp();
 
+  // Check if native header with Liquid Glass is available
+  const useNativeHeader = isLiquidGlassAvailable() && Platform.OS === "ios";
+
   const [modalVisible, setModalVisible] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState<string | null>(null);
@@ -54,13 +61,13 @@ export default function ExpensesScreen() {
   const [amount, setAmount] = useState("");
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
-  const openAddModal = () => {
+  const openAddModal = useCallback(() => {
     setEditingId(null);
     setSelectedType(null);
     setCustomType("");
     setAmount("");
     setModalVisible(true);
-  };
+  }, []);
 
   const openEditModal = (entry: {
     id: string;
@@ -120,24 +127,50 @@ export default function ExpensesScreen() {
     return matchingType?.icon || "plus-circle";
   };
 
+  // Set header right button for adding expense (only if native header is used)
+  useLayoutEffect(() => {
+    if (useNativeHeader) {
+      navigation.setOptions({
+        headerRight: () => (
+          <Pressable
+            onPress={openAddModal}
+            style={{ marginRight: 16 }}
+            hitSlop={8}
+          >
+            <Feather name="plus" size={24} color="#EF4444" />
+          </Pressable>
+        ),
+      });
+    }
+  }, [navigation, openAddModal, useNativeHeader]);
+
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <Animated.View entering={FadeIn.duration(300)} style={styles.header}>
-        <Pressable
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
+    <View style={styles.container}>
+      {/* Custom header for non-iOS 18 devices */}
+      {!useNativeHeader && (
+        <Animated.View
+          entering={FadeIn.duration(300)}
+          style={[styles.header, { paddingTop: insets.top }]}
         >
-          <Feather name="arrow-left" size={24} color="#111827" />
-        </Pressable>
-        <Text style={styles.headerTitle}>Ausgaben</Text>
-        <Pressable onPress={openAddModal} style={styles.addButton}>
-          <Feather name="plus" size={24} color="#EF4444" />
-        </Pressable>
-      </Animated.View>
+          <Pressable
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}
+          >
+            <Feather name="arrow-left" size={24} color="#111827" />
+          </Pressable>
+          <Text style={styles.headerTitle}>Ausgaben</Text>
+          <Pressable onPress={openAddModal} style={styles.addButton}>
+            <Feather name="plus" size={24} color="#EF4444" />
+          </Pressable>
+        </Animated.View>
+      )}
 
       <ScrollView
         style={styles.content}
-        contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.xl }}
+        contentContainerStyle={{
+          paddingTop: useNativeHeader ? headerHeight + Spacing.md : Spacing.md,
+          paddingBottom: insets.bottom + Spacing.xl,
+        }}
         showsVerticalScrollIndicator={false}
       >
         <Animated.View
@@ -245,418 +278,96 @@ export default function ExpensesScreen() {
         </Animated.View>
       </ScrollView>
 
-      <Modal
+      <AppModal
         visible={modalVisible}
-        animationType="fade"
-        transparent={true}
-        onRequestClose={() => setModalVisible(false)}
+        onClose={() => setModalVisible(false)}
+        maxHeightPercent={80}
+        contentStyle={[
+          styles.modalContent,
+          { paddingBottom: insets.bottom + Spacing.lg },
+        ]}
       >
-        <View style={styles.modalOverlay}>
-          <Pressable
-            style={styles.modalBackdrop}
-            onPress={() => setModalVisible(false)}
-          />
-          <View
-            style={[
-              styles.modalContent,
-              { paddingBottom: insets.bottom + Spacing.lg },
-            ]}
-          >
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
-                {editingId ? "Ausgabe bearbeiten" : "Neue Ausgabe"}
-              </Text>
-              <Pressable onPress={() => setModalVisible(false)}>
-                <Feather name="x" size={24} color="#6B7280" />
-              </Pressable>
-            </View>
+        <View style={styles.modalHeader}>
+          <Text style={styles.modalTitle}>
+            {editingId ? "Ausgabe bearbeiten" : "Neue Ausgabe"}
+          </Text>
+          <Pressable onPress={() => setModalVisible(false)}>
+            <Feather name="x" size={24} color="#6B7280" />
+          </Pressable>
+        </View>
 
-            <KeyboardAwareScrollViewCompat
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: 40 }}
-            >
-              <Text style={styles.modalLabel}>Art der Ausgabe</Text>
-              <View style={styles.typeGrid}>
-                {EXPENSE_TYPES.map((type) => (
-                  <Pressable
-                    key={type.id}
-                    style={[
-                      styles.typeButton,
-                      selectedType === type.id && styles.typeButtonSelected,
-                    ]}
-                    onPress={() => setSelectedType(type.id)}
-                  >
-                    <Feather
-                      name={type.icon as any}
-                      size={20}
-                      color={selectedType === type.id ? "#EF4444" : "#6B7280"}
-                    />
-                    <Text
-                      style={[
-                        styles.typeButtonText,
-                        selectedType === type.id &&
-                          styles.typeButtonTextSelected,
-                      ]}
-                    >
-                      {type.name}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-
-              {selectedType === "sonstiges" && (
-                <View style={styles.customTypeContainer}>
-                  <Text style={styles.modalLabel}>Bezeichnung</Text>
-                  <TextInput
-                    style={styles.textInput}
-                    value={customType}
-                    onChangeText={setCustomType}
-                    placeholder="z.B. Strom"
-                    placeholderTextColor="#9CA3AF"
-                  />
-                </View>
-              )}
-
-              <Text style={styles.modalLabel}>Betrag (monatlich)</Text>
-              <View style={styles.amountInputContainer}>
-                <Text style={styles.currencySymbol}>€</Text>
-                <TextInput
-                  style={styles.amountInput}
-                  value={amount}
-                  onChangeText={setAmount}
-                  placeholder="0,00"
-                  placeholderTextColor="#9CA3AF"
-                  keyboardType="decimal-pad"
-                />
-              </View>
-
+        <KeyboardAwareScrollViewCompat
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 40 }}
+        >
+          <Text style={styles.modalLabel}>Art der Ausgabe</Text>
+          <View style={styles.typeGrid}>
+            {EXPENSE_TYPES.map((type) => (
               <Pressable
+                key={type.id}
                 style={[
-                  styles.saveButton,
-                  (!selectedType || !amount) && styles.saveButtonDisabled,
+                  styles.typeButton,
+                  selectedType === type.id && styles.typeButtonSelected,
                 ]}
-                onPress={handleSave}
-                disabled={!selectedType || !amount}
+                onPress={() => setSelectedType(type.id)}
               >
-                <Text style={styles.saveButtonText}>
-                  {editingId ? "Speichern" : "Hinzufügen"}
+                <Feather
+                  name={type.icon as any}
+                  size={20}
+                  color={selectedType === type.id ? "#EF4444" : "#6B7280"}
+                />
+                <Text
+                  style={[
+                    styles.typeButtonText,
+                    selectedType === type.id && styles.typeButtonTextSelected,
+                  ]}
+                >
+                  {type.name}
                 </Text>
               </Pressable>
-            </KeyboardAwareScrollViewCompat>
+            ))}
           </View>
-        </View>
-      </Modal>
+
+          {selectedType === "sonstiges" && (
+            <View style={styles.customTypeContainer}>
+              <Text style={styles.modalLabel}>Bezeichnung</Text>
+              <TextInput
+                style={styles.textInput}
+                value={customType}
+                onChangeText={setCustomType}
+                placeholder="z.B. Strom"
+                placeholderTextColor="#9CA3AF"
+              />
+            </View>
+          )}
+
+          <Text style={styles.modalLabel}>Betrag (monatlich)</Text>
+          <View style={styles.amountInputContainer}>
+            <Text style={styles.currencySymbol}>€</Text>
+            <TextInput
+              style={styles.amountInput}
+              value={amount}
+              onChangeText={setAmount}
+              placeholder="0,00"
+              placeholderTextColor="#9CA3AF"
+              keyboardType="decimal-pad"
+            />
+          </View>
+
+          <Pressable
+            style={[
+              styles.saveButton,
+              (!selectedType || !amount) && styles.saveButtonDisabled,
+            ]}
+            onPress={handleSave}
+            disabled={!selectedType || !amount}
+          >
+            <Text style={styles.saveButtonText}>
+              {editingId ? "Speichern" : "Hinzufügen"}
+            </Text>
+          </Pressable>
+        </KeyboardAwareScrollViewCompat>
+      </AppModal>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F9FAFB",
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    backgroundColor: "#FFFFFF",
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
-  },
-  backButton: {
-    padding: Spacing.xs,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#111827",
-  },
-  addButton: {
-    padding: Spacing.xs,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: Spacing.lg,
-  },
-  summaryCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.lg,
-    marginTop: Spacing.lg,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  summaryIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#FEE2E2",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: Spacing.md,
-  },
-  summaryContent: {
-    flex: 1,
-  },
-  summaryLabel: {
-    fontSize: 14,
-    color: "#6B7280",
-    marginBottom: 4,
-  },
-  summaryAmount: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: "#EF4444",
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#374151",
-    marginTop: Spacing.xl,
-    marginBottom: Spacing.md,
-  },
-  emptyState: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: Spacing["2xl"],
-    backgroundColor: "#FFFFFF",
-    borderRadius: BorderRadius.lg,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: "#9CA3AF",
-    marginTop: Spacing.md,
-    marginBottom: Spacing.lg,
-  },
-  emptyButton: {
-    backgroundColor: "#EF4444",
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.md,
-  },
-  emptyButtonText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  expenseItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "#FFFFFF",
-    padding: Spacing.md,
-    borderRadius: BorderRadius.md,
-    marginBottom: Spacing.sm,
-  },
-  expenseLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  expenseIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#FEE2E2",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: Spacing.md,
-  },
-  expenseType: {
-    fontSize: 15,
-    fontWeight: "500",
-    color: "#111827",
-  },
-  expenseFrequency: {
-    fontSize: 12,
-    color: "#9CA3AF",
-    marginTop: 2,
-  },
-  expenseRight: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.md,
-  },
-  expenseAmount: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#EF4444",
-  },
-  deleteConfirm: {
-    backgroundColor: "#FEF2F2",
-    padding: Spacing.md,
-    borderRadius: BorderRadius.md,
-    marginTop: -Spacing.sm + 4,
-    marginBottom: Spacing.sm,
-  },
-  deleteConfirmText: {
-    fontSize: 14,
-    color: "#991B1B",
-    marginBottom: Spacing.sm,
-  },
-  deleteActions: {
-    flexDirection: "row",
-    gap: Spacing.sm,
-  },
-  cancelDeleteBtn: {
-    flex: 1,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.sm,
-    backgroundColor: "#FFFFFF",
-    alignItems: "center",
-  },
-  cancelDeleteText: {
-    fontSize: 14,
-    color: "#6B7280",
-  },
-  confirmDeleteBtn: {
-    flex: 1,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.sm,
-    backgroundColor: "#EF4444",
-    alignItems: "center",
-  },
-  confirmDeleteText: {
-    fontSize: 14,
-    color: "#FFFFFF",
-    fontWeight: "500",
-  },
-  tipCard: {
-    backgroundColor: "#FEF2F2",
-    padding: Spacing.md,
-    borderRadius: BorderRadius.md,
-    marginTop: Spacing.xl,
-  },
-  tipHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.xs,
-    marginBottom: Spacing.xs,
-  },
-  tipTitle: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#EF4444",
-  },
-  tipText: {
-    fontSize: 13,
-    color: "#991B1B",
-    lineHeight: 18,
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: "flex-end",
-  },
-  modalBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.5)",
-  },
-  modalContent: {
-    backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: BorderRadius.xl,
-    borderTopRightRadius: BorderRadius.xl,
-    padding: Spacing.lg,
-    maxHeight: "80%",
-  },
-  modalHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: Spacing.lg,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#111827",
-  },
-  modalLabel: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#374151",
-    marginBottom: Spacing.sm,
-    marginTop: Spacing.md,
-  },
-  typeGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: Spacing.sm,
-  },
-  typeButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.xs,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    borderRadius: BorderRadius.md,
-    backgroundColor: "#F3F4F6",
-    borderWidth: 1,
-    borderColor: "transparent",
-  },
-  typeButtonSelected: {
-    backgroundColor: "#FEF2F2",
-    borderColor: "#EF4444",
-  },
-  typeButtonText: {
-    fontSize: 13,
-    color: "#6B7280",
-  },
-  typeButtonTextSelected: {
-    color: "#EF4444",
-    fontWeight: "500",
-  },
-  customTypeContainer: {
-    marginTop: Spacing.sm,
-  },
-  textInput: {
-    backgroundColor: "#F9FAFB",
-    borderRadius: BorderRadius.md,
-    padding: Spacing.md,
-    fontSize: 16,
-    color: "#111827",
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    outlineStyle: "none",
-  } as any,
-  amountInputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#F9FAFB",
-    borderRadius: BorderRadius.md,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    paddingHorizontal: Spacing.md,
-  },
-  currencySymbol: {
-    fontSize: 18,
-    color: "#6B7280",
-    marginRight: Spacing.xs,
-  },
-  amountInput: {
-    flex: 1,
-    paddingVertical: Spacing.md,
-    fontSize: 18,
-    color: "#111827",
-    outlineStyle: "none",
-  } as any,
-  saveButton: {
-    backgroundColor: "#EF4444",
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.md,
-    alignItems: "center",
-    marginTop: Spacing.xl,
-  },
-  saveButtonDisabled: {
-    backgroundColor: "#D1D5DB",
-  },
-  saveButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#FFFFFF",
-  },
-});

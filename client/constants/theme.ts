@@ -25,6 +25,10 @@ export const Colors = {
     chipBorderSelected: "#000000",
     inputBorder: accentLavender,
     inputBorderLight: "#E5E7EB",
+    tabBarBackground: "#FFFFFF",
+    tabBarSelectedBackground: "#E0D9FA",
+    tabBarIconDefault: "#000000",
+    tabBarIconSelected: primaryPurple,
     cardOverview: "#7B8CDE",
     cardKlarna: "#F07B6E",
     cardSubscriptions: "#F5C5A8",
@@ -33,6 +37,9 @@ export const Colors = {
     cardPeace: "#D4B5C7",
     teal: "#2d9a8c",
     divider: "#E5E7EB",
+    success: "#166534",
+    successBackground: "#DCFCE7",
+    successBorder: "#86EFAC",
   },
   dark: {
     text: "#ECEDEE",
@@ -61,6 +68,9 @@ export const Colors = {
     cardPeace: "#D4B5C7",
     teal: "#2d9a8c",
     divider: "#404244",
+    success: "#DCFCE7",
+    successBackground: "#052e16",
+    successBorder: "#166534",
   },
 };
 

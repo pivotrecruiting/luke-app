@@ -1,10 +1,5 @@
 import React from "react";
-import {
-  View,
-  StyleSheet,
-  Pressable,
-  Dimensions,
-} from "react-native";
+import { View, StyleSheet, Pressable, Dimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
@@ -31,7 +26,9 @@ export default function WelcomeScreen() {
         cachePolicy="memory-disk"
       />
 
-      <View style={[styles.buttonContainer, { paddingBottom: insets.bottom + 50 }]}>
+      <View
+        style={[styles.buttonContainer, { paddingBottom: insets.bottom + 50 }]}
+      >
         <Pressable
           onPress={() => navigation.navigate("SignUp")}
           style={({ pressed }) => [
