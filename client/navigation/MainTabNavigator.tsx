@@ -85,6 +85,7 @@ const ui = {
     labelTopGap: 3,
     safe: {
       bottomInset: 16, // Abstand unterhalb der Tabbar (innerhalb SafeAreaView)
+      topMargin: 20, // Margin oben für die Tab Bar, damit Content nicht überlappt
     },
     layout: {
       horizontalInset: 16, // links/rechts Außenabstand der gesamten Tabbar
@@ -254,6 +255,7 @@ function makeStyles(theme: typeof ui) {
 
     tabBarContainer: {
       position: "relative",
+      marginTop: theme.metrics.safe.topMargin,
     },
 
     tabBar: {
