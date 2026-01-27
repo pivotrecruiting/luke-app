@@ -24,14 +24,16 @@ const EXPENSE_CATEGORIES = [
     name: cat.name,
     icon: cat.icon,
   })),
-  { id: "sonstiges", name: "Sonstiges", icon: "more-horizontal" },
 ];
 
 const INCOME_CATEGORIES = [
   { id: "gehalt", name: "Gehalt", icon: "briefcase" },
-  { id: "freelance", name: "Freelance", icon: "edit-3" },
-  { id: "investitionen", name: "Investitionen", icon: "trending-up" },
-  { id: "geschenke", name: "Geschenke", icon: "gift" },
+  { id: "lohn", name: "Lohn", icon: "dollar-sign" },
+  { id: "lehre", name: "Lehre", icon: "book-open" },
+  { id: "nebenjob", name: "Nebenjob", icon: "user" },
+  { id: "taschengeld", name: "Taschengeld", icon: "pocket" },
+  { id: "sidehustle", name: "Sidehustle", icon: "trending-up" },
+  { id: "geschenk", name: "Geschenk", icon: "gift" },
   { id: "sonstiges", name: "Sonstiges", icon: "more-horizontal" },
 ];
 
@@ -453,11 +455,11 @@ const styles = StyleSheet.create({
   categoriesGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 12,
   },
   categoryItem: {
     alignItems: "center",
-    width: 80,
+    width: "25%",
+    marginBottom: 12,
   },
   categoryItemActive: {},
   categoryIcon: {
