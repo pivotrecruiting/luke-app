@@ -699,25 +699,35 @@ export const getOrCreateUserProgress = async (
     return mapUserProgress(data as UserProgressRow);
   }
 
-  const { data: created, error: insertError } = await supabase
+  const { error: upsertError } = await supabase
     .from("user_progress")
-    .insert({
-      user_id: userId,
-      xp_total: 0,
-      current_level_id: initialLevelId,
-      current_streak: 0,
-      longest_streak: 0,
-      last_login_at: null,
-      last_streak_date: null,
-    })
+    .upsert(
+      {
+        user_id: userId,
+        xp_total: 0,
+        current_level_id: initialLevelId,
+        current_streak: 0,
+        longest_streak: 0,
+        last_login_at: null,
+        last_streak_date: null,
+      },
+      { onConflict: "user_id", ignoreDuplicates: true },
+    );
+  if (upsertError) {
+    throw upsertError;
+  }
+
+  const { data: ensured, error: ensuredError } = await supabase
+    .from("user_progress")
     .select(
       "id, user_id, xp_total, current_level_id, current_streak, longest_streak, last_login_at, last_streak_date, created_at, updated_at",
     )
-    .single();
-  if (insertError || !created) {
-    throw insertError ?? new Error("No user progress created");
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (ensuredError || !ensured) {
+    throw ensuredError ?? new Error("No user progress created");
   }
-  return mapUserProgress(created as UserProgressRow);
+  return mapUserProgress(ensured as UserProgressRow);
 };
 
 export const updateUserProgress = async (

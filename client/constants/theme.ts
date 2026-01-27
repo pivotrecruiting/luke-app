@@ -37,6 +37,9 @@ export const Colors = {
     cardPeace: "#D4B5C7",
     teal: "#2d9a8c",
     divider: "#E5E7EB",
+    success: "#166534",
+    successBackground: "#DCFCE7",
+    successBorder: "#86EFAC",
   },
   dark: {
     text: "#ECEDEE",
@@ -65,6 +68,9 @@ export const Colors = {
     cardPeace: "#D4B5C7",
     teal: "#2d9a8c",
     divider: "#404244",
+    success: "#DCFCE7",
+    successBackground: "#052e16",
+    successBorder: "#166534",
   },
 };
 
