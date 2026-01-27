@@ -65,11 +65,14 @@ export const AppModal = ({
             behavior={Platform.OS === "ios" ? "padding" : "height"}
             keyboardVerticalOffset={keyboardVerticalOffset}
             style={styles.contentWrapper}
+            pointerEvents="box-none"
           >
             {content}
           </KeyboardAvoidingView>
         ) : (
-          <View style={styles.contentWrapper}>{content}</View>
+          <View style={styles.contentWrapper} pointerEvents="box-none">
+            {content}
+          </View>
         )}
       </View>
     </Modal>
