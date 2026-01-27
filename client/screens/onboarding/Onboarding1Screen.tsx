@@ -144,10 +144,9 @@ export default function Onboarding1Screen() {
         <Pressable
           key={goal.id}
           onPress={() => toggleSelection(goal.id)}
-          style={({ pressed }) => [
+          style={[
             styles.goalCard,
             { backgroundColor: goal.color },
-            pressed && styles.goalCardPressed,
           ]}
         >
           {goal.id === "klarna" && "overlayImage" in goal ? (
@@ -313,9 +312,6 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     borderWidth: 4,
     borderColor: "transparent",
-  },
-  goalCardPressed: {
-    opacity: 0.9,
   },
   goalImage: {
     flex: 1,
