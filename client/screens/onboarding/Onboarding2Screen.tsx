@@ -30,7 +30,10 @@ export default function Onboarding2Screen() {
         <View style={styles.headerContainer}>
           <Text style={styles.titleBold}>Hast du bereits etwas</Text>
           <Text style={styles.titleBold}>erspartes?</Text>
-          <Text style={styles.subtitleItalic}>jeder Cent zählt.</Text>
+          <Text style={styles.subtitleItalic}>
+            Dein Erspartes wandert direkt in deinen Tresor - bereit für deine
+            späteren Ziele.
+          </Text>
         </View>
 
         <View style={styles.illustrationContainer}>

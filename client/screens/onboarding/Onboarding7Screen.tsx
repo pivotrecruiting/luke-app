@@ -72,8 +72,9 @@ export default function Onboarding7Screen() {
         <ProgressDots total={5} current={4} />
 
         <View style={styles.headerContainer}>
-          <Text style={styles.titleBold}>Wofür gibst du aktuell</Text>
-          <Text style={styles.titleBold}>am meisten Geld aus?</Text>
+          <Text style={styles.titleBold}>
+            Wo verschwindet dein Geld im Alltag am schnellsten?
+          </Text>
           <Text style={styles.subtitle}>
             Wähle Bereiche die wir gemeinsam zähmen und lege dein monatliches
             Limit fest.

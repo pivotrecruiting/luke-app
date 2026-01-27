@@ -105,11 +105,13 @@ const styles = StyleSheet.create({
     color: "#000000",
     marginTop: Spacing["3xl"],
     marginBottom: Spacing.sm,
+    textAlign: "center",
   },
   subtitle: {
     fontSize: 16,
     color: "#9CA3AF",
     marginBottom: Spacing["3xl"],
+    textAlign: "center",
   },
   card: {
     backgroundColor: "#FFFFFF",
