@@ -35,6 +35,13 @@ export const TrendView = ({
     );
   }
 
+  const safeSelectedMonth =
+    selectedMonth !== null &&
+    selectedMonth >= 0 &&
+    selectedMonth < monthlyData.length
+      ? selectedMonth
+      : null;
+
   const maxAmount = Math.max(...monthlyData.map((d) => d.amount), 1);
 
   const averageBase = monthlyData.filter((d) => d.amount > 0);
@@ -48,7 +55,9 @@ export const TrendView = ({
     monthlyData.length > 1 ? monthlyData[monthlyData.length - 2] : null;
 
   const displayedData =
-    selectedMonth !== null ? monthlyData[selectedMonth] : currentMonthData;
+    safeSelectedMonth !== null
+      ? monthlyData[safeSelectedMonth]
+      : currentMonthData;
   const timeFilterLabel = (() => {
     switch (timeFilter) {
       case "thisMonth":
@@ -66,7 +75,9 @@ export const TrendView = ({
     }
   })();
   const displayLabel =
-    selectedMonth !== null ? monthlyData[selectedMonth].month : timeFilterLabel;
+    safeSelectedMonth !== null
+      ? monthlyData[safeSelectedMonth].month
+      : timeFilterLabel;
 
   const changePercent =
     previousMonthData && previousMonthData.amount > 0
@@ -130,7 +141,7 @@ export const TrendView = ({
               const barHeight = isZero
                 ? 6
                 : Math.max((data.amount / maxAmount) * 100, 8);
-              const isSelected = selectedMonth === index;
+              const isSelected = safeSelectedMonth === index;
               const isCurrentMonth = index === monthlyData.length - 1;
               const hasSelection = selectedMonth !== null;
               const isActive =
