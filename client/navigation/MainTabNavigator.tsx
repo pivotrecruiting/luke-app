@@ -56,6 +56,7 @@ const ui = {
     surface: "rgba(255, 255, 255, 0.4)",
     tintOverlay: "rgba(255, 255, 255, 0.25)",
     shadow: "#0B1220",
+    tabItemActiveBackground: "#E2D5F7",
   },
   typography: {
     labelSize: 11,
@@ -136,7 +137,7 @@ const SimpleTabBar = memo(({ state, navigation }: BottomTabBarProps) => {
                 accessibilityRole="button"
                 accessibilityState={isFocused ? { selected: true } : {}}
                 onPress={handlePress}
-                style={s.tabItem}
+                style={[s.tabItem, isFocused && s.tabItemActive]}
                 activeOpacity={0.75}
               >
                 <Feather
@@ -219,6 +220,10 @@ function makeStyles(theme: typeof ui) {
       paddingVertical: theme.spacing.sm,
       borderRadius: theme.radius.tabItem,
       backgroundColor: "transparent",
+    },
+
+    tabItemActive: {
+      backgroundColor: theme.color.tabItemActiveBackground,
     },
 
     tabLabel: {
