@@ -20,38 +20,6 @@ export const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.8)",
     marginTop: 4,
   },
-  toggleContainer: {
-    flexDirection: "row",
-    marginTop: 20,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    borderRadius: 25,
-    padding: 4,
-  },
-  toggleButton: {
-    flex: 1,
-    paddingVertical: 12,
-    alignItems: "center",
-    borderRadius: 22,
-  },
-  toggleButtonIcon: {
-    flex: 0,
-    width: 48,
-    paddingVertical: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 22,
-  },
-  toggleButtonActive: {
-    backgroundColor: "#FFFFFF",
-  },
-  toggleButtonText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "rgba(255,255,255,0.8)",
-  },
-  toggleButtonTextActive: {
-    color: "#3B5BDB",
-  },
   scrollView: {
     flex: 1,
   },
