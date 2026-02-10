@@ -255,8 +255,8 @@ export const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    paddingHorizontal: 24,
-    paddingTop: 12,
+    paddingHorizontal: 48,
+    paddingTop: 28,
   },
   modalScrollView: {
     maxHeight: "100%",
@@ -423,5 +423,89 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#7340FE",
+  },
+  depositModalGoalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 24,
+  },
+  depositModalGoalIcon: {
+    fontSize: 32,
+  },
+  depositModalGoalInfo: {
+    flex: 1,
+  },
+  depositModalGoalName: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#000000",
+  },
+  depositModalGoalProgress: {
+    fontSize: 14,
+    color: "#6B7280",
+    marginTop: 2,
+  },
+  depositAmountBox: {
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 20,
+    overflow: "hidden",
+  },
+  depositAmountLabel: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "rgba(255,255,255,0.9)",
+    marginBottom: 8,
+  },
+  depositAmountValue: {
+    fontSize: 36,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    marginBottom: 16,
+  },
+  depositMetaRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  depositMetaLabel: {
+    fontSize: 14,
+    color: "rgba(255,255,255,0.9)",
+  },
+  depositMetaValue: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#FFFFFF",
+  },
+  depositButtonRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 20,
+  },
+  depositCancelButton: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: "center",
+  },
+  depositConfirmButton: {
+    flex: 1,
+    backgroundColor: "#14b8a6",
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: "center",
+  },
+  depositConfirmButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  numericKeypadContainer: {
+    marginBottom: 20,
   },
 });

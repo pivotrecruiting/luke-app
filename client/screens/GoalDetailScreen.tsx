@@ -113,6 +113,10 @@ export default function GoalDetailScreen() {
           visible={state.depositModalVisible}
           bottomInset={insets.bottom}
           depositTitle={derived.depositTitle}
+          goalName={goal.name}
+          goalIcon={goal.icon ?? "🎯"}
+          goalCurrent={goal.current}
+          goalTarget={goal.target}
           depositAmount={state.depositAmount}
           selectedDate={state.selectedDate}
           showDatePicker={state.showDatePicker}
