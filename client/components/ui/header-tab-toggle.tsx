@@ -4,6 +4,7 @@ import {
   headerTabToggleStyles as styles,
   TOGGLE_ICON_COLOR,
   TOGGLE_ICON_COLOR_ACTIVE,
+  TOGGLE_ICON_SIZE,
 } from "./header-tab-toggle.styles";
 
 type TabConfigT<T extends string> =
@@ -47,7 +48,7 @@ export function HeaderTabToggle<T extends string>({
             >
               <Feather
                 name={tab.icon as any}
-                size={20}
+                size={TOGGLE_ICON_SIZE}
                 color={isActive ? TOGGLE_ICON_COLOR_ACTIVE : TOGGLE_ICON_COLOR}
               />
             </Pressable>

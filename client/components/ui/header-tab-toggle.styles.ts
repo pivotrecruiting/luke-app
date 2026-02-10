@@ -21,7 +21,7 @@ export const headerTabToggleStyles = StyleSheet.create({
   },
   toggleButtonIcon: {
     flex: 0,
-    width: 48,
+    width: 56,
     paddingVertical: 10,
     alignItems: "center",
     justifyContent: "center",
@@ -42,3 +42,4 @@ export const headerTabToggleStyles = StyleSheet.create({
 
 export const TOGGLE_ICON_COLOR = "#FFFFFF";
 export const TOGGLE_ICON_COLOR_ACTIVE = "#3B5BDB";
+export const TOGGLE_ICON_SIZE = 20;
