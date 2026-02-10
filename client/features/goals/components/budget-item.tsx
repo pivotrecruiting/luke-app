@@ -15,6 +15,7 @@ export const BudgetItem = ({ budget, onPress }: BudgetItemPropsT) => {
   const percentage = (budget.current / budget.limit) * 100;
   const isOverBudget = budget.current > budget.limit;
   const displayPercentage = Math.min(percentage, 100);
+  const remaining = Math.max(0, budget.limit - budget.current);
 
   return (
     <Pressable style={styles.budgetItem} onPress={onPress}>
@@ -61,6 +62,19 @@ export const BudgetItem = ({ budget, onPress }: BudgetItemPropsT) => {
             isOverBudget && styles.budgetProgressBarOver,
           ]}
         />
+      </View>
+      <View style={styles.budgetFooter}>
+        <View>
+          <Text style={styles.budgetRemainingLabel}>Übrig</Text>
+          <Text
+            style={[
+              styles.budgetRemainingValue,
+              isOverBudget && styles.budgetRemainingValueOver,
+            ]}
+          >
+            {currencySymbol} {formatCurrency(remaining, currency)}
+          </Text>
+        </View>
       </View>
     </Pressable>
   );
