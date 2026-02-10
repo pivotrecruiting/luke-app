@@ -1,7 +1,7 @@
 import { Pressable, Text, TextInput, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useApp } from "@/context/AppContext";
-import { getCurrencySymbol } from "@/utils/currency-format";
+import CurrencyInput from "@/components/CurrencyInput";
 import { styles } from "@/screens/styles/goals-screen.styles";
 import { AppModal } from "@/components/ui/app-modal";
 
@@ -29,9 +29,7 @@ export const CreateBudgetModal = ({
   onCancel,
   onCreate,
 }: CreateBudgetModalPropsT) => {
-  const { currency, budgetCategories } = useApp();
-  const currencySymbol = getCurrencySymbol(currency);
-  const limitPlaceholder = `${currencySymbol} 200,00`;
+  const { budgetCategories } = useApp();
   return (
     <AppModal
       visible={visible}
@@ -75,13 +73,12 @@ export const CreateBudgetModal = ({
       </View>
 
       <Text style={styles.modalLabel}>Limit</Text>
-      <TextInput
-        style={styles.modalInput}
+      <CurrencyInput
         value={budgetLimit}
         onChangeText={onChangeBudgetLimit}
-        placeholder={limitPlaceholder}
-        placeholderTextColor="#9CA3AF"
-        keyboardType="decimal-pad"
+        placeholder="200,00"
+        variant="modal"
+        containerStyle={styles.modalInput}
       />
 
       <View style={styles.modalButtons}>

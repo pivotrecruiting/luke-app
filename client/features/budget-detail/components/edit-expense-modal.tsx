@@ -1,8 +1,7 @@
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { useApp } from "@/context/AppContext";
-import { getCurrencySymbol } from "@/utils/currency-format";
+import CurrencyInput from "@/components/CurrencyInput";
 import { styles } from "@/screens/styles/budget-detail-screen.styles";
 import { formatDisplayDate } from "../utils/date";
 import { AppModal } from "@/components/ui/app-modal";
@@ -41,8 +40,6 @@ export const EditExpenseModal = ({
   onSave,
   onCancel,
 }: EditExpenseModalPropsT) => {
-  const { currency } = useApp();
-  const currencySymbol = getCurrencySymbol(currency);
   return (
     <AppModal
       visible={visible}
@@ -70,17 +67,13 @@ export const EditExpenseModal = ({
         />
 
         <Text style={styles.modalLabel}>Betrag</Text>
-        <View style={styles.currencyInputContainer}>
-          <Text style={styles.currencyPrefix}>{currencySymbol}</Text>
-          <TextInput
-            style={styles.currencyInput}
-            value={editExpenseAmount}
-            onChangeText={onChangeAmount}
-            placeholder="0,00"
-            placeholderTextColor="#9CA3AF"
-            keyboardType="decimal-pad"
-          />
-        </View>
+        <CurrencyInput
+          value={editExpenseAmount}
+          onChangeText={onChangeAmount}
+          placeholder="0,00"
+          variant="modal"
+          containerStyle={styles.currencyInputContainer}
+        />
 
         <Text style={styles.modalLabel}>Datum</Text>
         <Pressable style={styles.datePickerButton} onPress={onOpenDatePicker}>

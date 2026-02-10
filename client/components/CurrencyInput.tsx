@@ -1,5 +1,12 @@
 import React, { useMemo } from "react";
-import { View, TextInput, Text, StyleSheet } from "react-native";
+import {
+  View,
+  TextInput,
+  Text,
+  StyleSheet,
+  type StyleProp,
+  type ViewStyle,
+} from "react-native";
 import { Colors, Spacing, BorderRadius, Typography } from "@/constants/theme";
 import { useApp, type CurrencyCode } from "@/context/AppContext";
 import {
@@ -15,6 +22,10 @@ type CurrencyInputProps = {
   highlighted?: boolean;
   currency?: CurrencyCode;
   allowNegative?: boolean;
+  containerStyle?: StyleProp<ViewStyle>;
+  /** Use "modal" for inputs inside modals (gray background, neutral border) */
+  variant?: "default" | "modal";
+  autoFocus?: boolean;
 };
 
 export default function CurrencyInput({
@@ -24,6 +35,9 @@ export default function CurrencyInput({
   highlighted = true,
   currency,
   allowNegative = false,
+  containerStyle,
+  variant = "default",
+  autoFocus = false,
 }: CurrencyInputProps) {
   const { currency: appCurrency } = useApp();
   const displayCurrency = currency ?? appCurrency;
@@ -82,7 +96,8 @@ export default function CurrencyInput({
     <View
       style={[
         styles.container,
-        highlighted ? styles.highlighted : styles.normal,
+        variant === "modal" ? styles.modal : highlighted ? styles.highlighted : styles.normal,
+        containerStyle,
       ]}
     >
       <Text style={styles.currency}>{currencySymbol}</Text>
@@ -93,6 +108,7 @@ export default function CurrencyInput({
         placeholder={resolvedPlaceholder}
         placeholderTextColor="#9CA3AF"
         keyboardType="numeric"
+        autoFocus={autoFocus}
         hitSlop={{
           top: Spacing.sm,
           bottom: Spacing.sm,
@@ -118,6 +134,11 @@ const styles = StyleSheet.create({
   },
   normal: {
     borderColor: Colors.light.inputBorderLight,
+    borderWidth: 1,
+  },
+  modal: {
+    backgroundColor: "#F3F4F6",
+    borderColor: "#E5E7EB",
     borderWidth: 1,
   },
   currency: {

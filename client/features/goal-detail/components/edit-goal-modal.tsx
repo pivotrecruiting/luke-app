@@ -1,6 +1,6 @@
 import { Pressable, Text, TextInput, View } from "react-native";
 import { useApp } from "@/context/AppContext";
-import { getCurrencySymbol } from "@/utils/currency-format";
+import CurrencyInput from "@/components/CurrencyInput";
 import { styles } from "@/screens/styles/goal-detail-screen.styles";
 import { EMOJI_LIST } from "@/features/goals/constants/goals-constants";
 import { AppModal } from "@/components/ui/app-modal";
@@ -43,10 +43,6 @@ export const EditGoalModal = ({
   onSave,
   onCancel,
 }: EditGoalModalPropsT) => {
-  const { currency } = useApp();
-  const currencySymbol = getCurrencySymbol(currency);
-  const amountPlaceholder = `${currencySymbol} 1000,00`;
-  const contributionPlaceholder = `${currencySymbol} 200,00`;
   return (
     <AppModal
       visible={visible}
@@ -86,23 +82,21 @@ export const EditGoalModal = ({
       ) : null}
 
       <Text style={styles.modalLabel}>Summe</Text>
-      <TextInput
-        style={styles.modalInput}
+      <CurrencyInput
         value={tempAmount}
         onChangeText={onChangeAmount}
-        placeholder={amountPlaceholder}
-        placeholderTextColor="#9CA3AF"
-        keyboardType="decimal-pad"
+        placeholder="1000,00"
+        variant="modal"
+        containerStyle={styles.modalInput}
       />
 
       <Text style={styles.modalLabel}>Monatlicher Beitrag</Text>
-      <TextInput
-        style={styles.modalInput}
+      <CurrencyInput
         value={tempMonthlyContribution}
         onChangeText={onChangeMonthlyContribution}
-        placeholder={contributionPlaceholder}
-        placeholderTextColor="#9CA3AF"
-        keyboardType="decimal-pad"
+        placeholder="200,00"
+        variant="modal"
+        containerStyle={styles.modalInput}
       />
 
       <Text style={styles.calculationText}>
