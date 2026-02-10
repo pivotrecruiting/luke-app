@@ -289,7 +289,7 @@ export default function SignUpScreen() {
                 setShowWorkshopModal(false);
                 setWorkshopCode("");
                 setCodeStatus("neutral");
-                navigation.navigate("OnboardingCurrency");
+                navigation.navigate("Onboarding1");
               }, 600);
             } else {
               setCodeStatus("invalid");

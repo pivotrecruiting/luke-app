@@ -1,20 +1,14 @@
 import React, { useCallback, useState } from "react";
-import { View, Text, StyleSheet, Pressable } from "react-native";
+import { View, Text, TextInput, StyleSheet, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import type { OnboardingStackParamList } from "@/navigation/OnboardingNavigator";
-import { Feather } from "@expo/vector-icons";
 import ProgressDots from "@/components/ProgressDots";
 import Chip from "@/components/Chip";
 import CurrencyInput from "@/components/CurrencyInput";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { Spacing, BorderRadius, Typography, Colors } from "@/constants/theme";
-import { useApp } from "@/context/AppContext";
-import {
-  formatCurrencyValue,
-  getCurrencySymbol,
-} from "@/utils/currency-format";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { OnboardingStackParamList } from "@/navigation/OnboardingNavigator";
 import {
   useOnboardingStore,
   type OnboardingStoreT,
@@ -22,65 +16,335 @@ import {
 
 type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
 
-interface Entry {
-  type: string;
-  amount: string;
-}
-
-const incomeTypes = [
-  "Gehalt/Lohn",
-  "Selbstständigkeit",
-  "Sonstiges",
-  "Kindergeld",
-  "Bafög/Stipendium",
-  "Nebenjob",
-  "Taschengeld",
-  "Unterhalt",
+const savingsGoals = [
+  "Urlaub",
+  "Führerschein",
+  "Wohnung",
+  "Hochzeit",
+  "Schuldenfrei",
+  "Notgroschen",
+  "Uhr",
+  "Auto",
+  "Weihnachten",
+  "Vespa",
+  "Handy",
+  "Bildschirm",
+  "Laptop",
+  "Klarna",
 ];
+
+const emojiKeywords: { keywords: string[]; emoji: string }[] = [
+  {
+    keywords: [
+      "iphone",
+      "handy",
+      "smartphone",
+      "telefon",
+      "phone",
+      "samsung",
+      "pixel",
+      "xiaomi",
+    ],
+    emoji: "📱",
+  },
+  {
+    keywords: [
+      "laptop",
+      "macbook",
+      "notebook",
+      "computer",
+      "pc",
+      "imac",
+      "mac",
+    ],
+    emoji: "💻",
+  },
+  {
+    keywords: ["bildschirm", "monitor", "tv", "fernseher", "display", "screen"],
+    emoji: "🖥️",
+  },
+  {
+    keywords: [
+      "auto",
+      "car",
+      "fahrzeug",
+      "wagen",
+      "tesla",
+      "bmw",
+      "mercedes",
+      "audi",
+      "vw",
+    ],
+    emoji: "🚗",
+  },
+  {
+    keywords: [
+      "vespa",
+      "roller",
+      "motorrad",
+      "moped",
+      "bike",
+      "fahrrad",
+      "ebike",
+      "e-bike",
+    ],
+    emoji: "🛵",
+  },
+  {
+    keywords: [
+      "urlaub",
+      "reise",
+      "ferien",
+      "travel",
+      "trip",
+      "strand",
+      "meer",
+      "vacation",
+    ],
+    emoji: "🏖️",
+  },
+  { keywords: ["führerschein", "lizenz", "license", "prüfung"], emoji: "🎓" },
+  {
+    keywords: [
+      "wohnung",
+      "haus",
+      "home",
+      "apartment",
+      "immobilie",
+      "miete",
+      "eigentum",
+      "zimmer",
+    ],
+    emoji: "🏠",
+  },
+  {
+    keywords: ["hochzeit", "heirat", "wedding", "ring", "verlobung", "ehe"],
+    emoji: "💍",
+  },
+  {
+    keywords: [
+      "schulden",
+      "kredit",
+      "loan",
+      "abbezahlen",
+      "tilgung",
+      "raten",
+      "klarna",
+    ],
+    emoji: "💳",
+  },
+  {
+    keywords: ["notgroschen", "reserve", "emergency", "rücklage", "sicherheit"],
+    emoji: "🛡️",
+  },
+  {
+    keywords: [
+      "uhr",
+      "watch",
+      "armbanduhr",
+      "rolex",
+      "smartwatch",
+      "apple watch",
+    ],
+    emoji: "⌚",
+  },
+  {
+    keywords: [
+      "weihnachten",
+      "christmas",
+      "geschenk",
+      "gift",
+      "geburtstag",
+      "birthday",
+      "present",
+    ],
+    emoji: "🎁",
+  },
+  {
+    keywords: ["paypal", "zahlung", "payment", "rechnung", "bill"],
+    emoji: "💵",
+  },
+  {
+    keywords: ["kamera", "camera", "foto", "photo", "gopro", "dslr"],
+    emoji: "📷",
+  },
+  {
+    keywords: [
+      "musik",
+      "music",
+      "kopfhörer",
+      "headphones",
+      "airpods",
+      "spotify",
+      "instrument",
+      "gitarre",
+    ],
+    emoji: "🎧",
+  },
+  {
+    keywords: [
+      "fitness",
+      "gym",
+      "sport",
+      "training",
+      "workout",
+      "mitgliedschaft",
+    ],
+    emoji: "💪",
+  },
+  {
+    keywords: ["buch", "book", "bücher", "kindle", "lesen", "reading"],
+    emoji: "📚",
+  },
+  {
+    keywords: [
+      "kurs",
+      "course",
+      "ausbildung",
+      "studium",
+      "uni",
+      "schule",
+      "lernen",
+      "education",
+    ],
+    emoji: "🎓",
+  },
+  {
+    keywords: ["flug", "flight", "flugzeug", "plane", "airline", "fliegen"],
+    emoji: "✈️",
+  },
+  {
+    keywords: [
+      "möbel",
+      "furniture",
+      "sofa",
+      "couch",
+      "tisch",
+      "stuhl",
+      "bett",
+      "schrank",
+    ],
+    emoji: "🛋️",
+  },
+  {
+    keywords: [
+      "kleidung",
+      "clothes",
+      "mode",
+      "fashion",
+      "schuhe",
+      "shoes",
+      "jacke",
+      "anzug",
+    ],
+    emoji: "👗",
+  },
+  {
+    keywords: [
+      "spiel",
+      "game",
+      "playstation",
+      "xbox",
+      "nintendo",
+      "switch",
+      "ps5",
+      "gaming",
+      "konsole",
+    ],
+    emoji: "🎮",
+  },
+  { keywords: ["tablet", "ipad", "surface"], emoji: "📱" },
+  {
+    keywords: [
+      "schmuck",
+      "jewelry",
+      "kette",
+      "armband",
+      "ohrringe",
+      "gold",
+      "silber",
+    ],
+    emoji: "💎",
+  },
+  { keywords: ["baby", "kind", "child", "familie", "family"], emoji: "👶" },
+  {
+    keywords: ["hund", "katze", "haustier", "pet", "tier", "animal"],
+    emoji: "🐕",
+  },
+  {
+    keywords: ["garten", "garden", "pflanzen", "plants", "balkon"],
+    emoji: "🌱",
+  },
+  {
+    keywords: [
+      "küche",
+      "kitchen",
+      "kochen",
+      "cooking",
+      "thermomix",
+      "kaffeemaschine",
+    ],
+    emoji: "☕",
+  },
+];
+
+function getEmojiForText(text: string): string {
+  const lowerText = text.toLowerCase();
+  for (const entry of emojiKeywords) {
+    for (const keyword of entry.keywords) {
+      if (lowerText.includes(keyword)) {
+        return entry.emoji;
+      }
+    }
+  }
+  return "🎯";
+}
 
 export default function Onboarding4Screen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
-  const { currency } = useApp();
-  const setIncomeEntriesDraft = useOnboardingStore(
-    (state: OnboardingStoreT) => state.setIncomeEntries,
+  const setGoalDraft = useOnboardingStore(
+    (state: OnboardingStoreT) => state.setGoalDraft,
   );
-  const resetIncomeEntries = useOnboardingStore(
-    (state: OnboardingStoreT) => state.resetIncomeEntries,
+  const resetGoalDraft = useOnboardingStore(
+    (state: OnboardingStoreT) => state.resetGoalDraft,
   );
-  const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [selectedGoal, setSelectedGoal] = useState("Wohnung");
   const [amount, setAmount] = useState("");
-  const [entries, setEntries] = useState<Entry[]>([]);
-  const currencySymbol = getCurrencySymbol(currency);
-
-  const handleAddEntry = () => {
-    if (selectedType && amount !== "") {
-      setEntries((prev) => [...prev, { type: selectedType, amount }]);
-      setSelectedType(null);
-      setAmount("");
-    }
-  };
-
-  const handleDeleteEntry = (index: number) => {
-    setEntries((prev) => prev.filter((_, i) => i !== index));
-  };
+  const [monthlyAmount, setMonthlyAmount] = useState("");
 
   const handleContinue = () => {
-    const parsedEntries = entries.map((entry) => ({
-      type: entry.type,
-      amount: Number.parseFloat(entry.amount),
-    }));
-    setIncomeEntriesDraft(parsedEntries);
+    if (selectedGoal && amount) {
+      const parsedAmount = Number.parseFloat(amount);
+      if (!isNaN(parsedAmount) && parsedAmount > 0) {
+        const emoji = getEmojiForText(selectedGoal);
+        const parsedMonthly = Number.parseFloat(
+          monthlyAmount.replace(",", "."),
+        );
+        const normalizedMonthly =
+          !isNaN(parsedMonthly) && parsedMonthly > 0 ? parsedMonthly : null;
+        setGoalDraft({
+          name: selectedGoal,
+          icon: emoji,
+          target: parsedAmount,
+          monthlyContribution: normalizedMonthly,
+        });
+      } else {
+        setGoalDraft(null);
+      }
+    } else {
+      setGoalDraft(null);
+    }
     navigation.navigate("Onboarding5");
   };
 
   useFocusEffect(
     useCallback(() => {
-      setSelectedType(null);
+      setSelectedGoal("");
       setAmount("");
-      setEntries([]);
-      resetIncomeEntries();
-    }, [resetIncomeEntries]),
+      setMonthlyAmount("");
+      resetGoalDraft();
+    }, [resetGoalDraft]),
   );
 
   return (
@@ -91,66 +355,61 @@ export default function Onboarding4Screen() {
           { paddingBottom: insets.bottom + 100 },
         ]}
       >
-        <ProgressDots total={5} current={3} />
+        <ProgressDots total={6} current={3} />
 
         <View style={styles.headerContainer}>
-          <Text style={styles.titleBold}>Was kommt monatlich</Text>
-          <Text style={styles.titleBold}>rein?</Text>
+          <Text style={styles.titleBold}>Worauf sparst du?</Text>
           <Text style={styles.subtitle}>
-            Gib dein durchschnittliches Netto-Einkommen an, damit Luke deinen
-            Spielraum berechnen kann
+            Dein erstes Ziel gibt deiner Reise eine{"\n"}Richtung
           </Text>
         </View>
 
         <View style={styles.chipsContainer}>
-          {incomeTypes.map((type) => (
+          {savingsGoals.map((goal) => (
             <Chip
-              key={type}
-              label={type}
-              selected={selectedType === type}
-              onPress={() => setSelectedType(type)}
+              key={goal}
+              label={goal}
+              selected={selectedGoal === goal}
+              onPress={() => setSelectedGoal(goal)}
             />
           ))}
         </View>
 
-        <View style={styles.inputContainer}>
-          <CurrencyInput value={amount} onChangeText={setAmount} />
-        </View>
-
-        <Pressable
-          onPress={handleAddEntry}
-          style={({ pressed }) => [
-            styles.addButton,
-            pressed && styles.addButtonPressed,
-          ]}
-        >
-          <Text style={styles.addButtonText}>Hinzufügen</Text>
-        </Pressable>
-
-        {entries.length > 0 ? (
-          <View style={styles.entriesContainer}>
-            {entries.map((entry, index) => (
-              <View key={index} style={styles.entryRow}>
-                <View style={styles.entryIconContainer}>
-                  <Feather name="trending-up" size={18} color="#7340FE" />
-                </View>
-                <View style={styles.entryContent}>
-                  <Text style={styles.entryType}>{entry.type}</Text>
-                  <Text style={styles.entryAmount}>
-                    {formatCurrencyValue(entry.amount, currency)}{" "}
-                    {currencySymbol}
-                  </Text>
-                </View>
-                <Pressable
-                  style={styles.entryDeleteButton}
-                  onPress={() => handleDeleteEntry(index)}
-                >
-                  <Feather name="x" size={18} color="#9CA3AF" />
-                </Pressable>
-              </View>
-            ))}
+        <View style={styles.formContainer}>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Name</Text>
+            <View style={styles.nameInputContainer}>
+              <Text style={styles.inputEmoji}>
+                {getEmojiForText(selectedGoal)}
+              </Text>
+              <TextInput
+                style={styles.nameInput}
+                value={selectedGoal}
+                onChangeText={setSelectedGoal}
+                placeholder="Zielname"
+                placeholderTextColor="#9CA3AF"
+              />
+            </View>
           </View>
-        ) : null}
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Summe</Text>
+            <CurrencyInput
+              value={amount}
+              onChangeText={setAmount}
+              highlighted={false}
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Monatlicher Beitrag</Text>
+            <CurrencyInput
+              value={monthlyAmount}
+              onChangeText={setMonthlyAmount}
+              highlighted={false}
+            />
+          </View>
+        </View>
       </KeyboardAwareScrollViewCompat>
 
       <View
@@ -200,71 +459,37 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
     marginTop: Spacing["3xl"],
   },
-  inputContainer: {
-    marginTop: Spacing["3xl"],
+  formContainer: {
+    marginTop: Spacing["4xl"],
+    gap: Spacing.lg,
   },
-  addButton: {
-    backgroundColor: "transparent",
-    borderWidth: 1,
-    borderColor: "#7340FE",
-    borderRadius: 12,
-    height: Spacing.buttonHeight,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: Spacing.lg,
+  inputGroup: {
+    gap: Spacing.sm,
   },
-  addButtonPressed: {
-    opacity: 0.8,
+  label: {
+    ...Typography.small,
+    color: "#6B7280",
   },
-  addButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#7340FE",
-  },
-  entriesContainer: {
-    marginTop: Spacing.xl,
-    gap: 12,
-  },
-  entryRow: {
+  nameInputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 16,
+    height: Spacing.inputHeight,
+    borderRadius: BorderRadius.sm,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: Colors.light.inputBorderLight,
+    paddingHorizontal: Spacing.lg,
   },
-  entryIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: "#F3E8FF",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 12,
+  inputEmoji: {
+    fontSize: 20,
+    marginRight: Spacing.sm,
   },
-  entryContent: {
+  nameInput: {
     flex: 1,
-  },
-  entryType: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#1F2937",
-    marginBottom: 2,
-  },
-  entryAmount: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#7340FE",
-  },
-  entryDeleteButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "#F3F4F6",
-    alignItems: "center",
-    justifyContent: "center",
-  },
+    ...Typography.body,
+    color: Colors.light.text,
+    padding: 0,
+    outlineStyle: "none",
+  } as any,
   buttonContainer: {
     position: "absolute",
     bottom: 0,

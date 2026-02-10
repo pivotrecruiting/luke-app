@@ -12,6 +12,10 @@ import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollV
 import { Spacing, BorderRadius, Typography, Colors } from "@/constants/theme";
 import { useApp } from "@/context/AppContext";
 import {
+  BUDGET_CATEGORIES,
+  getCategoryByName,
+} from "@/constants/budgetCategories";
+import {
   formatCurrencyValue,
   getCurrencySymbol,
 } from "@/utils/currency-format";
@@ -25,40 +29,27 @@ interface Entry {
   amount: string;
 }
 
-const expenseTypes = [
-  "Versicherungen",
-  "Netflix",
-  "Wohnen",
-  "Handy",
-  "Altersvorsorge",
-  "Spotify",
-  "Fitness",
-  "Abos",
-  "Fahrticket",
-  "Auswärts essen",
-];
-
 type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
 
-export default function Onboarding6Screen() {
+export default function Onboarding8Screen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
   const { currency } = useApp();
-  const setExpenseEntriesDraft = useOnboardingStore(
-    (state: OnboardingStoreT) => state.setExpenseEntries,
+  const setBudgetEntriesDraft = useOnboardingStore(
+    (state: OnboardingStoreT) => state.setBudgetEntries,
   );
-  const resetExpenseEntries = useOnboardingStore(
-    (state: OnboardingStoreT) => state.resetExpenseEntries,
+  const resetBudgetEntries = useOnboardingStore(
+    (state: OnboardingStoreT) => state.resetBudgetEntries,
   );
-  const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
   const [entries, setEntries] = useState<Entry[]>([]);
   const currencySymbol = getCurrencySymbol(currency);
 
   const handleAddEntry = () => {
-    if (selectedType && amount !== "") {
-      setEntries((prev) => [...prev, { type: selectedType, amount }]);
-      setSelectedType(null);
+    if (selectedCategory && amount !== "") {
+      setEntries((prev) => [...prev, { type: selectedCategory, amount }]);
+      setSelectedCategory(null);
       setAmount("");
     }
   };
@@ -68,21 +59,23 @@ export default function Onboarding6Screen() {
   };
 
   const handleContinue = () => {
-    const parsedEntries = entries.map((entry) => ({
-      type: entry.type,
-      amount: Number.parseFloat(entry.amount),
-    }));
-    setExpenseEntriesDraft(parsedEntries);
-    navigation.navigate("Onboarding7");
+    const parsedEntries = entries
+      .map((entry) => ({
+        name: entry.type,
+        limit: Number.parseFloat(entry.amount),
+      }))
+      .filter((entry) => Number.isFinite(entry.limit) && entry.limit > 0);
+    setBudgetEntriesDraft(parsedEntries);
+    navigation.navigate("AllesStartklar");
   };
 
   useFocusEffect(
     useCallback(() => {
-      setSelectedType(null);
+      setSelectedCategory(null);
       setAmount("");
       setEntries([]);
-      resetExpenseEntries();
-    }, [resetExpenseEntries]),
+      resetBudgetEntries();
+    }, [resetBudgetEntries]),
   );
 
   return (
@@ -96,21 +89,22 @@ export default function Onboarding6Screen() {
         <ProgressDots total={6} current={5} />
 
         <View style={styles.headerContainer}>
-          <Text style={styles.titleBold}>Was geht monatlich</Text>
-          <Text style={styles.titleBold}>sicher weg?</Text>
+          <Text style={styles.titleBold}>
+            Wo verschwindet dein Geld im Alltag am schnellsten?
+          </Text>
           <Text style={styles.subtitle}>
-            Miete, Abos oder Verträge – Luke reserviert diesen Betrag
-            automatisch.
+            Wähle Bereiche die wir gemeinsam zähmen und lege dein monatliches
+            Limit fest.
           </Text>
         </View>
 
         <View style={styles.chipsContainer}>
-          {expenseTypes.map((type) => (
+          {BUDGET_CATEGORIES.map((cat) => (
             <Chip
-              key={type}
-              label={type}
-              selected={selectedType === type}
-              onPress={() => setSelectedType(type)}
+              key={cat.id}
+              label={cat.name}
+              selected={selectedCategory === cat.name}
+              onPress={() => setSelectedCategory(cat.name)}
             />
           ))}
         </View>
@@ -131,26 +125,42 @@ export default function Onboarding6Screen() {
 
         {entries.length > 0 ? (
           <View style={styles.entriesContainer}>
-            {entries.map((entry, index) => (
-              <View key={index} style={styles.entryRow}>
-                <View style={styles.entryIconContainer}>
-                  <Feather name="trending-down" size={18} color="#EF4444" />
+            {entries.map((entry, index) => {
+              const category = getCategoryByName(entry.type);
+              return (
+                <View key={index} style={styles.entryRow}>
+                  <View
+                    style={[
+                      styles.entryIconContainer,
+                      {
+                        backgroundColor: category?.color
+                          ? `${category.color}20`
+                          : "#F3E8FF",
+                      },
+                    ]}
+                  >
+                    <Feather
+                      name={(category?.icon as any) || "circle"}
+                      size={18}
+                      color={category?.color || "#7340FE"}
+                    />
+                  </View>
+                  <View style={styles.entryContent}>
+                    <Text style={styles.entryType}>{entry.type}</Text>
+                    <Text style={styles.entryAmount}>
+                      {formatCurrencyValue(entry.amount, currency)}{" "}
+                      {currencySymbol}
+                    </Text>
+                  </View>
+                  <Pressable
+                    style={styles.entryDeleteButton}
+                    onPress={() => handleDeleteEntry(index)}
+                  >
+                    <Feather name="x" size={18} color="#9CA3AF" />
+                  </Pressable>
                 </View>
-                <View style={styles.entryContent}>
-                  <Text style={styles.entryType}>{entry.type}</Text>
-                  <Text style={styles.entryAmount}>
-                    {formatCurrencyValue(entry.amount, currency)}{" "}
-                    {currencySymbol}
-                  </Text>
-                </View>
-                <Pressable
-                  style={styles.entryDeleteButton}
-                  onPress={() => handleDeleteEntry(index)}
-                >
-                  <Feather name="x" size={18} color="#9CA3AF" />
-                </Pressable>
-              </View>
-            ))}
+              );
+            })}
           </View>
         ) : null}
       </KeyboardAwareScrollViewCompat>
@@ -240,7 +250,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: "#FEE2E2",
+    backgroundColor: "#F3E8FF",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,
@@ -257,7 +267,7 @@ const styles = StyleSheet.create({
   entryAmount: {
     fontSize: 14,
     fontWeight: "500",
-    color: "#EF4444",
+    color: "#7340FE",
   },
   entryDeleteButton: {
     width: 32,

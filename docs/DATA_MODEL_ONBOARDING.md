@@ -7,14 +7,14 @@ Ziel: Kanonisches Datenmodell fuer alle Onboarding-Eingaben als Basis fuer die s
 Quellen im Code:
 - `client/screens/WelcomeScreen.tsx`
 - `client/screens/SignUpScreen.tsx`
-- `client/screens/OnboardingCurrencyScreen.tsx`
-- `client/screens/Onboarding1Screen.tsx`
-- `client/screens/Onboarding2Screen.tsx`
-- `client/screens/Onboarding3Screen.tsx`
-- `client/screens/Onboarding4Screen.tsx`
-- `client/screens/Onboarding5Screen.tsx`
-- `client/screens/Onboarding6Screen.tsx`
-- `client/screens/Onboarding7Screen.tsx`
+- `client/screens/onboarding/Onboarding1Screen.tsx` (Currency)
+- `client/screens/onboarding/Onboarding2Screen.tsx` (Goals)
+- `client/screens/onboarding/Onboarding3Screen.tsx` (Erspartes)
+- `client/screens/onboarding/Onboarding4Screen.tsx` (Sparziel)
+- `client/screens/onboarding/Onboarding5Screen.tsx` (Einkommen)
+- `client/screens/onboarding/Onboarding6Screen.tsx` (Fixkosten)
+- `client/screens/onboarding/Onboarding7Screen.tsx` (Spielraum)
+- `client/screens/onboarding/Onboarding8Screen.tsx` (Budgets)
 - `client/constants/budgetCategories.ts`
 - `client/context/AppContext.tsx`
 
@@ -36,7 +36,7 @@ Vorgegebene Basis-Tabellen (fix):
 - Budgets (Kategorie + monatliches Limit)
 
 Nicht persistieren (ableiten):
-- Spielraum (Onboarding6), Summen, Rates
+- Spielraum (Onboarding7), Summen, Rates
 
 ## Entitaeten und Beziehungen (Vorschlag)
 
@@ -82,7 +82,7 @@ Beziehungen (Kurzform):
 | onboarding_version | text | NOT NULL | UI/Flow Version |
 | started_at | timestamptz | NOT NULL | |
 | completed_at | timestamptz | NULLABLE | |
-| skipped_steps | jsonb | NULLABLE | z. B. ["Onboarding2"] |
+| skipped_steps | jsonb | NULLABLE | z. B. ["Onboarding3"] |
 
 ### motivation_types
 | Feld | Typ | Constraints | Notiz |
@@ -106,7 +106,7 @@ Beziehungen (Kurzform):
 | --- | --- | --- | --- |
 | id | uuid | PK | |
 | user_id | uuid | FK -> users.id, UNIQUE | 1:1 |
-| initial_savings_cents | integer | NOT NULL, DEFAULT 0 | Onboarding2 |
+| initial_savings_cents | integer | NOT NULL, DEFAULT 0 | Onboarding3 |
 | currency | char(3) | NOT NULL, DEFAULT 'EUR' | ISO 4217, CHECK in (EUR, USD, CHF) |
 | as_of_date | date | NULLABLE | Stichtag |
 | created_at | timestamptz | NOT NULL, DEFAULT now() | |
@@ -117,10 +117,10 @@ Beziehungen (Kurzform):
 | --- | --- | --- | --- |
 | id | uuid | PK | |
 | user_id | uuid | FK -> users.id | |
-| name | text | NOT NULL | Onboarding3 |
+| name | text | NOT NULL | Onboarding4 |
 | icon | text | NULLABLE | Emoji/Icon |
 | target_amount_cents | integer | NOT NULL, CHECK >= 0 | |
-| monthly_contribution_cents | integer | NULLABLE | Onboarding3 (aktuell nicht gespeichert) |
+| monthly_contribution_cents | integer | NULLABLE | Onboarding4 (aktuell nicht gespeichert) |
 | created_in_onboarding | boolean | NOT NULL, DEFAULT false | |
 | status | text | NOT NULL, DEFAULT 'active' | z. B. active/paused/reached |
 | created_at | timestamptz | NOT NULL, DEFAULT now() | |
@@ -170,7 +170,7 @@ Beziehungen (Kurzform):
 | id | uuid | PK | |
 | user_id | uuid | FK -> users.id | |
 | category_id | uuid | FK -> budget_categories.id | |
-| limit_amount_cents | integer | NOT NULL, CHECK >= 0 | Onboarding7 |
+| limit_amount_cents | integer | NOT NULL, CHECK >= 0 | Onboarding8 |
 | period | text | NOT NULL | default: monthly |
 | currency | char(3) | NOT NULL, DEFAULT 'EUR' | CHECK in (EUR, USD, CHF) |
 | start_date | date | NULLABLE | |

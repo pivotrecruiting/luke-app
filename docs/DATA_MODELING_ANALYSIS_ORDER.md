@@ -18,14 +18,14 @@ Ziel: Klare Reihenfolge, welche Funktionalitaeten und Dateien wir analysieren, u
 2) Onboarding (Datenaufnahme)
    - `client/screens/WelcomeScreen.tsx`
    - `client/screens/SignUpScreen.tsx`
-   - `client/screens/OnboardingCurrencyScreen.tsx`
-   - `client/screens/Onboarding1Screen.tsx`
-   - `client/screens/Onboarding2Screen.tsx`
-   - `client/screens/Onboarding3Screen.tsx`
-   - `client/screens/Onboarding4Screen.tsx`
-   - `client/screens/Onboarding5Screen.tsx`
-   - `client/screens/Onboarding6Screen.tsx`
-   - `client/screens/Onboarding7Screen.tsx`
+   - `client/screens/onboarding/Onboarding1Screen.tsx` (Currency)
+   - `client/screens/onboarding/Onboarding2Screen.tsx` (Goals)
+   - `client/screens/onboarding/Onboarding3Screen.tsx` (Erspartes)
+   - `client/screens/onboarding/Onboarding4Screen.tsx` (Sparziel)
+   - `client/screens/onboarding/Onboarding5Screen.tsx` (Einkommen)
+   - `client/screens/onboarding/Onboarding6Screen.tsx` (Fixkosten)
+   - `client/screens/onboarding/Onboarding7Screen.tsx` (Spielraum)
+   - `client/screens/onboarding/Onboarding8Screen.tsx` (Budgets)
    - `client/screens/PaywallScreen.tsx`
    - `client/constants/budgetCategories.ts`
 

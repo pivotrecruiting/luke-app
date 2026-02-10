@@ -9,15 +9,15 @@ Ziel: Grobe, belastbare Basis fuer die spaetere DB-Planung und fuer eine saubere
 | Schritt | Screen | Eingaben | Persistenz | Ziel im State |
 | --- | --- | --- | --- | --- |
 | 0 | `client/screens/WelcomeScreen.tsx` | keine | keine | nur Navigation -> SignUp |
-| 1 | `client/screens/SignUpScreen.tsx` | Email (lokaler State) | keine | nicht verwendet, nur Navigation -> OnboardingCurrency |
-| 2 | `client/screens/OnboardingCurrencyScreen.tsx` | Standardwaehrung (EUR/USD/CHF) | **ja** | `setCurrency()` -> `AppContext.currency` |
-| 3 | `client/screens/Onboarding1Screen.tsx` | Gruende/Goals (Mehrfachauswahl) | keine | nicht gespeichert |
-| 4 | `client/screens/Onboarding2Screen.tsx` | Erspartes (CurrencyInput) | keine | nicht gespeichert |
-| 5 | `client/screens/Onboarding3Screen.tsx` | Sparziel: Name, Zielbetrag, monatlicher Beitrag | **teilweise** | `addGoal()` -> `AppContext.goals` (monatlicher Beitrag wird **nicht** gespeichert) |
-| 6 | `client/screens/Onboarding4Screen.tsx` | Einkommen (Typ + Betrag, mehrfach) | **ja** | `setIncomeEntries()` -> `AppContext.incomeEntries` |
-| 7 | `client/screens/Onboarding5Screen.tsx` | Fixkosten (Typ + Betrag, mehrfach) | **ja** | `setExpenseEntries()` -> `AppContext.expenseEntries` |
-| 8 | `client/screens/Onboarding6Screen.tsx` | keine neue Eingabe | n/a | berechnet `verfuegbar = totalIncome - totalFixedExpenses` |
-| 9 | `client/screens/Onboarding7Screen.tsx` | Budgets (Kategorie + Limit, mehrfach) | **ja** | `addBudget()` -> `AppContext.budgets` |
+| 1 | `client/screens/SignUpScreen.tsx` | Email (lokaler State) | keine | nicht verwendet, nur Navigation -> Onboarding1 |
+| 2 | `client/screens/onboarding/Onboarding1Screen.tsx` | Standardwaehrung (EUR/USD/CHF) | **ja** | `setCurrency()` -> `AppContext.currency` |
+| 3 | `client/screens/onboarding/Onboarding2Screen.tsx` | Gruende/Goals (Mehrfachauswahl) | keine | nicht gespeichert |
+| 4 | `client/screens/onboarding/Onboarding3Screen.tsx` | Erspartes (CurrencyInput) | keine | nicht gespeichert |
+| 5 | `client/screens/onboarding/Onboarding4Screen.tsx` | Sparziel: Name, Zielbetrag, monatlicher Beitrag | **teilweise** | `addGoal()` -> `AppContext.goals` (monatlicher Beitrag wird **nicht** gespeichert) |
+| 6 | `client/screens/onboarding/Onboarding5Screen.tsx` | Einkommen (Typ + Betrag, mehrfach) | **ja** | `setIncomeEntries()` -> `AppContext.incomeEntries` |
+| 7 | `client/screens/onboarding/Onboarding6Screen.tsx` | Fixkosten (Typ + Betrag, mehrfach) | **ja** | `setExpenseEntries()` -> `AppContext.expenseEntries` |
+| 8 | `client/screens/onboarding/Onboarding7Screen.tsx` | keine neue Eingabe | n/a | berechnet `verfuegbar = totalIncome - totalFixedExpenses` |
+| 9 | `client/screens/onboarding/Onboarding8Screen.tsx` | Budgets (Kategorie + Limit, mehrfach) | **ja** | `addBudget()` -> `AppContext.budgets` |
 | 10 | `client/screens/PaywallScreen.tsx` | keine | keine | Reset auf `Main`, **kein** `completeOnboarding()` |
 
 ### Zentrale Datenhaltung (Client)
@@ -61,13 +61,13 @@ Diese Werte sollten aus SSOT berechnet bleiben (keine Persistenz in DB, ausser f
 
 ### 3) Onboarding-Inputdaten (fachlich)
 
-- **Motivationen** (Onboarding1): Liste der gewaehlten Ziele/Reasons
+- **Motivationen** (Onboarding2): Liste der gewaehlten Ziele/Reasons
   - Beispiel: `onboarding_goals[] = ["Ueberblick", "Abos", ...]`
-- **Start-Ruecklage** (Onboarding2):
+- **Start-Ruecklage** (Onboarding3):
   - `initial_savings_amount` (numeric)
   - `currency` (z.B. "EUR")
   - `as_of_date` (optional, default = now)
-- **Erstes Sparziel** (Onboarding3):
+- **Erstes Sparziel** (Onboarding4):
   - `goal_name`
   - `target_amount`
   - `monthly_contribution` (aktuell erfasst, aber nicht gespeichert)
@@ -76,7 +76,7 @@ Diese Werte sollten aus SSOT berechnet bleiben (keine Persistenz in DB, ausser f
 
 ### 4) Finanz-Basisdaten (Kern fuer spaetere Features)
 
-- **Income Sources** (Onboarding4):
+- **Income Sources** (Onboarding5):
   - `income_source_id` (PK)
   - `user_id` (FK)
   - `type` / `category`
@@ -85,7 +85,7 @@ Diese Werte sollten aus SSOT berechnet bleiben (keine Persistenz in DB, ausser f
   - `currency`
   - `start_date`
 
-- **Fixed Expenses** (Onboarding5):
+- **Fixed Expenses** (Onboarding6):
   - `fixed_expense_id` (PK)
   - `user_id` (FK)
   - `type` / `category`
@@ -94,7 +94,7 @@ Diese Werte sollten aus SSOT berechnet bleiben (keine Persistenz in DB, ausser f
   - `currency`
   - `start_date`
 
-- **Budgets** (Onboarding7):
+- **Budgets** (Onboarding8):
   - `budget_id` (PK)
   - `user_id` (FK)
   - `budget_category_id` (FK, Referenztabelle)
@@ -111,8 +111,8 @@ Diese Werte sollten aus SSOT berechnet bleiben (keine Persistenz in DB, ausser f
 
 ## Gaps/Inkonsistenzen (aktueller Stand)
 
-- Onboarding1 (Motivation), Onboarding2 (Ersparnisse) werden **nicht** gespeichert.
-- Onboarding3 speichert `goal_name` + `target_amount`, aber **nicht** den `monthly_contribution`.
+- Onboarding2 (Motivation), Onboarding3 (Ersparnisse) werden **nicht** gespeichert.
+- Onboarding4 speichert `goal_name` + `target_amount`, aber **nicht** den `monthly_contribution`.
 - `SignUpScreen` sammelt Email, speichert sie aber nicht.
 - `completeOnboarding()` wird nirgends aufgerufen; zudem wird `isOnboardingComplete` durch `TEST_MODE` immer `false`.
 

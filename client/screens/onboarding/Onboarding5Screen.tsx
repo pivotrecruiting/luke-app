@@ -25,17 +25,15 @@ interface Entry {
   amount: string;
 }
 
-const expenseTypes = [
-  "Versicherungen",
-  "Netflix",
-  "Wohnen",
-  "Handy",
-  "Altersvorsorge",
-  "Spotify",
-  "Fitness",
-  "Abos",
-  "Fahrticket",
-  "Auswärts essen",
+const incomeTypes = [
+  "Gehalt/Lohn",
+  "Selbstständigkeit",
+  "Sonstiges",
+  "Kindergeld",
+  "Bafög/Stipendium",
+  "Nebenjob",
+  "Taschengeld",
+  "Unterhalt",
 ];
 
 type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
@@ -44,11 +42,11 @@ export default function Onboarding5Screen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
   const { currency } = useApp();
-  const setExpenseEntriesDraft = useOnboardingStore(
-    (state: OnboardingStoreT) => state.setExpenseEntries,
+  const setIncomeEntriesDraft = useOnboardingStore(
+    (state: OnboardingStoreT) => state.setIncomeEntries,
   );
-  const resetExpenseEntries = useOnboardingStore(
-    (state: OnboardingStoreT) => state.resetExpenseEntries,
+  const resetIncomeEntries = useOnboardingStore(
+    (state: OnboardingStoreT) => state.resetIncomeEntries,
   );
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
@@ -72,7 +70,7 @@ export default function Onboarding5Screen() {
       type: entry.type,
       amount: Number.parseFloat(entry.amount),
     }));
-    setExpenseEntriesDraft(parsedEntries);
+    setIncomeEntriesDraft(parsedEntries);
     navigation.navigate("Onboarding6");
   };
 
@@ -81,8 +79,8 @@ export default function Onboarding5Screen() {
       setSelectedType(null);
       setAmount("");
       setEntries([]);
-      resetExpenseEntries();
-    }, [resetExpenseEntries]),
+      resetIncomeEntries();
+    }, [resetIncomeEntries]),
   );
 
   return (
@@ -93,19 +91,19 @@ export default function Onboarding5Screen() {
           { paddingBottom: insets.bottom + 100 },
         ]}
       >
-        <ProgressDots total={5} current={4} />
+        <ProgressDots total={6} current={4} />
 
         <View style={styles.headerContainer}>
-          <Text style={styles.titleBold}>Was geht monatlich</Text>
-          <Text style={styles.titleBold}>sicher weg?</Text>
+          <Text style={styles.titleBold}>Was kommt monatlich</Text>
+          <Text style={styles.titleBold}>rein?</Text>
           <Text style={styles.subtitle}>
-            Miete, Abos oder Verträge – Luke reserviert diesen Betrag
-            automatisch.
+            Gib dein durchschnittliches Netto-Einkommen an, damit Luke deinen
+            Spielraum berechnen kann
           </Text>
         </View>
 
         <View style={styles.chipsContainer}>
-          {expenseTypes.map((type) => (
+          {incomeTypes.map((type) => (
             <Chip
               key={type}
               label={type}
@@ -134,7 +132,7 @@ export default function Onboarding5Screen() {
             {entries.map((entry, index) => (
               <View key={index} style={styles.entryRow}>
                 <View style={styles.entryIconContainer}>
-                  <Feather name="trending-down" size={18} color="#EF4444" />
+                  <Feather name="trending-up" size={18} color="#7340FE" />
                 </View>
                 <View style={styles.entryContent}>
                   <Text style={styles.entryType}>{entry.type}</Text>
@@ -240,7 +238,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: "#FEE2E2",
+    backgroundColor: "#F3E8FF",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,
@@ -257,7 +255,7 @@ const styles = StyleSheet.create({
   entryAmount: {
     fontSize: 14,
     fontWeight: "500",
-    color: "#EF4444",
+    color: "#7340FE",
   },
   entryDeleteButton: {
     width: 32,

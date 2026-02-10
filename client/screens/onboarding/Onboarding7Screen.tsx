@@ -1,184 +1,105 @@
-import React, { useCallback, useState } from "react";
+import React, { useMemo } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
+import ProgressDots from "@/components/ProgressDots";
+import { Spacing, BorderRadius } from "@/constants/theme";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { OnboardingStackParamList } from "@/navigation/OnboardingNavigator";
-import { Feather } from "@expo/vector-icons";
-import ProgressDots from "@/components/ProgressDots";
-import Chip from "@/components/Chip";
-import CurrencyInput from "@/components/CurrencyInput";
-import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
-import { Spacing, BorderRadius, Typography, Colors } from "@/constants/theme";
-import { useApp } from "@/context/AppContext";
-import {
-  BUDGET_CATEGORIES,
-  getCategoryByName,
-} from "@/constants/budgetCategories";
-import {
-  formatCurrencyValue,
-  getCurrencySymbol,
-} from "@/utils/currency-format";
 import {
   useOnboardingStore,
   type OnboardingStoreT,
 } from "@/stores/onboarding-store";
-
-interface Entry {
-  type: string;
-  amount: string;
-}
 
 type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
 
 export default function Onboarding7Screen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
-  const { currency } = useApp();
-  const setBudgetEntriesDraft = useOnboardingStore(
-    (state: OnboardingStoreT) => state.setBudgetEntries,
+  const incomeEntries = useOnboardingStore(
+    (state: OnboardingStoreT) => state.incomeEntries,
   );
-  const resetBudgetEntries = useOnboardingStore(
-    (state: OnboardingStoreT) => state.resetBudgetEntries,
+  const expenseEntries = useOnboardingStore(
+    (state: OnboardingStoreT) => state.expenseEntries,
   );
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [amount, setAmount] = useState("");
-  const [entries, setEntries] = useState<Entry[]>([]);
-  const currencySymbol = getCurrencySymbol(currency);
+  const totalIncome = useMemo(
+    () => incomeEntries.reduce((sum, entry) => sum + entry.amount, 0),
+    [incomeEntries],
+  );
+  const totalFixedExpenses = useMemo(
+    () => expenseEntries.reduce((sum, entry) => sum + entry.amount, 0),
+    [expenseEntries],
+  );
+  const verfuegbar = totalIncome - totalFixedExpenses;
 
-  const handleAddEntry = () => {
-    if (selectedCategory && amount !== "") {
-      setEntries((prev) => [...prev, { type: selectedCategory, amount }]);
-      setSelectedCategory(null);
-      setAmount("");
+  const formatCurrency = (value: number, showPlus: boolean = false) => {
+    const formatted = value.toLocaleString("de-DE", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+    if (showPlus && value > 0) {
+      return `+ ${formatted}`;
     }
-  };
-
-  const handleDeleteEntry = (index: number) => {
-    setEntries((prev) => prev.filter((_, i) => i !== index));
+    return formatted;
   };
 
   const handleContinue = () => {
-    const parsedEntries = entries
-      .map((entry) => ({
-        name: entry.type,
-        limit: Number.parseFloat(entry.amount),
-      }))
-      .filter((entry) => Number.isFinite(entry.limit) && entry.limit > 0);
-    setBudgetEntriesDraft(parsedEntries);
-    navigation.navigate("AllesStartklar");
+    navigation.navigate("Onboarding8");
   };
-
-  useFocusEffect(
-    useCallback(() => {
-      setSelectedCategory(null);
-      setAmount("");
-      setEntries([]);
-      resetBudgetEntries();
-    }, [resetBudgetEntries]),
-  );
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + Spacing.xl }]}>
-      <KeyboardAwareScrollViewCompat
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: insets.bottom + 100 },
-        ]}
-      >
-        <ProgressDots total={5} current={4} />
+      <View style={styles.content}>
+        <ProgressDots total={6} current={5} />
 
-        <View style={styles.headerContainer}>
-          <Text style={styles.titleBold}>
-            Wo verschwindet dein Geld im Alltag am schnellsten?
-          </Text>
-          <Text style={styles.subtitle}>
-            Wähle Bereiche die wir gemeinsam zähmen und lege dein monatliches
-            Limit fest.
-          </Text>
-        </View>
+        <Text style={styles.title}>Dein monatlicher Spielraum</Text>
+        <Text style={styles.subtitle}>Luke hat gerechnet!</Text>
 
-        <View style={styles.chipsContainer}>
-          {BUDGET_CATEGORIES.map((cat) => (
-            <Chip
-              key={cat.id}
-              label={cat.name}
-              selected={selectedCategory === cat.name}
-              onPress={() => setSelectedCategory(cat.name)}
-            />
-          ))}
-        </View>
-
-        <View style={styles.inputContainer}>
-          <CurrencyInput value={amount} onChangeText={setAmount} />
-        </View>
-
-        <Pressable
-          onPress={handleAddEntry}
-          style={({ pressed }) => [
-            styles.addButton,
-            pressed && styles.addButtonPressed,
-          ]}
-        >
-          <Text style={styles.addButtonText}>Hinzufügen</Text>
-        </Pressable>
-
-        {entries.length > 0 ? (
-          <View style={styles.entriesContainer}>
-            {entries.map((entry, index) => {
-              const category = getCategoryByName(entry.type);
-              return (
-                <View key={index} style={styles.entryRow}>
-                  <View
-                    style={[
-                      styles.entryIconContainer,
-                      {
-                        backgroundColor: category?.color
-                          ? `${category.color}20`
-                          : "#F3E8FF",
-                      },
-                    ]}
-                  >
-                    <Feather
-                      name={(category?.icon as any) || "circle"}
-                      size={18}
-                      color={category?.color || "#7340FE"}
-                    />
-                  </View>
-                  <View style={styles.entryContent}>
-                    <Text style={styles.entryType}>{entry.type}</Text>
-                    <Text style={styles.entryAmount}>
-                      {formatCurrencyValue(entry.amount, currency)}{" "}
-                      {currencySymbol}
-                    </Text>
-                  </View>
-                  <Pressable
-                    style={styles.entryDeleteButton}
-                    onPress={() => handleDeleteEntry(index)}
-                  >
-                    <Feather name="x" size={18} color="#9CA3AF" />
-                  </Pressable>
-                </View>
-              );
-            })}
+        <View style={styles.card}>
+          <View style={styles.row}>
+            <Text style={styles.rowLabel}>Einkommen</Text>
+            <Text style={styles.incomeValue}>
+              {formatCurrency(totalIncome, true)}
+            </Text>
           </View>
-        ) : null}
-      </KeyboardAwareScrollViewCompat>
+
+          <View style={styles.divider} />
+
+          <View style={styles.row}>
+            <Text style={styles.rowLabel}>Fixkosten</Text>
+            <Text style={styles.expenseValue}>
+              - {formatCurrency(totalFixedExpenses)}
+            </Text>
+          </View>
+
+          <View style={styles.totalSection}>
+            <Text style={styles.totalValue}>
+              {formatCurrency(verfuegbar, true)}
+            </Text>
+            <Text style={styles.totalLabel}>Verfügbar</Text>
+          </View>
+        </View>
+
+        <Text style={styles.description}>
+          Das ist das Geld, das dir zum Leben, Sparen und für deine Budgets
+          bleibt.
+        </Text>
+      </View>
 
       <View
         style={[
           styles.buttonContainer,
-          { paddingBottom: insets.bottom + Spacing.xl },
+          { paddingBottom: insets.bottom + Spacing.lg },
         ]}
       >
         <Pressable
-          onPress={handleContinue}
           style={({ pressed }) => [
-            styles.button,
+            styles.continueButton,
             pressed && styles.buttonPressed,
           ]}
+          onPress={handleContinue}
         >
-          <Text style={styles.buttonText}>WEITER</Text>
+          <Text style={styles.continueButtonText}>BUDGET FESTLEGEN</Text>
         </Pressable>
       </View>
     </View>
@@ -188,116 +109,103 @@ export default function Onboarding7Screen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.light.backgroundRoot,
+    backgroundColor: "#FFFFFF",
+  },
+  content: {
+    flex: 1,
     paddingHorizontal: Spacing.xl,
   },
-  scrollContent: {
-    flexGrow: 1,
-  },
-  headerContainer: {
-    marginTop: Spacing["2xl"],
-  },
-  titleBold: {
-    ...Typography.h1,
-    color: Colors.light.text,
+  title: {
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#000000",
+    marginTop: Spacing["3xl"],
+    marginBottom: Spacing.sm,
+    textAlign: "center",
   },
   subtitle: {
-    ...Typography.body,
-    color: Colors.light.textSecondary,
-    marginTop: Spacing.md,
-  },
-  chipsContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: Spacing.sm,
-    marginTop: Spacing["3xl"],
-  },
-  inputContainer: {
-    marginTop: Spacing["3xl"],
-  },
-  addButton: {
-    backgroundColor: "transparent",
-    borderWidth: 1,
-    borderColor: "#7340FE",
-    borderRadius: 12,
-    height: Spacing.buttonHeight,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: Spacing.lg,
-  },
-  addButtonPressed: {
-    opacity: 0.8,
-  },
-  addButtonText: {
     fontSize: 16,
-    fontWeight: "600",
-    color: "#7340FE",
+    color: "#9CA3AF",
+    marginBottom: Spacing["3xl"],
+    textAlign: "center",
   },
-  entriesContainer: {
-    marginTop: Spacing.xl,
-    gap: 12,
-  },
-  entryRow: {
-    flexDirection: "row",
-    alignItems: "center",
+  card: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.xl,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
   },
-  entryIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: "#F3E8FF",
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    justifyContent: "center",
-    marginRight: 12,
+    paddingVertical: Spacing.lg,
   },
-  entryContent: {
-    flex: 1,
-  },
-  entryType: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#1F2937",
-    marginBottom: 2,
-  },
-  entryAmount: {
-    fontSize: 14,
+  rowLabel: {
+    fontSize: 18,
     fontWeight: "500",
-    color: "#7340FE",
+    color: "#000000",
   },
-  entryDeleteButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "#F3F4F6",
+  incomeValue: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#22C55E",
+  },
+  expenseValue: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#EF4444",
+  },
+  divider: {
+    height: 1,
+    backgroundColor: "#E5E7EB",
+  },
+  totalSection: {
     alignItems: "center",
-    justifyContent: "center",
+    paddingTop: Spacing["2xl"],
+    paddingBottom: Spacing.lg,
+  },
+  totalValue: {
+    fontSize: 36,
+    fontWeight: "700",
+    color: "#2D9A8C",
+    marginBottom: Spacing.xs,
+  },
+  totalLabel: {
+    fontSize: 16,
+    color: "#9CA3AF",
+  },
+  description: {
+    fontSize: 16,
+    color: "#9CA3AF",
+    textAlign: "center",
+    marginTop: Spacing["3xl"],
+    lineHeight: 24,
+    paddingHorizontal: Spacing.lg,
   },
   buttonContainer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
     paddingHorizontal: Spacing.xl,
-    backgroundColor: Colors.light.backgroundRoot,
     paddingTop: Spacing.lg,
+    backgroundColor: "#FFFFFF",
   },
-  button: {
-    backgroundColor: Colors.light.buttonPrimary,
+  continueButton: {
+    backgroundColor: "#8E97FD",
+    height: 56,
     borderRadius: BorderRadius.md,
-    height: Spacing.buttonHeight,
-    alignItems: "center",
     justifyContent: "center",
+    alignItems: "center",
   },
   buttonPressed: {
     opacity: 0.8,
   },
-  buttonText: {
-    ...Typography.button,
-    color: Colors.light.buttonText,
+  continueButtonText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "800",
+    letterSpacing: 1,
   },
 });
