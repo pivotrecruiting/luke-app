@@ -273,6 +273,7 @@ export function AppProvider({ children }: AppProviderProps) {
     goals,
     setGoals,
     setTransactions,
+    deleteTransaction,
     handleDbError,
     handleSnapXp,
     awardXp,

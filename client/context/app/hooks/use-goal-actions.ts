@@ -27,6 +27,7 @@ type GoalActionsDepsT = {
   goals: Goal[];
   setGoals: React.Dispatch<React.SetStateAction<Goal[]>>;
   setTransactions: React.Dispatch<React.SetStateAction<Transaction[]>>;
+  deleteTransaction: (transactionId: string) => void;
   handleDbError: (error: unknown, context: string) => void;
   handleSnapXp: (transactionId: string) => Promise<UserProgressT | null>;
   awardXp: (params: {
@@ -49,6 +50,7 @@ export const useGoalActions = ({
   goals,
   setGoals,
   setTransactions,
+  deleteTransaction,
   handleDbError,
   handleSnapXp,
   awardXp,
@@ -135,7 +137,11 @@ export const useGoalActions = ({
                 ...g,
                 deposits: g.deposits.map((deposit) =>
                   deposit.id === tempDepositId
-                    ? { ...deposit, id: contributionId }
+                    ? {
+                        ...deposit,
+                        id: contributionId,
+                        transactionId: transactionId,
+                      }
                     : deposit,
                 ),
               };
@@ -263,27 +269,29 @@ export const useGoalActions = ({
 
   const deleteGoalDeposit = useCallback(
     (goalId: string, depositId: string) => {
+      const goal = goals.find((g) => g.id === goalId);
+      const depositToDelete = goal?.deposits.find((d) => d.id === depositId);
+      const transactionIdToRemove = depositToDelete?.transactionId;
+
       setGoals((prev) =>
-        prev.map((goal) => {
-          if (goal.id === goalId) {
-            const depositToDelete = goal.deposits.find(
-              (d) => d.id === depositId,
-            );
-            if (!depositToDelete) return goal;
-
-            const newCurrent = goal.current - depositToDelete.amount;
-            const newRemaining = Math.max(0, goal.target - newCurrent);
-
-            return {
-              ...goal,
-              current: Math.max(0, newCurrent),
-              remaining: newRemaining,
-              deposits: goal.deposits.filter((d) => d.id !== depositId),
-            };
-          }
-          return goal;
+        prev.map((g) => {
+          if (g.id !== goalId) return g;
+          const deposit = g.deposits.find((d) => d.id === depositId);
+          if (!deposit) return g;
+          const newCurrent = g.current - deposit.amount;
+          const newRemaining = Math.max(0, g.target - newCurrent);
+          return {
+            ...g,
+            current: Math.max(0, newCurrent),
+            remaining: newRemaining,
+            deposits: g.deposits.filter((d) => d.id !== depositId),
+          };
         }),
       );
+
+      if (transactionIdToRemove) {
+        deleteTransaction(transactionIdToRemove);
+      }
 
       if (!canUseDb) return;
       void (async () => {
@@ -294,7 +302,7 @@ export const useGoalActions = ({
         }
       })();
     },
-    [canUseDb, handleDbError, setGoals],
+    [canUseDb, deleteTransaction, goals, handleDbError, setGoals],
   );
 
   const addGoal = useCallback(

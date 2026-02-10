@@ -52,6 +52,7 @@ export const mapGoals = (
       date: formatDate(new Date(row.contribution_at)),
       amount,
       type,
+      ...(row.transaction_id && { transactionId: row.transaction_id }),
     });
     goalBalances[row.goal_id] = (goalBalances[row.goal_id] ?? 0) + amount;
   });

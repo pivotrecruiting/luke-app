@@ -317,7 +317,9 @@ export const fetchAppData = async (
       .eq("user_id", userId),
     supabase
       .from("goal_contributions")
-      .select("id, goal_id, amount_cents, contribution_type, contribution_at")
+      .select(
+        "id, goal_id, amount_cents, contribution_type, contribution_at, transaction_id",
+      )
       .eq("user_id", userId),
     supabase
       .from("budget_categories")

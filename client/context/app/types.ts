@@ -26,6 +26,8 @@ export type GoalDeposit = {
   date: string;
   amount: number;
   type: "Einzahlung" | "Rückzahlung";
+  /** Links to transaction for home screen balance; used when deleting deposit */
+  transactionId?: string;
 };
 
 export type Goal = {
