@@ -34,7 +34,6 @@ import {
   useOnboardingStore,
   type OnboardingStoreT,
 } from "@/stores/onboarding-store";
-import { getCategoryByName } from "@/constants/budgetCategories";
 import { useAppDerivedState } from "@/context/app/hooks/use-app-derived-state";
 import { useEntryActions } from "@/context/app/hooks/use-entry-actions";
 import { useTransactionActions } from "@/context/app/hooks/use-transaction-actions";
@@ -354,9 +353,9 @@ export function AppProvider({ children }: AppProviderProps) {
 
     if (budgetEntries.length > 0) {
       budgetEntries.forEach((entry) => {
-        const category = getCategoryByName(entry.name);
-        const icon = category?.icon || "circle";
-        const color = category?.color || "#6B7280";
+        const category = budgetCategories.find((c) => c.name === entry.name);
+        const icon = category?.icon ?? "circle";
+        const color = category?.color ?? "#6B7280";
         addBudget(entry.name, icon, color, entry.limit);
       });
     }
@@ -367,6 +366,7 @@ export function AppProvider({ children }: AppProviderProps) {
     addBudget,
     addGoal,
     addTransaction,
+    budgetCategories,
     canUseDb,
     currency,
     handleDbError,

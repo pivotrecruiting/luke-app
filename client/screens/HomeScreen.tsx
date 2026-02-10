@@ -9,21 +9,14 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { Spacing } from "@/constants/theme";
 import { useApp } from "@/context/AppContext";
+import {
+  formatCurrencyAmount,
+  getCurrencySymbol,
+} from "@/utils/currency-format";
 import { getUserFirstName } from "@/utils/user";
 import { styles } from "./styles/home-screen.styles";
 import { AppModal } from "@/components/ui/app-modal";
 const businessmanFigure = require("../../assets/images/businessman-figure.png");
-
-const formatCurrency = (value: number) => {
-  const formatted = Math.abs(value).toLocaleString("de-DE", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-  if (value < 0) {
-    return `- € ${formatted}`;
-  }
-  return `€ ${formatted}`;
-};
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
@@ -40,7 +33,16 @@ export default function HomeScreen() {
     currentWeekLabel,
     goToPreviousWeek,
     goToNextWeek,
+    currency,
   } = useApp();
+  const currencySymbol = getCurrencySymbol(currency);
+  const formatCurrency = (value: number) => {
+    const formatted = formatCurrencyAmount(Math.abs(value), currency);
+    if (value < 0) {
+      return `- ${currencySymbol} ${formatted}`;
+    }
+    return `${currencySymbol} ${formatted}`;
+  };
   const firstName = useMemo(() => getUserFirstName(userName), [userName]);
 
   // Parse various date formats to Date object for sorting
@@ -152,10 +154,9 @@ export default function HomeScreen() {
               transactionBalance < 0 && styles.balanceAmountNegative,
             ]}
           >
-            €{" "}
-            {transactionBalance.toLocaleString("de-DE", {
-              minimumFractionDigits: 2,
-            })}
+            {transactionBalance < 0 ? "-" : ""}
+            {currencySymbol}{" "}
+            {formatCurrencyAmount(Math.abs(transactionBalance), currency)}
           </Text>
         </View>
 
@@ -186,10 +187,8 @@ export default function HomeScreen() {
             </View>
             <Text style={styles.cardLabel}>Einnahmen</Text>
             <Text style={styles.incomeAmount}>
-              €{" "}
-              {transactionIncomeTotal.toLocaleString("de-DE", {
-                minimumFractionDigits: 2,
-              })}
+              {currencySymbol}{" "}
+              {formatCurrencyAmount(transactionIncomeTotal, currency)}
             </Text>
           </Pressable>
 
@@ -202,10 +201,8 @@ export default function HomeScreen() {
             </View>
             <Text style={styles.cardLabel}>Ausgaben</Text>
             <Text style={styles.expenseAmount}>
-              €{" "}
-              {transactionExpenseTotal.toLocaleString("de-DE", {
-                minimumFractionDigits: 2,
-              })}
+              {currencySymbol}{" "}
+              {formatCurrencyAmount(transactionExpenseTotal, currency)}
             </Text>
           </Pressable>
         </View>
@@ -236,10 +233,12 @@ export default function HomeScreen() {
           {selectedDay && (
             <View style={styles.selectedAmount}>
               <Text style={styles.selectedAmountText}>
-                €{" "}
-                {weeklySpending
-                  .find((d) => d.day === selectedDay)
-                  ?.amount.toFixed(2) || "0.00"}
+                {currencySymbol}{" "}
+                {formatCurrencyAmount(
+                  weeklySpending.find((d) => d.day === selectedDay)?.amount ??
+                    0,
+                  currency,
+                )}
               </Text>
             </View>
           )}

@@ -1,6 +1,8 @@
 import { Pressable, Text, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { useApp } from "@/context/AppContext";
+import { getCurrencySymbol } from "@/utils/currency-format";
 import { styles } from "@/screens/styles/insights-screen.styles";
 import { formatCurrency } from "../utils/format";
 import type { MonthlyTrendT, TimeFilterT } from "../types/insights-types";
@@ -21,6 +23,8 @@ export const TrendView = ({
   selectedMonth,
   onSelectMonth,
 }: TrendViewPropsT) => {
+  const { currency } = useApp();
+  const currencySymbol = getCurrencySymbol(currency);
   if (monthlyData.length === 0) {
     return (
       <View style={styles.trendContainer}>
@@ -107,7 +111,7 @@ export const TrendView = ({
           <View style={styles.trendStat}>
             <Text style={styles.trendStatLabel}>Durchschnitt</Text>
             <Text style={styles.trendStatValue}>
-              € {formatCurrency(average)}
+              {currencySymbol} {formatCurrency(average, currency)}
             </Text>
           </View>
           <View style={styles.trendStatDivider} />
@@ -121,7 +125,7 @@ export const TrendView = ({
                   : styles.trendNegative,
               ]}
             >
-              € {formatCurrency(displayedData.amount)}
+              {currencySymbol} {formatCurrency(displayedData.amount, currency)}
             </Text>
           </View>
         </View>
@@ -130,7 +134,7 @@ export const TrendView = ({
           {selectedMonth !== null ? (
             <View style={styles.trendChartSelectedAmount}>
               <Text style={styles.trendChartSelectedAmountText}>
-                € {formatCurrency(displayedData.amount)}
+                {currencySymbol} {formatCurrency(displayedData.amount, currency)}
               </Text>
             </View>
           ) : null}

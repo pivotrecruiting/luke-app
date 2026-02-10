@@ -12,10 +12,6 @@ import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollV
 import { Spacing, BorderRadius, Typography, Colors } from "@/constants/theme";
 import { useApp } from "@/context/AppContext";
 import {
-  BUDGET_CATEGORIES,
-  getCategoryByName,
-} from "@/constants/budgetCategories";
-import {
   formatCurrencyValue,
   getCurrencySymbol,
 } from "@/utils/currency-format";
@@ -34,7 +30,7 @@ type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
 export default function Onboarding8Screen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
-  const { currency } = useApp();
+  const { currency, budgetCategories } = useApp();
   const setBudgetEntriesDraft = useOnboardingStore(
     (state: OnboardingStoreT) => state.setBudgetEntries,
   );
@@ -99,7 +95,7 @@ export default function Onboarding8Screen() {
         </View>
 
         <View style={styles.chipsContainer}>
-          {BUDGET_CATEGORIES.map((cat) => (
+          {budgetCategories.map((cat) => (
             <Chip
               key={cat.id}
               label={cat.name}
@@ -126,7 +122,9 @@ export default function Onboarding8Screen() {
         {entries.length > 0 ? (
           <View style={styles.entriesContainer}>
             {entries.map((entry, index) => {
-              const category = getCategoryByName(entry.type);
+              const category = budgetCategories.find(
+                (c) => c.name === entry.type,
+              );
               return (
                 <View key={index} style={styles.entryRow}>
                   <View

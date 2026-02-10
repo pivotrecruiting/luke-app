@@ -1,4 +1,6 @@
 import { Pressable, Text, TextInput, View } from "react-native";
+import { useApp } from "@/context/AppContext";
+import { getCurrencySymbol } from "@/utils/currency-format";
 import { styles } from "@/screens/styles/budget-detail-screen.styles";
 import { AppModal } from "@/components/ui/app-modal";
 
@@ -22,6 +24,8 @@ export const EditBudgetModal = ({
   onSave,
   onCancel,
 }: EditBudgetModalPropsT) => {
+  const { currency } = useApp();
+  const currencySymbol = getCurrencySymbol(currency);
   return (
     <AppModal
       visible={visible}
@@ -34,7 +38,7 @@ export const EditBudgetModal = ({
 
       <Text style={styles.modalLabel}>Monatliches Limit</Text>
       <View style={styles.currencyInputContainer}>
-        <Text style={styles.currencyPrefix}>€</Text>
+        <Text style={styles.currencyPrefix}>{currencySymbol}</Text>
         <TextInput
           style={styles.currencyInput}
           value={budgetLimit}

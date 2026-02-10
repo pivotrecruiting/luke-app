@@ -1,5 +1,7 @@
 import { Pressable, Text, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import { useApp } from "@/context/AppContext";
+import { getCurrencySymbol } from "@/utils/currency-format";
 import { styles } from "@/screens/styles/goals-screen.styles";
 import { formatCurrency } from "../utils/format";
 import type { GoalItemPropsT } from "../types/goals-types";
@@ -8,6 +10,8 @@ import type { GoalItemPropsT } from "../types/goals-types";
  * Renders a single goal item with progress.
  */
 export const GoalItem = ({ goal, onPress }: GoalItemPropsT) => {
+  const { currency } = useApp();
+  const currencySymbol = getCurrencySymbol(currency);
   const percentage = (goal.current / goal.target) * 100;
 
   return (
@@ -18,7 +22,7 @@ export const GoalItem = ({ goal, onPress }: GoalItemPropsT) => {
           <View>
             <Text style={styles.goalName}>{goal.name}</Text>
             <Text style={styles.goalProgress}>
-              € {formatCurrency(goal.current)} / € {formatCurrency(goal.target)}
+              {currencySymbol} {formatCurrency(goal.current, currency)} / {currencySymbol} {formatCurrency(goal.target, currency)}
             </Text>
           </View>
         </View>
@@ -33,7 +37,7 @@ export const GoalItem = ({ goal, onPress }: GoalItemPropsT) => {
         <View>
           <Text style={styles.goalRemainingLabel}>Übrig</Text>
           <Text style={styles.goalRemainingValue}>
-            € {formatCurrency(goal.remaining)}
+            {currencySymbol} {formatCurrency(goal.remaining, currency)}
           </Text>
         </View>
         <Pressable>

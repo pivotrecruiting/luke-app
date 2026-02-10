@@ -1,7 +1,8 @@
 import { Pressable, Text, TextInput, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import { useApp } from "@/context/AppContext";
+import { getCurrencySymbol } from "@/utils/currency-format";
 import { styles } from "@/screens/styles/goals-screen.styles";
-import { BUDGET_CATEGORIES } from "@/constants/budgetCategories";
 import { AppModal } from "@/components/ui/app-modal";
 
 type CreateBudgetModalPropsT = {
@@ -28,6 +29,9 @@ export const CreateBudgetModal = ({
   onCancel,
   onCreate,
 }: CreateBudgetModalPropsT) => {
+  const { currency, budgetCategories } = useApp();
+  const currencySymbol = getCurrencySymbol(currency);
+  const limitPlaceholder = `${currencySymbol} 200,00`;
   return (
     <AppModal
       visible={visible}
@@ -40,8 +44,9 @@ export const CreateBudgetModal = ({
 
       <Text style={styles.categoryLabel}>Kategorie auswählen</Text>
       <View style={styles.categoryGrid}>
-        {BUDGET_CATEGORIES.map((category) => {
-          const isSelected = selectedCategory === category.id;
+        {budgetCategories.map((category) => {
+          const categoryKey = category.key ?? category.id;
+          const isSelected = selectedCategory === categoryKey;
           return (
             <Pressable
               key={category.id}
@@ -49,7 +54,7 @@ export const CreateBudgetModal = ({
                 styles.categoryItem,
                 isSelected && styles.categoryItemSelected,
               ]}
-              onPress={() => onSelectCategory(category.id)}
+              onPress={() => onSelectCategory(categoryKey)}
             >
               <View
                 style={[
@@ -58,9 +63,9 @@ export const CreateBudgetModal = ({
                 ]}
               >
                 <Feather
-                  name={category.icon as any}
+                  name={(category.icon ?? "circle") as any}
                   size={24}
-                  color={category.color}
+                  color={category.color ?? "#6B7280"}
                 />
               </View>
               <Text style={styles.categoryName}>{category.name}</Text>
@@ -74,7 +79,7 @@ export const CreateBudgetModal = ({
         style={styles.modalInput}
         value={budgetLimit}
         onChangeText={onChangeBudgetLimit}
-        placeholder="€ 200,00"
+        placeholder={limitPlaceholder}
         placeholderTextColor="#9CA3AF"
         keyboardType="decimal-pad"
       />

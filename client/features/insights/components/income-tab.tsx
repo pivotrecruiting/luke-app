@@ -1,6 +1,8 @@
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import Animated, { FadeInDown } from "react-native-reanimated";
+import { useApp } from "@/context/AppContext";
+import { getCurrencySymbol } from "@/utils/currency-format";
 import { styles } from "@/screens/styles/insights-screen.styles";
 import { formatCurrency } from "../utils/format";
 import type { IncomeEntry } from "@/context/AppContext";
@@ -33,6 +35,8 @@ export const IncomeTab = ({
   onConfirmDelete,
   getIconForIncomeType,
 }: IncomeTabPropsT) => {
+  const { currency } = useApp();
+  const currencySymbol = getCurrencySymbol(currency);
   return (
     <ScrollView
       style={styles.scrollView}
@@ -50,7 +54,7 @@ export const IncomeTab = ({
         <View style={styles.incomeSummaryContent}>
           <Text style={styles.incomeSummaryLabel}>Monatliche Einnahmen</Text>
           <Text style={styles.incomeSummaryAmount}>
-            € {formatCurrency(totalIncome)}
+            {currencySymbol} {formatCurrency(totalIncome, currency)}
           </Text>
         </View>
         <Pressable style={styles.addIncomeButton} onPress={onAddIncome}>
@@ -97,7 +101,7 @@ export const IncomeTab = ({
               </View>
               <View style={styles.incomeRight}>
                 <Text style={styles.incomeAmount}>
-                  € {formatCurrency(entry.amount)}
+                  {currencySymbol} {formatCurrency(entry.amount, currency)}
                 </Text>
                 <Pressable
                   onPress={() => onRequestDelete(entry.id)}

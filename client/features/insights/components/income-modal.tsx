@@ -1,5 +1,7 @@
 import { Pressable, Text, TextInput, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import { useApp } from "@/context/AppContext";
+import { getCurrencySymbol } from "@/utils/currency-format";
 import { styles } from "@/screens/styles/insights-screen.styles";
 import { INCOME_TYPES } from "../constants/insights-constants";
 import { AppModal } from "@/components/ui/app-modal";
@@ -35,6 +37,8 @@ export const IncomeModal = ({
   onChangeIncomeAmount,
   onSave,
 }: IncomeModalPropsT) => {
+  const { currency } = useApp();
+  const currencySymbol = getCurrencySymbol(currency);
   const isDisabled = !selectedIncomeType || !incomeAmount;
 
   return (
@@ -109,7 +113,7 @@ export const IncomeModal = ({
 
         <Text style={styles.incomeModalLabel}>Betrag (monatlich)</Text>
         <View style={styles.incomeAmountInputContainer}>
-          <Text style={styles.incomeCurrencySymbol}>€</Text>
+          <Text style={styles.incomeCurrencySymbol}>{currencySymbol}</Text>
           <TextInput
             style={styles.incomeAmountInput}
             value={incomeAmount}

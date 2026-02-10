@@ -1,6 +1,8 @@
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { useApp } from "@/context/AppContext";
+import { getCurrencySymbol } from "@/utils/currency-format";
 import { styles } from "@/screens/styles/goal-detail-screen.styles";
 import { formatDisplayDate } from "../utils/date";
 import { AppModal } from "@/components/ui/app-modal";
@@ -37,6 +39,8 @@ export const AddDepositModal = ({
   onSave,
   onCancel,
 }: AddDepositModalPropsT) => {
+  const { currency } = useApp();
+  const currencySymbol = getCurrencySymbol(currency);
   return (
     <AppModal
       visible={visible}
@@ -56,7 +60,7 @@ export const AddDepositModal = ({
 
         <Text style={styles.modalLabel}>Betrag</Text>
         <View style={styles.currencyInputContainer}>
-          <Text style={styles.currencyPrefix}>€</Text>
+          <Text style={styles.currencyPrefix}>{currencySymbol}</Text>
           <TextInput
             style={styles.currencyInput}
             value={depositAmount}

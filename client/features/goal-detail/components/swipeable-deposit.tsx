@@ -1,5 +1,7 @@
 import { Alert, Pressable, Text, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import { useApp } from "@/context/AppContext";
+import { getCurrencySymbol } from "@/utils/currency-format";
 import { styles } from "@/screens/styles/goal-detail-screen.styles";
 import type { GoalDeposit } from "@/context/app/types";
 import { formatCurrency } from "../utils/format";
@@ -24,6 +26,8 @@ export const SwipeableDeposit = ({
   isActive,
   onSwipeOpen,
 }: SwipeableDepositPropsT) => {
+  const { currency } = useApp();
+  const currencySymbol = getCurrencySymbol(currency);
   const handleSwipeOpen = () => {
     onSwipeOpen(deposit.id);
   };
@@ -35,7 +39,7 @@ export const SwipeableDeposit = ({
   const handleDelete = () => {
     Alert.alert(
       "Eintrag löschen",
-      `Möchtest du diesen Eintrag über € ${formatCurrency(deposit.amount)} wirklich löschen?`,
+      `Möchtest du diesen Eintrag über ${currencySymbol} ${formatCurrency(deposit.amount, currency)} wirklich löschen?`,
       [
         {
           text: "Abbrechen",
@@ -77,7 +81,7 @@ export const SwipeableDeposit = ({
           </View>
         </View>
         <Text style={styles.transactionAmount}>
-          € {formatCurrency(deposit.amount)}
+          {currencySymbol} {formatCurrency(deposit.amount, currency)}
         </Text>
       </Pressable>
     </View>

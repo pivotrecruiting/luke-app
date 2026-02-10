@@ -16,6 +16,10 @@ import { Feather } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Spacing } from "@/constants/theme";
 import { useApp } from "@/context/AppContext";
+import {
+  formatCurrencyAmount,
+  getCurrencySymbol,
+} from "@/utils/currency-format";
 
 type CategoryOptionT = {
   id: string;
@@ -69,7 +73,9 @@ export default function AddScreen() {
     budgetCategories,
     incomeCategories,
     isAppLoading,
+    currency,
   } = useApp();
+  const currencySymbol = getCurrencySymbol(currency);
 
   const [activeTab, setActiveTab] = useState<"ausgaben" | "einnahmen">(
     "ausgaben",
@@ -136,7 +142,7 @@ export default function AddScreen() {
 
     Alert.alert(
       activeTab === "ausgaben" ? "Ausgabe gespeichert" : "Einnahme gespeichert",
-      `${transactionName}: € ${parsedAmount.toLocaleString("de-DE", { minimumFractionDigits: 2 })}`,
+      `${transactionName}: ${currencySymbol} ${formatCurrencyAmount(parsedAmount, currency)}`,
     );
   };
 
@@ -199,7 +205,7 @@ export default function AddScreen() {
         <View style={styles.inputCard}>
           <Text style={styles.inputLabel}>Betrag</Text>
           <View style={styles.amountInputContainer}>
-            <Text style={styles.currencySymbol}>€</Text>
+            <Text style={styles.currencySymbol}>{currencySymbol}</Text>
             <TextInput
               style={styles.amountInput}
               value={amount}

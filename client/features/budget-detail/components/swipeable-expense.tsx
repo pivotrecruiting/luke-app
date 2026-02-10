@@ -1,5 +1,7 @@
 import { Alert, Pressable, Text, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import { useApp } from "@/context/AppContext";
+import { getCurrencySymbol } from "@/utils/currency-format";
 import { styles } from "@/screens/styles/budget-detail-screen.styles";
 import type { BudgetExpense } from "@/context/app/types";
 import { formatCurrency } from "../utils/format";
@@ -24,6 +26,8 @@ export const SwipeableExpense = ({
   isActive,
   onSwipeOpen,
 }: SwipeableExpensePropsT) => {
+  const { currency } = useApp();
+  const currencySymbol = getCurrencySymbol(currency);
   const handleSwipeOpen = () => {
     onSwipeOpen(expense.id);
   };
@@ -35,7 +39,7 @@ export const SwipeableExpense = ({
   const handleDelete = () => {
     Alert.alert(
       "Ausgabe löschen",
-      `Möchtest du diese Ausgabe über € ${formatCurrency(expense.amount)} wirklich löschen?`,
+      `Möchtest du diese Ausgabe über ${currencySymbol} ${formatCurrency(expense.amount, currency)} wirklich löschen?`,
       [
         {
           text: "Abbrechen",
@@ -79,7 +83,7 @@ export const SwipeableExpense = ({
           </View>
         </View>
         <Text style={styles.transactionAmountNegative}>
-          -€ {formatCurrency(expense.amount)}
+          -{currencySymbol} {formatCurrency(expense.amount, currency)}
         </Text>
       </Pressable>
     </View>

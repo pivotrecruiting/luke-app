@@ -1,6 +1,8 @@
 import { Pressable, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
+import { useApp } from "@/context/AppContext";
+import { getCurrencySymbol } from "@/utils/currency-format";
 import { styles } from "@/screens/styles/goal-detail-screen.styles";
 import { formatCurrency } from "../utils/format";
 
@@ -34,6 +36,8 @@ export const GoalDetailHeader = ({
   onDeleteGoal,
   onClose,
 }: GoalDetailHeaderPropsT) => {
+  const { currency } = useApp();
+  const currencySymbol = getCurrencySymbol(currency);
   return (
     <LinearGradient
       colors={["#7340fd", "#3B5BDB"]}
@@ -75,7 +79,7 @@ export const GoalDetailHeader = ({
                 </Pressable>
               </View>
               <Text style={styles.goalProgress}>
-                € {formatCurrency(goalCurrent)} / € {formatCurrency(goalTarget)}
+                {currencySymbol} {formatCurrency(goalCurrent, currency)} / {currencySymbol} {formatCurrency(goalTarget, currency)}
               </Text>
             </View>
           </View>
@@ -94,7 +98,7 @@ export const GoalDetailHeader = ({
         <View style={styles.goalFooter}>
           <Text style={styles.remainingLabel}>Übrig</Text>
           <Text style={styles.remainingValue}>
-            € {formatCurrency(Math.max(0, remaining))}
+            {currencySymbol} {formatCurrency(Math.max(0, remaining), currency)}
           </Text>
         </View>
       </View>

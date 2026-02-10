@@ -1,4 +1,6 @@
 import { Pressable, Text, View } from "react-native";
+import { useApp } from "@/context/AppContext";
+import { getCurrencySymbol } from "@/utils/currency-format";
 import { styles } from "@/screens/styles/insights-screen.styles";
 import { DonutChart } from "./donut-chart";
 import { formatCurrency } from "../utils/format";
@@ -22,6 +24,8 @@ export const CategoriesPanel = ({
   onSelectCategory,
   onToggleCategory,
 }: CategoriesPanelPropsT) => {
+  const { currency } = useApp();
+  const currencySymbol = getCurrencySymbol(currency);
   return (
     <View style={styles.chartCard}>
       <DonutChart
@@ -52,7 +56,7 @@ export const CategoriesPanel = ({
               <View>
                 <Text style={styles.kategorieName}>{category.name}</Text>
                 <Text style={styles.kategorieBetrag}>
-                  € {formatCurrency(category.amount)}
+                  {currencySymbol} {formatCurrency(category.amount, currency)}
                 </Text>
               </View>
             </Pressable>

@@ -1,4 +1,6 @@
 import { Pressable, Text, TextInput, View } from "react-native";
+import { useApp } from "@/context/AppContext";
+import { getCurrencySymbol } from "@/utils/currency-format";
 import { styles } from "@/screens/styles/goals-screen.styles";
 import { EMOJI_LIST } from "../constants/goals-constants";
 import { AppModal } from "@/components/ui/app-modal";
@@ -41,6 +43,10 @@ export const CreateGoalModal = ({
   onCancel,
   onCreate,
 }: CreateGoalModalPropsT) => {
+  const { currency } = useApp();
+  const currencySymbol = getCurrencySymbol(currency);
+  const amountPlaceholder = `${currencySymbol} 1000,00`;
+  const contributionPlaceholder = `${currencySymbol} 200,00`;
   return (
     <AppModal
       visible={visible}
@@ -84,7 +90,7 @@ export const CreateGoalModal = ({
         style={styles.modalInput}
         value={goalAmount}
         onChangeText={onChangeAmount}
-        placeholder="€ 1000,00"
+        placeholder={amountPlaceholder}
         placeholderTextColor="#9CA3AF"
         keyboardType="decimal-pad"
       />
@@ -94,7 +100,7 @@ export const CreateGoalModal = ({
         style={styles.modalInput}
         value={monthlyContribution}
         onChangeText={onChangeMonthlyContribution}
-        placeholder="€ 200,00"
+        placeholder={contributionPlaceholder}
         placeholderTextColor="#9CA3AF"
         keyboardType="decimal-pad"
       />
