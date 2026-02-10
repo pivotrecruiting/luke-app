@@ -163,10 +163,12 @@ export const styles = StyleSheet.create({
     color: "#000000",
     marginBottom: 12,
   },
-  transactionsList: {
-    backgroundColor: "#FFFFFF",
+  transactionsList: {},
+  depositItemWrapper: {
     borderRadius: 16,
     overflow: "hidden",
+    backgroundColor: "#FFFFFF",
+    marginBottom: 8,
   },
   swipeableContainer: {
     position: "relative",
@@ -199,8 +201,6 @@ export const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F3F4F6",
     backgroundColor: "#FFFFFF",
   },
   transactionLeft: {

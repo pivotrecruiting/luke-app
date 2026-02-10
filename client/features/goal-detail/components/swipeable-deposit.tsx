@@ -103,16 +103,17 @@ export const SwipeableDeposit = React.forwardRef<
   );
 
   return (
-    <Swipeable
-      ref={setRef}
-      renderRightActions={renderRightActions}
-      onSwipeableWillOpen={handleSwipeWillOpen}
-      onSwipeableOpen={(direction) => handleSwipeOpen(direction)}
-      rightThreshold={40}
-      friction={2}
-    >
-      <Pressable
-        style={styles.transactionItem}
+    <View style={styles.depositItemWrapper}>
+      <Swipeable
+        ref={setRef}
+        renderRightActions={renderRightActions}
+        onSwipeableWillOpen={handleSwipeWillOpen}
+        onSwipeableOpen={(direction) => handleSwipeOpen(direction)}
+        rightThreshold={40}
+        friction={2}
+      >
+        <Pressable
+          style={styles.transactionItem}
         onPress={handleRowPress}
         onLongPress={() => internalRef.current?.openRight()}
       >
@@ -128,5 +129,6 @@ export const SwipeableDeposit = React.forwardRef<
         </Text>
       </Pressable>
     </Swipeable>
+    </View>
   );
 });
