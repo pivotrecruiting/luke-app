@@ -1,43 +1,29 @@
 import { Pressable, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
-import { useApp } from "@/context/AppContext";
-import { getCurrencySymbol } from "@/utils/currency-format";
 import { styles } from "@/screens/styles/goal-detail-screen.styles";
-import { formatCurrency } from "../utils/format";
 
 type GoalDetailHeaderPropsT = {
   topInset: number;
-  goalName: string;
-  goalIcon: string;
-  goalCurrent: number;
-  goalTarget: number;
-  percentage: number;
-  remaining: number;
-  isCompleted: boolean;
-  onEditName: () => void;
+  title: string;
+  subtitle: string;
+  onBack: () => void;
+  onEditGoal: () => void;
   onDeleteGoal: () => void;
-  onClose: () => void;
 };
 
 /**
- * Renders the goal detail header and progress card.
+ * Renders the goal detail header with back, edit and delete actions.
+ * Matches BudgetDetailHeader structure: back left, edit + delete right.
  */
 export const GoalDetailHeader = ({
   topInset,
-  goalName,
-  goalIcon,
-  goalCurrent,
-  goalTarget,
-  percentage,
-  remaining,
-  isCompleted,
-  onEditName,
+  title,
+  subtitle,
+  onBack,
+  onEditGoal,
   onDeleteGoal,
-  onClose,
 }: GoalDetailHeaderPropsT) => {
-  const { currency } = useApp();
-  const currencySymbol = getCurrencySymbol(currency);
   return (
     <LinearGradient
       colors={["#7340fd", "#3B5BDB"]}
@@ -46,62 +32,20 @@ export const GoalDetailHeader = ({
       style={[styles.header, { paddingTop: topInset }]}
     >
       <View style={styles.headerRow}>
-        <View>
-          <Text style={styles.headerTitle}>Goals</Text>
-          <Text style={styles.headerSubtitle}>
-            {isCompleted ? "Geschafft!" : "bleib dran!"}
-          </Text>
-        </View>
-        <View style={styles.headerButtons}>
+        <Pressable style={styles.backButton} onPress={onBack}>
+          <Feather name="arrow-left" size={24} color="#FFFFFF" />
+        </Pressable>
+        <View style={styles.headerActions}>
+          <Pressable style={styles.editHeaderButton} onPress={onEditGoal}>
+            <Feather name="edit-2" size={20} color="#FFFFFF" />
+          </Pressable>
           <Pressable style={styles.deleteHeaderButton} onPress={onDeleteGoal}>
             <Feather name="trash-2" size={20} color="#FFFFFF" />
           </Pressable>
-          <Pressable style={styles.closeButton} onPress={onClose}>
-            <Feather name="x" size={24} color="#000000" />
-          </Pressable>
         </View>
       </View>
-
-      <View style={styles.goalCard}>
-        <View style={styles.goalHeader}>
-          <View style={styles.goalLeft}>
-            <Text style={styles.goalIcon}>{goalIcon}</Text>
-            <View>
-              <View style={styles.goalNameRow}>
-                <Text style={styles.goalName}>{goalName}</Text>
-                <Pressable onPress={onEditName}>
-                  <Feather
-                    name="edit-2"
-                    size={14}
-                    color="#7340FE"
-                    style={styles.editIcon}
-                  />
-                </Pressable>
-              </View>
-              <Text style={styles.goalProgress}>
-                {currencySymbol} {formatCurrency(goalCurrent, currency)} / {currencySymbol} {formatCurrency(goalTarget, currency)}
-              </Text>
-            </View>
-          </View>
-          <Text style={styles.goalPercentage}>
-            {percentage.toFixed(2).replace(".", ",")}%
-          </Text>
-        </View>
-        <View style={styles.progressBarContainer}>
-          <View
-            style={[
-              styles.progressBar,
-              { width: `${Math.min(percentage, 100)}%` },
-            ]}
-          />
-        </View>
-        <View style={styles.goalFooter}>
-          <Text style={styles.remainingLabel}>Übrig</Text>
-          <Text style={styles.remainingValue}>
-            {currencySymbol} {formatCurrency(Math.max(0, remaining), currency)}
-          </Text>
-        </View>
-      </View>
+      <Text style={styles.headerTitle}>{title}</Text>
+      <Text style={styles.headerSubtitle}>{subtitle}</Text>
     </LinearGradient>
   );
 };
