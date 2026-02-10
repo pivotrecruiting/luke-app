@@ -37,6 +37,7 @@ export type GoalRow = {
   name: string;
   icon: string | null;
   target_amount_cents: number;
+  monthly_contribution_cents: number | null;
 };
 
 export type GoalContributionRow = {

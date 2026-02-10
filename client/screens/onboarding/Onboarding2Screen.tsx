@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { OnboardingStackParamList } from "@/navigation/OnboardingNavigator";
 import { Image } from "expo-image";
@@ -9,13 +9,41 @@ import ProgressDots from "@/components/ProgressDots";
 import CurrencyInput from "@/components/CurrencyInput";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { Spacing, BorderRadius, Typography, Colors } from "@/constants/theme";
+import {
+  useOnboardingStore,
+  type OnboardingStoreT,
+} from "@/stores/onboarding-store";
 
 type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
 
 export default function Onboarding2Screen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
+  const setInitialSavingsAmount = useOnboardingStore(
+    (state: OnboardingStoreT) => state.setInitialSavingsAmount,
+  );
+  const resetInitialSavings = useOnboardingStore(
+    (state: OnboardingStoreT) => state.resetInitialSavings,
+  );
   const [amount, setAmount] = useState("");
+
+  const parseAmount = (value: string): number | null => {
+    const parsed = Number.parseFloat(value.replace(",", "."));
+    if (!Number.isFinite(parsed) || parsed <= 0) return null;
+    return parsed;
+  };
+
+  const handleAmountChange = (value: string) => {
+    setAmount(value);
+    setInitialSavingsAmount(parseAmount(value));
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      setAmount("");
+      resetInitialSavings();
+    }, [resetInitialSavings]),
+  );
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + Spacing.xl }]}>
@@ -50,7 +78,7 @@ export default function Onboarding2Screen() {
         </View>
 
         <View style={styles.inputContainer}>
-          <CurrencyInput value={amount} onChangeText={setAmount} />
+          <CurrencyInput value={amount} onChangeText={handleAmountChange} />
         </View>
       </KeyboardAwareScrollViewCompat>
 
@@ -61,7 +89,11 @@ export default function Onboarding2Screen() {
         ]}
       >
         <Pressable
-          onPress={() => navigation.navigate("Onboarding3")}
+          onPress={() => {
+            setAmount("");
+            setInitialSavingsAmount(null);
+            navigation.navigate("Onboarding3");
+          }}
           style={({ pressed }) => [
             styles.skipButton,
             pressed && styles.buttonPressed,
@@ -71,7 +103,10 @@ export default function Onboarding2Screen() {
         </Pressable>
 
         <Pressable
-          onPress={() => navigation.navigate("Onboarding3")}
+          onPress={() => {
+            setInitialSavingsAmount(parseAmount(amount));
+            navigation.navigate("Onboarding3");
+          }}
           style={({ pressed }) => [
             styles.continueButton,
             pressed && styles.buttonPressed,

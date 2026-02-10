@@ -1,15 +1,18 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { View, Text, TextInput, StyleSheet, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import ProgressDots from "@/components/ProgressDots";
 import Chip from "@/components/Chip";
 import CurrencyInput from "@/components/CurrencyInput";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { Spacing, BorderRadius, Typography, Colors } from "@/constants/theme";
-import { useApp } from "@/context/AppContext";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { OnboardingStackParamList } from "@/navigation/OnboardingNavigator";
+import {
+  useOnboardingStore,
+  type OnboardingStoreT,
+} from "@/stores/onboarding-store";
 
 type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
 
@@ -300,7 +303,12 @@ function getEmojiForText(text: string): string {
 export default function Onboarding3Screen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
-  const { addGoal } = useApp();
+  const setGoalDraft = useOnboardingStore(
+    (state: OnboardingStoreT) => state.setGoalDraft,
+  );
+  const resetGoalDraft = useOnboardingStore(
+    (state: OnboardingStoreT) => state.resetGoalDraft,
+  );
   const [selectedGoal, setSelectedGoal] = useState("Wohnung");
   const [amount, setAmount] = useState("");
   const [monthlyAmount, setMonthlyAmount] = useState("");
@@ -310,11 +318,34 @@ export default function Onboarding3Screen() {
       const parsedAmount = Number.parseFloat(amount);
       if (!isNaN(parsedAmount) && parsedAmount > 0) {
         const emoji = getEmojiForText(selectedGoal);
-        addGoal(selectedGoal, emoji, parsedAmount);
+        const parsedMonthly = Number.parseFloat(
+          monthlyAmount.replace(",", "."),
+        );
+        const normalizedMonthly =
+          !isNaN(parsedMonthly) && parsedMonthly > 0 ? parsedMonthly : null;
+        setGoalDraft({
+          name: selectedGoal,
+          icon: emoji,
+          target: parsedAmount,
+          monthlyContribution: normalizedMonthly,
+        });
+      } else {
+        setGoalDraft(null);
       }
+    } else {
+      setGoalDraft(null);
     }
     navigation.navigate("Onboarding4");
   };
+
+  useFocusEffect(
+    useCallback(() => {
+      setSelectedGoal("");
+      setAmount("");
+      setMonthlyAmount("");
+      resetGoalDraft();
+    }, [resetGoalDraft]),
+  );
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + Spacing.xl }]}>

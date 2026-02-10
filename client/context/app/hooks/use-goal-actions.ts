@@ -298,13 +298,23 @@ export const useGoalActions = ({
   );
 
   const addGoal = useCallback(
-    (name: string, icon: string, target: number) => {
+    (
+      name: string,
+      icon: string,
+      target: number,
+      monthlyContribution?: number | null,
+    ) => {
+      const normalizedMonthlyContribution =
+        typeof monthlyContribution === "number" && monthlyContribution > 0
+          ? monthlyContribution
+          : null;
       const tempId = generateId();
       const newGoal: Goal = {
         id: tempId,
         name,
         icon,
         target,
+        monthlyContribution: normalizedMonthlyContribution,
         current: 0,
         remaining: target,
         deposits: [],
@@ -319,6 +329,7 @@ export const useGoalActions = ({
             name,
             icon,
             target,
+            normalizedMonthlyContribution,
             !isOnboardingComplete,
           );
           setGoals((prev) =>
@@ -339,7 +350,25 @@ export const useGoalActions = ({
       setGoals((prev) =>
         prev.map((goal) => {
           if (goal.id === goalId) {
-            return { ...goal, ...updates };
+            const nextTarget =
+              typeof updates.target === "number" ? updates.target : goal.target;
+            const nextCurrent =
+              typeof updates.current === "number"
+                ? updates.current
+                : goal.current;
+            const nextRemaining = Math.max(0, nextTarget - nextCurrent);
+            const nextMonthlyContribution =
+              updates.monthlyContribution !== undefined
+                ? updates.monthlyContribution
+                : goal.monthlyContribution;
+            return {
+              ...goal,
+              ...updates,
+              target: nextTarget,
+              current: nextCurrent,
+              remaining: nextRemaining,
+              monthlyContribution: nextMonthlyContribution,
+            };
           }
           return goal;
         }),

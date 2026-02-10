@@ -91,7 +91,16 @@ export default function GoalDetailScreen() {
           visible={state.editModalVisible}
           bottomInset={insets.bottom}
           tempName={state.tempName}
+          tempAmount={state.tempAmount}
+          tempMonthlyContribution={state.tempMonthlyContribution}
+          tempEmoji={state.tempEmoji}
+          showEmojiPicker={state.showEmojiPicker}
+          monthsToGoal={derived.monthsToGoal}
           onChangeName={actions.setTempName}
+          onChangeAmount={actions.setTempAmount}
+          onChangeMonthlyContribution={actions.setTempMonthlyContribution}
+          onToggleEmojiPicker={actions.toggleEmojiPicker}
+          onSelectEmoji={actions.selectEmoji}
           onSave={actions.handleEditSave}
           onCancel={actions.handleEditCancel}
         />

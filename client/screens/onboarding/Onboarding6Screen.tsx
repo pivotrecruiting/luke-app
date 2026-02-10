@@ -1,19 +1,35 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import ProgressDots from "@/components/ProgressDots";
 import { Spacing, BorderRadius } from "@/constants/theme";
-import { useApp } from "@/context/AppContext";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { OnboardingStackParamList } from "@/navigation/OnboardingNavigator";
+import {
+  useOnboardingStore,
+  type OnboardingStoreT,
+} from "@/stores/onboarding-store";
 
 type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
 
 export default function Onboarding6Screen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
-  const { totalIncome, totalFixedExpenses } = useApp();
+  const incomeEntries = useOnboardingStore(
+    (state: OnboardingStoreT) => state.incomeEntries,
+  );
+  const expenseEntries = useOnboardingStore(
+    (state: OnboardingStoreT) => state.expenseEntries,
+  );
+  const totalIncome = useMemo(
+    () => incomeEntries.reduce((sum, entry) => sum + entry.amount, 0),
+    [incomeEntries],
+  );
+  const totalFixedExpenses = useMemo(
+    () => expenseEntries.reduce((sum, entry) => sum + entry.amount, 0),
+    [expenseEntries],
+  );
   const verfuegbar = totalIncome - totalFixedExpenses;
 
   const formatCurrency = (value: number, showPlus: boolean = false) => {

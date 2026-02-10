@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { OnboardingStackParamList } from "@/navigation/OnboardingNavigator";
 import { Feather } from "@expo/vector-icons";
@@ -19,6 +19,10 @@ import {
   formatCurrencyValue,
   getCurrencySymbol,
 } from "@/utils/currency-format";
+import {
+  useOnboardingStore,
+  type OnboardingStoreT,
+} from "@/stores/onboarding-store";
 
 interface Entry {
   type: string;
@@ -30,7 +34,13 @@ type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
 export default function Onboarding7Screen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
-  const { addBudget, currency } = useApp();
+  const { currency } = useApp();
+  const setBudgetEntriesDraft = useOnboardingStore(
+    (state: OnboardingStoreT) => state.setBudgetEntries,
+  );
+  const resetBudgetEntries = useOnboardingStore(
+    (state: OnboardingStoreT) => state.resetBudgetEntries,
+  );
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
   const [entries, setEntries] = useState<Entry[]>([]);
@@ -49,17 +59,24 @@ export default function Onboarding7Screen() {
   };
 
   const handleContinue = () => {
-    if (entries.length > 0) {
-      entries.forEach((entry) => {
-        const parsedAmount = Number.parseFloat(entry.amount);
-        const category = getCategoryByName(entry.type);
-        const icon = category?.icon || "circle";
-        const color = category?.color || "#6B7280";
-        addBudget(entry.type, icon, color, parsedAmount);
-      });
-    }
+    const parsedEntries = entries
+      .map((entry) => ({
+        name: entry.type,
+        limit: Number.parseFloat(entry.amount),
+      }))
+      .filter((entry) => Number.isFinite(entry.limit) && entry.limit > 0);
+    setBudgetEntriesDraft(parsedEntries);
     navigation.navigate("AllesStartklar");
   };
+
+  useFocusEffect(
+    useCallback(() => {
+      setSelectedCategory(null);
+      setAmount("");
+      setEntries([]);
+      resetBudgetEntries();
+    }, [resetBudgetEntries]),
+  );
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + Spacing.xl }]}>

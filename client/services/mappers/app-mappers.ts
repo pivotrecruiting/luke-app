@@ -59,11 +59,16 @@ export const mapGoals = (
   return goalRows.map((row) => {
     const target = fromCents(row.target_amount_cents);
     const current = goalBalances[row.id] ?? 0;
+    const monthlyContribution =
+      typeof row.monthly_contribution_cents === "number"
+        ? fromCents(row.monthly_contribution_cents)
+        : null;
     return {
       id: row.id,
       name: row.name,
       icon: row.icon ?? "🎯",
       target,
+      monthlyContribution,
       current,
       remaining: target - current,
       deposits: depositsByGoal[row.id] ?? [],

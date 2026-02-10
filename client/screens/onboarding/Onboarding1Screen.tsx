@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,7 +7,7 @@ import {
   type ImageSourcePropType,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { Image } from "expo-image";
 import Animated, {
   useAnimatedStyle,
@@ -20,6 +20,7 @@ import ProgressDots from "@/components/ProgressDots";
 import { Spacing, BorderRadius, Typography, Colors } from "@/constants/theme";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { OnboardingStackParamList } from "@/navigation/OnboardingNavigator";
+import { useOnboardingStore, type OnboardingStoreT } from "@/stores/onboarding-store";
 
 type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
 
@@ -190,13 +191,21 @@ const GoalCard = ({
 export default function Onboarding1Screen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
-  const [selected, setSelected] = useState<string[]>([]);
+  const motivations = useOnboardingStore(
+    (state: OnboardingStoreT) => state.motivations,
+  );
+  const toggleMotivation = useOnboardingStore(
+    (state: OnboardingStoreT) => state.toggleMotivation,
+  );
+  const resetMotivations = useOnboardingStore(
+    (state: OnboardingStoreT) => state.resetMotivations,
+  );
 
-  const toggleSelection = (id: string) => {
-    setSelected((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
-    );
-  };
+  useFocusEffect(
+    useCallback(() => {
+      resetMotivations();
+    }, [resetMotivations]),
+  );
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + Spacing.md }]}>
@@ -217,9 +226,9 @@ export default function Onboarding1Screen() {
               <GoalCard
                 key={goal.id}
                 goal={goal}
-                isSelected={selected.includes(goal.id)}
+                isSelected={motivations.includes(goal.id)}
                 flexValue={index === 0 ? 1.2 : 1.3}
-                onToggle={toggleSelection}
+                onToggle={toggleMotivation}
               />
             ))}
           </View>
@@ -228,9 +237,9 @@ export default function Onboarding1Screen() {
               <GoalCard
                 key={goal.id}
                 goal={goal}
-                isSelected={selected.includes(goal.id)}
+                isSelected={motivations.includes(goal.id)}
                 flexValue={index === 0 ? 0.8 : 1.3}
-                onToggle={toggleSelection}
+                onToggle={toggleMotivation}
               />
             ))}
           </View>
@@ -242,12 +251,12 @@ export default function Onboarding1Screen() {
               .filter((_, index) => index % 2 === 0)
               .map((goal) => (
                 <GoalCard
-                  key={goal.id}
-                  goal={goal}
-                  isSelected={selected.includes(goal.id)}
-                  flexValue={0.7}
-                  onToggle={toggleSelection}
-                />
+                key={goal.id}
+                goal={goal}
+                isSelected={motivations.includes(goal.id)}
+                flexValue={0.7}
+                onToggle={toggleMotivation}
+              />
               ))}
           </View>
           <View style={styles.rightColumn}>
@@ -255,12 +264,12 @@ export default function Onboarding1Screen() {
               .filter((_, index) => index % 2 === 1)
               .map((goal) => (
                 <GoalCard
-                  key={goal.id}
-                  goal={goal}
-                  isSelected={selected.includes(goal.id)}
-                  flexValue={0.7}
-                  onToggle={toggleSelection}
-                />
+                key={goal.id}
+                goal={goal}
+                isSelected={motivations.includes(goal.id)}
+                flexValue={0.7}
+                onToggle={toggleMotivation}
+              />
               ))}
           </View>
         </View>

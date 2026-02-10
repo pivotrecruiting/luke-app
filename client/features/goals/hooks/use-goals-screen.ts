@@ -119,10 +119,20 @@ export const useGoalsScreen = (): UseGoalsScreenReturnT => {
     const amount = parseFloat(goalAmount.replace(",", ".")) || 0;
     if (!goalName || amount <= 0) return;
 
-    addGoal(goalName, selectedEmoji, amount);
+    const parsedMonthly = parseFloat(monthlyContribution.replace(",", "."));
+    const normalizedMonthly =
+      !isNaN(parsedMonthly) && parsedMonthly > 0 ? parsedMonthly : null;
+    addGoal(goalName, selectedEmoji, amount, normalizedMonthly);
     resetAndCloseGoalModal();
     setSuccessToast("goal");
-  }, [addGoal, goalAmount, goalName, resetAndCloseGoalModal, selectedEmoji]);
+  }, [
+    addGoal,
+    goalAmount,
+    goalName,
+    monthlyContribution,
+    resetAndCloseGoalModal,
+    selectedEmoji,
+  ]);
 
   const handleCreateBudget = useCallback(() => {
     const limit = parseFloat(budgetLimit.replace(",", ".")) || 0;

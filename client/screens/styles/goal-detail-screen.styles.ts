@@ -261,6 +261,50 @@ export const styles = StyleSheet.create({
     color: "#6B7280",
     marginBottom: 8,
   },
+  nameInputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F3F4F6",
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  emojiButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRightWidth: 1,
+    borderRightColor: "#E5E7EB",
+  },
+  emojiButtonText: {
+    fontSize: 24,
+  },
+  nameInput: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: "#000000",
+    outlineStyle: "none",
+  } as any,
+  emojiPicker: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    backgroundColor: "#F3F4F6",
+    borderRadius: 12,
+    padding: 8,
+    marginBottom: 16,
+    gap: 8,
+  },
+  emojiOption: {
+    width: 44,
+    height: 44,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 8,
+    backgroundColor: "#FFFFFF",
+  },
+  emojiOptionText: {
+    fontSize: 24,
+  },
   modalInput: {
     backgroundColor: "#F3F4F6",
     borderRadius: 12,
@@ -271,6 +315,42 @@ export const styles = StyleSheet.create({
     marginBottom: 24,
     outlineStyle: "none",
   } as any,
+  calculationText: {
+    fontSize: 14,
+    color: "#6B7280",
+    marginBottom: 24,
+  },
+  calculationBold: {
+    fontWeight: "700",
+    color: "#000000",
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 12,
+  },
+  cancelButton: {
+    backgroundColor: "#9CA3AF",
+    borderRadius: 24,
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FFFFFF",
+  },
+  createButton: {
+    backgroundColor: "#7340FE",
+    borderRadius: 24,
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+  },
+  createButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FFFFFF",
+  },
   currencyInputContainer: {
     flexDirection: "row",
     alignItems: "center",

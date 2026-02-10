@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { OnboardingStackParamList } from "@/navigation/OnboardingNavigator";
 import { Feather } from "@expo/vector-icons";
@@ -15,6 +15,10 @@ import {
   formatCurrencyValue,
   getCurrencySymbol,
 } from "@/utils/currency-format";
+import {
+  useOnboardingStore,
+  type OnboardingStoreT,
+} from "@/stores/onboarding-store";
 
 interface Entry {
   type: string;
@@ -39,12 +43,16 @@ type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
 export default function Onboarding5Screen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
-  const { setExpenseEntries, expenseEntries, currency } = useApp();
+  const { currency } = useApp();
+  const setExpenseEntriesDraft = useOnboardingStore(
+    (state: OnboardingStoreT) => state.setExpenseEntries,
+  );
+  const resetExpenseEntries = useOnboardingStore(
+    (state: OnboardingStoreT) => state.resetExpenseEntries,
+  );
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
-  const [entries, setEntries] = useState<Entry[]>(() =>
-    expenseEntries.map((e) => ({ type: e.type, amount: e.amount.toString() })),
-  );
+  const [entries, setEntries] = useState<Entry[]>([]);
   const currencySymbol = getCurrencySymbol(currency);
 
   const handleAddEntry = () => {
@@ -64,9 +72,18 @@ export default function Onboarding5Screen() {
       type: entry.type,
       amount: Number.parseFloat(entry.amount),
     }));
-    setExpenseEntries(parsedEntries);
+    setExpenseEntriesDraft(parsedEntries);
     navigation.navigate("Onboarding6");
   };
+
+  useFocusEffect(
+    useCallback(() => {
+      setSelectedType(null);
+      setAmount("");
+      setEntries([]);
+      resetExpenseEntries();
+    }, [resetExpenseEntries]),
+  );
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + Spacing.xl }]}>

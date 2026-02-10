@@ -11,9 +11,10 @@ import { Spacing, BorderRadius, Typography, Colors } from "@/constants/theme";
  */
 export default function AllesStartklarScreen() {
   const insets = useSafeAreaInsets();
-  const { completeOnboarding } = useApp();
+  const { completeOnboarding, submitOnboarding } = useApp();
 
   const handleContinue = () => {
+    submitOnboarding();
     completeOnboarding();
   };
 
