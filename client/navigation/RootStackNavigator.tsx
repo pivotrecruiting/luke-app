@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Platform } from "react-native";
+import React from "react";
+import { ActivityIndicator, Platform, StyleSheet, View } from "react-native";
 import type { NavigatorScreenParams } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { isLiquidGlassAvailable } from "expo-glass-effect";
@@ -13,6 +13,7 @@ import ExpensesScreen from "@/screens/ExpensesScreen";
 import LevelUpScreen from "@/screens/LevelUpScreen";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
+import { Colors } from "@/constants/theme";
 
 export type RootStackParamList = {
   Onboarding: undefined;
@@ -33,40 +34,23 @@ export type RootStackParamList = {
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
+/**
+ * Shows a neutral loading state while auth and app data are being resolved.
+ */
+function AuthLoadingScreen() {
+  return (
+    <View style={styles.loadingContainer}>
+      <ActivityIndicator size="large" color={Colors.light.primary} />
+    </View>
+  );
+}
+
 export default function RootStackNavigator() {
   const { isOnboardingComplete, isAppLoading } = useApp();
   const { session, isLoading } = useAuth();
   const isAuthenticated = Boolean(session);
-  const wasAuthenticatedRef = useRef<boolean | null>(null);
-  const [isSignInTransition, setIsSignInTransition] = useState(false);
-  const showOnboarding =
-    !isAuthenticated || isSignInTransition || !isOnboardingComplete;
+  const showOnboarding = !isAuthenticated || !isOnboardingComplete;
   const liquidGlassAvailable = isLiquidGlassAvailable();
-
-  useEffect(() => {
-    if (isLoading) return;
-
-    if (wasAuthenticatedRef.current === null) {
-      wasAuthenticatedRef.current = isAuthenticated;
-      return;
-    }
-
-    if (!wasAuthenticatedRef.current && isAuthenticated) {
-      setIsSignInTransition(true);
-    }
-
-    if (wasAuthenticatedRef.current && !isAuthenticated) {
-      setIsSignInTransition(false);
-    }
-
-    wasAuthenticatedRef.current = isAuthenticated;
-  }, [isAuthenticated, isLoading]);
-
-  useEffect(() => {
-    if (!isSignInTransition) return;
-    if (isAppLoading) return;
-    setIsSignInTransition(false);
-  }, [isAppLoading, isSignInTransition]);
 
   // Base glass effect configuration for iOS 18+
   // Use 'regular' for iOS 18+ Liquid Glass, fallback to custom header for older versions
@@ -81,8 +65,8 @@ export default function RootStackNavigator() {
   // Otherwise, screens will use their custom headers
   const useNativeHeader = liquidGlassAvailable && Platform.OS === "ios";
 
-  if (isLoading || (isAppLoading && !showOnboarding)) {
-    return null;
+  if (isLoading || (isAuthenticated && isAppLoading)) {
+    return <AuthLoadingScreen />;
   }
 
   return (
@@ -172,3 +156,12 @@ export default function RootStackNavigator() {
     </Stack.Navigator>
   );
 }
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Colors.light.backgroundRoot,
+  },
+});

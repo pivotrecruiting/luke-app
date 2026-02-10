@@ -11,6 +11,7 @@ import Onboarding5Screen from "@/screens/onboarding/Onboarding5Screen";
 import Onboarding6Screen from "@/screens/onboarding/Onboarding6Screen";
 import Onboarding7Screen from "@/screens/onboarding/Onboarding7Screen";
 import AllesStartklarScreen from "@/screens/onboarding/AllesStartklarScreen";
+import { useAuth } from "@/context/AuthContext";
 
 export type OnboardingStackParamList = {
   Welcome: undefined;
@@ -29,8 +30,13 @@ export type OnboardingStackParamList = {
 const Stack = createNativeStackNavigator<OnboardingStackParamList>();
 
 export default function OnboardingNavigator() {
+  const { session } = useAuth();
+  const isAuthenticated = Boolean(session);
+  const initialRouteName = isAuthenticated ? "OnboardingCurrency" : "Welcome";
+
   return (
     <Stack.Navigator
+      initialRouteName={initialRouteName}
       screenOptions={{
         headerShown: false,
         animation: "slide_from_right",
