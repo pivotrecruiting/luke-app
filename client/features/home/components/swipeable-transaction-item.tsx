@@ -125,7 +125,12 @@ export const SwipeableTransactionItem = React.forwardRef<
             </Text>
             <Text style={styles.transactionDate}>{transaction.date}</Text>
           </View>
-          <Text style={styles.transactionAmount}>
+          <Text
+            style={[
+              styles.transactionAmount,
+              transaction.amount >= 0 && styles.transactionAmountIncome,
+            ]}
+          >
             {formatCurrency(transaction.amount)}
           </Text>
         </Pressable>

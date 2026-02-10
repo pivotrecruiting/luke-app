@@ -1,5 +1,17 @@
-import React, { useState, useMemo, useRef, useCallback } from "react";
-import { View, Text, ScrollView, Pressable } from "react-native";
+import React, {
+  useState,
+  useMemo,
+  useRef,
+  useCallback,
+  useEffect,
+} from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  useWindowDimensions,
+} from "react-native";
 import Swipeable from "react-native-gesture-handler/Swipeable";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -19,12 +31,16 @@ import { formatDate, parseFormattedDate } from "@/utils/dates";
 import { getUserFirstName } from "@/utils/user";
 import { styles } from "./styles/home-screen.styles";
 import { AppModal } from "@/components/ui/app-modal";
+import Chip from "@/components/Chip";
 import { SwipeableTransactionItem } from "@/features/home/components/swipeable-transaction-item";
 import { EditTransactionModal } from "@/features/home/components/edit-transaction-modal";
 const businessmanFigure = require("../../assets/images/businessman-figure.png");
 
+type ModalTypeFilterT = "all" | "income" | "expense";
+
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const {
@@ -127,6 +143,51 @@ export default function HomeScreen() {
 
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [allTransactionsVisible, setAllTransactionsVisible] = useState(false);
+  const [modalTypeFilter, setModalTypeFilter] =
+    useState<ModalTypeFilterT>("all");
+  const [modalCategoryFilter, setModalCategoryFilter] = useState<string | null>(
+    null,
+  );
+
+  const modalFilteredTransactions = useMemo(() => {
+    let list = sortedTransactions;
+    if (modalTypeFilter === "income") {
+      list = list.filter((t) => t.amount >= 0);
+    } else if (modalTypeFilter === "expense") {
+      list = list.filter((t) => t.amount < 0);
+    }
+    if (modalCategoryFilter) {
+      list = list.filter(
+        (t) => t.category.toLowerCase() === modalCategoryFilter.toLowerCase(),
+      );
+    }
+    return list;
+  }, [sortedTransactions, modalTypeFilter, modalCategoryFilter]);
+
+  const modalAvailableCategories = useMemo(() => {
+    let list = sortedTransactions;
+    if (modalTypeFilter === "income") {
+      list = list.filter((t) => t.amount >= 0);
+    } else if (modalTypeFilter === "expense") {
+      list = list.filter((t) => t.amount < 0);
+    }
+    const categories = [
+      ...new Set(list.map((t) => t.category).filter(Boolean)),
+    ].sort((a, b) => a.localeCompare(b));
+    return categories;
+  }, [sortedTransactions, modalTypeFilter]);
+
+  useEffect(() => {
+    if (
+      modalCategoryFilter &&
+      !modalAvailableCategories.some(
+        (c) => c.toLowerCase() === modalCategoryFilter.toLowerCase(),
+      )
+    ) {
+      setModalCategoryFilter(null);
+    }
+  }, [modalAvailableCategories, modalCategoryFilter]);
+
   const [editTransactionModalVisible, setEditTransactionModalVisible] =
     useState(false);
   const [editingTransactionId, setEditingTransactionId] = useState<
@@ -425,32 +486,131 @@ export default function HomeScreen() {
 
       <AppModal
         visible={allTransactionsVisible}
-        onClose={() => setAllTransactionsVisible(false)}
+        onClose={() => {
+          setAllTransactionsVisible(false);
+          setModalTypeFilter("all");
+          setModalCategoryFilter(null);
+        }}
         maxHeightPercent={80}
         contentStyle={[
           styles.modalContent,
-          { paddingBottom: insets.bottom + 24 },
+          {
+            height: windowHeight * 0.8,
+            paddingBottom: insets.bottom + 24,
+          },
         ]}
       >
-        <View style={styles.modalHandle} />
-        <View style={styles.modalHeader}>
-          <Text style={styles.modalTitle}>Alle Transaktionen</Text>
-          <Pressable
-            onPress={() => setAllTransactionsVisible(false)}
-            style={styles.closeButton}
+        <View style={styles.modalStaticContent}>
+          <View style={styles.modalHandle} />
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Alle Transaktionen</Text>
+            <Pressable
+              onPress={() => setAllTransactionsVisible(false)}
+              style={styles.closeButton}
+            >
+              <Feather name="x" size={24} color="#000000" />
+            </Pressable>
+          </View>
+          <View style={styles.modalFilterRow}>
+            <Pressable
+              style={[
+                styles.modalFilterBadge,
+                modalTypeFilter === "all" && styles.modalFilterBadgeActive,
+              ]}
+              onPress={() => setModalTypeFilter("all")}
+            >
+              <Text
+                style={[
+                  styles.modalFilterBadgeText,
+                  modalTypeFilter === "all" &&
+                    styles.modalFilterBadgeTextActive,
+                ]}
+              >
+                Alle
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[
+                styles.modalFilterBadge,
+                modalTypeFilter === "income" && styles.modalFilterBadgeActive,
+              ]}
+              onPress={() => setModalTypeFilter("income")}
+            >
+              <Feather
+                name="arrow-up"
+                size={12}
+                color={
+                  modalTypeFilter === "income" ? "#7340FE" : "#6B7280"
+                }
+              />
+              <Text
+                style={[
+                  styles.modalFilterBadgeText,
+                  modalTypeFilter === "income" &&
+                    styles.modalFilterBadgeTextActive,
+                ]}
+              >
+                Einnahmen
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[
+                styles.modalFilterBadge,
+                modalTypeFilter === "expense" && styles.modalFilterBadgeActive,
+              ]}
+              onPress={() => setModalTypeFilter("expense")}
+            >
+              <Feather
+                name="arrow-down"
+                size={12}
+                color={
+                  modalTypeFilter === "expense" ? "#7340FE" : "#6B7280"
+                }
+              />
+              <Text
+                style={[
+                  styles.modalFilterBadgeText,
+                  modalTypeFilter === "expense" &&
+                    styles.modalFilterBadgeTextActive,
+                ]}
+              >
+                Ausgaben
+              </Text>
+            </Pressable>
+          </View>
+
+          <ScrollView
+            style={styles.modalCategoriesScroll}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.modalCategoriesScrollContent}
           >
-            <Feather name="x" size={24} color="#000000" />
-          </Pressable>
+            {modalAvailableCategories.map((categoryName) => (
+              <Chip
+                key={categoryName}
+                label={categoryName}
+                selected={modalCategoryFilter === categoryName}
+                onPress={() =>
+                  setModalCategoryFilter((prev) =>
+                    prev === categoryName ? null : categoryName,
+                  )
+                }
+              />
+            ))}
+          </ScrollView>
+
+          <Text style={styles.modalSwipeHint}>
+            Tippen zum Bearbeiten · Wischen zum Löschen
+          </Text>
         </View>
-        <Text style={styles.modalSwipeHint}>
-          Tippen zum Bearbeiten · Wischen zum Löschen
-        </Text>
+
         <ScrollView
           style={styles.modalScrollView}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.modalScrollViewContent}
         >
-          {sortedTransactions.map((transaction) => (
+          {modalFilteredTransactions.map((transaction) => (
             <SwipeableTransactionItem
               key={`modal-${transaction.id}`}
               ref={(r) => {

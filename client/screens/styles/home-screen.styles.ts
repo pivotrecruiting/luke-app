@@ -291,12 +291,17 @@ export const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#000000",
   },
+  transactionAmountIncome: {
+    color: "#22C55E",
+  },
   modalContent: {
+    flex: 1,
     backgroundColor: "#FFFFFF",
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 20,
     paddingTop: 12,
+    minHeight: 0,
   },
   modalHandle: {
     width: 40,
@@ -320,13 +325,58 @@ export const styles = StyleSheet.create({
   closeButton: {
     padding: 4,
   },
+  modalFilterRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 12,
+  },
+  modalFilterBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: "#F3F4F6",
+    borderWidth: 1,
+    borderColor: "transparent",
+  },
+  modalFilterBadgeActive: {
+    backgroundColor: "#EDE9FE",
+    borderColor: "#7340FE",
+  },
+  modalFilterBadgeText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#6B7280",
+  },
+  modalFilterBadgeTextActive: {
+    color: "#7340FE",
+  },
+  modalCategoriesScroll: {
+    marginBottom: 12,
+    maxHeight: 40,
+  },
+  modalCategoriesScrollContent: {
+    flexDirection: "row",
+    gap: 8,
+    paddingRight: 20,
+  },
   modalSwipeHint: {
     fontSize: 12,
     color: "#9CA3AF",
     marginBottom: Spacing.sm,
   },
+  modalStaticContent: {
+    flexShrink: 0,
+  },
   modalScrollView: {
-    flexGrow: 0,
+    flex: 1,
+    minHeight: 0,
+  },
+  modalScrollViewContent: {
+    paddingBottom: Spacing.md,
   },
   editTransactionModalScrollView: {
     flexGrow: 0,
