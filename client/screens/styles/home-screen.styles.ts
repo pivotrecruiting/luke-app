@@ -227,6 +227,10 @@ export const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#000000",
   },
+  transactionsAllButton: {
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+  },
   transactionsAll: {
     fontSize: 14,
     fontWeight: "600",

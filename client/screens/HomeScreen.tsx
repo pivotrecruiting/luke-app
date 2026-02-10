@@ -455,7 +455,11 @@ export default function HomeScreen() {
         <View style={styles.transactionsSection}>
           <View style={styles.transactionsHeader}>
             <Text style={styles.transactionsTitle}>Letzte Transaktionen</Text>
-            <Pressable onPress={() => setAllTransactionsVisible(true)}>
+            <Pressable
+              onPress={() => setAllTransactionsVisible(true)}
+              hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
+              style={styles.transactionsAllButton}
+            >
               <Text style={styles.transactionsAll}>All</Text>
             </Pressable>
           </View>
