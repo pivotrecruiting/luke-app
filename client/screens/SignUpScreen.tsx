@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Alert,
   View,
@@ -15,6 +15,7 @@ import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollV
 import { Spacing, BorderRadius, Typography, Colors } from "@/constants/theme";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { OnboardingStackParamList } from "@/navigation/OnboardingNavigator";
+import { useApp } from "@/context/AppContext";
 import {
   completeAuthSessionIfNeeded,
   signInWithOAuth,
@@ -53,6 +54,7 @@ function GoogleLogo({ size = 20 }: { size?: number }) {
 export default function SignUpScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
+  const { isAppLoading, isOnboardingComplete } = useApp();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showWorkshopModal, setShowWorkshopModal] = useState(false);
@@ -62,6 +64,23 @@ export default function SignUpScreen() {
   );
   const [isAuthLoading, setIsAuthLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [pendingAuthSuccess, setPendingAuthSuccess] = useState(false);
+
+  useEffect(() => {
+    if (!pendingAuthSuccess) return;
+    if (isAppLoading) return;
+
+    if (!isOnboardingComplete) {
+      navigation.navigate("OnboardingCurrency");
+    }
+
+    setPendingAuthSuccess(false);
+  }, [
+    isAppLoading,
+    isOnboardingComplete,
+    navigation,
+    pendingAuthSuccess,
+  ]);
 
   const handleEmailSignUp = async () => {
     if (isAuthLoading) return;
@@ -83,7 +102,7 @@ export default function SignUpScreen() {
       const result = await signUpWithEmailPassword(trimmedEmail, password);
 
       if (result.status === "signed-in") {
-        navigation.navigate("OnboardingCurrency");
+        setPendingAuthSuccess(true);
         return;
       }
 
@@ -108,7 +127,7 @@ export default function SignUpScreen() {
       const result = await signInWithOAuth(provider);
 
       if (result.status === "signed-in") {
-        navigation.navigate("OnboardingCurrency");
+        setPendingAuthSuccess(true);
         return;
       }
 
