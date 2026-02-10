@@ -1,5 +1,4 @@
 import { Pressable, Text, TextInput, View } from "react-native";
-import { useApp } from "@/context/AppContext";
 import CurrencyInput from "@/components/CurrencyInput";
 import { styles } from "@/screens/styles/goal-detail-screen.styles";
 import { EMOJI_LIST } from "@/features/goals/constants/goals-constants";

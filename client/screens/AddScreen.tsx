@@ -20,6 +20,7 @@ import {
   formatCurrencyAmount,
   getCurrencySymbol,
 } from "@/utils/currency-format";
+import CurrencyInput from "@/components/CurrencyInput";
 
 type CategoryOptionT = {
   id: string;
@@ -104,7 +105,9 @@ export default function AddScreen() {
   const handleSave = () => {
     if (!amount || !selectedCategory) return;
 
-    const parsedAmount = parseFloat(amount.replace(",", "."));
+    const parsedAmount = parseFloat(
+      amount.replace(",", ".").replace(/\s/g, ""),
+    );
     if (isNaN(parsedAmount) || parsedAmount <= 0) {
       Alert.alert("Ungültiger Betrag", "Bitte gib einen gültigen Betrag ein.");
       return;
@@ -204,17 +207,12 @@ export default function AddScreen() {
       >
         <View style={styles.inputCard}>
           <Text style={styles.inputLabel}>Betrag</Text>
-          <View style={styles.amountInputContainer}>
-            <Text style={styles.currencySymbol}>{currencySymbol}</Text>
-            <TextInput
-              style={styles.amountInput}
-              value={amount}
-              onChangeText={setAmount}
-              placeholder="0,00"
-              placeholderTextColor="#9CA3AF"
-              keyboardType="decimal-pad"
-            />
-          </View>
+          <CurrencyInput
+            value={amount}
+            onChangeText={setAmount}
+            placeholder="0,00"
+            containerStyle={styles.amountInputContainer}
+          />
         </View>
 
         <View style={styles.inputCard}>

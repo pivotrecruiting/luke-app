@@ -139,6 +139,10 @@ export function AppProvider({ children }: AppProviderProps) {
 
   const handleDbError = useCallback((error: unknown, context: string) => {
     console.error(`DB error during ${context}:`, error);
+    if (error instanceof Error) {
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+    }
     setUseLocalFallback(true);
   }, []);
   const { resolveBudgetCategory } = useBudgetCategoryResolver({
