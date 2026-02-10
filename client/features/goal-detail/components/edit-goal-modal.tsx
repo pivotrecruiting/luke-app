@@ -86,7 +86,7 @@ export const EditGoalModal = ({
         onChangeText={onChangeAmount}
         placeholder="1000,00"
         variant="modal"
-        containerStyle={styles.modalInput}
+        containerStyle={styles.currencyInputContainer}
       />
 
       <Text style={styles.modalLabel}>Monatlicher Beitrag</Text>
@@ -95,7 +95,7 @@ export const EditGoalModal = ({
         onChangeText={onChangeMonthlyContribution}
         placeholder="200,00"
         variant="modal"
-        containerStyle={styles.modalInput}
+        containerStyle={styles.currencyInputContainer}
       />
 
       <Text style={styles.calculationText}>
@@ -103,14 +103,13 @@ export const EditGoalModal = ({
         <Text style={styles.calculationBold}>{monthsToGoal} Monaten</Text>
       </Text>
 
-      <View style={styles.modalButtons}>
-        <Pressable style={styles.cancelButton} onPress={onCancel}>
-          <Text style={styles.cancelButtonText}>abbrechen</Text>
-        </Pressable>
-        <Pressable style={styles.createButton} onPress={onSave}>
-          <Text style={styles.createButtonText}>Speichern</Text>
-        </Pressable>
-      </View>
+      <Pressable style={styles.modalSaveButton} onPress={onSave}>
+        <Text style={styles.modalSaveButtonText}>Speichern</Text>
+      </Pressable>
+
+      <Pressable style={styles.modalCancelButton} onPress={onCancel}>
+        <Text style={styles.modalCancelButtonText}>Abbrechen</Text>
+      </Pressable>
     </AppModal>
   );
 };
