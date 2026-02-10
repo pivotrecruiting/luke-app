@@ -10,14 +10,17 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { Spacing } from "@/constants/theme";
 import { useApp } from "@/context/AppContext";
+import type { Transaction } from "@/context/app/types";
 import {
   formatCurrencyAmount,
   getCurrencySymbol,
 } from "@/utils/currency-format";
+import { formatDate, parseFormattedDate } from "@/utils/dates";
 import { getUserFirstName } from "@/utils/user";
 import { styles } from "./styles/home-screen.styles";
 import { AppModal } from "@/components/ui/app-modal";
 import { SwipeableTransactionItem } from "@/features/home/components/swipeable-transaction-item";
+import { EditTransactionModal } from "@/features/home/components/edit-transaction-modal";
 const businessmanFigure = require("../../assets/images/businessman-figure.png");
 
 export default function HomeScreen() {
@@ -37,6 +40,10 @@ export default function HomeScreen() {
     goToNextWeek,
     currency,
     deleteTransaction,
+    updateTransaction,
+    budgetCategories,
+    incomeCategories,
+    isAppLoading,
   } = useApp();
   const currencySymbol = getCurrencySymbol(currency);
   const formatCurrency = (value: number) => {
@@ -120,8 +127,94 @@ export default function HomeScreen() {
 
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [allTransactionsVisible, setAllTransactionsVisible] = useState(false);
+  const [editTransactionModalVisible, setEditTransactionModalVisible] =
+    useState(false);
+  const [editingTransactionId, setEditingTransactionId] = useState<
+    string | null
+  >(null);
+  const [editName, setEditName] = useState("");
+  const [editAmount, setEditAmount] = useState("");
+  const [editSelectedCategoryId, setEditSelectedCategoryId] = useState<
+    string | null
+  >(null);
+  const [editDate, setEditDate] = useState(new Date());
+  const [showEditDatePicker, setShowEditDatePicker] = useState(false);
+  const [editIsExpense, setEditIsExpense] = useState(true);
   const scrollViewRef = useRef<ScrollView>(null);
   const swipeableRefs = useRef<Record<string, Swipeable | null>>({});
+
+  const openEditTransactionModal = useCallback((transaction: Transaction) => {
+    const isExpense = transaction.amount < 0;
+    const categories = isExpense ? budgetCategories : incomeCategories;
+    const category = categories.find(
+      (c) => c.name.toLowerCase() === transaction.category.toLowerCase(),
+    );
+    setEditingTransactionId(transaction.id);
+    setEditName(transaction.name);
+    setEditAmount(
+      Math.abs(transaction.amount).toString().replace(".", ","),
+    );
+    setEditSelectedCategoryId(category?.id ?? null);
+    setEditDate(parseFormattedDate(transaction.date));
+    setEditIsExpense(isExpense);
+    setShowEditDatePicker(false);
+    setEditTransactionModalVisible(true);
+  }, [budgetCategories, incomeCategories]);
+
+  const handleEditTransactionSave = useCallback(() => {
+    if (!editingTransactionId || !editSelectedCategoryId) return;
+    const categories = editIsExpense ? budgetCategories : incomeCategories;
+    const category = categories.find((c) => c.id === editSelectedCategoryId);
+    if (!category) return;
+    const parsedAmount = parseFloat(editAmount.replace(",", ".")) || 0;
+    if (parsedAmount <= 0) return;
+    const amount = editIsExpense ? -parsedAmount : parsedAmount;
+    const dateStr = formatDate(editDate);
+    updateTransaction(editingTransactionId, {
+      name: editName.trim(),
+      category: category.name,
+      amount,
+      date: dateStr,
+    });
+    setEditTransactionModalVisible(false);
+    setEditingTransactionId(null);
+  }, [
+    budgetCategories,
+    editAmount,
+    editDate,
+    editIsExpense,
+    editName,
+    editSelectedCategoryId,
+    editingTransactionId,
+    incomeCategories,
+    updateTransaction,
+  ]);
+
+  const handleEditTransactionCancel = useCallback(() => {
+    setEditTransactionModalVisible(false);
+    setEditingTransactionId(null);
+  }, []);
+
+  const editCategories = useMemo(
+    () =>
+      editIsExpense
+        ? budgetCategories.map((c) => ({
+            id: c.id,
+            name: c.name,
+            icon: c.icon ?? "circle",
+          }))
+        : incomeCategories.map((c) => ({
+            id: c.id,
+            name: c.name,
+            icon: c.icon ?? "circle",
+          })),
+    [budgetCategories, incomeCategories, editIsExpense],
+  );
+
+  const handleEditToggleType = useCallback(() => {
+    setEditIsExpense((prev) => !prev);
+    setEditSelectedCategoryId(null);
+  }, []);
 
   const handleSwipeOpen = useCallback((id: string) => {
     Object.entries(swipeableRefs.current).forEach(([txId, ref]) => {
@@ -305,7 +398,7 @@ export default function HomeScreen() {
             </Pressable>
           </View>
           <Text style={styles.transactionsSwipeHint}>
-            Wischen zum Löschen
+            Tippen zum Bearbeiten · Wischen zum Löschen
           </Text>
 
           {sortedTransactions.slice(0, 2).map((transaction) => (
@@ -321,6 +414,7 @@ export default function HomeScreen() {
               }}
               transaction={transaction}
               formatCurrency={formatCurrency}
+              onEdit={() => openEditTransactionModal(transaction)}
               onDelete={() => deleteTransaction(transaction.id)}
               onSwipeOpen={(id) => handleSwipeOpen(`list-${id}`)}
             />
@@ -347,7 +441,9 @@ export default function HomeScreen() {
             <Feather name="x" size={24} color="#000000" />
           </Pressable>
         </View>
-        <Text style={styles.modalSwipeHint}>Wischen zum Löschen</Text>
+        <Text style={styles.modalSwipeHint}>
+          Tippen zum Bearbeiten · Wischen zum Löschen
+        </Text>
         <ScrollView
           style={styles.modalScrollView}
           showsVerticalScrollIndicator={false}
@@ -366,12 +462,37 @@ export default function HomeScreen() {
               }}
               transaction={transaction}
               formatCurrency={formatCurrency}
+              onEdit={() => openEditTransactionModal(transaction)}
               onDelete={() => deleteTransaction(transaction.id)}
               onSwipeOpen={(id) => handleSwipeOpen(`modal-${id}`)}
             />
           ))}
         </ScrollView>
       </AppModal>
+
+      <EditTransactionModal
+        visible={editTransactionModalVisible}
+        bottomInset={insets.bottom}
+        editName={editName}
+        editAmount={editAmount}
+        selectedCategoryId={editSelectedCategoryId}
+        categories={editCategories}
+        editDate={editDate}
+        showDatePicker={showEditDatePicker}
+        isExpense={editIsExpense}
+        isAppLoading={isAppLoading}
+        onChangeName={setEditName}
+        onChangeAmount={setEditAmount}
+        onSelectCategory={setEditSelectedCategoryId}
+        onOpenDatePicker={() => setShowEditDatePicker(true)}
+        onCloseDatePicker={() => setShowEditDatePicker(false)}
+        onDateChange={(_, date) => {
+          if (date) setEditDate(date);
+        }}
+        onToggleType={handleEditToggleType}
+        onSave={handleEditTransactionSave}
+        onCancel={handleEditTransactionCancel}
+      />
     </View>
   );
 }

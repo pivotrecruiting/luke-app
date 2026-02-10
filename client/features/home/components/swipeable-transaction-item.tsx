@@ -9,6 +9,7 @@ import { styles } from "@/screens/styles/home-screen.styles";
 type SwipeableTransactionItemPropsT = {
   transaction: Transaction;
   formatCurrency: (amount: number) => string;
+  onEdit: () => void;
   onDelete: () => void;
   onSwipeOpen: (id: string) => void;
 };
@@ -20,10 +21,11 @@ export const SwipeableTransactionItem = React.forwardRef<
   Swipeable,
   SwipeableTransactionItemPropsT
 >(function SwipeableTransactionItem(
-  { transaction, formatCurrency, onDelete, onSwipeOpen },
+  { transaction, formatCurrency, onEdit, onDelete, onSwipeOpen },
   ref,
 ) {
   const internalRef = useRef<Swipeable | null>(null);
+  const justSwipedRef = useRef(false);
 
   const setRef = useCallback(
     (instance: Swipeable | null) => {
@@ -59,14 +61,28 @@ export const SwipeableTransactionItem = React.forwardRef<
     );
   }, [formatCurrency, onDelete, transaction.amount, transaction.name]);
 
+  const handleSwipeWillOpen = useCallback((direction: "left" | "right") => {
+    if (direction === "right") {
+      justSwipedRef.current = true;
+    }
+  }, []);
+
   const handleSwipeOpen = useCallback(
     (direction: "left" | "right") => {
       if (direction === "right") {
         onSwipeOpen(transaction.id);
+        setTimeout(() => {
+          justSwipedRef.current = false;
+        }, 400);
       }
     },
     [onSwipeOpen, transaction.id],
   );
+
+  const handleRowPress = useCallback(() => {
+    if (justSwipedRef.current) return;
+    onEdit();
+  }, [onEdit]);
 
   const renderRightActions = useCallback(
     () => (
@@ -85,12 +101,14 @@ export const SwipeableTransactionItem = React.forwardRef<
       <Swipeable
         ref={setRef}
         renderRightActions={renderRightActions}
+        onSwipeableWillOpen={handleSwipeWillOpen}
         onSwipeableOpen={(direction) => handleSwipeOpen(direction)}
         rightThreshold={40}
         friction={2}
       >
         <Pressable
           style={styles.transactionItem}
+          onPress={handleRowPress}
           onLongPress={() => internalRef.current?.openRight()}
         >
           <View style={styles.transactionIconContainer}>
