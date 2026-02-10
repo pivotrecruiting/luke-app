@@ -83,7 +83,7 @@ export default function SignUpScreen() {
       const result = await signUpWithEmailPassword(trimmedEmail, password);
 
       if (result.status === "signed-in") {
-        navigation.navigate("Onboarding1");
+        navigation.navigate("OnboardingCurrency");
         return;
       }
 
@@ -108,7 +108,7 @@ export default function SignUpScreen() {
       const result = await signInWithOAuth(provider);
 
       if (result.status === "signed-in") {
-        navigation.navigate("Onboarding1");
+        navigation.navigate("OnboardingCurrency");
         return;
       }
 
@@ -291,7 +291,7 @@ export default function SignUpScreen() {
                 setShowWorkshopModal(false);
                 setWorkshopCode("");
                 setCodeStatus("neutral");
-                navigation.navigate("Onboarding1");
+                navigation.navigate("OnboardingCurrency");
               }, 600);
             } else {
               setCodeStatus("invalid");

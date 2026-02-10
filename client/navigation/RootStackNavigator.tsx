@@ -53,7 +53,7 @@ export default function RootStackNavigator() {
   // Otherwise, screens will use their custom headers
   const useNativeHeader = liquidGlassAvailable && Platform.OS === "ios";
 
-  if (isLoading || isAppLoading) {
+  if (isLoading || (isAppLoading && !showOnboarding)) {
     return null;
   }
 
