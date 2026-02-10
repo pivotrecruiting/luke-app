@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Platform } from "react-native";
 import type { NavigatorScreenParams } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -37,8 +37,36 @@ export default function RootStackNavigator() {
   const { isOnboardingComplete, isAppLoading } = useApp();
   const { session, isLoading } = useAuth();
   const isAuthenticated = Boolean(session);
-  const showOnboarding = !isAuthenticated || !isOnboardingComplete;
+  const wasAuthenticatedRef = useRef<boolean | null>(null);
+  const [isSignInTransition, setIsSignInTransition] = useState(false);
+  const showOnboarding =
+    !isAuthenticated || isSignInTransition || !isOnboardingComplete;
   const liquidGlassAvailable = isLiquidGlassAvailable();
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    if (wasAuthenticatedRef.current === null) {
+      wasAuthenticatedRef.current = isAuthenticated;
+      return;
+    }
+
+    if (!wasAuthenticatedRef.current && isAuthenticated) {
+      setIsSignInTransition(true);
+    }
+
+    if (wasAuthenticatedRef.current && !isAuthenticated) {
+      setIsSignInTransition(false);
+    }
+
+    wasAuthenticatedRef.current = isAuthenticated;
+  }, [isAuthenticated, isLoading]);
+
+  useEffect(() => {
+    if (!isSignInTransition) return;
+    if (isAppLoading) return;
+    setIsSignInTransition(false);
+  }, [isAppLoading, isSignInTransition]);
 
   // Base glass effect configuration for iOS 18+
   // Use 'regular' for iOS 18+ Liquid Glass, fallback to custom header for older versions
