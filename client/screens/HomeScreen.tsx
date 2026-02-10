@@ -149,6 +149,7 @@ export default function HomeScreen() {
     const category = categories.find(
       (c) => c.name.toLowerCase() === transaction.category.toLowerCase(),
     );
+    setAllTransactionsVisible(false);
     setEditingTransactionId(transaction.id);
     setEditName(transaction.name);
     setEditAmount(
