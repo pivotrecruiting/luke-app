@@ -1,11 +1,14 @@
+import { useRef, useCallback } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import Swipeable from "react-native-gesture-handler/Swipeable";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useApp } from "@/context/AppContext";
 import { getCurrencySymbol } from "@/utils/currency-format";
 import { styles } from "@/screens/styles/insights-screen.styles";
 import { formatCurrency } from "../utils/format";
 import type { IncomeEntry } from "@/context/AppContext";
+import { SwipeableIncomeItem } from "./swipeable-income-item";
 
 type IncomeTabPropsT = {
   bottomInset: number;
@@ -27,16 +30,22 @@ export const IncomeTab = ({
   bottomInset,
   totalIncome,
   incomeEntries,
-  deleteConfirmId,
   onAddIncome,
   onEditIncome,
-  onRequestDelete,
-  onCancelDelete,
   onConfirmDelete,
   getIconForIncomeType,
 }: IncomeTabPropsT) => {
   const { currency } = useApp();
   const currencySymbol = getCurrencySymbol(currency);
+  const swipeableRefs = useRef<Record<string, Swipeable | null>>({});
+
+  const handleSwipeOpen = useCallback((id: string) => {
+    Object.entries(swipeableRefs.current).forEach(([entryId, ref]) => {
+      if (entryId !== id && ref?.close) {
+        ref.close();
+      }
+    });
+  }, []);
   return (
     <ScrollView
       style={styles.scrollView}
@@ -63,6 +72,9 @@ export const IncomeTab = ({
       </View>
 
       <Text style={styles.incomeSectionTitle}>Einnahmequellen</Text>
+      <Text style={styles.incomeSwipeHint}>
+        Wischen zum Löschen, tippen zum Bearbeiten
+      </Text>
 
       {incomeEntries.length === 0 ? (
         <View style={styles.incomeEmptyState}>
@@ -82,55 +94,20 @@ export const IncomeTab = ({
             key={entry.id}
             entering={FadeInDown.delay(index * 50).duration(300)}
           >
-            <Pressable
-              style={styles.incomeItem}
-              onPress={() => onEditIncome(entry)}
-            >
-              <View style={styles.incomeLeft}>
-                <View style={styles.incomeIconContainer}>
-                  <Feather
-                    name={getIconForIncomeType(entry.type) as any}
-                    size={20}
-                    color="#10B981"
-                  />
-                </View>
-                <View>
-                  <Text style={styles.incomeType}>{entry.type}</Text>
-                  <Text style={styles.incomeFrequency}>Monatlich</Text>
-                </View>
-              </View>
-              <View style={styles.incomeRight}>
-                <Text style={styles.incomeAmount}>
-                  {currencySymbol} {formatCurrency(entry.amount, currency)}
-                </Text>
-                <Pressable
-                  onPress={() => onRequestDelete(entry.id)}
-                  hitSlop={8}
-                >
-                  <Feather name="trash-2" size={18} color="#9CA3AF" />
-                </Pressable>
-              </View>
-            </Pressable>
-
-            {deleteConfirmId === entry.id && (
-              <View style={styles.deleteConfirm}>
-                <Text style={styles.deleteConfirmText}>Wirklich löschen?</Text>
-                <View style={styles.deleteActions}>
-                  <Pressable
-                    style={styles.cancelDeleteBtn}
-                    onPress={onCancelDelete}
-                  >
-                    <Text style={styles.cancelDeleteText}>Abbrechen</Text>
-                  </Pressable>
-                  <Pressable
-                    style={styles.confirmDeleteBtn}
-                    onPress={() => onConfirmDelete(entry.id)}
-                  >
-                    <Text style={styles.confirmDeleteText}>Löschen</Text>
-                  </Pressable>
-                </View>
-              </View>
-            )}
+            <SwipeableIncomeItem
+              ref={(r) => {
+                if (r) {
+                  swipeableRefs.current[entry.id] = r;
+                } else {
+                  delete swipeableRefs.current[entry.id];
+                }
+              }}
+              entry={entry}
+              getIconForIncomeType={getIconForIncomeType}
+              onEdit={() => onEditIncome(entry)}
+              onDelete={() => onConfirmDelete(entry.id)}
+              onSwipeOpen={handleSwipeOpen}
+            />
           </Animated.View>
         ))
       )}

@@ -1,11 +1,14 @@
+import { useRef, useCallback } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import Swipeable from "react-native-gesture-handler/Swipeable";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useApp } from "@/context/AppContext";
 import { getCurrencySymbol } from "@/utils/currency-format";
 import { styles } from "@/screens/styles/insights-screen.styles";
 import { formatCurrency } from "../utils/format";
 import type { ExpenseEntry } from "@/context/AppContext";
+import { SwipeableExpenseItem } from "./swipeable-expense-item";
 
 type ExpensesTabPropsT = {
   bottomInset: number;
@@ -27,16 +30,22 @@ export const ExpensesTab = ({
   bottomInset,
   totalFixedExpenses,
   expenseEntries,
-  deleteConfirmId,
   onAddExpense,
   onEditExpense,
-  onRequestDelete,
-  onCancelDelete,
   onConfirmDelete,
   getIconForExpenseType,
 }: ExpensesTabPropsT) => {
   const { currency } = useApp();
   const currencySymbol = getCurrencySymbol(currency);
+  const swipeableRefs = useRef<Record<string, Swipeable | null>>({});
+
+  const handleSwipeOpen = useCallback((id: string) => {
+    Object.entries(swipeableRefs.current).forEach(([entryId, ref]) => {
+      if (entryId !== id && ref?.close) {
+        ref.close();
+      }
+    });
+  }, []);
 
   return (
     <ScrollView
@@ -64,6 +73,9 @@ export const ExpensesTab = ({
       </View>
 
       <Text style={styles.expenseSectionTitle}>Fixkosten</Text>
+      <Text style={styles.expenseSwipeHint}>
+        Wischen zum Löschen, tippen zum Bearbeiten
+      </Text>
 
       {expenseEntries.length === 0 ? (
         <View style={styles.expenseEmptyState}>
@@ -83,55 +95,20 @@ export const ExpensesTab = ({
             key={entry.id}
             entering={FadeInDown.delay(index * 50).duration(300)}
           >
-            <Pressable
-              style={styles.expenseItem}
-              onPress={() => onEditExpense(entry)}
-            >
-              <View style={styles.expenseLeft}>
-                <View style={styles.expenseIconContainer}>
-                  <Feather
-                    name={getIconForExpenseType(entry.type) as any}
-                    size={20}
-                    color="#EF4444"
-                  />
-                </View>
-                <View>
-                  <Text style={styles.expenseType}>{entry.type}</Text>
-                  <Text style={styles.expenseFrequency}>Monatlich</Text>
-                </View>
-              </View>
-              <View style={styles.expenseRight}>
-                <Text style={styles.expenseAmount}>
-                  {currencySymbol} {formatCurrency(entry.amount, currency)}
-                </Text>
-                <Pressable
-                  onPress={() => onRequestDelete(entry.id)}
-                  hitSlop={8}
-                >
-                  <Feather name="trash-2" size={18} color="#9CA3AF" />
-                </Pressable>
-              </View>
-            </Pressable>
-
-            {deleteConfirmId === entry.id && (
-              <View style={styles.deleteConfirm}>
-                <Text style={styles.deleteConfirmText}>Wirklich löschen?</Text>
-                <View style={styles.deleteActions}>
-                  <Pressable
-                    style={styles.cancelDeleteBtn}
-                    onPress={onCancelDelete}
-                  >
-                    <Text style={styles.cancelDeleteText}>Abbrechen</Text>
-                  </Pressable>
-                  <Pressable
-                    style={styles.confirmDeleteBtn}
-                    onPress={() => onConfirmDelete(entry.id)}
-                  >
-                    <Text style={styles.confirmDeleteText}>Löschen</Text>
-                  </Pressable>
-                </View>
-              </View>
-            )}
+            <SwipeableExpenseItem
+              ref={(r) => {
+                if (r) {
+                  swipeableRefs.current[entry.id] = r;
+                } else {
+                  delete swipeableRefs.current[entry.id];
+                }
+              }}
+              entry={entry}
+              getIconForExpenseType={getIconForExpenseType}
+              onEdit={() => onEditExpense(entry)}
+              onDelete={() => onConfirmDelete(entry.id)}
+              onSwipeOpen={handleSwipeOpen}
+            />
           </Animated.View>
         ))
       )}
