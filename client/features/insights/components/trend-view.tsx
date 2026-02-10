@@ -131,13 +131,6 @@ export const TrendView = ({
         </View>
 
         <View style={styles.chartContainer}>
-          {selectedMonth !== null ? (
-            <View style={styles.trendChartSelectedAmount}>
-              <Text style={styles.trendChartSelectedAmountText}>
-                {currencySymbol} {formatCurrency(displayedData.amount, currency)}
-              </Text>
-            </View>
-          ) : null}
           <View style={styles.trendChartBars}>
             {monthlyData.map((data, index) => {
               const isZero = data.amount <= 0;
