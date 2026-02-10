@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef, useCallback } from "react";
 import { View, Text, ScrollView, Pressable } from "react-native";
+import Swipeable from "react-native-gesture-handler/Swipeable";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "expo-image";
@@ -16,6 +17,7 @@ import {
 import { getUserFirstName } from "@/utils/user";
 import { styles } from "./styles/home-screen.styles";
 import { AppModal } from "@/components/ui/app-modal";
+import { SwipeableTransactionItem } from "@/features/home/components/swipeable-transaction-item";
 const businessmanFigure = require("../../assets/images/businessman-figure.png");
 
 export default function HomeScreen() {
@@ -34,6 +36,7 @@ export default function HomeScreen() {
     goToPreviousWeek,
     goToNextWeek,
     currency,
+    deleteTransaction,
   } = useApp();
   const currencySymbol = getCurrencySymbol(currency);
   const formatCurrency = (value: number) => {
@@ -118,6 +121,15 @@ export default function HomeScreen() {
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [allTransactionsVisible, setAllTransactionsVisible] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
+  const swipeableRefs = useRef<Record<string, Swipeable | null>>({});
+
+  const handleSwipeOpen = useCallback((id: string) => {
+    Object.entries(swipeableRefs.current).forEach(([txId, ref]) => {
+      if (txId !== id && ref?.close) {
+        ref.close();
+      }
+    });
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -292,27 +304,26 @@ export default function HomeScreen() {
               <Text style={styles.transactionsAll}>All</Text>
             </Pressable>
           </View>
+          <Text style={styles.transactionsSwipeHint}>
+            Wischen zum Löschen
+          </Text>
 
           {sortedTransactions.slice(0, 2).map((transaction) => (
-            <View key={transaction.id} style={styles.transactionItem}>
-              <View style={styles.transactionIconContainer}>
-                <Feather
-                  name={transaction.icon as any}
-                  size={20}
-                  color="#7B8CDE"
-                />
-              </View>
-              <View style={styles.transactionDetails}>
-                <Text style={styles.transactionName}>{transaction.name}</Text>
-                <Text style={styles.transactionCategory}>
-                  {transaction.category}
-                </Text>
-                <Text style={styles.transactionDate}>{transaction.date}</Text>
-              </View>
-              <Text style={styles.transactionAmount}>
-                {formatCurrency(transaction.amount)}
-              </Text>
-            </View>
+            <SwipeableTransactionItem
+              key={`list-${transaction.id}`}
+              ref={(r) => {
+                const key = `list-${transaction.id}`;
+                if (r) {
+                  swipeableRefs.current[key] = r;
+                } else {
+                  delete swipeableRefs.current[key];
+                }
+              }}
+              transaction={transaction}
+              formatCurrency={formatCurrency}
+              onDelete={() => deleteTransaction(transaction.id)}
+              onSwipeOpen={(id) => handleSwipeOpen(`list-${id}`)}
+            />
           ))}
         </View>
       </ScrollView>
@@ -336,31 +347,28 @@ export default function HomeScreen() {
             <Feather name="x" size={24} color="#000000" />
           </Pressable>
         </View>
+        <Text style={styles.modalSwipeHint}>Wischen zum Löschen</Text>
         <ScrollView
           style={styles.modalScrollView}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
           {sortedTransactions.map((transaction) => (
-            <View key={transaction.id} style={styles.transactionItem}>
-              <View style={styles.transactionIconContainer}>
-                <Feather
-                  name={transaction.icon as any}
-                  size={20}
-                  color="#7B8CDE"
-                />
-              </View>
-              <View style={styles.transactionDetails}>
-                <Text style={styles.transactionName}>{transaction.name}</Text>
-                <Text style={styles.transactionCategory}>
-                  {transaction.category}
-                </Text>
-                <Text style={styles.transactionDate}>{transaction.date}</Text>
-              </View>
-              <Text style={styles.transactionAmount}>
-                {formatCurrency(transaction.amount)}
-              </Text>
-            </View>
+            <SwipeableTransactionItem
+              key={`modal-${transaction.id}`}
+              ref={(r) => {
+                const key = `modal-${transaction.id}`;
+                if (r) {
+                  swipeableRefs.current[key] = r;
+                } else {
+                  delete swipeableRefs.current[key];
+                }
+              }}
+              transaction={transaction}
+              formatCurrency={formatCurrency}
+              onDelete={() => deleteTransaction(transaction.id)}
+              onSwipeOpen={(id) => handleSwipeOpen(`modal-${id}`)}
+            />
           ))}
         </ScrollView>
       </AppModal>

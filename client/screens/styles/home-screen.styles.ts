@@ -232,13 +232,27 @@ export const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#3B82F6",
   },
+  transactionsSwipeHint: {
+    fontSize: 12,
+    color: "#9CA3AF",
+    marginBottom: Spacing.sm,
+  },
+  transactionItemWrapper: {
+    borderRadius: 12,
+    overflow: "hidden",
+    marginBottom: Spacing.sm,
+  },
+  swipeableDeleteAction: {
+    width: 80,
+    backgroundColor: "#EF4444",
+    justifyContent: "center",
+    alignItems: "center",
+  },
   transactionItem: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#FFFFFF",
-    borderRadius: 12,
     padding: Spacing.md,
-    marginBottom: Spacing.sm,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
@@ -305,6 +319,11 @@ export const styles = StyleSheet.create({
   },
   closeButton: {
     padding: 4,
+  },
+  modalSwipeHint: {
+    fontSize: 12,
+    color: "#9CA3AF",
+    marginBottom: Spacing.sm,
   },
   modalScrollView: {
     flexGrow: 0,
