@@ -1,4 +1,5 @@
 import { Pressable, Text, View } from "react-native";
+import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { styles } from "@/screens/styles/insights-screen.styles";
 import type { InsightsTabT } from "../types/insights-types";
@@ -28,6 +29,21 @@ export const InsightsHeader = ({
       <Text style={styles.headerSubtitle}>alles auf einen Blick.</Text>
 
       <View style={styles.toggleContainer}>
+        <Pressable
+          style={[
+            styles.toggleButtonIcon,
+            activeTab === "analytics" && styles.toggleButtonActive,
+          ]}
+          onPress={() => onChangeTab("analytics")}
+        >
+          <Feather
+            name="bar-chart-2"
+            size={20}
+            color={
+              activeTab === "analytics" ? "#3B5BDB" : "rgba(255,255,255,0.8)"
+            }
+          />
+        </Pressable>
         <Pressable
           style={[
             styles.toggleButton,

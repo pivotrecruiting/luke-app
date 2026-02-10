@@ -33,6 +33,14 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 22,
   },
+  toggleButtonIcon: {
+    flex: 0,
+    width: 48,
+    paddingVertical: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 22,
+  },
   toggleButtonActive: {
     backgroundColor: "#FFFFFF",
   },

@@ -1,101 +1,45 @@
-import { useEffect, useMemo, useRef, type RefObject } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
-import PagerView from "react-native-pager-view";
+import { Feather } from "@expo/vector-icons";
+import Animated, { FadeInDown } from "react-native-reanimated";
+import { useApp } from "@/context/AppContext";
+import { getCurrencySymbol } from "@/utils/currency-format";
 import { styles } from "@/screens/styles/insights-screen.styles";
-import { CategoriesPanel } from "./categories-panel";
-import { IncomeExpensesView } from "./income-expenses-view";
-import { TrendView } from "./trend-view";
-import type {
-  CategoryT,
-  InsightsFilterT,
-  MonthlyTrendT,
-  TimeFilterT,
-} from "../types/insights-types";
+import { formatCurrency } from "../utils/format";
+import type { ExpenseEntry } from "@/context/AppContext";
 
 type ExpensesTabPropsT = {
-  scrollViewRef: RefObject<ScrollView | null>;
   bottomInset: number;
-  activeFilter: InsightsFilterT;
-  onChangeFilter: (value: InsightsFilterT) => void;
-  selectedTimeFilter: TimeFilterT;
-  onSelectTimeFilter: (value: TimeFilterT) => void;
-  categories: CategoryT[];
-  totalCategoryExpenses: number;
-  selectedCategory: string | null;
-  onSelectCategory: (name: string | null) => void;
-  onToggleCategory: (name: string) => void;
-  monthlyTrendData: MonthlyTrendT[];
-  selectedTrendMonth: number | null;
-  onSelectTrendMonth: (index: number | null) => void;
-  totalIncome: number;
-  totalExpenses: number;
+  totalFixedExpenses: number;
+  expenseEntries: ExpenseEntry[];
+  deleteConfirmId: string | null;
+  onAddExpense: () => void;
+  onEditExpense: (entry: ExpenseEntry) => void;
+  onRequestDelete: (id: string) => void;
+  onCancelDelete: () => void;
+  onConfirmDelete: (id: string) => void;
+  getIconForExpenseType: (typeName: string) => string;
 };
 
 /**
- * Renders the expenses tab with filters, categories, comparison and trend.
+ * Displays the expenses tab with summary, list of fix costs, and tips.
  */
 export const ExpensesTab = ({
-  scrollViewRef,
   bottomInset,
-  activeFilter,
-  onChangeFilter,
-  selectedTimeFilter,
-  onSelectTimeFilter,
-  categories,
-  totalCategoryExpenses,
-  selectedCategory,
-  onSelectCategory,
-  onToggleCategory,
-  monthlyTrendData,
-  selectedTrendMonth,
-  onSelectTrendMonth,
-  totalIncome,
-  totalExpenses,
+  totalFixedExpenses,
+  expenseEntries,
+  deleteConfirmId,
+  onAddExpense,
+  onEditExpense,
+  onRequestDelete,
+  onCancelDelete,
+  onConfirmDelete,
+  getIconForExpenseType,
 }: ExpensesTabPropsT) => {
-  const pagerRef = useRef<PagerView>(null);
-
-  const timeFilterOptions = useMemo<{ id: TimeFilterT; label: string }[]>(
-    () => [
-      { id: "thisMonth", label: "Dieser Mon." },
-      { id: "lastMonth", label: "Letzter Mon." },
-      { id: "last3Months", label: "3M" },
-      { id: "last6Months", label: "6M" },
-      { id: "thisYear", label: "Y" },
-    ],
-    [],
-  );
-
-  const filterOrder = useMemo<InsightsFilterT[]>(
-    () => ["kategorien", "income", "trend"],
-    [],
-  );
-
-  const filterToIndex = (filter: InsightsFilterT) => {
-    return filterOrder.indexOf(filter);
-  };
-
-  const indexToFilter = (index: number) => {
-    return filterOrder[index] ?? "kategorien";
-  };
-
-  useEffect(() => {
-    const targetIndex = filterToIndex(activeFilter);
-    if (targetIndex >= 0) {
-      pagerRef.current?.setPage(targetIndex);
-    }
-  }, [activeFilter]);
-
-  const handleTabPress = (filter: InsightsFilterT) => {
-    onChangeFilter(filter);
-    const targetIndex = filterToIndex(filter);
-    if (targetIndex >= 0) {
-      pagerRef.current?.setPage(targetIndex);
-    }
-  };
+  const { currency } = useApp();
+  const currencySymbol = getCurrencySymbol(currency);
 
   return (
     <ScrollView
-      ref={scrollViewRef}
       style={styles.scrollView}
       contentContainerStyle={[
         styles.scrollContent,
@@ -104,120 +48,104 @@ export const ExpensesTab = ({
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
     >
-      <View style={styles.filterRow}>
-        {timeFilterOptions.map((option) => {
-          const isSelected = selectedTimeFilter === option.id;
-          return (
+      <View style={styles.expenseSummaryCard}>
+        <View style={styles.expenseSummaryIcon}>
+          <Feather name="trending-down" size={28} color="#EF4444" />
+        </View>
+        <View style={styles.expenseSummaryContent}>
+          <Text style={styles.expenseSummaryLabel}>Monatliche Fixkosten</Text>
+          <Text style={styles.expenseSummaryAmount}>
+            {currencySymbol} {formatCurrency(totalFixedExpenses, currency)}
+          </Text>
+        </View>
+        <Pressable style={styles.addExpenseButton} onPress={onAddExpense}>
+          <Feather name="plus" size={20} color="#7340fd" />
+        </Pressable>
+      </View>
+
+      <Text style={styles.expenseSectionTitle}>Fixkosten</Text>
+
+      {expenseEntries.length === 0 ? (
+        <View style={styles.expenseEmptyState}>
+          <Feather name="inbox" size={48} color="#D1D5DB" />
+          <Text style={styles.expenseEmptyText}>
+            Noch keine Ausgaben hinzugefügt
+          </Text>
+          <Pressable style={styles.expenseEmptyButton} onPress={onAddExpense}>
+            <Text style={styles.expenseEmptyButtonText}>
+              Ausgabe hinzufügen
+            </Text>
+          </Pressable>
+        </View>
+      ) : (
+        expenseEntries.map((entry, index) => (
+          <Animated.View
+            key={entry.id}
+            entering={FadeInDown.delay(index * 50).duration(300)}
+          >
             <Pressable
-              key={option.id}
-              style={[
-                styles.filterBadge,
-                isSelected && styles.filterBadgeActive,
-              ]}
-              onPress={() => onSelectTimeFilter(option.id)}
+              style={styles.expenseItem}
+              onPress={() => onEditExpense(entry)}
             >
-              <Text
-                style={[
-                  styles.filterBadgeText,
-                  isSelected && styles.filterBadgeTextActive,
-                ]}
-              >
-                {option.label}
-              </Text>
+              <View style={styles.expenseLeft}>
+                <View style={styles.expenseIconContainer}>
+                  <Feather
+                    name={getIconForExpenseType(entry.type) as any}
+                    size={20}
+                    color="#EF4444"
+                  />
+                </View>
+                <View>
+                  <Text style={styles.expenseType}>{entry.type}</Text>
+                  <Text style={styles.expenseFrequency}>Monatlich</Text>
+                </View>
+              </View>
+              <View style={styles.expenseRight}>
+                <Text style={styles.expenseAmount}>
+                  {currencySymbol} {formatCurrency(entry.amount, currency)}
+                </Text>
+                <Pressable
+                  onPress={() => onRequestDelete(entry.id)}
+                  hitSlop={8}
+                >
+                  <Feather name="trash-2" size={18} color="#9CA3AF" />
+                </Pressable>
+              </View>
             </Pressable>
-          );
-        })}
+
+            {deleteConfirmId === entry.id && (
+              <View style={styles.deleteConfirm}>
+                <Text style={styles.deleteConfirmText}>Wirklich löschen?</Text>
+                <View style={styles.deleteActions}>
+                  <Pressable
+                    style={styles.cancelDeleteBtn}
+                    onPress={onCancelDelete}
+                  >
+                    <Text style={styles.cancelDeleteText}>Abbrechen</Text>
+                  </Pressable>
+                  <Pressable
+                    style={styles.confirmDeleteBtn}
+                    onPress={() => onConfirmDelete(entry.id)}
+                  >
+                    <Text style={styles.confirmDeleteText}>Löschen</Text>
+                  </Pressable>
+                </View>
+              </View>
+            )}
+          </Animated.View>
+        ))
+      )}
+
+      <View style={styles.expenseTipCard}>
+        <View style={styles.expenseTipHeader}>
+          <Feather name="info" size={18} color="#EF4444" />
+          <Text style={styles.expenseTipTitle}>Tipp</Text>
+        </View>
+        <Text style={styles.expenseTipText}>
+          Füge alle regelmäßigen Fixkosten hinzu, um dein verfügbares Budget
+          genauer zu berechnen.
+        </Text>
       </View>
-
-      <View style={styles.tabsRow}>
-        <Pressable
-          style={[
-            styles.tabButton,
-            activeFilter === "kategorien" && styles.tabButtonActive,
-          ]}
-          onPress={() => handleTabPress("kategorien")}
-        >
-          <Text
-            style={[
-              styles.tabButtonText,
-              activeFilter === "kategorien" && styles.tabButtonTextActive,
-            ]}
-          >
-            Kategorien
-          </Text>
-        </Pressable>
-        <Pressable
-          style={[
-            styles.tabButton,
-            activeFilter === "income" && styles.tabButtonActive,
-          ]}
-          onPress={() => handleTabPress("income")}
-        >
-          <Text
-            style={[
-              styles.tabButtonText,
-              activeFilter === "income" && styles.tabButtonTextActive,
-            ]}
-          >
-            Vergleich
-          </Text>
-        </Pressable>
-        <Pressable
-          style={[
-            styles.tabButton,
-            activeFilter === "trend" && styles.tabButtonActive,
-          ]}
-          onPress={() => handleTabPress("trend")}
-        >
-          <Text
-            style={[
-              styles.tabButtonText,
-              activeFilter === "trend" && styles.tabButtonTextActive,
-            ]}
-          >
-            Trend
-          </Text>
-        </Pressable>
-      </View>
-
-      <PagerView
-        ref={pagerRef}
-        style={styles.pagerView}
-        initialPage={filterToIndex(activeFilter)}
-        onPageSelected={(event) => {
-          const nextFilter = indexToFilter(event.nativeEvent.position);
-          if (nextFilter !== activeFilter) {
-            onChangeFilter(nextFilter);
-          }
-        }}
-      >
-        <View key="kategorien" style={styles.pagerPage}>
-          <CategoriesPanel
-            categories={categories}
-            total={totalCategoryExpenses}
-            selectedCategory={selectedCategory}
-            onSelectCategory={onSelectCategory}
-            onToggleCategory={onToggleCategory}
-          />
-        </View>
-
-        <View key="income" style={styles.pagerPage}>
-          <IncomeExpensesView
-            income={totalIncome}
-            expenses={totalExpenses}
-            timeFilter={selectedTimeFilter}
-          />
-        </View>
-
-        <View key="trend" style={styles.pagerPage}>
-          <TrendView
-            monthlyData={monthlyTrendData}
-            timeFilter={selectedTimeFilter}
-            selectedMonth={selectedTrendMonth}
-            onSelectMonth={onSelectTrendMonth}
-          />
-        </View>
-      </PagerView>
     </ScrollView>
   );
 };

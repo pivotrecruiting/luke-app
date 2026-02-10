@@ -1,4 +1,4 @@
-export type InsightsTabT = "ausgaben" | "einnahmen";
+export type InsightsTabT = "ausgaben" | "einnahmen" | "analytics";
 
 export type InsightsFilterT = "kategorien" | "income" | "trend";
 
