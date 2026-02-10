@@ -50,7 +50,7 @@ export default function Onboarding7Screen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top + Spacing.xl }]}>
       <View style={styles.content}>
-        <ProgressDots total={6} current={5} />
+        <ProgressDots total={8} current={6} />
 
         <Text style={styles.title}>Dein monatlicher Spielraum</Text>
         <Text style={styles.subtitle}>Luke hat gerechnet!</Text>

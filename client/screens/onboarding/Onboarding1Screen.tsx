@@ -41,7 +41,7 @@ export default function Onboarding1Screen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + Spacing.xl }]}>
-      <ProgressDots total={6} current={0} />
+      <ProgressDots total={8} current={0} />
 
       <View style={styles.headerContainer}>
         <Text style={styles.titleBold}>Welche Währung nutzt du?</Text>

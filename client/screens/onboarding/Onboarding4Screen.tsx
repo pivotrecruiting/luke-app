@@ -355,7 +355,7 @@ export default function Onboarding4Screen() {
           { paddingBottom: insets.bottom + 100 },
         ]}
       >
-        <ProgressDots total={6} current={3} />
+        <ProgressDots total={8} current={3} />
 
         <View style={styles.headerContainer}>
           <Text style={styles.titleBold}>Worauf sparst du?</Text>

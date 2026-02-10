@@ -91,7 +91,7 @@ export default function Onboarding5Screen() {
           { paddingBottom: insets.bottom + 100 },
         ]}
       >
-        <ProgressDots total={6} current={4} />
+        <ProgressDots total={8} current={4} />
 
         <View style={styles.headerContainer}>
           <Text style={styles.titleBold}>Was kommt monatlich</Text>

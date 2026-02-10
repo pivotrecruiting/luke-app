@@ -93,7 +93,7 @@ export default function Onboarding6Screen() {
           { paddingBottom: insets.bottom + 100 },
         ]}
       >
-        <ProgressDots total={6} current={5} />
+        <ProgressDots total={8} current={5} />
 
         <View style={styles.headerContainer}>
           <Text style={styles.titleBold}>Was geht monatlich</Text>

@@ -86,7 +86,7 @@ export default function Onboarding8Screen() {
           { paddingBottom: insets.bottom + 100 },
         ]}
       >
-        <ProgressDots total={6} current={5} />
+        <ProgressDots total={8} current={7} />
 
         <View style={styles.headerContainer}>
           <Text style={styles.titleBold}>

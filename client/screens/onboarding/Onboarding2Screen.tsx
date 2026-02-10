@@ -209,7 +209,7 @@ export default function Onboarding2Screen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + Spacing.md }]}>
-      <ProgressDots total={6} current={1} />
+      <ProgressDots total={8} current={1} />
 
       <View style={styles.headerContainer}>
         <Text style={styles.titleBold}>Was bringt dich</Text>

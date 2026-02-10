@@ -53,7 +53,7 @@ export default function Onboarding3Screen() {
           { paddingBottom: insets.bottom + 100 },
         ]}
       >
-        <ProgressDots total={6} current={2} />
+        <ProgressDots total={8} current={2} />
 
         <View style={styles.headerContainer}>
           <Text style={styles.titleBold}>Hast du bereits etwas</Text>
