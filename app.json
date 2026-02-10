@@ -11,10 +11,10 @@
     "ios": {
       "supportsTablet": true,
       "usesAppleSignIn": true,
-      "bundleIdentifier": "com.deniyunusov.luke"
+      "bundleIdentifier": "com.deni.luke"
     },
     "android": {
-      "package": "com.deniyunusov.luke",
+      "package": "com.deni.luke",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
