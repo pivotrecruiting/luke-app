@@ -29,6 +29,7 @@ export const SwipeableExpense = React.forwardRef<
   ref,
 ) {
   const internalRef = useRef<Swipeable | null>(null);
+  const justSwipedRef = useRef(false);
   const { currency } = useApp();
 
   const setRef = useCallback(
@@ -66,14 +67,28 @@ export const SwipeableExpense = React.forwardRef<
     );
   }, [currency, currencySymbol, expense.amount, onDelete]);
 
+  const handleSwipeWillOpen = useCallback((direction: "left" | "right") => {
+    if (direction === "right") {
+      justSwipedRef.current = true;
+    }
+  }, []);
+
   const handleSwipeOpen = useCallback(
     (direction: "left" | "right") => {
       if (direction === "right") {
         onSwipeOpen(expense.id);
+        setTimeout(() => {
+          justSwipedRef.current = false;
+        }, 400);
       }
     },
     [expense.id, onSwipeOpen],
   );
+
+  const handleRowPress = useCallback(() => {
+    if (justSwipedRef.current) return;
+    onEdit();
+  }, [onEdit]);
 
   const renderRightActions = useCallback(
     () => (
@@ -91,13 +106,14 @@ export const SwipeableExpense = React.forwardRef<
     <Swipeable
       ref={setRef}
       renderRightActions={renderRightActions}
+      onSwipeableWillOpen={handleSwipeWillOpen}
       onSwipeableOpen={(direction) => handleSwipeOpen(direction)}
       rightThreshold={40}
       friction={2}
     >
       <Pressable
         style={styles.transactionItem}
-        onPress={onEdit}
+        onPress={handleRowPress}
         onLongPress={() => internalRef.current?.openRight()}
       >
         <View style={styles.transactionLeft}>
