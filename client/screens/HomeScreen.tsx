@@ -1,5 +1,18 @@
-import React, { useState, useMemo, useRef, useCallback } from "react";
-import { View, Text, ScrollView, Pressable } from "react-native";
+import React, {
+  useState,
+  useMemo,
+  useRef,
+  useCallback,
+  useEffect,
+} from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  useWindowDimensions,
+} from "react-native";
+import Swipeable from "react-native-gesture-handler/Swipeable";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "expo-image";
@@ -9,24 +22,25 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { Spacing } from "@/constants/theme";
 import { useApp } from "@/context/AppContext";
+import type { Transaction } from "@/context/app/types";
+import {
+  formatCurrencyAmount,
+  getCurrencySymbol,
+} from "@/utils/currency-format";
+import { formatDate, parseFormattedDate } from "@/utils/dates";
 import { getUserFirstName } from "@/utils/user";
 import { styles } from "./styles/home-screen.styles";
 import { AppModal } from "@/components/ui/app-modal";
+import Chip from "@/components/Chip";
+import { SwipeableTransactionItem } from "@/features/home/components/swipeable-transaction-item";
+import { EditTransactionModal } from "@/features/home/components/edit-transaction-modal";
 const businessmanFigure = require("../../assets/images/businessman-figure.png");
 
-const formatCurrency = (value: number) => {
-  const formatted = Math.abs(value).toLocaleString("de-DE", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-  if (value < 0) {
-    return `- € ${formatted}`;
-  }
-  return `€ ${formatted}`;
-};
+type ModalTypeFilterT = "all" | "income" | "expense";
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const {
@@ -40,7 +54,21 @@ export default function HomeScreen() {
     currentWeekLabel,
     goToPreviousWeek,
     goToNextWeek,
+    currency,
+    deleteTransaction,
+    updateTransaction,
+    budgetCategories,
+    incomeCategories,
+    isAppLoading,
   } = useApp();
+  const currencySymbol = getCurrencySymbol(currency);
+  const formatCurrency = (value: number) => {
+    const formatted = formatCurrencyAmount(Math.abs(value), currency);
+    if (value < 0) {
+      return `- ${currencySymbol} ${formatted}`;
+    }
+    return `${currencySymbol} ${formatted}`;
+  };
   const firstName = useMemo(() => getUserFirstName(userName), [userName]);
 
   // Parse various date formats to Date object for sorting
@@ -115,7 +143,148 @@ export default function HomeScreen() {
 
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [allTransactionsVisible, setAllTransactionsVisible] = useState(false);
+  const [modalTypeFilter, setModalTypeFilter] =
+    useState<ModalTypeFilterT>("all");
+  const [modalCategoryFilter, setModalCategoryFilter] = useState<string | null>(
+    null,
+  );
+
+  const modalFilteredTransactions = useMemo(() => {
+    let list = sortedTransactions;
+    if (modalTypeFilter === "income") {
+      list = list.filter((t) => t.amount >= 0);
+    } else if (modalTypeFilter === "expense") {
+      list = list.filter((t) => t.amount < 0);
+    }
+    if (modalCategoryFilter) {
+      list = list.filter(
+        (t) => t.category.toLowerCase() === modalCategoryFilter.toLowerCase(),
+      );
+    }
+    return list;
+  }, [sortedTransactions, modalTypeFilter, modalCategoryFilter]);
+
+  const modalAvailableCategories = useMemo(() => {
+    let list = sortedTransactions;
+    if (modalTypeFilter === "income") {
+      list = list.filter((t) => t.amount >= 0);
+    } else if (modalTypeFilter === "expense") {
+      list = list.filter((t) => t.amount < 0);
+    }
+    const categories = [
+      ...new Set(list.map((t) => t.category).filter(Boolean)),
+    ].sort((a, b) => a.localeCompare(b));
+    return categories;
+  }, [sortedTransactions, modalTypeFilter]);
+
+  useEffect(() => {
+    if (
+      modalCategoryFilter &&
+      !modalAvailableCategories.some(
+        (c) => c.toLowerCase() === modalCategoryFilter.toLowerCase(),
+      )
+    ) {
+      setModalCategoryFilter(null);
+    }
+  }, [modalAvailableCategories, modalCategoryFilter]);
+
+  const [editTransactionModalVisible, setEditTransactionModalVisible] =
+    useState(false);
+  const [editingTransactionId, setEditingTransactionId] = useState<
+    string | null
+  >(null);
+  const [editName, setEditName] = useState("");
+  const [editAmount, setEditAmount] = useState("");
+  const [editSelectedCategoryId, setEditSelectedCategoryId] = useState<
+    string | null
+  >(null);
+  const [editDate, setEditDate] = useState(new Date());
+  const [showEditDatePicker, setShowEditDatePicker] = useState(false);
+  const [editIsExpense, setEditIsExpense] = useState(true);
   const scrollViewRef = useRef<ScrollView>(null);
+  const swipeableRefs = useRef<Record<string, Swipeable | null>>({});
+
+  const openEditTransactionModal = useCallback((transaction: Transaction) => {
+    const isExpense = transaction.amount < 0;
+    const categories = isExpense ? budgetCategories : incomeCategories;
+    const category = categories.find(
+      (c) => c.name.toLowerCase() === transaction.category.toLowerCase(),
+    );
+    setAllTransactionsVisible(false);
+    setEditingTransactionId(transaction.id);
+    setEditName(transaction.name);
+    setEditAmount(
+      Math.abs(transaction.amount).toString().replace(".", ","),
+    );
+    setEditSelectedCategoryId(category?.id ?? null);
+    setEditDate(parseFormattedDate(transaction.date));
+    setEditIsExpense(isExpense);
+    setShowEditDatePicker(false);
+    setEditTransactionModalVisible(true);
+  }, [budgetCategories, incomeCategories]);
+
+  const handleEditTransactionSave = useCallback(() => {
+    if (!editingTransactionId || !editSelectedCategoryId) return;
+    const categories = editIsExpense ? budgetCategories : incomeCategories;
+    const category = categories.find((c) => c.id === editSelectedCategoryId);
+    if (!category) return;
+    const parsedAmount = parseFloat(editAmount.replace(",", ".")) || 0;
+    if (parsedAmount <= 0) return;
+    const amount = editIsExpense ? -parsedAmount : parsedAmount;
+    const dateStr = formatDate(editDate);
+    updateTransaction(editingTransactionId, {
+      name: editName.trim(),
+      category: category.name,
+      amount,
+      date: dateStr,
+    });
+    setEditTransactionModalVisible(false);
+    setEditingTransactionId(null);
+  }, [
+    budgetCategories,
+    editAmount,
+    editDate,
+    editIsExpense,
+    editName,
+    editSelectedCategoryId,
+    editingTransactionId,
+    incomeCategories,
+    updateTransaction,
+  ]);
+
+  const handleEditTransactionCancel = useCallback(() => {
+    setEditTransactionModalVisible(false);
+    setEditingTransactionId(null);
+  }, []);
+
+  const editCategories = useMemo(
+    () =>
+      editIsExpense
+        ? budgetCategories.map((c) => ({
+            id: c.id,
+            name: c.name,
+            icon: c.icon ?? "circle",
+          }))
+        : incomeCategories.map((c) => ({
+            id: c.id,
+            name: c.name,
+            icon: c.icon ?? "circle",
+          })),
+    [budgetCategories, incomeCategories, editIsExpense],
+  );
+
+  const handleEditToggleType = useCallback(() => {
+    setEditIsExpense((prev) => !prev);
+    setEditSelectedCategoryId(null);
+  }, []);
+
+  const handleSwipeOpen = useCallback((id: string) => {
+    Object.entries(swipeableRefs.current).forEach(([txId, ref]) => {
+      if (txId !== id && ref?.close) {
+        ref.close();
+      }
+    });
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -152,10 +321,9 @@ export default function HomeScreen() {
               transactionBalance < 0 && styles.balanceAmountNegative,
             ]}
           >
-            €{" "}
-            {transactionBalance.toLocaleString("de-DE", {
-              minimumFractionDigits: 2,
-            })}
+            {transactionBalance < 0 ? "-" : ""}
+            {currencySymbol}{" "}
+            {formatCurrencyAmount(Math.abs(transactionBalance), currency)}
           </Text>
         </View>
 
@@ -186,10 +354,8 @@ export default function HomeScreen() {
             </View>
             <Text style={styles.cardLabel}>Einnahmen</Text>
             <Text style={styles.incomeAmount}>
-              €{" "}
-              {transactionIncomeTotal.toLocaleString("de-DE", {
-                minimumFractionDigits: 2,
-              })}
+              {currencySymbol}{" "}
+              {formatCurrencyAmount(transactionIncomeTotal, currency)}
             </Text>
           </Pressable>
 
@@ -202,10 +368,8 @@ export default function HomeScreen() {
             </View>
             <Text style={styles.cardLabel}>Ausgaben</Text>
             <Text style={styles.expenseAmount}>
-              €{" "}
-              {transactionExpenseTotal.toLocaleString("de-DE", {
-                minimumFractionDigits: 2,
-              })}
+              {currencySymbol}{" "}
+              {formatCurrencyAmount(transactionExpenseTotal, currency)}
             </Text>
           </Pressable>
         </View>
@@ -236,10 +400,12 @@ export default function HomeScreen() {
           {selectedDay && (
             <View style={styles.selectedAmount}>
               <Text style={styles.selectedAmountText}>
-                €{" "}
-                {weeklySpending
-                  .find((d) => d.day === selectedDay)
-                  ?.amount.toFixed(2) || "0.00"}
+                {currencySymbol}{" "}
+                {formatCurrencyAmount(
+                  weeklySpending.find((d) => d.day === selectedDay)?.amount ??
+                    0,
+                  currency,
+                )}
               </Text>
             </View>
           )}
@@ -289,82 +455,209 @@ export default function HomeScreen() {
         <View style={styles.transactionsSection}>
           <View style={styles.transactionsHeader}>
             <Text style={styles.transactionsTitle}>Letzte Transaktionen</Text>
-            <Pressable onPress={() => setAllTransactionsVisible(true)}>
+            <Pressable
+              onPress={() => setAllTransactionsVisible(true)}
+              hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
+              style={styles.transactionsAllButton}
+            >
               <Text style={styles.transactionsAll}>All</Text>
             </Pressable>
           </View>
+          <Text style={styles.transactionsSwipeHint}>
+            Tippen zum Bearbeiten · Wischen zum Löschen
+          </Text>
 
           {sortedTransactions.slice(0, 2).map((transaction) => (
-            <View key={transaction.id} style={styles.transactionItem}>
-              <View style={styles.transactionIconContainer}>
-                <Feather
-                  name={transaction.icon as any}
-                  size={20}
-                  color="#7B8CDE"
-                />
-              </View>
-              <View style={styles.transactionDetails}>
-                <Text style={styles.transactionName}>{transaction.name}</Text>
-                <Text style={styles.transactionCategory}>
-                  {transaction.category}
-                </Text>
-                <Text style={styles.transactionDate}>{transaction.date}</Text>
-              </View>
-              <Text style={styles.transactionAmount}>
-                {formatCurrency(transaction.amount)}
-              </Text>
-            </View>
+            <SwipeableTransactionItem
+              key={`list-${transaction.id}`}
+              ref={(r) => {
+                const key = `list-${transaction.id}`;
+                if (r) {
+                  swipeableRefs.current[key] = r;
+                } else {
+                  delete swipeableRefs.current[key];
+                }
+              }}
+              transaction={transaction}
+              formatCurrency={formatCurrency}
+              onEdit={() => openEditTransactionModal(transaction)}
+              onDelete={() => deleteTransaction(transaction.id)}
+              onSwipeOpen={(id) => handleSwipeOpen(`list-${id}`)}
+            />
           ))}
         </View>
       </ScrollView>
 
       <AppModal
         visible={allTransactionsVisible}
-        onClose={() => setAllTransactionsVisible(false)}
+        onClose={() => {
+          setAllTransactionsVisible(false);
+          setModalTypeFilter("all");
+          setModalCategoryFilter(null);
+        }}
         maxHeightPercent={80}
         contentStyle={[
           styles.modalContent,
-          { paddingBottom: insets.bottom + 24 },
+          {
+            height: windowHeight * 0.8,
+            paddingBottom: insets.bottom + 24,
+          },
         ]}
       >
-        <View style={styles.modalHandle} />
-        <View style={styles.modalHeader}>
-          <Text style={styles.modalTitle}>Alle Transaktionen</Text>
-          <Pressable
-            onPress={() => setAllTransactionsVisible(false)}
-            style={styles.closeButton}
+        <View style={styles.modalStaticContent}>
+          <View style={styles.modalHandle} />
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Alle Transaktionen</Text>
+            <Pressable
+              onPress={() => setAllTransactionsVisible(false)}
+              style={styles.closeButton}
+            >
+              <Feather name="x" size={24} color="#000000" />
+            </Pressable>
+          </View>
+          <View style={styles.modalFilterRow}>
+            <Pressable
+              style={[
+                styles.modalFilterBadge,
+                modalTypeFilter === "all" && styles.modalFilterBadgeActive,
+              ]}
+              onPress={() => setModalTypeFilter("all")}
+            >
+              <Text
+                style={[
+                  styles.modalFilterBadgeText,
+                  modalTypeFilter === "all" &&
+                    styles.modalFilterBadgeTextActive,
+                ]}
+              >
+                Alle
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[
+                styles.modalFilterBadge,
+                modalTypeFilter === "income" && styles.modalFilterBadgeActive,
+              ]}
+              onPress={() => setModalTypeFilter("income")}
+            >
+              <Feather
+                name="arrow-up"
+                size={12}
+                color={
+                  modalTypeFilter === "income" ? "#7340FE" : "#6B7280"
+                }
+              />
+              <Text
+                style={[
+                  styles.modalFilterBadgeText,
+                  modalTypeFilter === "income" &&
+                    styles.modalFilterBadgeTextActive,
+                ]}
+              >
+                Einnahmen
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[
+                styles.modalFilterBadge,
+                modalTypeFilter === "expense" && styles.modalFilterBadgeActive,
+              ]}
+              onPress={() => setModalTypeFilter("expense")}
+            >
+              <Feather
+                name="arrow-down"
+                size={12}
+                color={
+                  modalTypeFilter === "expense" ? "#7340FE" : "#6B7280"
+                }
+              />
+              <Text
+                style={[
+                  styles.modalFilterBadgeText,
+                  modalTypeFilter === "expense" &&
+                    styles.modalFilterBadgeTextActive,
+                ]}
+              >
+                Ausgaben
+              </Text>
+            </Pressable>
+          </View>
+
+          <ScrollView
+            style={styles.modalCategoriesScroll}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.modalCategoriesScrollContent}
           >
-            <Feather name="x" size={24} color="#000000" />
-          </Pressable>
+            {modalAvailableCategories.map((categoryName) => (
+              <Chip
+                key={categoryName}
+                label={categoryName}
+                selected={modalCategoryFilter === categoryName}
+                onPress={() =>
+                  setModalCategoryFilter((prev) =>
+                    prev === categoryName ? null : categoryName,
+                  )
+                }
+              />
+            ))}
+          </ScrollView>
+
+          <Text style={styles.modalSwipeHint}>
+            Tippen zum Bearbeiten · Wischen zum Löschen
+          </Text>
         </View>
+
         <ScrollView
           style={styles.modalScrollView}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.modalScrollViewContent}
         >
-          {sortedTransactions.map((transaction) => (
-            <View key={transaction.id} style={styles.transactionItem}>
-              <View style={styles.transactionIconContainer}>
-                <Feather
-                  name={transaction.icon as any}
-                  size={20}
-                  color="#7B8CDE"
-                />
-              </View>
-              <View style={styles.transactionDetails}>
-                <Text style={styles.transactionName}>{transaction.name}</Text>
-                <Text style={styles.transactionCategory}>
-                  {transaction.category}
-                </Text>
-                <Text style={styles.transactionDate}>{transaction.date}</Text>
-              </View>
-              <Text style={styles.transactionAmount}>
-                {formatCurrency(transaction.amount)}
-              </Text>
-            </View>
+          {modalFilteredTransactions.map((transaction) => (
+            <SwipeableTransactionItem
+              key={`modal-${transaction.id}`}
+              ref={(r) => {
+                const key = `modal-${transaction.id}`;
+                if (r) {
+                  swipeableRefs.current[key] = r;
+                } else {
+                  delete swipeableRefs.current[key];
+                }
+              }}
+              transaction={transaction}
+              formatCurrency={formatCurrency}
+              onEdit={() => openEditTransactionModal(transaction)}
+              onDelete={() => deleteTransaction(transaction.id)}
+              onSwipeOpen={(id) => handleSwipeOpen(`modal-${id}`)}
+            />
           ))}
         </ScrollView>
       </AppModal>
+
+      <EditTransactionModal
+        visible={editTransactionModalVisible}
+        bottomInset={insets.bottom}
+        editName={editName}
+        editAmount={editAmount}
+        selectedCategoryId={editSelectedCategoryId}
+        categories={editCategories}
+        editDate={editDate}
+        showDatePicker={showEditDatePicker}
+        isExpense={editIsExpense}
+        isAppLoading={isAppLoading}
+        onChangeName={setEditName}
+        onChangeAmount={setEditAmount}
+        onSelectCategory={setEditSelectedCategoryId}
+        onOpenDatePicker={() => setShowEditDatePicker(true)}
+        onCloseDatePicker={() => setShowEditDatePicker(false)}
+        onDateChange={(_, date) => {
+          if (date) setEditDate(date);
+        }}
+        onToggleType={handleEditToggleType}
+        onSave={handleEditTransactionSave}
+        onCancel={handleEditTransactionCancel}
+      />
     </View>
   );
 }

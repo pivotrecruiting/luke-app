@@ -1,5 +1,7 @@
 import { Text, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import { useApp } from "@/context/AppContext";
+import { getCurrencySymbol } from "@/utils/currency-format";
 import { styles } from "@/screens/styles/insights-screen.styles";
 import { formatCurrency } from "../utils/format";
 import type { TimeFilterT } from "../types/insights-types";
@@ -18,6 +20,8 @@ export const IncomeExpensesView = ({
   expenses,
   timeFilter,
 }: IncomeExpensesViewPropsT) => {
+  const { currency } = useApp();
+  const currencySymbol = getCurrencySymbol(currency);
   const timeFilterLabel = (() => {
     switch (timeFilter) {
       case "thisMonth":
@@ -78,7 +82,7 @@ export const IncomeExpensesView = ({
               />
               <Text style={styles.barLabel}>Einnahmen</Text>
             </View>
-            <Text style={styles.barValue}>€ {formatCurrency(income)}</Text>
+            <Text style={styles.barValue}>{currencySymbol} {formatCurrency(income, currency)}</Text>
           </View>
           <View style={styles.barTrack}>
             <View
@@ -99,7 +103,7 @@ export const IncomeExpensesView = ({
               />
               <Text style={styles.barLabel}>Ausgaben</Text>
             </View>
-            <Text style={styles.barValue}>€ {formatCurrency(expenses)}</Text>
+            <Text style={styles.barValue}>{currencySymbol} {formatCurrency(expenses, currency)}</Text>
           </View>
           <View style={styles.barTrack}>
             <View
@@ -125,7 +129,7 @@ export const IncomeExpensesView = ({
                   : styles.differenceNegative,
               ]}
             >
-              {isPositive ? "+" : ""}€ {formatCurrency(difference)}
+              {isPositive ? "+" : ""}{currencySymbol} {formatCurrency(difference, currency)}
             </Text>
           </View>
           <View style={styles.differenceRow}>

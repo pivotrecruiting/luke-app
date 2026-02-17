@@ -26,6 +26,8 @@ export type GoalDeposit = {
   date: string;
   amount: number;
   type: "Einzahlung" | "Rückzahlung";
+  /** Links to transaction for home screen balance; used when deleting deposit */
+  transactionId?: string;
 };
 
 export type Goal = {
@@ -33,6 +35,7 @@ export type Goal = {
   name: string;
   icon: string;
   target: number;
+  monthlyContribution: number | null;
   current: number;
   remaining: number;
   deposits: GoalDeposit[];
@@ -56,6 +59,8 @@ export type Budget = {
   expenses: BudgetExpense[];
 };
 
+export type TransactionSourceT = "manual" | "recurring" | "onboarding";
+
 export type WeeklySpending = {
   day: string;
   amount: number;
@@ -70,6 +75,7 @@ export type Transaction = {
   amount: number;
   icon: string;
   timestamp?: number;
+  source?: TransactionSourceT;
 };
 
 export type InsightCategory = {
@@ -158,7 +164,12 @@ export type AppContextType = AppState & {
   deleteGoal: (goalId: string) => void;
   updateBudget: (budgetId: string, updates: Partial<Budget>) => void;
   deleteBudget: (budgetId: string) => void;
-  addGoal: (name: string, icon: string, target: number) => void;
+  addGoal: (
+    name: string,
+    icon: string,
+    target: number,
+    monthlyContribution?: number | null,
+  ) => void;
   addBudget: (
     name: string,
     icon: string,
@@ -182,6 +193,7 @@ export type AppContextType = AppState & {
   lastBudgetResetMonth: number;
   enqueueLevelUp: (payload: XpLevelUpPayloadT) => void;
   consumeNextLevelUp: () => void;
+  submitOnboarding: () => void;
 };
 
 export type PersistedData = {

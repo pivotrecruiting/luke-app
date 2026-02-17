@@ -6,6 +6,7 @@ import type {
   IncomeEntry,
   MonthlyTrendData,
   Transaction,
+  TransactionSourceT,
 } from "@/context/app/types";
 import { GERMAN_MONTHS_SHORT } from "@/context/app/constants";
 import type {
@@ -312,11 +313,13 @@ export const fetchAppData = async (
       .eq("user_id", userId),
     supabase
       .from("goals")
-      .select("id, name, icon, target_amount_cents")
+      .select("id, name, icon, target_amount_cents, monthly_contribution_cents")
       .eq("user_id", userId),
     supabase
       .from("goal_contributions")
-      .select("id, goal_id, amount_cents, contribution_type, contribution_at")
+      .select(
+        "id, goal_id, amount_cents, contribution_type, contribution_at, transaction_id",
+      )
       .eq("user_id", userId),
     supabase
       .from("budget_categories")
@@ -461,6 +464,26 @@ export const upsertUserCurrency = async (
   const { error } = await supabase
     .from("user_financial_profiles")
     .upsert({ user_id: userId, currency }, { onConflict: "user_id" });
+  if (error) {
+    throw error;
+  }
+};
+
+export const upsertInitialSavings = async (
+  userId: string,
+  amount: number,
+  currency: CurrencyCode,
+): Promise<void> => {
+  const { error } = await supabase
+    .from("user_financial_profiles")
+    .upsert(
+      {
+        user_id: userId,
+        initial_savings_cents: toCents(amount),
+        currency,
+      },
+      { onConflict: "user_id" },
+    );
   if (error) {
     throw error;
   }
@@ -611,6 +634,7 @@ export const createGoal = async (
   name: string,
   icon: string,
   target: number,
+  monthlyContribution: number | null,
   createdInOnboarding: boolean,
 ): Promise<string> => {
   const { data, error } = await supabase
@@ -620,7 +644,10 @@ export const createGoal = async (
       name,
       icon,
       target_amount_cents: toCents(target),
-      monthly_contribution_cents: null,
+      monthly_contribution_cents:
+        typeof monthlyContribution === "number"
+          ? toCents(monthlyContribution)
+          : null,
       created_in_onboarding: createdInOnboarding,
     })
     .select("id")
@@ -640,6 +667,12 @@ export const updateGoal = async (
   if (typeof updates.icon === "string") payload.icon = updates.icon;
   if (typeof updates.target === "number")
     payload.target_amount_cents = toCents(updates.target);
+  if (typeof updates.monthlyContribution === "number") {
+    payload.monthly_contribution_cents = toCents(updates.monthlyContribution);
+  }
+  if (updates.monthlyContribution === null) {
+    payload.monthly_contribution_cents = null;
+  }
   if (Object.keys(payload).length === 0) return;
   const { error } = await supabase
     .from("goals")
@@ -756,7 +789,7 @@ export const createTransaction = async (payload: {
   budget_category_id?: string | null;
   income_category_id?: string | null;
   transaction_at: string;
-  source: "manual" | "recurring";
+  source: TransactionSourceT;
 }): Promise<string> => {
   const { data, error } = await supabase
     .from("transactions")

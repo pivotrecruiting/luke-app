@@ -13,9 +13,15 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
+import { HeaderTabToggle } from "@/components/ui/header-tab-toggle";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Spacing } from "@/constants/theme";
 import { useApp } from "@/context/AppContext";
+import {
+  formatCurrencyAmount,
+  getCurrencySymbol,
+} from "@/utils/currency-format";
+import CurrencyInput from "@/components/CurrencyInput";
 
 type CategoryOptionT = {
   id: string;
@@ -69,7 +75,9 @@ export default function AddScreen() {
     budgetCategories,
     incomeCategories,
     isAppLoading,
+    currency,
   } = useApp();
+  const currencySymbol = getCurrencySymbol(currency);
 
   const [activeTab, setActiveTab] = useState<"ausgaben" | "einnahmen">(
     "ausgaben",
@@ -98,7 +106,9 @@ export default function AddScreen() {
   const handleSave = () => {
     if (!amount || !selectedCategory) return;
 
-    const parsedAmount = parseFloat(amount.replace(",", "."));
+    const parsedAmount = parseFloat(
+      amount.replace(",", ".").replace(/\s/g, ""),
+    );
     if (isNaN(parsedAmount) || parsedAmount <= 0) {
       Alert.alert("Ungültiger Betrag", "Bitte gib einen gültigen Betrag ein.");
       return;
@@ -136,7 +146,7 @@ export default function AddScreen() {
 
     Alert.alert(
       activeTab === "ausgaben" ? "Ausgabe gespeichert" : "Einnahme gespeichert",
-      `${transactionName}: € ${parsedAmount.toLocaleString("de-DE", { minimumFractionDigits: 2 })}`,
+      `${transactionName}: ${currencySymbol} ${formatCurrencyAmount(parsedAmount, currency)}`,
     );
   };
 
@@ -151,40 +161,14 @@ export default function AddScreen() {
         <Text style={styles.headerTitle}>Transaktion</Text>
         <Text style={styles.headerSubtitle}>hinzufügen</Text>
 
-        <View style={styles.toggleContainer}>
-          <Pressable
-            style={[
-              styles.toggleButton,
-              activeTab === "ausgaben" && styles.toggleButtonActive,
-            ]}
-            onPress={() => setActiveTab("ausgaben")}
-          >
-            <Text
-              style={[
-                styles.toggleButtonText,
-                activeTab === "ausgaben" && styles.toggleButtonTextActive,
-              ]}
-            >
-              Ausgaben
-            </Text>
-          </Pressable>
-          <Pressable
-            style={[
-              styles.toggleButton,
-              activeTab === "einnahmen" && styles.toggleButtonActive,
-            ]}
-            onPress={() => setActiveTab("einnahmen")}
-          >
-            <Text
-              style={[
-                styles.toggleButtonText,
-                activeTab === "einnahmen" && styles.toggleButtonTextActive,
-              ]}
-            >
-              Einnahmen
-            </Text>
-          </Pressable>
-        </View>
+        <HeaderTabToggle
+          tabs={[
+            { value: "ausgaben", label: "Ausgaben" },
+            { value: "einnahmen", label: "Einnahmen" },
+          ]}
+          value={activeTab}
+          onChange={setActiveTab}
+        />
       </LinearGradient>
 
       <ScrollView
@@ -198,17 +182,12 @@ export default function AddScreen() {
       >
         <View style={styles.inputCard}>
           <Text style={styles.inputLabel}>Betrag</Text>
-          <View style={styles.amountInputContainer}>
-            <Text style={styles.currencySymbol}>€</Text>
-            <TextInput
-              style={styles.amountInput}
-              value={amount}
-              onChangeText={setAmount}
-              placeholder="0,00"
-              placeholderTextColor="#9CA3AF"
-              keyboardType="decimal-pad"
-            />
-          </View>
+          <CurrencyInput
+            value={amount}
+            onChangeText={setAmount}
+            placeholder="0,00"
+            containerStyle={styles.amountInputContainer}
+          />
         </View>
 
         <View style={styles.inputCard}>
@@ -365,30 +344,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "rgba(255,255,255,0.8)",
     marginTop: 4,
-  },
-  toggleContainer: {
-    flexDirection: "row",
-    marginTop: 20,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    borderRadius: 25,
-    padding: 4,
-  },
-  toggleButton: {
-    flex: 1,
-    paddingVertical: 10,
-    alignItems: "center",
-    borderRadius: 22,
-  },
-  toggleButtonActive: {
-    backgroundColor: "#FFFFFF",
-  },
-  toggleButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#FFFFFF",
-  },
-  toggleButtonTextActive: {
-    color: "#3B5BDB",
   },
   scrollView: {
     flex: 1,

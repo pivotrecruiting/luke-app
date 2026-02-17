@@ -1,4 +1,5 @@
 import { Pressable, Text, TextInput, View } from "react-native";
+import CurrencyInput from "@/components/CurrencyInput";
 import { styles } from "@/screens/styles/goals-screen.styles";
 import { EMOJI_LIST } from "../constants/goals-constants";
 import { AppModal } from "@/components/ui/app-modal";
@@ -80,23 +81,21 @@ export const CreateGoalModal = ({
       ) : null}
 
       <Text style={styles.modalLabel}>Summe</Text>
-      <TextInput
-        style={styles.modalInput}
+      <CurrencyInput
         value={goalAmount}
         onChangeText={onChangeAmount}
-        placeholder="€ 1000,00"
-        placeholderTextColor="#9CA3AF"
-        keyboardType="decimal-pad"
+        placeholder="1000,00"
+        variant="modal"
+        containerStyle={styles.modalInput}
       />
 
       <Text style={styles.modalLabel}>Monatlicher Beitrag</Text>
-      <TextInput
-        style={styles.modalInput}
+      <CurrencyInput
         value={monthlyContribution}
         onChangeText={onChangeMonthlyContribution}
-        placeholder="€ 200,00"
-        placeholderTextColor="#9CA3AF"
-        keyboardType="decimal-pad"
+        placeholder="200,00"
+        variant="modal"
+        containerStyle={styles.modalInput}
       />
 
       <Text style={styles.calculationText}>

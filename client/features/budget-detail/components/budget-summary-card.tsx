@@ -1,5 +1,7 @@
 import { Text, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import { useApp } from "@/context/AppContext";
+import { getCurrencySymbol } from "@/utils/currency-format";
 import { styles } from "@/screens/styles/budget-detail-screen.styles";
 import { formatCurrency } from "../utils/format";
 
@@ -27,6 +29,8 @@ export const BudgetSummaryCard = ({
   isOverBudget,
   displayPercentage,
 }: BudgetSummaryCardPropsT) => {
+  const { currency } = useApp();
+  const currencySymbol = getCurrencySymbol(currency);
   return (
     <View style={styles.summaryCard}>
       <View style={styles.summaryHeader}>
@@ -43,7 +47,7 @@ export const BudgetSummaryCard = ({
               isOverBudget && styles.overBudgetText,
             ]}
           >
-            € {formatCurrency(current)} / € {limit}
+            {currencySymbol} {formatCurrency(current, currency)} / {currencySymbol} {formatCurrency(limit, currency)}
           </Text>
         </View>
       </View>
@@ -64,16 +68,16 @@ export const BudgetSummaryCard = ({
           <Text
             style={[styles.statValue, isOverBudget && styles.overBudgetText]}
           >
-            € {formatCurrency(current)}
+            {currencySymbol} {formatCurrency(current, currency)}
           </Text>
         </View>
         <View style={styles.statItem}>
           <Text style={styles.statLabel}>Übrig</Text>
-          <Text style={styles.statValue}>€ {formatCurrency(remaining)}</Text>
+          <Text style={styles.statValue}>{currencySymbol} {formatCurrency(remaining, currency)}</Text>
         </View>
         <View style={styles.statItem}>
           <Text style={styles.statLabel}>Limit</Text>
-          <Text style={styles.statValue}>€ {limit}</Text>
+          <Text style={styles.statValue}>{currencySymbol} {formatCurrency(limit, currency)}</Text>
         </View>
       </View>
     </View>

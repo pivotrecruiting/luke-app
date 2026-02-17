@@ -1,5 +1,7 @@
+import { useRef, useCallback } from "react";
 import { Text, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import Swipeable from "react-native-gesture-handler/Swipeable";
 import { styles } from "@/screens/styles/budget-detail-screen.styles";
 import type { BudgetExpense } from "@/context/app/types";
 import type { GroupedExpensesT } from "../types/budget-detail-types";
@@ -16,23 +18,36 @@ type TransactionsSectionPropsT = {
 
 /**
  * Renders the transactions section with grouped expense lists.
+ * Manages swipeable refs so only one row is open at a time.
  */
 export const TransactionsSection = ({
   groupedExpenses,
   budgetIcon,
-  activeSwipeId,
   onSwipeOpen,
   onEditExpense,
   onDeleteExpense,
 }: TransactionsSectionPropsT) => {
+  const swipeableRefs = useRef<Record<string, Swipeable | null>>({});
   const hasExpenses = Object.keys(groupedExpenses).length > 0;
+
+  const handleSwipeOpen = useCallback(
+    (id: string) => {
+      Object.entries(swipeableRefs.current).forEach(([expenseId, ref]) => {
+        if (expenseId !== id && ref?.close) {
+          ref.close();
+        }
+      });
+      onSwipeOpen(id);
+    },
+    [onSwipeOpen],
+  );
 
   return (
     <>
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Transaktionen</Text>
         <Text style={styles.swipeHint}>
-          Lang drücken zum Löschen, tippen zum Bearbeiten
+          Wischen zum Löschen, tippen zum Bearbeiten
         </Text>
       </View>
 
@@ -54,12 +69,18 @@ export const TransactionsSection = ({
               {expenses.map((expense) => (
                 <SwipeableExpense
                   key={expense.id}
+                  ref={(r) => {
+                    if (r) {
+                      swipeableRefs.current[expense.id] = r;
+                    } else {
+                      delete swipeableRefs.current[expense.id];
+                    }
+                  }}
                   expense={expense}
                   budgetIcon={budgetIcon}
                   onDelete={() => onDeleteExpense(expense.id)}
                   onEdit={() => onEditExpense(expense)}
-                  isActive={activeSwipeId === expense.id}
-                  onSwipeOpen={onSwipeOpen}
+                  onSwipeOpen={handleSwipeOpen}
                 />
               ))}
             </View>

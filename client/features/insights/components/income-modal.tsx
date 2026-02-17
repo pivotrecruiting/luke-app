@@ -1,5 +1,6 @@
 import { Pressable, Text, TextInput, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import CurrencyInput from "@/components/CurrencyInput";
 import { styles } from "@/screens/styles/insights-screen.styles";
 import { INCOME_TYPES } from "../constants/insights-constants";
 import { AppModal } from "@/components/ui/app-modal";
@@ -108,17 +109,13 @@ export const IncomeModal = ({
         )}
 
         <Text style={styles.incomeModalLabel}>Betrag (monatlich)</Text>
-        <View style={styles.incomeAmountInputContainer}>
-          <Text style={styles.incomeCurrencySymbol}>€</Text>
-          <TextInput
-            style={styles.incomeAmountInput}
-            value={incomeAmount}
-            onChangeText={onChangeIncomeAmount}
-            placeholder="0,00"
-            placeholderTextColor="#9CA3AF"
-            keyboardType="decimal-pad"
-          />
-        </View>
+        <CurrencyInput
+          value={incomeAmount}
+          onChangeText={onChangeIncomeAmount}
+          placeholder="0,00"
+          variant="modal"
+          containerStyle={styles.incomeAmountInputContainer}
+        />
 
         <Pressable
           style={[

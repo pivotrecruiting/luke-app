@@ -28,6 +28,12 @@ import type {
 } from "@/context/app/types";
 import type { BudgetCategoryRow, IncomeCategoryRow } from "@/services/types";
 import type { XpLevelUpPayloadT } from "@/types/xp-types";
+import { formatDate } from "@/utils/dates";
+import { upsertInitialSavings } from "@/services/app-service";
+import {
+  useOnboardingStore,
+  type OnboardingStoreT,
+} from "@/stores/onboarding-store";
 import { useAppDerivedState } from "@/context/app/hooks/use-app-derived-state";
 import { useEntryActions } from "@/context/app/hooks/use-entry-actions";
 import { useTransactionActions } from "@/context/app/hooks/use-transaction-actions";
@@ -133,6 +139,10 @@ export function AppProvider({ children }: AppProviderProps) {
 
   const handleDbError = useCallback((error: unknown, context: string) => {
     console.error(`DB error during ${context}:`, error);
+    if (error instanceof Error) {
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+    }
     setUseLocalFallback(true);
   }, []);
   const { resolveBudgetCategory } = useBudgetCategoryResolver({
@@ -263,6 +273,7 @@ export function AppProvider({ children }: AppProviderProps) {
     goals,
     setGoals,
     setTransactions,
+    deleteTransaction,
     handleDbError,
     handleSnapXp,
     awardXp,
@@ -288,6 +299,87 @@ export function AppProvider({ children }: AppProviderProps) {
     handleSnapXp,
     addTransaction,
   });
+
+  const submitOnboarding = useCallback(() => {
+    const {
+      initialSavingsAmount,
+      incomeEntries,
+      expenseEntries,
+      goalDraft,
+      budgetEntries,
+      isSubmitting,
+      hasSubmitted,
+      setIsSubmitting,
+      setHasSubmitted,
+      resetDrafts,
+    } = useOnboardingStore.getState() as OnboardingStoreT;
+
+    if (isSubmitting || hasSubmitted) return;
+    setIsSubmitting(true);
+    setHasSubmitted(true);
+
+    if (typeof initialSavingsAmount === "number" && initialSavingsAmount > 0) {
+      const incomeCategory = incomeCategories.find(
+        (category) => category.name.toLowerCase() === "sonstiges",
+      );
+      const icon = incomeCategory?.icon ?? "more-horizontal";
+
+      addTransaction({
+        name: "Ersparnisse",
+        category: "Sonstiges",
+        date: formatDate(new Date()),
+        amount: initialSavingsAmount,
+        icon,
+        source: "onboarding",
+      });
+
+      if (canUseDb && userId) {
+        void (async () => {
+          try {
+            await upsertInitialSavings(userId, initialSavingsAmount, currency);
+          } catch (error) {
+            handleDbError(error, "submitOnboarding.savings");
+          }
+        })();
+      }
+    }
+
+    setIncomeEntriesFromOnboarding(incomeEntries);
+    setExpenseEntriesFromOnboarding(expenseEntries);
+
+    if (goalDraft) {
+      addGoal(
+        goalDraft.name,
+        goalDraft.icon,
+        goalDraft.target,
+        goalDraft.monthlyContribution,
+      );
+    }
+
+    if (budgetEntries.length > 0) {
+      budgetEntries.forEach((entry) => {
+        const category = budgetCategories.find((c) => c.name === entry.name);
+        const icon = category?.icon ?? "circle";
+        const color = category?.color ?? "#6B7280";
+        addBudget(entry.name, icon, color, entry.limit);
+      });
+    }
+
+    resetDrafts();
+    setIsSubmitting(false);
+  }, [
+    addBudget,
+    addGoal,
+    addTransaction,
+    budgetCategories,
+    canUseDb,
+    currency,
+    handleDbError,
+    incomeCategories,
+    setExpenseEntriesFromOnboarding,
+    setIncomeEntriesFromOnboarding,
+    userId,
+  ]);
 
   const { resetMonthlyBudgets } = useMonthlyBudgetReset({
     budgets,
@@ -329,6 +421,7 @@ export function AppProvider({ children }: AppProviderProps) {
     xpEventRules,
     userProgress,
     pendingLevelUps,
+    submitOnboarding,
     addIncomeEntry,
     addExpenseEntry,
     setIncomeEntries: setIncomeEntriesFromOnboarding,

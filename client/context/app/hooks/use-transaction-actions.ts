@@ -57,18 +57,18 @@ export const useTransactionActions = ({
           ? null
           : resolveIncomeCategory(transaction.category);
         try {
-          const transactionId = await createTransaction({
-            user_id: userId,
-            type: isExpense ? "expense" : "income",
-            amount_cents: toCents(Math.abs(transaction.amount)),
-            currency,
-            name: transaction.name,
-            category_name: transaction.category,
-            budget_category_id: category?.id ?? null,
-            income_category_id: incomeCategory?.id ?? null,
-            transaction_at: transactionAt.toISOString(),
-            source: "manual",
-          });
+        const transactionId = await createTransaction({
+          user_id: userId,
+          type: isExpense ? "expense" : "income",
+          amount_cents: toCents(Math.abs(transaction.amount)),
+          currency,
+          name: transaction.name,
+          category_name: transaction.category,
+          budget_category_id: category?.id ?? null,
+          income_category_id: incomeCategory?.id ?? null,
+          transaction_at: transactionAt.toISOString(),
+          source: transaction.source ?? "manual",
+        });
           setTransactions((prev) =>
             prev.map((tx) =>
               tx.id === tempId ? { ...tx, id: transactionId } : tx,

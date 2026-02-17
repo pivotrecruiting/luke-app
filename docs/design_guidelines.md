@@ -141,11 +141,11 @@ Luke is a German-language personal finance app that helps users gain control ove
 - Lamp image: nordic-style-colorful-metal-pendant-light-fixture-dining-room-ta.png
 - Purple blur circle for depth effect
 
-### Onboarding2 Screen
+### Onboarding3 Screen (Erspartes)
 - Coins illustration: image_1767541830063.png
 - Ellipse background: image_1767542218268.png
 
-### Goal Card Images (Onboarding1)
+### Goal Card Images (Onboarding2)
 - Overview: image_1767540420128.png
 - Klarna: image_1767540689248.png
 - Subscriptions: image_1767540704833.png

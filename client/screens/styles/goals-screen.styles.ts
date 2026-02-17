@@ -268,6 +268,24 @@ export const styles = StyleSheet.create({
   budgetLimitOver: {
     color: "#EF4444",
   },
+  budgetFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-end",
+    marginTop: 12,
+  },
+  budgetRemainingLabel: {
+    fontSize: 12,
+    color: "#9CA3AF",
+  },
+  budgetRemainingValue: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#3B5BDB",
+  },
+  budgetRemainingValueOver: {
+    color: "#EF4444",
+  },
   modalOverlay: {
     flex: 1,
     justifyContent: "flex-end",

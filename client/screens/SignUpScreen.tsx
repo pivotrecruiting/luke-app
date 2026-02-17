@@ -83,7 +83,6 @@ export default function SignUpScreen() {
       const result = await signUpWithEmailPassword(trimmedEmail, password);
 
       if (result.status === "signed-in") {
-        navigation.navigate("Onboarding1");
         return;
       }
 
@@ -108,7 +107,6 @@ export default function SignUpScreen() {
       const result = await signInWithOAuth(provider);
 
       if (result.status === "signed-in") {
-        navigation.navigate("Onboarding1");
         return;
       }
 

@@ -1,5 +1,7 @@
 import { Pressable, Text, View } from "react-native";
 import Svg, { Circle, G } from "react-native-svg";
+import { useApp } from "@/context/AppContext";
+import { getCurrencySymbol } from "@/utils/currency-format";
 import { styles } from "@/screens/styles/insights-screen.styles";
 import { formatCurrency } from "../utils/format";
 import type { CategoryT } from "../types/insights-types";
@@ -20,6 +22,8 @@ export const DonutChart = ({
   selectedCategory,
   onSelectCategory,
 }: DonutChartPropsT) => {
+  const { currency } = useApp();
+  const currencySymbol = getCurrencySymbol(currency);
   const size = 215;
   const strokeWidth = 26;
   const radius = (size - strokeWidth) / 2;
@@ -104,7 +108,7 @@ export const DonutChart = ({
       </Svg>
       <View style={styles.chartCenter}>
         <Text style={styles.chartAmount}>
-          € {formatCurrency(displayAmount)}
+          {currencySymbol} {formatCurrency(displayAmount, currency)}
         </Text>
         <Text style={styles.chartLabel}>{displayLabel}</Text>
         {selectedCategoryData && hasTotal ? (

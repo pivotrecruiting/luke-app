@@ -32,6 +32,23 @@ export const getCurrencySeparators = (
   );
 };
 
+const CURRENCY_LOCALES: Record<CurrencyCode, string> = {
+  EUR: "de-DE",
+  USD: "en-US",
+  CHF: "de-CH",
+};
+
+export const formatCurrencyAmount = (
+  value: number,
+  currency: CurrencyCode,
+): string => {
+  const locale = CURRENCY_LOCALES[currency] ?? "de-DE";
+  return value.toLocaleString(locale, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
 export const formatCurrencyValue = (
   value: string,
   currency: CurrencyCode,

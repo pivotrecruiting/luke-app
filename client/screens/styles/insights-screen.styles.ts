@@ -20,30 +20,6 @@ export const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.8)",
     marginTop: 4,
   },
-  toggleContainer: {
-    flexDirection: "row",
-    marginTop: 20,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    borderRadius: 25,
-    padding: 4,
-  },
-  toggleButton: {
-    flex: 1,
-    paddingVertical: 12,
-    alignItems: "center",
-    borderRadius: 22,
-  },
-  toggleButtonActive: {
-    backgroundColor: "#FFFFFF",
-  },
-  toggleButtonText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "rgba(255,255,255,0.8)",
-  },
-  toggleButtonTextActive: {
-    color: "#3B5BDB",
-  },
   scrollView: {
     flex: 1,
   },
@@ -606,6 +582,11 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#374151",
+    marginBottom: Spacing.sm,
+  },
+  incomeSwipeHint: {
+    fontSize: 12,
+    color: "#9CA3AF",
     marginBottom: Spacing.md,
   },
   incomeEmptyState: {
@@ -632,14 +613,17 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
+  incomeItemWrapper: {
+    borderRadius: BorderRadius.md,
+    overflow: "hidden",
+    marginBottom: Spacing.sm,
+  },
   incomeItem: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     backgroundColor: "#FFFFFF",
     padding: Spacing.md,
-    borderRadius: BorderRadius.md,
-    marginBottom: Spacing.sm,
   },
   incomeLeft: {
     flexDirection: "row",
@@ -673,6 +657,12 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#10B981",
+  },
+  swipeableDeleteAction: {
+    width: 80,
+    backgroundColor: "#EF4444",
+    justifyContent: "center",
+    alignItems: "center",
   },
   deleteConfirm: {
     backgroundColor: "#FEF2F2",
@@ -898,6 +888,11 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#374151",
+    marginBottom: Spacing.sm,
+  },
+  expenseSwipeHint: {
+    fontSize: 12,
+    color: "#9CA3AF",
     marginBottom: Spacing.md,
   },
   expenseEmptyState: {
@@ -924,14 +919,17 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
+  expenseItemWrapper: {
+    borderRadius: BorderRadius.md,
+    overflow: "hidden",
+    marginBottom: Spacing.sm,
+  },
   expenseItem: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     backgroundColor: "#FFFFFF",
     padding: Spacing.md,
-    borderRadius: BorderRadius.md,
-    marginBottom: Spacing.sm,
   },
   expenseLeft: {
     flexDirection: "row",

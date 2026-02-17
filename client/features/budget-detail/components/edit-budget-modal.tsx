@@ -1,4 +1,5 @@
-import { Pressable, Text, TextInput, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
+import CurrencyInput from "@/components/CurrencyInput";
 import { styles } from "@/screens/styles/budget-detail-screen.styles";
 import { AppModal } from "@/components/ui/app-modal";
 
@@ -33,18 +34,14 @@ export const EditBudgetModal = ({
       <Text style={styles.modalTitle}>Budget bearbeiten</Text>
 
       <Text style={styles.modalLabel}>Monatliches Limit</Text>
-      <View style={styles.currencyInputContainer}>
-        <Text style={styles.currencyPrefix}>€</Text>
-        <TextInput
-          style={styles.currencyInput}
-          value={budgetLimit}
-          onChangeText={onChangeLimit}
-          placeholder="0,00"
-          placeholderTextColor="#9CA3AF"
-          keyboardType="decimal-pad"
-          autoFocus
-        />
-      </View>
+      <CurrencyInput
+        value={budgetLimit}
+        onChangeText={onChangeLimit}
+        placeholder="0,00"
+        variant="modal"
+        containerStyle={styles.currencyInputContainer}
+        autoFocus
+      />
 
       <Pressable style={styles.modalSaveButton} onPress={onSave}>
         <Text style={styles.modalSaveButtonText}>Speichern</Text>

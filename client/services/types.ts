@@ -37,6 +37,7 @@ export type GoalRow = {
   name: string;
   icon: string | null;
   target_amount_cents: number;
+  monthly_contribution_cents: number | null;
 };
 
 export type GoalContributionRow = {
@@ -45,6 +46,7 @@ export type GoalContributionRow = {
   amount_cents: number;
   contribution_type: "deposit" | "repayment";
   contribution_at: string;
+  transaction_id: string | null;
 };
 
 export type BudgetCategoryRow = {

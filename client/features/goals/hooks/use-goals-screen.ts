@@ -3,7 +3,6 @@ import type { RefObject } from "react";
 import { ScrollView } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { useApp } from "@/context/AppContext";
-import { BUDGET_CATEGORIES } from "@/constants/budgetCategories";
 import { calculateMonths } from "../utils/calc";
 import type { SuccessToastT } from "../types/goals-types";
 
@@ -49,7 +48,7 @@ type UseGoalsScreenReturnT = {
 };
 
 export const useGoalsScreen = (): UseGoalsScreenReturnT => {
-  const { goals, budgets, addGoal, addBudget } = useApp();
+  const { goals, budgets, budgetCategories, addGoal, addBudget } = useApp();
   const scrollViewRef = useRef<ScrollView>(null);
 
   useFocusEffect(
@@ -119,19 +118,36 @@ export const useGoalsScreen = (): UseGoalsScreenReturnT => {
     const amount = parseFloat(goalAmount.replace(",", ".")) || 0;
     if (!goalName || amount <= 0) return;
 
-    addGoal(goalName, selectedEmoji, amount);
+    const parsedMonthly = parseFloat(monthlyContribution.replace(",", "."));
+    const normalizedMonthly =
+      !isNaN(parsedMonthly) && parsedMonthly > 0 ? parsedMonthly : null;
+    addGoal(goalName, selectedEmoji, amount, normalizedMonthly);
     resetAndCloseGoalModal();
     setSuccessToast("goal");
-  }, [addGoal, goalAmount, goalName, resetAndCloseGoalModal, selectedEmoji]);
+  }, [
+    addGoal,
+    goalAmount,
+    goalName,
+    monthlyContribution,
+    resetAndCloseGoalModal,
+    selectedEmoji,
+  ]);
 
   const handleCreateBudget = useCallback(() => {
     const limit = parseFloat(budgetLimit.replace(",", ".")) || 0;
     if (!selectedCategory || limit <= 0) return;
 
-    const category = BUDGET_CATEGORIES.find((c) => c.id === selectedCategory);
+    const category = budgetCategories.find(
+      (c) => c.key === selectedCategory || c.id === selectedCategory,
+    );
     if (!category) return;
 
-    addBudget(category.name, category.icon, category.color, limit);
+    addBudget(
+      category.name,
+      category.icon ?? "circle",
+      category.color ?? "#6B7280",
+      limit,
+    );
     resetAndCloseBudgetModal();
     setSuccessToast("budget");
   }, [addBudget, budgetLimit, resetAndCloseBudgetModal, selectedCategory]);

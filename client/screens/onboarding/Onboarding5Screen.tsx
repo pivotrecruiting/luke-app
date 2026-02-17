@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { OnboardingStackParamList } from "@/navigation/OnboardingNavigator";
 import { Feather } from "@expo/vector-icons";
@@ -15,23 +15,25 @@ import {
   formatCurrencyValue,
   getCurrencySymbol,
 } from "@/utils/currency-format";
+import {
+  useOnboardingStore,
+  type OnboardingStoreT,
+} from "@/stores/onboarding-store";
 
 interface Entry {
   type: string;
   amount: string;
 }
 
-const expenseTypes = [
-  "Versicherungen",
-  "Netflix",
-  "Wohnen",
-  "Handy",
-  "Altersvorsorge",
-  "Spotify",
-  "Fitness",
-  "Abos",
-  "Fahrticket",
-  "Auswärts essen",
+const incomeTypes = [
+  "Gehalt/Lohn",
+  "Selbstständigkeit",
+  "Sonstiges",
+  "Kindergeld",
+  "Bafög/Stipendium",
+  "Nebenjob",
+  "Taschengeld",
+  "Unterhalt",
 ];
 
 type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
@@ -39,12 +41,16 @@ type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
 export default function Onboarding5Screen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
-  const { setExpenseEntries, expenseEntries, currency } = useApp();
+  const { currency } = useApp();
+  const setIncomeEntriesDraft = useOnboardingStore(
+    (state: OnboardingStoreT) => state.setIncomeEntries,
+  );
+  const resetIncomeEntries = useOnboardingStore(
+    (state: OnboardingStoreT) => state.resetIncomeEntries,
+  );
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
-  const [entries, setEntries] = useState<Entry[]>(() =>
-    expenseEntries.map((e) => ({ type: e.type, amount: e.amount.toString() })),
-  );
+  const [entries, setEntries] = useState<Entry[]>([]);
   const currencySymbol = getCurrencySymbol(currency);
 
   const handleAddEntry = () => {
@@ -64,9 +70,18 @@ export default function Onboarding5Screen() {
       type: entry.type,
       amount: Number.parseFloat(entry.amount),
     }));
-    setExpenseEntries(parsedEntries);
+    setIncomeEntriesDraft(parsedEntries);
     navigation.navigate("Onboarding6");
   };
+
+  useFocusEffect(
+    useCallback(() => {
+      setSelectedType(null);
+      setAmount("");
+      setEntries([]);
+      resetIncomeEntries();
+    }, [resetIncomeEntries]),
+  );
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + Spacing.xl }]}>
@@ -76,19 +91,19 @@ export default function Onboarding5Screen() {
           { paddingBottom: insets.bottom + 100 },
         ]}
       >
-        <ProgressDots total={5} current={4} />
+        <ProgressDots total={8} current={4} />
 
         <View style={styles.headerContainer}>
-          <Text style={styles.titleBold}>Was geht monatlich</Text>
-          <Text style={styles.titleBold}>sicher weg?</Text>
+          <Text style={styles.titleBold}>Was kommt monatlich</Text>
+          <Text style={styles.titleBold}>rein?</Text>
           <Text style={styles.subtitle}>
-            Miete, Abos oder Verträge – Luke reserviert diesen Betrag
-            automatisch.
+            Gib dein durchschnittliches Netto-Einkommen an, damit Luke deinen
+            Spielraum berechnen kann
           </Text>
         </View>
 
         <View style={styles.chipsContainer}>
-          {expenseTypes.map((type) => (
+          {incomeTypes.map((type) => (
             <Chip
               key={type}
               label={type}
@@ -117,7 +132,7 @@ export default function Onboarding5Screen() {
             {entries.map((entry, index) => (
               <View key={index} style={styles.entryRow}>
                 <View style={styles.entryIconContainer}>
-                  <Feather name="trending-down" size={18} color="#EF4444" />
+                  <Feather name="trending-up" size={18} color="#7340FE" />
                 </View>
                 <View style={styles.entryContent}>
                   <Text style={styles.entryType}>{entry.type}</Text>
@@ -223,7 +238,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: "#FEE2E2",
+    backgroundColor: "#F3E8FF",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,
@@ -240,7 +255,7 @@ const styles = StyleSheet.create({
   entryAmount: {
     fontSize: 14,
     fontWeight: "500",
-    color: "#EF4444",
+    color: "#7340FE",
   },
   entryDeleteButton: {
     width: 32,

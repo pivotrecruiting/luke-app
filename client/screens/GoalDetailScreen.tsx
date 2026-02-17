@@ -8,6 +8,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Spacing } from "@/constants/theme";
 import { useGoalDetailScreen } from "@/features/goal-detail/hooks/use-goal-detail-screen";
 import { GoalDetailHeader } from "@/features/goal-detail/components/goal-detail-header";
+import { GoalSummaryCard } from "@/features/goal-detail/components/goal-summary-card";
 import { DepositsSection } from "@/features/goal-detail/components/deposits-section";
 import { EditGoalModal } from "@/features/goal-detail/components/edit-goal-modal";
 import { AddDepositModal } from "@/features/goal-detail/components/add-deposit-modal";
@@ -48,16 +49,11 @@ export default function GoalDetailScreen() {
       <View style={styles.modalContentWrapper}>
         <GoalDetailHeader
           topInset={insets.top + Spacing.lg}
-          goalName={goal.name}
-          goalIcon={goal.icon}
-          goalCurrent={goal.current}
-          goalTarget={goal.target}
-          percentage={derived.percentage}
-          remaining={derived.remaining}
-          isCompleted={derived.isCompleted}
-          onEditName={actions.openEditNameModal}
+          title={goal.name}
+          subtitle={derived.isCompleted ? "Geschafft!" : "bleib dran!"}
+          onBack={() => navigation.goBack()}
+          onEditGoal={actions.openEditNameModal}
           onDeleteGoal={actions.handleDeleteGoal}
-          onClose={() => navigation.goBack()}
         />
 
         <ScrollView
@@ -69,6 +65,14 @@ export default function GoalDetailScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
+          <GoalSummaryCard
+            name={goal.name}
+            icon={goal.icon}
+            current={goal.current}
+            target={goal.target}
+            percentage={derived.percentage}
+            remaining={derived.remaining}
+          />
           <DepositsSection
             groupedDeposits={groupedDeposits}
             goalIcon={goal.icon}
@@ -91,7 +95,16 @@ export default function GoalDetailScreen() {
           visible={state.editModalVisible}
           bottomInset={insets.bottom}
           tempName={state.tempName}
+          tempAmount={state.tempAmount}
+          tempMonthlyContribution={state.tempMonthlyContribution}
+          tempEmoji={state.tempEmoji}
+          showEmojiPicker={state.showEmojiPicker}
+          monthsToGoal={derived.monthsToGoal}
           onChangeName={actions.setTempName}
+          onChangeAmount={actions.setTempAmount}
+          onChangeMonthlyContribution={actions.setTempMonthlyContribution}
+          onToggleEmojiPicker={actions.toggleEmojiPicker}
+          onSelectEmoji={actions.selectEmoji}
           onSave={actions.handleEditSave}
           onCancel={actions.handleEditCancel}
         />
@@ -100,6 +113,10 @@ export default function GoalDetailScreen() {
           visible={state.depositModalVisible}
           bottomInset={insets.bottom}
           depositTitle={derived.depositTitle}
+          goalName={goal.name}
+          goalIcon={goal.icon ?? "🎯"}
+          goalCurrent={goal.current}
+          goalTarget={goal.target}
           depositAmount={state.depositAmount}
           selectedDate={state.selectedDate}
           showDatePicker={state.showDatePicker}

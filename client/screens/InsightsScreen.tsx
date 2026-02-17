@@ -6,6 +6,7 @@ import { useInsightsScreen } from "@/features/insights/hooks/use-insights-screen
 import { InsightsHeader } from "@/features/insights/components/insights-header";
 import { ExpensesTab } from "@/features/insights/components/expenses-tab";
 import { IncomeTab } from "@/features/insights/components/income-tab";
+import { AnalyticsTab } from "@/features/insights/components/analytics-tab";
 import { IncomeModal } from "@/features/insights/components/income-modal";
 import { ExpenseModal } from "@/features/insights/components/expense-modal";
 import { styles } from "./styles/insights-screen.styles";
@@ -25,8 +26,38 @@ export default function InsightsScreen() {
         onChangeTab={actions.setActiveTab}
       />
 
-      {state.activeTab === "ausgaben" ? (
+      {state.activeTab === "ausgaben" && (
         <ExpensesTab
+          bottomInset={insets.bottom}
+          totalFixedExpenses={appData.totalFixedExpenses}
+          expenseEntries={appData.expenseEntries}
+          deleteConfirmId={state.deleteExpenseConfirmId}
+          onAddExpense={actions.openAddExpenseModal}
+          onEditExpense={actions.openEditExpenseModal}
+          onRequestDelete={actions.setDeleteExpenseConfirmId}
+          onCancelDelete={() => actions.setDeleteExpenseConfirmId(null)}
+          onConfirmDelete={actions.handleDeleteExpense}
+          getIconForExpenseType={actions.getIconForExpenseType}
+        />
+      )}
+
+      {state.activeTab === "einnahmen" && (
+        <IncomeTab
+          bottomInset={insets.bottom}
+          totalIncome={appData.totalIncome}
+          incomeEntries={appData.incomeEntries}
+          deleteConfirmId={state.deleteConfirmId}
+          onAddIncome={actions.openAddIncomeModal}
+          onEditIncome={actions.openEditIncomeModal}
+          onRequestDelete={actions.setDeleteConfirmId}
+          onCancelDelete={() => actions.setDeleteConfirmId(null)}
+          onConfirmDelete={actions.handleDeleteIncome}
+          getIconForIncomeType={actions.getIconForIncomeType}
+        />
+      )}
+
+      {state.activeTab === "analytics" && (
+        <AnalyticsTab
           scrollViewRef={refs.scrollViewRef}
           bottomInset={insets.bottom}
           activeFilter={state.activeFilter}
@@ -43,19 +74,6 @@ export default function InsightsScreen() {
           onSelectTrendMonth={actions.setSelectedTrendMonth}
           totalIncome={derived.filteredComparisonTotals.income}
           totalExpenses={derived.filteredComparisonTotals.expenses}
-        />
-      ) : (
-        <IncomeTab
-          bottomInset={insets.bottom}
-          totalIncome={appData.totalIncome}
-          incomeEntries={appData.incomeEntries}
-          deleteConfirmId={state.deleteConfirmId}
-          onAddIncome={actions.openAddIncomeModal}
-          onEditIncome={actions.openEditIncomeModal}
-          onRequestDelete={actions.setDeleteConfirmId}
-          onCancelDelete={() => actions.setDeleteConfirmId(null)}
-          onConfirmDelete={actions.handleDeleteIncome}
-          getIconForIncomeType={actions.getIconForIncomeType}
         />
       )}
 

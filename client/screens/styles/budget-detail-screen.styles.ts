@@ -182,6 +182,12 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  swipeableDeleteAction: {
+    width: 80,
+    backgroundColor: "#EF4444",
+    justifyContent: "center",
+    alignItems: "center",
+  },
   transactionsList: {
     backgroundColor: "#FFFFFF",
     borderRadius: 16,

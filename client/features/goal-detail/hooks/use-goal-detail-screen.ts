@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 import { Alert, Platform } from "react-native";
 import { useApp } from "@/context/AppContext";
 import type { GoalDeposit } from "@/context/app/types";
+import { calculateMonths } from "@/features/goals/utils/calc";
 import { groupDepositsByMonth } from "../utils/group-deposits";
 import { parseDepositDate } from "../utils/date";
 
@@ -19,10 +20,15 @@ type UseGoalDetailScreenReturnT = {
     remaining: number;
     isCompleted: boolean;
     depositTitle: string;
+    monthsToGoal: number;
   };
   state: {
     editModalVisible: boolean;
     tempName: string;
+    tempAmount: string;
+    tempMonthlyContribution: string;
+    tempEmoji: string;
+    showEmojiPicker: boolean;
     depositModalVisible: boolean;
     depositAmount: string;
     selectedDate: Date;
@@ -36,6 +42,11 @@ type UseGoalDetailScreenReturnT = {
   };
   actions: {
     setTempName: (value: string) => void;
+    setTempAmount: (value: string) => void;
+    setTempMonthlyContribution: (value: string) => void;
+    setTempEmoji: (value: string) => void;
+    toggleEmojiPicker: () => void;
+    selectEmoji: (value: string) => void;
     setDepositAmount: (value: string) => void;
     setSelectedDate: (value: Date) => void;
     setEditDepositAmount: (value: string) => void;
@@ -84,6 +95,18 @@ export const useGoalDetailScreen = ({
 
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [tempName, setTempName] = useState(goal?.name || "");
+  const [tempAmount, setTempAmount] = useState(
+    typeof goal?.target === "number"
+      ? goal.target.toString().replace(".", ",")
+      : "",
+  );
+  const [tempMonthlyContribution, setTempMonthlyContribution] = useState(
+    typeof goal?.monthlyContribution === "number"
+      ? goal.monthlyContribution.toString().replace(".", ",")
+      : "",
+  );
+  const [tempEmoji, setTempEmoji] = useState(goal?.icon ?? "🎯");
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [depositModalVisible, setDepositModalVisible] = useState(false);
   const [depositAmount, setDepositAmount] = useState("");
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -115,10 +138,22 @@ export const useGoalDetailScreen = ({
   const isCompleted = percentage >= 100;
   const isKlarna = goal?.name.toLowerCase().includes("klarna") ?? false;
   const depositTitle = isKlarna ? "Rückzahlung" : "Einzahlung";
+  const monthsToGoal = useMemo(
+    () => calculateMonths(tempAmount, tempMonthlyContribution),
+    [tempAmount, tempMonthlyContribution],
+  );
 
   const openEditNameModal = useCallback(() => {
     if (!goal) return;
     setTempName(goal.name);
+    setTempAmount(goal.target.toString().replace(".", ","));
+    setTempMonthlyContribution(
+      typeof goal.monthlyContribution === "number"
+        ? goal.monthlyContribution.toString().replace(".", ",")
+        : "",
+    );
+    setTempEmoji(goal.icon ?? "🎯");
+    setShowEmojiPicker(false);
     setEditModalVisible(true);
   }, [goal]);
 
@@ -142,14 +177,43 @@ export const useGoalDetailScreen = ({
   }, [deleteGoal, goal, onNavigateBack]);
 
   const handleEditSave = useCallback(() => {
-    if (goal) {
-      updateGoal(goal.id, { name: tempName });
+    const targetAmount = parseFloat(tempAmount.replace(",", "."));
+    if (!goal || !tempName.trim() || isNaN(targetAmount) || targetAmount <= 0) {
+      return;
     }
+    const monthlyParsed = parseFloat(tempMonthlyContribution.replace(",", "."));
+    const normalizedMonthly =
+      !isNaN(monthlyParsed) && monthlyParsed > 0 ? monthlyParsed : null;
+
+    updateGoal(goal.id, {
+      name: tempName.trim(),
+      icon: tempEmoji,
+      target: targetAmount,
+      monthlyContribution: normalizedMonthly,
+    });
     setEditModalVisible(false);
-  }, [goal, tempName, updateGoal]);
+    setShowEmojiPicker(false);
+  }, [
+    goal,
+    tempAmount,
+    tempEmoji,
+    tempMonthlyContribution,
+    tempName,
+    updateGoal,
+  ]);
 
   const handleEditCancel = useCallback(() => {
     setEditModalVisible(false);
+    setShowEmojiPicker(false);
+  }, []);
+
+  const toggleEmojiPicker = useCallback(() => {
+    setShowEmojiPicker((prev) => !prev);
+  }, []);
+
+  const selectEmoji = useCallback((value: string) => {
+    setTempEmoji(value);
+    setShowEmojiPicker(false);
   }, []);
 
   const openDepositModal = useCallback(() => {
@@ -237,10 +301,15 @@ export const useGoalDetailScreen = ({
       remaining,
       isCompleted,
       depositTitle,
+      monthsToGoal,
     },
     state: {
       editModalVisible,
       tempName,
+      tempAmount,
+      tempMonthlyContribution,
+      tempEmoji,
+      showEmojiPicker,
       depositModalVisible,
       depositAmount,
       selectedDate,
@@ -254,6 +323,11 @@ export const useGoalDetailScreen = ({
     },
     actions: {
       setTempName,
+      setTempAmount,
+      setTempMonthlyContribution,
+      setTempEmoji,
+      toggleEmojiPicker,
+      selectEmoji,
       setDepositAmount,
       setSelectedDate,
       setEditDepositAmount,

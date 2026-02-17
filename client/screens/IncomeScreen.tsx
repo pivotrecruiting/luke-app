@@ -13,6 +13,10 @@ import { Feather } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { isLiquidGlassAvailable } from "expo-glass-effect";
 import { useApp } from "@/context/AppContext";
+import {
+  formatCurrencyAmount,
+  getCurrencySymbol,
+} from "@/utils/currency-format";
 import { Spacing } from "@/constants/theme";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
@@ -30,13 +34,6 @@ const INCOME_TYPES = [
   { id: "sonstiges", name: "Sonstiges", icon: "plus-circle" },
 ];
 
-function formatCurrency(value: number): string {
-  return value.toLocaleString("de-DE", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
-
 export default function IncomeScreen() {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
@@ -47,7 +44,9 @@ export default function IncomeScreen() {
     addIncomeEntry,
     updateIncomeEntry,
     deleteIncomeEntry,
+    currency,
   } = useApp();
+  const currencySymbol = getCurrencySymbol(currency);
 
   // Check if native header with Liquid Glass is available
   const useNativeHeader = isLiquidGlassAvailable() && Platform.OS === "ios";
@@ -181,7 +180,7 @@ export default function IncomeScreen() {
           <View style={styles.summaryContent}>
             <Text style={styles.summaryLabel}>Monatliche Einnahmen</Text>
             <Text style={styles.summaryAmount}>
-              € {formatCurrency(totalIncome)}
+              {currencySymbol} {formatCurrencyAmount(totalIncome, currency)}
             </Text>
           </View>
         </Animated.View>
@@ -224,7 +223,7 @@ export default function IncomeScreen() {
                   </View>
                   <View style={styles.incomeRight}>
                     <Text style={styles.incomeAmount}>
-                      € {formatCurrency(entry.amount)}
+                      {currencySymbol} {formatCurrencyAmount(entry.amount, currency)}
                     </Text>
                     <Pressable
                       onPress={() => setDeleteConfirmId(entry.id)}
@@ -341,7 +340,7 @@ export default function IncomeScreen() {
 
           <Text style={styles.modalLabel}>Betrag (monatlich)</Text>
           <View style={styles.amountInputContainer}>
-            <Text style={styles.currencySymbol}>€</Text>
+            <Text style={styles.currencySymbol}>{currencySymbol}</Text>
             <TextInput
               style={styles.amountInput}
               value={amount}

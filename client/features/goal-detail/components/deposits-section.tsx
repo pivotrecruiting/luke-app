@@ -1,4 +1,6 @@
+import { useRef, useCallback } from "react";
 import { Text, View } from "react-native";
+import Swipeable from "react-native-gesture-handler/Swipeable";
 import { styles } from "@/screens/styles/goal-detail-screen.styles";
 import type { GoalDeposit } from "@/context/app/types";
 import type { GroupedDepositsT } from "../types/goal-detail-types";
@@ -16,22 +18,35 @@ type DepositsSectionPropsT = {
 
 /**
  * Renders the deposit list grouped by month.
+ * Manages swipeable refs so only one row is open at a time.
  */
 export const DepositsSection = ({
   groupedDeposits,
   goalIcon,
   depositTitle,
-  activeSwipeId,
   onSwipeOpen,
   onEditDeposit,
   onDeleteDeposit,
 }: DepositsSectionPropsT) => {
+  const swipeableRefs = useRef<Record<string, Swipeable | null>>({});
   const hasDeposits = Object.keys(groupedDeposits).length > 0;
+
+  const handleSwipeOpen = useCallback(
+    (id: string) => {
+      Object.entries(swipeableRefs.current).forEach(([depositId, ref]) => {
+        if (depositId !== id && ref?.close) {
+          ref.close();
+        }
+      });
+      onSwipeOpen(id);
+    },
+    [onSwipeOpen],
+  );
 
   return (
     <>
       <Text style={styles.swipeHint}>
-        Lang drücken zum Löschen, tippen zum Bearbeiten
+        Wischen zum Löschen, tippen zum Bearbeiten
       </Text>
       {Object.entries(groupedDeposits).map(([month, transactions]) => (
         <View key={month} style={styles.monthSection}>
@@ -40,12 +55,18 @@ export const DepositsSection = ({
             {transactions.map((transaction) => (
               <SwipeableDeposit
                 key={transaction.id}
+                ref={(r) => {
+                  if (r) {
+                    swipeableRefs.current[transaction.id] = r;
+                  } else {
+                    delete swipeableRefs.current[transaction.id];
+                  }
+                }}
                 deposit={transaction}
                 goalIcon={goalIcon}
                 onDelete={() => onDeleteDeposit(transaction.id)}
                 onEdit={() => onEditDeposit(transaction)}
-                isActive={activeSwipeId === transaction.id}
-                onSwipeOpen={onSwipeOpen}
+                onSwipeOpen={handleSwipeOpen}
               />
             ))}
           </View>

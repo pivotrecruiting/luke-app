@@ -26,6 +26,7 @@ type UseInsightsScreenReturnT = {
     budgets: ReturnType<typeof useApp>["budgets"];
     totalIncome: number;
     totalExpenses: number;
+    totalFixedExpenses: number;
     monthlyTrendData: ReturnType<typeof useApp>["monthlyTrendData"];
     transactions: ReturnType<typeof useApp>["transactions"];
     incomeEntries: IncomeEntry[];
@@ -94,6 +95,7 @@ export const useInsightsScreen = (): UseInsightsScreenReturnT => {
     budgets,
     totalIncome,
     totalExpenses,
+    totalFixedExpenses,
     monthlyTrendData,
     transactions,
     incomeEntries,
@@ -384,6 +386,7 @@ export const useInsightsScreen = (): UseInsightsScreenReturnT => {
       budgets,
       totalIncome,
       totalExpenses,
+      totalFixedExpenses,
       monthlyTrendData,
       transactions,
       incomeEntries,

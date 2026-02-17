@@ -412,6 +412,10 @@ export const useBudgetActions = ({
       const tempBudgetId = existingBudget?.id ?? generateId();
       const tempExpenseId = generateId();
 
+      const isCurrentMonth =
+        date.getMonth() === new Date().getMonth() &&
+        date.getFullYear() === new Date().getFullYear();
+
       setBudgets((prevBudgets) => {
         if (existingBudget) {
           const newExpense: BudgetExpense = {
@@ -419,12 +423,13 @@ export const useBudgetActions = ({
             name,
             date: formatDate(date),
             amount,
+            timestamp: date.getTime(),
           };
           return prevBudgets.map((b) => {
             if (b.id === existingBudget.id) {
               return {
                 ...b,
-                current: b.current + amount,
+                current: isCurrentMonth ? b.current + amount : b.current,
                 expenses: [newExpense, ...b.expenses],
               };
             }
@@ -438,6 +443,7 @@ export const useBudgetActions = ({
           name,
           date: formatDate(date),
           amount,
+          timestamp: date.getTime(),
         };
         const newBudget: Budget = {
           id: tempBudgetId,
@@ -445,7 +451,7 @@ export const useBudgetActions = ({
           icon,
           iconColor,
           limit: 0,
-          current: amount,
+          current: isCurrentMonth ? amount : 0,
           expenses: [newExpense],
         };
 
