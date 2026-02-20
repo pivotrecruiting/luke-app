@@ -13,6 +13,9 @@ type SwipeableTransactionItemPropsT = {
   onEdit: () => void;
   onDelete: () => void;
   onSwipeOpen: (id: string) => void;
+  /** Card: standalone with shadow; flat: inside a parent card with divider. */
+  variant?: "card" | "flat";
+  showDivider?: boolean;
 };
 
 /**
@@ -22,7 +25,15 @@ export const SwipeableTransactionItem = React.forwardRef<
   Swipeable,
   SwipeableTransactionItemPropsT
 >(function SwipeableTransactionItem(
-  { transaction, formatCurrency, onEdit, onDelete, onSwipeOpen },
+  {
+    transaction,
+    formatCurrency,
+    onEdit,
+    onDelete,
+    onSwipeOpen,
+    variant = "card",
+    showDivider = false,
+  },
   ref,
 ) {
   const internalRef = useRef<Swipeable | null>(null);
@@ -98,7 +109,12 @@ export const SwipeableTransactionItem = React.forwardRef<
   );
 
   return (
-    <View style={styles.transactionItemWrapper}>
+    <View
+      style={[
+        styles.transactionItemWrapper,
+        variant === "flat" && styles.transactionItemWrapperFlat,
+      ]}
+    >
       <Swipeable
         ref={setRef}
         renderRightActions={renderRightActions}
@@ -106,6 +122,7 @@ export const SwipeableTransactionItem = React.forwardRef<
         onSwipeableOpen={(direction) => handleSwipeOpen(direction)}
         rightThreshold={40}
         friction={2}
+        containerStyle={variant === "flat" ? { overflow: "hidden" } : undefined}
       >
         <TransactionItem
           icon={
@@ -122,7 +139,8 @@ export const SwipeableTransactionItem = React.forwardRef<
           date={transaction.date}
           amountFormatted={formatCurrency(transaction.amount)}
           isIncome={transaction.amount >= 0}
-          variant="card"
+          variant={variant}
+          showDivider={showDivider}
           onPress={handleRowPress}
           onLongPress={() => internalRef.current?.openRight()}
         />

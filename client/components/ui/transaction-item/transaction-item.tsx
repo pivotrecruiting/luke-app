@@ -38,6 +38,7 @@ export const TransactionItem = ({
     styles.row,
     showDivider && styles.rowWithDivider,
     variant === "card" && styles.rowCard,
+    variant === "flat" && styles.rowFlat,
   ];
   const content = (
     <>

@@ -21,6 +21,10 @@ export const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
+  /** Opaque background for flat variant inside cards - prevents content overlap on swipe. */
+  rowFlat: {
+    backgroundColor: "#FFFFFF",
+  },
   iconContainer: {
     width: 44,
     height: 44,
