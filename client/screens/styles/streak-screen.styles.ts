@@ -12,13 +12,12 @@ export const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "flex-start",
     paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing["3xl"],
     paddingBottom: Spacing["3xl"],
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: "center",
     paddingVertical: Spacing["3xl"],
+    paddingBottom: Spacing["3xl"],
   },
   middleSection: {
     marginTop: Spacing.xl,
@@ -43,6 +42,6 @@ export const styles = StyleSheet.create({
   },
   buttonContainer: {
     width: "100%",
-    marginTop: "auto",
+    marginTop: Spacing["4xl"],
   },
 });
