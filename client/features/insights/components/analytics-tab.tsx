@@ -9,6 +9,7 @@ import type {
   CategoryT,
   InsightsFilterT,
   MonthlyTrendT,
+  PeriodIncomeExpensesT,
   TimeFilterT,
 } from "../types/insights-types";
 
@@ -29,6 +30,7 @@ type AnalyticsTabPropsT = {
   onSelectTrendMonth: (index: number | null) => void;
   totalIncome: number;
   totalExpenses: number;
+  periodIncomeExpenses: PeriodIncomeExpensesT[];
 };
 
 /**
@@ -51,6 +53,7 @@ export const AnalyticsTab = ({
   onSelectTrendMonth,
   totalIncome,
   totalExpenses,
+  periodIncomeExpenses,
 }: AnalyticsTabPropsT) => {
   const pagerRef = useRef<PagerView>(null);
 
@@ -205,6 +208,7 @@ export const AnalyticsTab = ({
           <IncomeExpensesView
             income={totalIncome}
             expenses={totalExpenses}
+            periodIncomeExpenses={periodIncomeExpenses}
             timeFilter={selectedTimeFilter}
           />
         </View>

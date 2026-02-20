@@ -18,8 +18,13 @@ import type {
   CategoryT,
   InsightsFilterT,
   InsightsTabT,
+  PeriodIncomeExpensesT,
   TimeFilterT,
 } from "../types/insights-types";
+import {
+  aggregateByPeriods,
+  getPeriodsForTimeFilter,
+} from "../utils/period-income-expenses";
 
 type UseInsightsScreenReturnT = {
   appData: {
@@ -56,6 +61,7 @@ type UseInsightsScreenReturnT = {
     totalCategoryExpenses: number;
     filteredMonthlyTrendData: ReturnType<typeof useApp>["monthlyTrendData"];
     filteredComparisonTotals: { income: number; expenses: number };
+    periodIncomeExpenses: PeriodIncomeExpensesT[];
   };
   actions: {
     setActiveTab: (value: InsightsTabT) => void;
@@ -233,6 +239,11 @@ export const useInsightsScreen = (): UseInsightsScreenReturnT => {
       income: variableIncome,
       expenses: variableExpenses,
     };
+  }, [selectedTimeFilter, transactions]);
+
+  const periodIncomeExpenses = useMemo(() => {
+    const periods = getPeriodsForTimeFilter(selectedTimeFilter);
+    return aggregateByPeriods(transactions, periods);
   }, [selectedTimeFilter, transactions]);
 
   const openAddIncomeModal = useCallback(() => {
@@ -416,6 +427,7 @@ export const useInsightsScreen = (): UseInsightsScreenReturnT => {
       totalCategoryExpenses,
       filteredMonthlyTrendData,
       filteredComparisonTotals,
+      periodIncomeExpenses,
     },
     actions: {
       setActiveTab,

@@ -168,6 +168,81 @@ export const styles = StyleSheet.create({
   incomeExpensesContainer: {
     gap: 16,
   },
+  balanceHeader: {
+    marginBottom: 20,
+  },
+  balanceTitle: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#6B7280",
+    marginBottom: 4,
+  },
+  balanceAmount: {
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#000000",
+  },
+  incomeExpensesChartContainer: {
+    width: "100%",
+    marginBottom: 16,
+  },
+  incomeExpensesChartBars: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-end",
+    height: 120,
+    width: "100%",
+  },
+  incomeExpensesPeriodGroup: {
+    flex: 1,
+    alignItems: "center",
+  },
+  incomeExpensesBarWrapper: {
+    height: 100,
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "center",
+    gap: 4,
+  },
+  incomeExpensesBar: {
+    width: 12,
+    borderRadius: 4,
+    minHeight: 4,
+  },
+  incomeExpensesBarExpenses: {
+    backgroundColor: "#B45309",
+  },
+  incomeExpensesBarIncome: {
+    backgroundColor: "#22C55E",
+  },
+  incomeExpensesPeriodLabel: {
+    fontSize: 12,
+    color: "#9CA3AF",
+    marginTop: 8,
+    textAlign: "center",
+  },
+  incomeExpensesLegend: {
+    flexDirection: "row",
+    justifyContent: "flex-start",
+    alignItems: "center",
+    gap: 16,
+    marginTop: 12,
+  },
+  incomeExpensesLegendItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  incomeExpensesLegendDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  incomeExpensesLegendText: {
+    fontSize: 12,
+    color: "#6B7280",
+    fontWeight: "500",
+  },
   summaryCard: {
     backgroundColor: "#FFFFFF",
     borderRadius: 16,

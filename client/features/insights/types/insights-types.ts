@@ -31,3 +31,9 @@ export type MonthlyTrendT = {
   month: string;
   amount: number;
 };
+
+export type PeriodIncomeExpensesT = {
+  label: string;
+  income: number;
+  expenses: number;
+};
