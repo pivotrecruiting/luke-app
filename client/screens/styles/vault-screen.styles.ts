@@ -64,12 +64,14 @@ export const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 6,
+    paddingRight: 44,
   },
   balanceLockIcon: {
     position: "absolute",
     top: 18,
     right: 18,
-    zIndex: 1,
+    zIndex: 2,
+    alignItems: "flex-end",
   },
   balanceLabel: {
     fontSize: 14,

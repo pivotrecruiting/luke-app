@@ -155,9 +155,6 @@ export default function VaultScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.balanceCard}>
-          <View style={styles.balanceLockIcon}>
-            <LockIcon size={38} />
-          </View>
           <View style={styles.balanceHeaderRow}>
             <Text style={styles.balanceLabel}>Dein Tresor</Text>
           </View>
@@ -166,6 +163,10 @@ export default function VaultScreen() {
             {currencySymbol} {formatCurrencyAmount(vaultBalance, currency)}
           </Text>
           <Text style={styles.availableLabel}>verfügbar für Deine Ziele</Text>
+
+          <View style={styles.balanceLockIcon}>
+            <LockIcon size={38} />
+          </View>
         </View>
 
         <Text style={styles.sectionTitle}>Transaktionen</Text>
