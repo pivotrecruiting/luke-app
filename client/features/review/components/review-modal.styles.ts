@@ -35,8 +35,8 @@ export const styles = StyleSheet.create({
     marginVertical: Spacing.sm,
   },
   illustration: {
-    width: 120,
-    height: 120,
+    width: 160,
+    height: 160,
   },
   ctaText: {
     ...Typography.body,
