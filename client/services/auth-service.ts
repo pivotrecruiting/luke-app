@@ -54,6 +54,128 @@ const getAuthRedirectUrl = () =>
     path: "auth/callback",
   });
 
+type OAuthCallbackParamsT = {
+  accessToken: string | null;
+  refreshToken: string | null;
+  code: string | null;
+  errorCode: string | null;
+  errorDescription: string | null;
+};
+
+const getParam = (
+  searchParams: URLSearchParams | null,
+  key: string,
+): string | null => {
+  if (!searchParams) return null;
+  const value = searchParams.get(key);
+  return value && value.length > 0 ? value : null;
+};
+
+const extractOAuthCallbackParams = (url: string): OAuthCallbackParamsT => {
+  try {
+    const parsedUrl = new URL(url);
+    const hashParams = parsedUrl.hash
+      ? new URLSearchParams(parsedUrl.hash.replace(/^#/, ""))
+      : null;
+
+    const accessToken =
+      getParam(parsedUrl.searchParams, "access_token") ??
+      getParam(hashParams, "access_token");
+    const refreshToken =
+      getParam(parsedUrl.searchParams, "refresh_token") ??
+      getParam(hashParams, "refresh_token");
+    const code =
+      getParam(parsedUrl.searchParams, "code") ?? getParam(hashParams, "code");
+    const errorCode =
+      getParam(parsedUrl.searchParams, "error_code") ??
+      getParam(hashParams, "error_code") ??
+      getParam(parsedUrl.searchParams, "error") ??
+      getParam(hashParams, "error");
+    const errorDescription =
+      getParam(parsedUrl.searchParams, "error_description") ??
+      getParam(hashParams, "error_description");
+
+    return {
+      accessToken,
+      refreshToken,
+      code,
+      errorCode,
+      errorDescription,
+    };
+  } catch {
+    // Fallback for callback URLs that cannot be parsed by URL().
+    const queryMatch = url.match(/\?([^#]+)/);
+    const hashMatch = url.match(/#(.+)$/);
+    const queryParams = queryMatch ? new URLSearchParams(queryMatch[1]) : null;
+    const hashParams = hashMatch ? new URLSearchParams(hashMatch[1]) : null;
+
+    const accessToken =
+      getParam(queryParams, "access_token") ??
+      getParam(hashParams, "access_token");
+    const refreshToken =
+      getParam(queryParams, "refresh_token") ??
+      getParam(hashParams, "refresh_token");
+    const code = getParam(queryParams, "code") ?? getParam(hashParams, "code");
+    const errorCode =
+      getParam(queryParams, "error_code") ??
+      getParam(hashParams, "error_code") ??
+      getParam(queryParams, "error") ??
+      getParam(hashParams, "error");
+    const errorDescription =
+      getParam(queryParams, "error_description") ??
+      getParam(hashParams, "error_description");
+
+    return {
+      accessToken,
+      refreshToken,
+      code,
+      errorCode,
+      errorDescription,
+    };
+  }
+};
+
+const createSessionFromOAuthCallback = async (
+  callbackUrl: string,
+): Promise<OAuthSignInResultT> => {
+  const { accessToken, refreshToken, code, errorCode, errorDescription } =
+    extractOAuthCallbackParams(callbackUrl);
+
+  if (errorCode || errorDescription) {
+    return {
+      status: "error",
+      message: errorDescription ?? errorCode ?? "OAuth callback failed",
+    };
+  }
+
+  if (accessToken && refreshToken) {
+    const { error } = await supabase.auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    });
+
+    if (error) {
+      return { status: "error", message: error.message };
+    }
+
+    return { status: "signed-in" };
+  }
+
+  if (code) {
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    if (error) {
+      return { status: "error", message: error.message };
+    }
+
+    return { status: "signed-in" };
+  }
+
+  return {
+    status: "error",
+    message: "Missing auth tokens in OAuth callback URL",
+  };
+};
+
 export const completeAuthSessionIfNeeded = () => {
   WebBrowser.maybeCompleteAuthSession();
 };
@@ -152,15 +274,7 @@ export const signInWithOAuth = async (
       return { status: "cancelled" };
     }
 
-    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(
-      result.url,
-    );
-
-    if (exchangeError) {
-      return { status: "error", message: exchangeError.message };
-    }
-
-    return { status: "signed-in" };
+    return await createSessionFromOAuthCallback(result.url);
   } catch (error) {
     return {
       status: "error",
