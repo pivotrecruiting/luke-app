@@ -129,7 +129,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
     paddingVertical: 2,
     borderTopLeftRadius: 10,
-    borderBottomRightRadius: 2,
+    borderBottomRightRadius: 10,
   },
   planCardBadgeText: {
     fontSize: 9,
