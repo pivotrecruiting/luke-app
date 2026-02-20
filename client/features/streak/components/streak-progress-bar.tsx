@@ -1,10 +1,9 @@
 import React, { useMemo } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { addDays, getLocalDateKey } from "@/features/xp/utils/dates";
-import { startOfWeek } from "date-fns";
 import { Spacing } from "@/constants/theme";
 
-const WEEK_LABELS = ["SO", "MO", "DI", "MI", "DO", "FR", "SA"] as const;
+const DAY_LABELS = ["SO", "MO", "DI", "MI", "DO", "FR", "SA"] as const;
 
 type StreakProgressBarProps = {
   currentStreak: number;
@@ -19,32 +18,47 @@ export const StreakProgressBar = ({
   lastStreakDate,
 }: StreakProgressBarProps) => {
   const dayStates = useMemo(() => {
+    const today = new Date();
+
     if (!lastStreakDate || currentStreak <= 0) {
-      return WEEK_LABELS.map(() => ({ isActive: false, isCurrentDay: false }));
+      const windowStart = addDays(today, -6);
+      return Array.from({ length: 7 }, (_, i) => {
+        const date = addDays(windowStart, i);
+        return {
+          label: DAY_LABELS[date.getDay()],
+          isActive: false,
+          isCurrentDay: getLocalDateKey(date) === getLocalDateKey(today),
+        };
+      });
     }
 
     const [year, month, day] = lastStreakDate.split("-").map(Number);
     const lastDate = new Date(year, month - 1, day);
-    const weekStart = startOfWeek(lastDate, { weekStartsOn: 0 });
-    const streakStart = addDays(lastDate, -(currentStreak - 1));
-    const streakStartKey = getLocalDateKey(streakStart);
+    const cycleDayCount = ((currentStreak - 1) % 7) + 1;
+    const cycleStart = addDays(lastDate, -(cycleDayCount - 1));
+    const windowStart = addDays(lastDate, -6);
+    const cycleStartKey = getLocalDateKey(cycleStart);
     const lastStreakKey = getLocalDateKey(lastDate);
-    const todayKey = getLocalDateKey(new Date());
+    const todayKey = getLocalDateKey(today);
 
-    return WEEK_LABELS.map((_, i) => {
-      const date = addDays(weekStart, i);
+    return Array.from({ length: 7 }, (_, i) => {
+      const date = addDays(windowStart, i);
       const dateKey = getLocalDateKey(date);
-      const isActive = dateKey >= streakStartKey && dateKey <= lastStreakKey;
+      const isActive = dateKey >= cycleStartKey && dateKey <= lastStreakKey;
       const isCurrentDay = dateKey === todayKey;
 
-      return { isActive, isCurrentDay };
+      return {
+        label: DAY_LABELS[date.getDay()],
+        isActive,
+        isCurrentDay,
+      };
     });
   }, [currentStreak, lastStreakDate]);
 
   return (
     <View style={styles.container}>
       <View style={styles.labelsRow}>
-        {WEEK_LABELS.map((label, i) => (
+        {dayStates.map(({ label }, i) => (
           <View key={i} style={styles.cell}>
             <Text style={styles.label}>{label}</Text>
           </View>
