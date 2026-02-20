@@ -13,6 +13,7 @@ type LevelUpGateProps = {
 export const LevelUpGate = ({ currentRouteName }: LevelUpGateProps) => {
   const {
     pendingLevelUps,
+    pendingStreaks,
     consumeNextLevelUp,
     isOnboardingComplete,
     isAppLoading,
@@ -27,6 +28,7 @@ export const LevelUpGate = ({ currentRouteName }: LevelUpGateProps) => {
     if (isNavigatingRef.current) return;
     if (isAppLoading || !isOnboardingComplete) return;
     if (!navigationRef.isReady()) return;
+    if (pendingStreaks.length > 0) return;
 
     const nextLevelUp = pendingLevelUps[0];
     if (!nextLevelUp) return;
@@ -40,6 +42,7 @@ export const LevelUpGate = ({ currentRouteName }: LevelUpGateProps) => {
     isAppLoading,
     isOnboardingComplete,
     pendingLevelUps,
+    pendingStreaks.length,
   ]);
 
   return null;

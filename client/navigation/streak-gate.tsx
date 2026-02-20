@@ -14,7 +14,6 @@ export const StreakGate = ({ currentRouteName }: StreakGateProps) => {
   const {
     pendingStreaks,
     consumeNextStreak,
-    pendingLevelUps,
     isOnboardingComplete,
     isAppLoading,
   } = useApp();
@@ -29,7 +28,6 @@ export const StreakGate = ({ currentRouteName }: StreakGateProps) => {
     if (isAppLoading || !isOnboardingComplete) return;
     if (!navigationRef.isReady()) return;
     if (currentRouteName === "LevelUp") return;
-    if (pendingLevelUps.length > 0) return;
 
     const nextStreak = pendingStreaks[0];
     if (!nextStreak) return;
@@ -42,7 +40,6 @@ export const StreakGate = ({ currentRouteName }: StreakGateProps) => {
     currentRouteName,
     isAppLoading,
     isOnboardingComplete,
-    pendingLevelUps.length,
     pendingStreaks,
   ]);
 
