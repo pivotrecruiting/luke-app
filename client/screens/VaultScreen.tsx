@@ -189,7 +189,7 @@ export default function VaultScreen() {
                   ]}
                 >
                   {isDepositEntry(entry) ? (
-                    <Feather name="arrow-up-right" size={16} color="#16A34A" />
+                    <Feather name="arrow-up-right" size={22} color="#16A34A" />
                   ) : (
                     <Text style={styles.transactionGoalIcon}>
                       {goals.find((goal) => goal.id === entry.goalId)?.icon ??
