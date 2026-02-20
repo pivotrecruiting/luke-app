@@ -465,6 +465,24 @@ export default function ProfileScreen() {
                   Review Modal öffnen
                 </ThemedText>
               </Pressable>
+              <ThemedText style={styles.devToolsTitle}>
+                Test Paywall Screen
+              </ThemedText>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.devToolsButton,
+                  { opacity: pressed ? 0.8 : 1 },
+                ]}
+                onPress={() => navigation.navigate("Paywall")}
+              >
+                <ThemedText
+                  type="small"
+                  style={styles.devToolsButtonText}
+                  lightColor="#FFFFFF"
+                >
+                  Paywall Screen öffnen
+                </ThemedText>
+              </Pressable>
             </View>
           </>
         )}

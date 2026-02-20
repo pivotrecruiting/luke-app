@@ -12,6 +12,7 @@ import IncomeScreen from "@/screens/IncomeScreen";
 import ExpensesScreen from "@/screens/ExpensesScreen";
 import LevelUpScreen from "@/screens/LevelUpScreen";
 import StreakScreen from "@/screens/StreakScreen";
+import PaywallScreen from "@/screens/PaywallScreen";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import { Colors } from "@/constants/theme";
@@ -35,6 +36,7 @@ export type RootStackParamList = {
     xpGained?: number;
     variant?: "ongoing" | "completed";
   };
+  Paywall: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -159,6 +161,15 @@ export default function RootStackNavigator() {
           <Stack.Screen
             name="Streak"
             component={StreakScreen}
+            options={{
+              presentation: "modal",
+              animation: "fade_from_bottom",
+              animationDuration: 300,
+            }}
+          />
+          <Stack.Screen
+            name="Paywall"
+            component={PaywallScreen}
             options={{
               presentation: "modal",
               animation: "fade_from_bottom",
