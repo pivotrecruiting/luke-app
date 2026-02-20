@@ -44,13 +44,6 @@ export const TransactionsSection = ({
 
   return (
     <>
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Transaktionen</Text>
-        <Text style={styles.swipeHint}>
-          Wischen zum Löschen, tippen zum Bearbeiten
-        </Text>
-      </View>
-
       {!hasExpenses ? (
         <View style={styles.emptyState}>
           <View style={styles.emptyIconContainer}>
@@ -66,7 +59,7 @@ export const TransactionsSection = ({
           <View key={month} style={styles.monthSection}>
             <Text style={styles.monthTitle}>{month}</Text>
             <View style={styles.transactionsList}>
-              {expenses.map((expense) => (
+              {expenses.map((expense, index) => (
                 <SwipeableExpense
                   key={expense.id}
                   ref={(r) => {
@@ -81,6 +74,7 @@ export const TransactionsSection = ({
                   onDelete={() => onDeleteExpense(expense.id)}
                   onEdit={() => onEditExpense(expense)}
                   onSwipeOpen={handleSwipeOpen}
+                  showDivider={index < expenses.length - 1}
                 />
               ))}
             </View>

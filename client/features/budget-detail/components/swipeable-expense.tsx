@@ -1,10 +1,11 @@
 import React, { useRef, useCallback } from "react";
-import { Alert, Pressable, Text, View } from "react-native";
+import { Alert, View } from "react-native";
 import { RectButton } from "react-native-gesture-handler";
 import Swipeable from "react-native-gesture-handler/Swipeable";
 import { Feather } from "@expo/vector-icons";
 import { useApp } from "@/context/AppContext";
 import { getCurrencySymbol } from "@/utils/currency-format";
+import { TransactionItem } from "@/components/ui/transaction-item";
 import { styles } from "@/screens/styles/budget-detail-screen.styles";
 import type { BudgetExpense } from "@/context/app/types";
 import { formatCurrency } from "../utils/format";
@@ -15,22 +16,24 @@ type SwipeableExpensePropsT = {
   onDelete: () => void;
   onEdit: () => void;
   onSwipeOpen: (id: string) => void;
+  showDivider?: boolean;
 };
 
 /**
  * Renders a swipeable expense row with swipe-left-to-delete.
- * Uses Swipeable from react-native-gesture-handler for native swipe gesture.
+ * Uses reusable TransactionItem for consistent styling.
  */
 export const SwipeableExpense = React.forwardRef<
   Swipeable,
   SwipeableExpensePropsT
 >(function SwipeableExpense(
-  { expense, budgetIcon, onDelete, onEdit, onSwipeOpen },
+  { expense, budgetIcon, onDelete, onEdit, onSwipeOpen, showDivider = true },
   ref,
 ) {
   const internalRef = useRef<Swipeable | null>(null);
   const justSwipedRef = useRef(false);
   const { currency } = useApp();
+  const currencySymbol = getCurrencySymbol(currency);
 
   const setRef = useCallback(
     (instance: Swipeable | null) => {
@@ -43,7 +46,6 @@ export const SwipeableExpense = React.forwardRef<
     },
     [ref],
   );
-  const currencySymbol = getCurrencySymbol(currency);
 
   const handleDelete = useCallback(() => {
     Alert.alert(
@@ -103,32 +105,35 @@ export const SwipeableExpense = React.forwardRef<
   );
 
   return (
-    <Swipeable
-      ref={setRef}
-      renderRightActions={renderRightActions}
-      onSwipeableWillOpen={handleSwipeWillOpen}
-      onSwipeableOpen={(direction) => handleSwipeOpen(direction)}
-      rightThreshold={40}
-      friction={2}
-    >
-      <Pressable
-        style={styles.transactionItem}
-        onPress={handleRowPress}
-        onLongPress={() => internalRef.current?.openRight()}
+    <View style={styles.transactionItemWrapper}>
+      <Swipeable
+        ref={setRef}
+        renderRightActions={renderRightActions}
+        onSwipeableWillOpen={handleSwipeWillOpen}
+        onSwipeableOpen={(direction) => handleSwipeOpen(direction)}
+        rightThreshold={40}
+        friction={2}
+        containerStyle={{ overflow: "hidden" }}
       >
-        <View style={styles.transactionLeft}>
-          <View style={styles.transactionIconContainer}>
-            <Feather name={budgetIcon as any} size={18} color="#6B7280" />
-          </View>
-          <View>
-            <Text style={styles.transactionName}>{expense.name}</Text>
-            <Text style={styles.transactionDate}>{expense.date}</Text>
-          </View>
-        </View>
-        <Text style={styles.transactionAmountNegative}>
-          -{currencySymbol} {formatCurrency(expense.amount, currency)}
-        </Text>
-      </Pressable>
-    </Swipeable>
+        <TransactionItem
+          icon={
+            <Feather
+              name={budgetIcon as React.ComponentProps<typeof Feather>["name"]}
+              size={20}
+              color="#6B7280"
+            />
+          }
+          iconContainerStyle={styles.transactionIconContainerBudget}
+          title={expense.name}
+          date={expense.date}
+          amountFormatted={`-${currencySymbol} ${formatCurrency(expense.amount, currency)}`}
+          isIncome={false}
+          showDivider={showDivider}
+          variant="flat"
+          onPress={handleRowPress}
+          onLongPress={() => internalRef.current?.openRight()}
+        />
+      </Swipeable>
+    </View>
   );
 });

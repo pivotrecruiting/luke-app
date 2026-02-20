@@ -395,7 +395,12 @@ export const useBudgetActions = ({
       date: Date,
     ) => {
       const dbCategory = canUseDb ? resolveBudgetCategory(categoryName) : null;
-      if (canUseDb && !dbCategory) {
+
+      const existingBudget = budgets.find(
+        (b) => b.name.toLowerCase() === categoryName.toLowerCase(),
+      );
+
+      if (!existingBudget) {
         addTransaction({
           name,
           category: categoryName,
@@ -403,21 +408,45 @@ export const useBudgetActions = ({
           amount: -amount,
           icon,
         });
+
+        if (!canUseDb || !userId) return;
+        void (async () => {
+          try {
+            const transactionId = await createTransaction({
+              user_id: userId,
+              type: "expense",
+              amount_cents: toCents(amount),
+              currency,
+              name,
+              category_name: categoryName,
+              budget_id: null,
+              budget_category_id: dbCategory?.id ?? null,
+              transaction_at: date.toISOString(),
+              source: "manual",
+            });
+            setTransactions((prev) =>
+              prev.map((tx) =>
+                tx.name === name && tx.category === categoryName && tx.amount === -amount
+                  ? { ...tx, id: transactionId }
+                  : tx,
+              ),
+            );
+            await handleSnapXp(transactionId);
+          } catch (error) {
+            handleDbError(error, "addExpenseWithAutobudget");
+          }
+        })();
         return;
       }
 
-      const existingBudget = budgets.find(
-        (b) => b.name.toLowerCase() === categoryName.toLowerCase(),
-      );
-      const tempBudgetId = existingBudget?.id ?? generateId();
       const tempExpenseId = generateId();
-
       const isCurrentMonth =
         date.getMonth() === new Date().getMonth() &&
         date.getFullYear() === new Date().getFullYear();
 
-      setBudgets((prevBudgets) => {
-        if (existingBudget) {
+      setBudgets((prevBudgets) =>
+        prevBudgets.map((b) => {
+          if (b.id !== existingBudget.id) return b;
           const newExpense: BudgetExpense = {
             id: tempExpenseId,
             name,
@@ -425,38 +454,13 @@ export const useBudgetActions = ({
             amount,
             timestamp: date.getTime(),
           };
-          return prevBudgets.map((b) => {
-            if (b.id === existingBudget.id) {
-              return {
-                ...b,
-                current: isCurrentMonth ? b.current + amount : b.current,
-                expenses: [newExpense, ...b.expenses],
-              };
-            }
-            return b;
-          });
-        }
-
-        const iconColor = AUTOBUDGET_CATEGORY_COLORS[categoryName] || "#7340fd";
-        const newExpense: BudgetExpense = {
-          id: tempExpenseId,
-          name,
-          date: formatDate(date),
-          amount,
-          timestamp: date.getTime(),
-        };
-        const newBudget: Budget = {
-          id: tempBudgetId,
-          name: categoryName,
-          icon,
-          iconColor,
-          limit: 0,
-          current: isCurrentMonth ? amount : 0,
-          expenses: [newExpense],
-        };
-
-        return [...prevBudgets, newBudget];
-      });
+          return {
+            ...b,
+            current: isCurrentMonth ? b.current + amount : b.current,
+            expenses: [newExpense, ...b.expenses],
+          };
+        }),
+      );
 
       setTransactions((prev) => [
         {
@@ -472,32 +476,6 @@ export const useBudgetActions = ({
 
       if (!canUseDb || !userId) return;
       void (async () => {
-        let budgetId = existingBudget?.id;
-        if (!budgetId) {
-          try {
-            const newBudgetId = await createBudgetInDb({
-              user_id: userId,
-              category_id: dbCategory?.id,
-              name: categoryName,
-              limit_amount_cents: 0,
-              period: "monthly",
-              currency,
-              is_active: true,
-            });
-            budgetId = newBudgetId;
-            setBudgets((prev) =>
-              prev.map((budget) =>
-                budget.id === tempBudgetId
-                  ? { ...budget, id: newBudgetId }
-                  : budget,
-              ),
-            );
-          } catch (error) {
-            handleDbError(error, "addExpenseWithAutobudget");
-            return;
-          }
-        }
-
         let transactionId: string;
         try {
           transactionId = await createTransaction({
@@ -507,7 +485,7 @@ export const useBudgetActions = ({
             currency,
             name,
             category_name: categoryName,
-            budget_id: budgetId,
+            budget_id: existingBudget.id,
             budget_category_id: dbCategory?.id ?? null,
             transaction_at: date.toISOString(),
             source: "manual",
@@ -519,7 +497,7 @@ export const useBudgetActions = ({
 
         setBudgets((prev) =>
           prev.map((budget) => {
-            if (budget.id !== (budgetId ?? tempBudgetId)) return budget;
+            if (budget.id !== existingBudget.id) return budget;
             return {
               ...budget,
               expenses: budget.expenses.map((expense) =>
