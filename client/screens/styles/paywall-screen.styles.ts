@@ -78,11 +78,13 @@ export const styles = StyleSheet.create({
     paddingHorizontal: Spacing["3xl"],
   },
 
-  // Feature rows
+  // Features wrapper (same width as headline via matching padding)
+  featuresWrapper: {
+    paddingHorizontal: Spacing["3xl"],
+  },
   featureRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
     marginBottom: Spacing.lg,
   },
   featureIcon: {
@@ -91,7 +93,8 @@ export const styles = StyleSheet.create({
   featureText: {
     ...Typography.body,
     color: Colors.light.text,
-    textAlign: "center",
+    textAlign: "left",
+    flex: 1,
   },
 
   // Plan cards section

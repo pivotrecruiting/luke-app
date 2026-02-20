@@ -136,14 +136,16 @@ export default function PaywallScreen() {
             Starte jetzt deine Reise für mehr Geld am Monatsende.
           </Text>
 
-          {FEATURES.map(({ icon, text }) => (
-            <View key={text} style={styles.featureRow}>
-              <View style={styles.featureIcon}>
-                <Feather name={icon} size={22} color={Colors.light.primary} />
+          <View style={styles.featuresWrapper}>
+            {FEATURES.map(({ icon, text }) => (
+              <View key={text} style={styles.featureRow}>
+                <View style={styles.featureIcon}>
+                  <Feather name={icon} size={22} color={Colors.light.primary} />
+                </View>
+                <Text style={styles.featureText}>{text}</Text>
               </View>
-              <Text style={styles.featureText}>{text}</Text>
-            </View>
-          ))}
+            ))}
+          </View>
 
           {/* Plan cards */}
           <View style={styles.plansContainer}>
