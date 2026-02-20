@@ -78,15 +78,17 @@ export default function PaywallScreen() {
             <Text style={styles.planCardBadgeText}>{badge}</Text>
           </View>
         )}
-        <Text
-          style={[
-            styles.planCardTitle,
-            badge && styles.planCardTitleWithBadge,
-          ]}
-        >
-          {title}
-        </Text>
-        <Text style={styles.planCardPrice}>{price}</Text>
+        <View style={styles.planCardContent}>
+          <Text
+            style={[
+              styles.planCardTitle,
+              badge && styles.planCardTitleWithBadge,
+            ]}
+          >
+            {title}
+          </Text>
+          <Text style={styles.planCardPrice}>{price}</Text>
+        </View>
         <Text style={styles.planCardDescription}>{description}</Text>
       </Pressable>
     );
