@@ -1,4 +1,5 @@
 import type {
+  XpStreakPayloadT,
   UserProgressT,
   XpEventRuleT,
   XpEventTypeT,
@@ -123,6 +124,7 @@ export type AppState = {
   xpEventRules: XpEventRuleT[];
   userProgress: UserProgressT | null;
   pendingLevelUps: XpLevelUpPayloadT[];
+  pendingStreaks: XpStreakPayloadT[];
 };
 
 export type AppContextType = AppState & {
@@ -193,6 +195,8 @@ export type AppContextType = AppState & {
   lastBudgetResetMonth: number;
   enqueueLevelUp: (payload: XpLevelUpPayloadT) => void;
   consumeNextLevelUp: () => void;
+  enqueueStreak: (payload: XpStreakPayloadT) => void;
+  consumeNextStreak: () => void;
   submitOnboarding: () => void;
 };
 

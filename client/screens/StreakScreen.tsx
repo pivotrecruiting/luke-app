@@ -30,11 +30,17 @@ export default function StreakScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const route = useRoute();
-  const { userProgress } = useApp();
+  const { userProgress, xpEventTypes } = useApp();
 
   const params = (route.params as StreakScreenRouteParams) || {};
   const currentStreak = userProgress?.currentStreak ?? 0;
   const lastStreakDate = userProgress?.lastStreakDate ?? null;
+  const dailyLoginXp =
+    xpEventTypes.find((eventType) => eventType.key === "daily_login")?.baseXp ??
+    0;
+  const streakBonusXp =
+    xpEventTypes.find((eventType) => eventType.key === "streak_7_bonus")
+      ?.baseXp ?? 0;
 
   const isCompleted =
     params.variant === "completed" ||
@@ -42,12 +48,17 @@ export default function StreakScreen() {
       currentStreak >= 7 &&
       currentStreak % 7 === 0);
 
-  const xpGained = params.xpGained ?? (isCompleted ? 150 : 50);
+  const xpGained =
+    params.xpGained ??
+    (isCompleted ? dailyLoginXp + streakBonusXp : dailyLoginXp);
   const displayStreak = isCompleted && currentStreak < 7 ? 7 : currentStreak;
-  const progressBarStreak = isCompleted && currentStreak < 7 ? 7 : currentStreak;
+  const progressBarStreak =
+    isCompleted && currentStreak < 7 ? 7 : currentStreak;
   const progressBarLastDate =
     isCompleted && (params.variant === "completed" || !lastStreakDate)
-      ? getLocalDateKey(addDays(startOfWeek(new Date(), { weekStartsOn: 0 }), 6))
+      ? getLocalDateKey(
+          addDays(startOfWeek(new Date(), { weekStartsOn: 0 }), 6),
+        )
       : lastStreakDate;
   const streakTitle =
     displayStreak === 1 ? "1 Tag Streak" : `${displayStreak} Tage Streak`;
@@ -104,10 +115,7 @@ export default function StreakScreen() {
             </View>
 
             <View style={styles.buttonContainer}>
-              <ContinueButton
-                onPress={handleContinue}
-                label={buttonLabel}
-              />
+              <ContinueButton onPress={handleContinue} label={buttonLabel} />
             </View>
           </View>
         </View>

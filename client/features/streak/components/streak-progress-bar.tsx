@@ -4,7 +4,7 @@ import { addDays, getLocalDateKey } from "@/features/xp/utils/dates";
 import { startOfWeek } from "date-fns";
 import { Spacing } from "@/constants/theme";
 
-const WEEK_LABELS = ["SO", "M", "D", "M", "D", "F", "SA"] as const;
+const WEEK_LABELS = ["SO", "MO", "DI", "MI", "DO", "FR", "SA"] as const;
 
 type StreakProgressBarProps = {
   currentStreak: number;

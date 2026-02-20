@@ -27,7 +27,7 @@ import type {
   Transaction,
 } from "@/context/app/types";
 import type { BudgetCategoryRow, IncomeCategoryRow } from "@/services/types";
-import type { XpLevelUpPayloadT } from "@/types/xp-types";
+import type { XpLevelUpPayloadT, XpStreakPayloadT } from "@/types/xp-types";
 import { formatDate } from "@/utils/dates";
 import { upsertInitialSavings } from "@/services/app-service";
 import {
@@ -101,6 +101,7 @@ export function AppProvider({ children }: AppProviderProps) {
   const [pendingLevelUps, setPendingLevelUps] = useState<XpLevelUpPayloadT[]>(
     [],
   );
+  const [pendingStreaks, setPendingStreaks] = useState<XpStreakPayloadT[]>([]);
 
   const { user } = useAuth();
   const userId = user?.id ?? null;
@@ -131,10 +132,19 @@ export function AppProvider({ children }: AppProviderProps) {
     setPendingLevelUps((prev) => prev.slice(1));
   }, []);
 
+  const enqueueStreak = useCallback((payload: XpStreakPayloadT) => {
+    setPendingStreaks((prev) => [...prev, payload]);
+  }, []);
+
+  const consumeNextStreak = useCallback(() => {
+    setPendingStreaks((prev) => prev.slice(1));
+  }, []);
+
   const { levels, xpEventTypes, xpEventRules, userProgress, awardXp } = useXp({
     userId,
     canUseDb,
     onLevelUp: enqueueLevelUp,
+    onStreakReached: enqueueStreak,
   });
 
   const handleDbError = useCallback((error: unknown, context: string) => {
@@ -421,6 +431,7 @@ export function AppProvider({ children }: AppProviderProps) {
     xpEventRules,
     userProgress,
     pendingLevelUps,
+    pendingStreaks,
     submitOnboarding,
     addIncomeEntry,
     addExpenseEntry,
@@ -454,6 +465,8 @@ export function AppProvider({ children }: AppProviderProps) {
     lastBudgetResetMonth,
     enqueueLevelUp,
     consumeNextLevelUp,
+    enqueueStreak,
+    consumeNextStreak,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

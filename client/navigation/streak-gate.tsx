@@ -3,43 +3,47 @@ import { useApp } from "@/context/AppContext";
 import { navigationRef } from "@/navigation/navigation-ref";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 
-type LevelUpGateProps = {
+type StreakGateProps = {
   currentRouteName: keyof RootStackParamList | null;
 };
 
 /**
- * Navigates to the LevelUp screen when a queued level-up is ready to be shown.
+ * Navigates to the streak screen when a queued daily streak payload is ready.
  */
-export const LevelUpGate = ({ currentRouteName }: LevelUpGateProps) => {
+export const StreakGate = ({ currentRouteName }: StreakGateProps) => {
   const {
+    pendingStreaks,
+    consumeNextStreak,
     pendingLevelUps,
-    consumeNextLevelUp,
     isOnboardingComplete,
     isAppLoading,
   } = useApp();
   const isNavigatingRef = useRef(false);
 
   useEffect(() => {
-    if (currentRouteName === "LevelUp" || currentRouteName === "Streak") {
+    if (currentRouteName === "Streak") {
       isNavigatingRef.current = false;
       return;
     }
     if (isNavigatingRef.current) return;
     if (isAppLoading || !isOnboardingComplete) return;
     if (!navigationRef.isReady()) return;
+    if (currentRouteName === "LevelUp") return;
+    if (pendingLevelUps.length > 0) return;
 
-    const nextLevelUp = pendingLevelUps[0];
-    if (!nextLevelUp) return;
+    const nextStreak = pendingStreaks[0];
+    if (!nextStreak) return;
 
     isNavigatingRef.current = true;
-    consumeNextLevelUp();
-    navigationRef.navigate("LevelUp", nextLevelUp);
+    consumeNextStreak();
+    navigationRef.navigate("Streak", nextStreak);
   }, [
-    consumeNextLevelUp,
+    consumeNextStreak,
     currentRouteName,
     isAppLoading,
     isOnboardingComplete,
-    pendingLevelUps,
+    pendingLevelUps.length,
+    pendingStreaks,
   ]);
 
   return null;

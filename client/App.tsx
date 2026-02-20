@@ -13,6 +13,7 @@ import { queryClient } from "@/lib/query-client";
 import RootStackNavigator from "@/navigation/RootStackNavigator";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { LevelUpGate } from "@/navigation/level-up-gate";
+import { StreakGate } from "@/navigation/streak-gate";
 import { getActiveRouteName, navigationRef } from "@/navigation/navigation-ref";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AppProvider, useApp } from "@/context/AppContext";
@@ -89,6 +90,7 @@ function AppNavigator() {
             <RootStackNavigator />
           </NavigationContainer>
           <LevelUpGate currentRouteName={currentRouteName} />
+          <StreakGate currentRouteName={currentRouteName} />
           <StatusBar style="auto" />
         </KeyboardProvider>
       </GestureHandlerRootView>
