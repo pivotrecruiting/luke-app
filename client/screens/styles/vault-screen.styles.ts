@@ -85,7 +85,7 @@ export const styles = StyleSheet.create({
   },
   balanceLabel: {
     fontSize: 14,
-    color: "#6B7280",
+    color: "#000000",
   },
   balanceAmount: {
     fontSize: 32,

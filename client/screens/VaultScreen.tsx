@@ -25,10 +25,7 @@ import {
   TransactionListByMonth,
   type TransactionListByMonthItemT,
 } from "@/components/ui/transaction-list-by-month";
-import {
-  styles,
-  CARD_OVERLAP_HALF_HEIGHT,
-} from "./styles/vault-screen.styles";
+import { styles, CARD_OVERLAP_HALF_HEIGHT } from "./styles/vault-screen.styles";
 
 const getEntryTitle = (entry: {
   entryType: "monthly_rollover" | "manual_deposit" | "goal_deposit";
@@ -119,7 +116,7 @@ export default function VaultScreen() {
         ),
         iconContainerStyle: isDeposit
           ? { backgroundColor: "#E7F2E8", borderRadius: 22 }
-          : undefined,
+          : { backgroundColor: "transparent" },
         amountFormatted: `${entry.amount > 0 ? "+" : "-"}${currencySymbol} ${formatCurrencyAmount(Math.abs(entry.amount), currency)}`,
         isIncome: entry.amount > 0,
       };
@@ -206,8 +203,6 @@ export default function VaultScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.sectionTitle}>Transaktionen</Text>
-
         {transactionListItems.length === 0 ? (
           <View style={styles.emptyState}>
             <Feather name="inbox" size={36} color="#9CA3AF" />
