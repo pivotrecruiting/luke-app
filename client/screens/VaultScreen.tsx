@@ -20,6 +20,11 @@ import {
   formatCurrencyAmount,
   getCurrencySymbol,
 } from "@/utils/currency-format";
+import { formatDate } from "@/utils/dates";
+import {
+  TransactionListByMonth,
+  type TransactionListByMonthItemT,
+} from "@/components/ui/transaction-list-by-month";
 import {
   styles,
   CARD_OVERLAP_HALF_HEIGHT,
@@ -97,13 +102,29 @@ export default function VaultScreen() {
   const isDepositDisabled =
     parsedDepositAmount <= 0 || parsedDepositAmount > availableFromBalance;
 
-  const formatDate = useCallback((value: string) => {
-    const date = new Date(value);
-    return new Intl.DateTimeFormat("de-DE", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    }).format(date);
-  }, []);
+  const transactionListItems = useMemo((): TransactionListByMonthItemT[] => {
+    return sortedEntries.map((entry) => {
+      const isDeposit = isDepositEntry(entry);
+      return {
+        id: entry.id,
+        dateStr: entry.transactionAt,
+        dateFormatted: formatDate(new Date(entry.transactionAt)),
+        title: getEntryTitle(entry),
+        icon: isDeposit ? (
+          <Feather name="arrow-up-right" size={22} color="#16A34A" />
+        ) : (
+          <Text style={styles.transactionGoalIcon}>
+            {goals.find((goal) => goal.id === entry.goalId)?.icon ?? "🎯"}
+          </Text>
+        ),
+        iconContainerStyle: isDeposit
+          ? { backgroundColor: "#E7F2E8", borderRadius: 22 }
+          : undefined,
+        amountFormatted: `${entry.amount > 0 ? "+" : "-"}${currencySymbol} ${formatCurrencyAmount(Math.abs(entry.amount), currency)}`,
+        isIncome: entry.amount > 0,
+      };
+    });
+  }, [currency, currencySymbol, goals, sortedEntries]);
 
   const handleSaveDeposit = useCallback(() => {
     if (parsedDepositAmount <= 0) {
@@ -187,7 +208,7 @@ export default function VaultScreen() {
       >
         <Text style={styles.sectionTitle}>Transaktionen</Text>
 
-        {sortedEntries.length === 0 ? (
+        {transactionListItems.length === 0 ? (
           <View style={styles.emptyState}>
             <Feather name="inbox" size={36} color="#9CA3AF" />
             <Text style={styles.emptyText}>
@@ -195,49 +216,7 @@ export default function VaultScreen() {
             </Text>
           </View>
         ) : (
-          sortedEntries.map((entry) => (
-            <View key={entry.id} style={styles.transactionCard}>
-              <View style={styles.transactionRow}>
-                <View
-                  style={[
-                    styles.transactionIconContainer,
-                    isDepositEntry(entry) &&
-                      styles.transactionIconContainerDeposit,
-                  ]}
-                >
-                  {isDepositEntry(entry) ? (
-                    <Feather name="arrow-up-right" size={22} color="#16A34A" />
-                  ) : (
-                    <Text style={styles.transactionGoalIcon}>
-                      {goals.find((goal) => goal.id === entry.goalId)?.icon ??
-                        "🎯"}
-                    </Text>
-                  )}
-                </View>
-
-                <View style={styles.transactionContent}>
-                  <View style={styles.transactionHeader}>
-                    <Text style={styles.transactionTitle}>
-                      {getEntryTitle(entry)}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.transactionAmount,
-                        entry.amount < 0 && styles.transactionAmountNegative,
-                      ]}
-                    >
-                      {entry.amount > 0 ? "+" : "-"}
-                      {currencySymbol}{" "}
-                      {formatCurrencyAmount(Math.abs(entry.amount), currency)}
-                    </Text>
-                  </View>
-                  <Text style={styles.transactionDate}>
-                    {formatDate(entry.transactionAt)}
-                  </Text>
-                </View>
-              </View>
-            </View>
-          ))
+          <TransactionListByMonth items={transactionListItems} />
         )}
       </ScrollView>
 

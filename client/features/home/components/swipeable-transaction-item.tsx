@@ -1,9 +1,10 @@
 import React, { useRef, useCallback } from "react";
-import { Alert, Pressable, Text, View } from "react-native";
+import { Alert, View } from "react-native";
 import { RectButton } from "react-native-gesture-handler";
 import Swipeable from "react-native-gesture-handler/Swipeable";
 import { Feather } from "@expo/vector-icons";
 import type { Transaction } from "@/context/app/types";
+import { TransactionItem } from "@/components/ui/transaction-item";
 import { styles } from "@/screens/styles/home-screen.styles";
 
 type SwipeableTransactionItemPropsT = {
@@ -106,34 +107,25 @@ export const SwipeableTransactionItem = React.forwardRef<
         rightThreshold={40}
         friction={2}
       >
-        <Pressable
-          style={styles.transactionItem}
-          onPress={handleRowPress}
-          onLongPress={() => internalRef.current?.openRight()}
-        >
-          <View style={styles.transactionIconContainer}>
+        <TransactionItem
+          icon={
             <Feather
-              name={transaction.icon as any}
+              name={transaction.icon as React.ComponentProps<
+                typeof Feather
+              >["name"]}
               size={20}
               color="#7B8CDE"
             />
-          </View>
-          <View style={styles.transactionDetails}>
-            <Text style={styles.transactionName}>{transaction.name}</Text>
-            <Text style={styles.transactionCategory}>
-              {transaction.category}
-            </Text>
-            <Text style={styles.transactionDate}>{transaction.date}</Text>
-          </View>
-          <Text
-            style={[
-              styles.transactionAmount,
-              transaction.amount >= 0 && styles.transactionAmountIncome,
-            ]}
-          >
-            {formatCurrency(transaction.amount)}
-          </Text>
-        </Pressable>
+          }
+          title={transaction.name}
+          subtitle={transaction.category}
+          date={transaction.date}
+          amountFormatted={formatCurrency(transaction.amount)}
+          isIncome={transaction.amount >= 0}
+          variant="card"
+          onPress={handleRowPress}
+          onLongPress={() => internalRef.current?.openRight()}
+        />
       </Swipeable>
     </View>
   );
