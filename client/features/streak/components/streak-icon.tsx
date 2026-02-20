@@ -3,12 +3,23 @@ import { View, StyleSheet } from "react-native";
 import { Image } from "expo-image";
 
 const ornamentImage = require("@assets/images/lvlup-ornament.svg");
-const streakFoxImage = require("@assets/images/streaks/streak-completed-fox.png");
+const streakOngoingFoxImage = require("@assets/images/streaks/streak-ongoing-fox.png");
+const streakCompletedFoxImage = require("@assets/images/streaks/streak-completed-fox.png");
+
+type StreakIconVariant = "ongoing" | "completed";
+
+type StreakIconProps = {
+  variant?: StreakIconVariant;
+};
 
 /**
- * Displays the streak fox SVG with decorative star ornaments positioned at top-right and bottom-left.
+ * Displays the streak fox image with decorative star ornaments.
+ * Ongoing: running fox. Completed: fox with trophy.
  */
-export const StreakIcon = () => {
+export const StreakIcon = ({ variant = "ongoing" }: StreakIconProps) => {
+  const foxImage =
+    variant === "completed" ? streakCompletedFoxImage : streakOngoingFoxImage;
+
   return (
     <View style={styles.container}>
       <Image
@@ -17,7 +28,7 @@ export const StreakIcon = () => {
         contentFit="contain"
       />
       <Image
-        source={streakFoxImage}
+        source={foxImage}
         style={styles.foxImage}
         contentFit="contain"
       />
@@ -39,7 +50,7 @@ const styles = StyleSheet.create({
     minHeight: 200,
   },
   foxImage: {
-    width: 500,
+    width: 200,
     height: 200,
   },
   ornament: {

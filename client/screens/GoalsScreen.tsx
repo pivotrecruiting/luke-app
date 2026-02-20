@@ -48,6 +48,51 @@ export default function GoalsScreen() {
           }}
         />
 
+        {__DEV__ && (
+          <>
+            <Pressable
+              style={({ pressed }) => [
+                styles.levelCard,
+                pressed && styles.levelCardPressed,
+                { marginBottom: 12, opacity: pressed ? 0.8 : 1 },
+              ]}
+              onPress={() =>
+                navigation.navigate("Streak", {
+                  variant: "ongoing",
+                  xpGained: 50,
+                })
+              }
+            >
+              <View style={styles.levelHeader}>
+                <View style={styles.levelLeft}>
+                  <Text style={styles.foxEmoji}>🔥</Text>
+                  <Text style={styles.levelTitle}>Test Streak Ongoing</Text>
+                </View>
+              </View>
+            </Pressable>
+            <Pressable
+              style={({ pressed }) => [
+                styles.levelCard,
+                pressed && styles.levelCardPressed,
+                { marginBottom: 24, opacity: pressed ? 0.8 : 1 },
+              ]}
+              onPress={() =>
+                navigation.navigate("Streak", {
+                  variant: "completed",
+                  xpGained: 150,
+                })
+              }
+            >
+              <View style={styles.levelHeader}>
+                <View style={styles.levelLeft}>
+                  <Text style={styles.foxEmoji}>🏆</Text>
+                  <Text style={styles.levelTitle}>Test Streak Completed</Text>
+                </View>
+              </View>
+            </Pressable>
+          </>
+        )}
+
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Goals</Text>
           <Pressable

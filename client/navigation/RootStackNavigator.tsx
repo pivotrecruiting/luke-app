@@ -33,6 +33,7 @@ export type RootStackParamList = {
   };
   Streak: {
     xpGained?: number;
+    variant?: "ongoing" | "completed";
   };
 };
 

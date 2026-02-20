@@ -4,18 +4,22 @@ import { Typography, Spacing, BorderRadius } from "@/constants/theme";
 
 type ContinueButtonProps = {
   onPress: () => void;
+  label?: string;
 };
 
 /**
  * Displays a full-width continue button with rocket emoji.
  */
-export const ContinueButton = ({ onPress }: ContinueButtonProps) => {
+export const ContinueButton = ({
+  onPress,
+  label = "WEITER",
+}: ContinueButtonProps) => {
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
     >
-      <Text style={styles.buttonText}>WEITER 🚀</Text>
+      <Text style={styles.buttonText}>{label} 🚀</Text>
     </Pressable>
   );
 };

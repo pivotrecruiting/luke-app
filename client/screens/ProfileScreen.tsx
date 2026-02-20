@@ -410,7 +410,10 @@ export default function ProfileScreen() {
                   { opacity: pressed ? 0.8 : 1 },
                 ]}
                 onPress={() => {
-                  navigation.navigate("Streak", { xpGained: 50 });
+                  navigation.navigate("Streak", {
+                    variant: "ongoing",
+                    xpGained: 50,
+                  });
                 }}
               >
                 <ThemedText
@@ -418,7 +421,27 @@ export default function ProfileScreen() {
                   style={styles.devToolsButtonText}
                   lightColor="#FFFFFF"
                 >
-                  Streak Screen - 50 XP
+                  Streak Ongoing (3 Tage) - 50 XP
+                </ThemedText>
+              </Pressable>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.devToolsButton,
+                  { opacity: pressed ? 0.8 : 1 },
+                ]}
+                onPress={() => {
+                  navigation.navigate("Streak", {
+                    variant: "completed",
+                    xpGained: 150,
+                  });
+                }}
+              >
+                <ThemedText
+                  type="small"
+                  style={styles.devToolsButtonText}
+                  lightColor="#FFFFFF"
+                >
+                  Streak Completed (7 Tage) - 150 XP
                 </ThemedText>
               </Pressable>
             </View>

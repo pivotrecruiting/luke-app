@@ -56,7 +56,6 @@ export const StreakProgressBar = ({
             <View
               style={[
                 styles.circle,
-                isActive && styles.circleActive,
                 isCurrentDay && isActive && styles.circleCurrent,
               ]}
             >
@@ -103,16 +102,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  circleActive: {
+  circleCurrent: {
     borderWidth: 2,
     borderColor: "#FFFFFF",
-  },
-  circleCurrent: {
-    shadowColor: "#FFFFFF",
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 6,
-    elevation: 4,
   },
   flame: {
     fontSize: 18,
