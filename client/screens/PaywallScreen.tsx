@@ -32,7 +32,7 @@ export default function PaywallScreen() {
   const { completeOnboarding } = useApp();
   const [selectedPlan, setSelectedPlan] = useState<PlanT>("yearly");
 
-  const headerMinHeight = Math.max(height * 0.35, 200);
+  const headerMinHeight = Math.max(height * 0.27, 140);
   const studyCardOverlap = Spacing["5xl"];
 
   const handleCtaPress = () => {
