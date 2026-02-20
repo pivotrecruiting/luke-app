@@ -17,6 +17,7 @@ import { formatDaysSince } from "@/utils/dates";
 import { getUserFirstName } from "@/utils/user";
 import { styles } from "./styles/profile-screen.styles";
 import { AppModal } from "@/components/ui/app-modal";
+import { ReviewModal } from "@/features/review/components/review-modal";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -32,6 +33,7 @@ export default function ProfileScreen() {
   const [manageModalVisible, setManageModalVisible] = useState(false);
   const [deleteAccountModalVisible, setDeleteAccountModalVisible] =
     useState(false);
+  const [reviewModalVisible, setReviewModalVisible] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const profileCardOverlap = Spacing["4xl"];
@@ -343,6 +345,7 @@ export default function ProfileScreen() {
             action={{
               type: "icon",
               iconName: "message-circle",
+              onPress: () => setReviewModalVisible(true),
             }}
             showDivider={false}
           />
@@ -444,6 +447,24 @@ export default function ProfileScreen() {
                   Streak Completed (7 Tage) - 150 XP
                 </ThemedText>
               </Pressable>
+              <ThemedText style={styles.devToolsTitle}>
+                Test Review Modal
+              </ThemedText>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.devToolsButton,
+                  { opacity: pressed ? 0.8 : 1 },
+                ]}
+                onPress={() => setReviewModalVisible(true)}
+              >
+                <ThemedText
+                  type="small"
+                  style={styles.devToolsButtonText}
+                  lightColor="#FFFFFF"
+                >
+                  Review Modal öffnen
+                </ThemedText>
+              </Pressable>
             </View>
           </>
         )}
@@ -526,6 +547,11 @@ export default function ProfileScreen() {
           </Pressable>
         </View>
       </AppModal>
+
+      <ReviewModal
+        visible={reviewModalVisible}
+        onClose={() => setReviewModalVisible(false)}
+      />
     </View>
   );
 }
