@@ -23,6 +23,8 @@ export type RootStackParamList = {
   Main: NavigatorScreenParams<MainTabParamList> | undefined;
   GoalDetail: {
     goalId: string;
+    /** When true, opens the deposit modal immediately. */
+    openDeposit?: boolean;
   };
   BudgetDetail: {
     budgetId: string;

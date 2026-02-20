@@ -22,11 +22,13 @@ export default function GoalDetailScreen() {
 
   const goalId = route.params?.goalId || route.params?.goal?.id;
   const goalName = route.params?.goal?.name;
+  const openDeposit = Boolean(route.params?.openDeposit);
 
   const { goal, groupedDeposits, derived, state, actions } =
     useGoalDetailScreen({
       goalId,
       goalName,
+      openDeposit,
       onNavigateBack: () => navigation.goBack(),
     });
 

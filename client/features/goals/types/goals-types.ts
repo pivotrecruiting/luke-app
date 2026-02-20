@@ -5,6 +5,7 @@ export type SuccessToastT = "goal" | "budget" | null;
 export type GoalItemPropsT = {
   goal: Goal;
   onPress: () => void;
+  onDepositPress: (goal: Goal) => void;
 };
 
 export type BudgetItemPropsT = {

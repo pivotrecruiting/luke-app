@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert, Platform } from "react-native";
 import { useApp } from "@/context/AppContext";
 import type { GoalDeposit } from "@/context/app/types";
@@ -9,6 +9,8 @@ import { parseDepositDate } from "../utils/date";
 type UseGoalDetailScreenParamsT = {
   goalId?: string | null;
   goalName?: string | null;
+  /** When true, opens the deposit modal on mount. */
+  openDeposit?: boolean;
   onNavigateBack: () => void;
 };
 
@@ -74,6 +76,7 @@ type UseGoalDetailScreenReturnT = {
 export const useGoalDetailScreen = ({
   goalId,
   goalName,
+  openDeposit = false,
   onNavigateBack,
 }: UseGoalDetailScreenParamsT): UseGoalDetailScreenReturnT => {
   const {
@@ -121,6 +124,12 @@ export const useGoalDetailScreen = ({
   const [editDepositDate, setEditDepositDate] = useState(new Date());
   const [showEditDatePicker, setShowEditDatePicker] = useState(false);
   const [activeSwipeId, setActiveSwipeId] = useState<string>("");
+
+  useEffect(() => {
+    if (openDeposit && goal) {
+      setDepositModalVisible(true);
+    }
+  }, [openDeposit, goal?.id]);
 
   const groupedDeposits = useMemo(() => {
     if (!goal?.deposits) return {};

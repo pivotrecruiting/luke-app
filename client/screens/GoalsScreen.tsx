@@ -12,9 +12,10 @@ import { GoalItem } from "@/features/goals/components/goal-item";
 import { BudgetItem } from "@/features/goals/components/budget-item";
 import { CreateGoalModal } from "@/features/goals/components/create-goal-modal";
 import { CreateBudgetModal } from "@/features/goals/components/create-budget-modal";
+import { AddDepositModal } from "@/features/goal-detail/components/add-deposit-modal";
 import {
   styles,
-  LEVEL_CARD_HALF_HEIGHT,
+  CARD_OVERLAP_HALF_HEIGHT,
 } from "./styles/goals-screen.styles";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
@@ -30,15 +31,14 @@ export default function GoalsScreen() {
       <GoalsHeader
         topInset={insets.top + Spacing.lg}
         successToast={state.successToast}
-        overlapBottom={LEVEL_CARD_HALF_HEIGHT}
+        overlapBottom={CARD_OVERLAP_HALF_HEIGHT}
       />
 
-      {/* LevelCard as sibling of header – renders above it (like ProfileScreen). */}
+      {/* LevelCard overlapping header (like ProfileScreen). */}
       <View
         style={[
-          styles.levelCardOverlapWrapper,
-          styles.levelCardOverlapWrapperPosition,
-          { marginTop: -LEVEL_CARD_HALF_HEIGHT },
+          styles.overlapCardWrapper,
+          { marginTop: -CARD_OVERLAP_HALF_HEIGHT },
         ]}
       >
         <LevelCard
@@ -62,12 +62,6 @@ export default function GoalsScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <VaultCard
-          vaultBalance={data.vaultBalance}
-          monthlyBalance={data.monthlyBalance}
-          onPress={() => navigation.navigate("Vault")}
-        />
-
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Goals</Text>
           <Pressable
@@ -78,6 +72,12 @@ export default function GoalsScreen() {
           </Pressable>
         </View>
 
+        <VaultCard
+          vaultBalance={data.vaultBalance}
+          monthlyBalance={data.monthlyBalance}
+          onPress={() => navigation.navigate("Vault")}
+        />
+
         {data.goals.map((goal) => (
           <GoalItem
             key={goal.id}
@@ -85,6 +85,7 @@ export default function GoalsScreen() {
             onPress={() =>
               navigation.navigate("GoalDetail", { goalId: goal.id })
             }
+            onDepositPress={actions.openDepositModal}
           />
         ))}
 
@@ -134,6 +135,32 @@ export default function GoalsScreen() {
         onCancel={actions.resetAndCloseBudgetModal}
         onCreate={actions.handleCreateBudget}
       />
+
+      {state.selectedGoalForDeposit && (
+        <AddDepositModal
+          visible={state.depositModalVisible}
+          bottomInset={insets.bottom}
+          depositTitle={
+            state.selectedGoalForDeposit.name.toLowerCase().includes("klarna")
+              ? "Rückzahlung"
+              : "Einzahlung"
+          }
+          goalName={state.selectedGoalForDeposit.name}
+          goalIcon={state.selectedGoalForDeposit.icon ?? "🎯"}
+          goalCurrent={state.selectedGoalForDeposit.current}
+          goalTarget={state.selectedGoalForDeposit.target}
+          vaultBalance={data.vaultBalance}
+          depositAmount={state.depositAmount}
+          selectedDate={new Date()}
+          showDatePicker={false}
+          onChangeAmount={actions.setDepositAmount}
+          onOpenDatePicker={() => {}}
+          onCloseDatePicker={() => {}}
+          onDateChange={() => {}}
+          onSave={actions.handleDepositSave}
+          onCancel={actions.handleDepositCancel}
+        />
+      )}
     </View>
   );
 }

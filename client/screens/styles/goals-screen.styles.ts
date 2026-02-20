@@ -1,7 +1,7 @@
 import { StyleSheet } from "react-native";
 
-/** Half of LevelCard height for 50/50 overlap with header. */
-export const LEVEL_CARD_HALF_HEIGHT = 64;
+/** Half of card height for 50/50 overlap with header (LevelCard / VaultCard). */
+export const CARD_OVERLAP_HALF_HEIGHT = 64;
 
 export const styles = StyleSheet.create({
   container: {
@@ -62,13 +62,10 @@ export const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 24,
   },
-  /** Wrapper for LevelCard overlap - ensures card renders above header. */
-  levelCardOverlapWrapper: {
+  /** Wrapper for overlapping card - ensures card renders above header. */
+  overlapCardWrapper: {
     zIndex: 100,
     elevation: 10,
-  },
-  /** Horizontal alignment with scroll content (padding: 20). */
-  levelCardOverlapWrapperPosition: {
     marginHorizontal: 20,
   },
   levelCard: {
@@ -262,6 +259,24 @@ export const styles = StyleSheet.create({
   goalRemainingValue: {
     fontSize: 20,
     fontWeight: "700",
+    color: "#3B5BDB",
+  },
+  goalFooterLeft: {
+    flex: 1,
+  },
+  goalDepositButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+  goalDepositButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
     color: "#3B5BDB",
   },
   budgetItem: {
