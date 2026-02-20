@@ -16,8 +16,12 @@ import { styles } from "./styles/paywall-screen.styles";
 
 type PlanT = "monthly" | "yearly" | "lifetime";
 
-const FEATURES: { icon: keyof typeof Feather.glyphMap; text: string }[] = [
-  { icon: "eye", text: "Behalte stets den Überblick" },
+const FEATURES: {
+  icon: keyof typeof Feather.glyphMap;
+  text: string;
+  semibold?: boolean;
+}[] = [
+  { icon: "eye", text: "Behalte stets den Überblick", semibold: true },
   { icon: "credit-card", text: "Nie wieder Mahngebühren zahlen" },
   { icon: "bar-chart-2", text: "Einfacher als jede Excel-Liste" },
 ];
@@ -146,12 +150,19 @@ export default function PaywallScreen() {
           </Text>
 
           <View style={styles.featuresWrapper}>
-            {FEATURES.map(({ icon, text }) => (
+            {FEATURES.map(({ icon, text, semibold }) => (
               <View key={text} style={styles.featureRow}>
                 <View style={styles.featureIcon}>
                   <Feather name={icon} size={22} color={Colors.light.primary} />
                 </View>
-                <Text style={styles.featureText}>{text}</Text>
+                <Text
+                  style={[
+                    styles.featureText,
+                    semibold && styles.featureTextSemibold,
+                  ]}
+                >
+                  {text}
+                </Text>
               </View>
             ))}
           </View>

@@ -96,6 +96,9 @@ export const styles = StyleSheet.create({
     textAlign: "left",
     flex: 1,
   },
+  featureTextSemibold: {
+    fontWeight: "600",
+  },
 
   // Plan cards section
   plansContainer: {
