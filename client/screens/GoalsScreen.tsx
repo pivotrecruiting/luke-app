@@ -12,7 +12,10 @@ import { GoalItem } from "@/features/goals/components/goal-item";
 import { BudgetItem } from "@/features/goals/components/budget-item";
 import { CreateGoalModal } from "@/features/goals/components/create-goal-modal";
 import { CreateBudgetModal } from "@/features/goals/components/create-budget-modal";
-import { styles } from "./styles/goals-screen.styles";
+import {
+  styles,
+  LEVEL_CARD_HALF_HEIGHT,
+} from "./styles/goals-screen.styles";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 
@@ -27,7 +30,27 @@ export default function GoalsScreen() {
       <GoalsHeader
         topInset={insets.top + Spacing.lg}
         successToast={state.successToast}
+        overlapBottom={LEVEL_CARD_HALF_HEIGHT}
       />
+
+      {/* LevelCard as sibling of header – renders above it (like ProfileScreen). */}
+      <View
+        style={[
+          styles.levelCardOverlapWrapper,
+          styles.levelCardOverlapWrapperPosition,
+          { marginTop: -LEVEL_CARD_HALF_HEIGHT },
+        ]}
+      >
+        <LevelCard
+          onPress={(level) => {
+            if (level?.id) {
+              navigation.navigate("LevelUp", { levelId: level.id });
+              return;
+            }
+            navigation.navigate("LevelUp", {});
+          }}
+        />
+      </View>
 
       <ScrollView
         ref={refs.scrollViewRef}
@@ -39,16 +62,6 @@ export default function GoalsScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <LevelCard
-          onPress={(level) => {
-            if (level?.id) {
-              navigation.navigate("LevelUp", { levelId: level.id });
-              return;
-            }
-            navigation.navigate("LevelUp", {});
-          }}
-        />
-
         <VaultCard
           vaultBalance={data.vaultBalance}
           monthlyBalance={data.monthlyBalance}

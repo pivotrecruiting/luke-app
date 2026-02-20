@@ -1,5 +1,8 @@
 import { StyleSheet } from "react-native";
 
+/** Half of LevelCard height for 50/50 overlap with header. */
+export const LEVEL_CARD_HALF_HEIGHT = 64;
+
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -8,6 +11,8 @@ export const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingBottom: 24,
+    zIndex: 0,
+    elevation: 0,
   },
   headerTitle: {
     fontSize: 32,
@@ -57,6 +62,15 @@ export const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 24,
   },
+  /** Wrapper for LevelCard overlap - ensures card renders above header. */
+  levelCardOverlapWrapper: {
+    zIndex: 100,
+    elevation: 10,
+  },
+  /** Horizontal alignment with scroll content (padding: 20). */
+  levelCardOverlapWrapperPosition: {
+    marginHorizontal: 20,
+  },
   levelCard: {
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
@@ -66,7 +80,8 @@ export const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
-    elevation: 3,
+    elevation: 10,
+    zIndex: 100,
   },
   levelCardPressed: {
     opacity: 0.85,
