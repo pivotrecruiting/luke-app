@@ -107,9 +107,11 @@ export const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.light.backgroundRoot,
     borderRadius: BorderRadius.md,
-    padding: Spacing.md,
+    padding: Spacing.lg,
+    minHeight: 96,
     borderWidth: 2,
     borderColor: Colors.light.chipBorder,
+    overflow: "hidden",
   },
   planCardSelected: {
     borderColor: Colors.light.primary,
@@ -121,15 +123,16 @@ export const styles = StyleSheet.create({
   },
   planCardBadge: {
     position: "absolute",
-    top: -6,
-    right: 8,
+    top: 0,
+    left: 0,
     backgroundColor: Colors.light.primary,
     paddingHorizontal: Spacing.sm,
     paddingVertical: 2,
-    borderRadius: BorderRadius.xs,
+    borderTopLeftRadius: 10,
+    borderBottomRightRadius: 2,
   },
   planCardBadgeText: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: "600",
     color: Colors.light.buttonText,
   },
@@ -140,11 +143,17 @@ export const styles = StyleSheet.create({
     marginBottom: Spacing.xs,
     textAlign: "center",
   },
+  planCardTitleWithBadge: {
+    marginTop: Spacing.sm,
+  },
   planCardPrice: {
     fontSize: 18,
     fontWeight: "700",
     color: Colors.light.text,
     textAlign: "center",
+  },
+  planCardPriceSelected: {
+    color: Colors.light.primary,
   },
   planCardDescription: {
     ...Typography.tiny,
@@ -192,15 +201,16 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginTop: Spacing.xl,
-    gap: Spacing.xs,
+    gap: 2,
   },
   footerLink: {
-    ...Typography.tiny,
+    fontSize: 10,
+    fontWeight: "400",
     color: Colors.light.textSecondary,
     textAlign: "center",
   },
   footerSeparator: {
-    ...Typography.tiny,
+    fontSize: 10,
     color: Colors.light.textSecondary,
   },
 });
