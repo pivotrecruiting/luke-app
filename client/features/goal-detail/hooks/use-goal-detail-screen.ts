@@ -21,6 +21,7 @@ type UseGoalDetailScreenReturnT = {
     isCompleted: boolean;
     depositTitle: string;
     monthsToGoal: number;
+    availableVault: number;
   };
   state: {
     editModalVisible: boolean;
@@ -82,6 +83,7 @@ export const useGoalDetailScreen = ({
     deleteGoalDeposit,
     updateGoal,
     deleteGoal,
+    vaultBalance,
   } = useApp();
 
   const goal = useMemo(() => {
@@ -223,12 +225,19 @@ export const useGoalDetailScreen = ({
   const handleDepositSave = useCallback(() => {
     const amount = parseFloat(depositAmount.replace(",", "."));
     if (!isNaN(amount) && amount > 0 && goal) {
+      if (amount > vaultBalance) {
+        Alert.alert(
+          "Nicht genug im Tresor",
+          "Die Einzahlung ist höher als dein verfügbarer Tresorbetrag.",
+        );
+        return;
+      }
       addGoalDeposit(goal.id, amount, selectedDate);
       setDepositModalVisible(false);
       setDepositAmount("");
       setSelectedDate(new Date());
     }
-  }, [addGoalDeposit, depositAmount, goal, selectedDate]);
+  }, [addGoalDeposit, depositAmount, goal, selectedDate, vaultBalance]);
 
   const handleDepositCancel = useCallback(() => {
     setDepositModalVisible(false);
@@ -247,6 +256,14 @@ export const useGoalDetailScreen = ({
   const handleEditDepositSave = useCallback(() => {
     const amount = parseFloat(editDepositAmount.replace(",", "."));
     if (!isNaN(amount) && amount > 0 && goal && editingDeposit) {
+      const amountDiff = amount - editingDeposit.amount;
+      if (amountDiff > 0 && amountDiff > vaultBalance) {
+        Alert.alert(
+          "Nicht genug im Tresor",
+          "Die Erhöhung ist höher als dein verfügbarer Tresorbetrag.",
+        );
+        return;
+      }
       updateGoalDeposit(goal.id, editingDeposit.id, amount, editDepositDate);
       setEditDepositModalVisible(false);
       setEditingDeposit(null);
@@ -258,6 +275,7 @@ export const useGoalDetailScreen = ({
     editingDeposit,
     goal,
     updateGoalDeposit,
+    vaultBalance,
   ]);
 
   const handleEditDepositCancel = useCallback(() => {
@@ -302,6 +320,7 @@ export const useGoalDetailScreen = ({
       isCompleted,
       depositTitle,
       monthsToGoal,
+      availableVault: vaultBalance,
     },
     state: {
       editModalVisible,

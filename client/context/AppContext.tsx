@@ -25,11 +25,15 @@ import type {
   MonthlyTrendData,
   PersistedData,
   Transaction,
+  VaultTransactionT,
 } from "@/context/app/types";
 import type { BudgetCategoryRow, IncomeCategoryRow } from "@/services/types";
 import type { XpLevelUpPayloadT, XpStreakPayloadT } from "@/types/xp-types";
 import { formatDate } from "@/utils/dates";
-import { upsertInitialSavings } from "@/services/app-service";
+import {
+  createVaultTransaction,
+  upsertInitialSavings,
+} from "@/services/app-service";
 import {
   useOnboardingStore,
   type OnboardingStoreT,
@@ -49,6 +53,9 @@ import { useOnboardingActions } from "@/context/app/hooks/use-onboarding-actions
 import { useSnapXp } from "@/context/app/hooks/use-snap-xp";
 import { useMonthlyBudgetReset } from "@/context/app/hooks/use-monthly-budget-reset";
 import { useIncomeCategoryResolver } from "@/context/app/hooks/use-income-category-resolver";
+import { useMonthlyBalanceRollover } from "@/context/app/hooks/use-monthly-balance-rollover";
+import { generateId } from "@/utils/ids";
+import { toCents } from "@/utils/money";
 
 export type {
   AppContextType,
@@ -62,6 +69,7 @@ export type {
   MonthlyTrendData,
   PersistedData,
   Transaction,
+  VaultTransactionT,
 } from "@/context/app/types";
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -85,6 +93,9 @@ export function AppProvider({ children }: AppProviderProps) {
   const [budgets, setBudgets] = useState<Budget[]>(INITIAL_BUDGETS);
   const [transactions, setTransactions] =
     useState<Transaction[]>(INITIAL_TRANSACTIONS);
+  const [vaultTransactions, setVaultTransactions] = useState<
+    VaultTransactionT[]
+  >([]);
   const [monthlyTrendData, setMonthlyTrendData] = useState<MonthlyTrendData[]>(
     [],
   );
@@ -102,6 +113,9 @@ export function AppProvider({ children }: AppProviderProps) {
     [],
   );
   const [pendingStreaks, setPendingStreaks] = useState<XpStreakPayloadT[]>([]);
+  const [balanceAnchorMonth, setBalanceAnchorMonth] = useState<string | null>(
+    null,
+  );
 
   const { user } = useAuth();
   const userId = user?.id ?? null;
@@ -117,10 +131,12 @@ export function AppProvider({ children }: AppProviderProps) {
     setGoals,
     setBudgets,
     setTransactions,
+    setVaultTransactions,
     setMonthlyTrendData,
     setBudgetCategories,
     setIncomeCategories,
     setLastBudgetResetMonth,
+    setBalanceAnchorMonth,
   });
   const canUseDb = Boolean(userId) && !useLocalFallback;
 
@@ -147,14 +163,17 @@ export function AppProvider({ children }: AppProviderProps) {
     onStreakReached: enqueueStreak,
   });
 
-  const handleDbError = useCallback((error: unknown, context: string) => {
-    console.error(`DB error during ${context}:`, error);
-    if (error instanceof Error) {
-      console.error("Error message:", error.message);
-      console.error("Error stack:", error.stack);
-    }
-    setUseLocalFallback(true);
-  }, []);
+  const handleDbError = useCallback(
+    (error: unknown, context: string) => {
+      console.error(`DB error during ${context}:`, error);
+      if (error instanceof Error) {
+        console.error("Error message:", error.message);
+        console.error("Error stack:", error.stack);
+      }
+      setUseLocalFallback(true);
+    },
+    [setUseLocalFallback],
+  );
   const { resolveBudgetCategory } = useBudgetCategoryResolver({
     budgetCategories,
   });
@@ -174,6 +193,8 @@ export function AppProvider({ children }: AppProviderProps) {
     transactionIncomeTotal,
     transactionExpenseTotal,
     transactionBalance,
+    monthlyBalance,
+    vaultBalance,
     savingsRate,
     insightCategories,
   } = useAppDerivedState({
@@ -181,6 +202,7 @@ export function AppProvider({ children }: AppProviderProps) {
     expenseEntries,
     budgets,
     transactions,
+    vaultTransactions,
     selectedWeekOffset,
   });
 
@@ -193,7 +215,9 @@ export function AppProvider({ children }: AppProviderProps) {
       goals,
       budgets,
       transactions,
+      vaultTransactions,
       lastBudgetResetMonth,
+      balanceAnchorMonth,
     }),
     [
       budgets,
@@ -204,6 +228,8 @@ export function AppProvider({ children }: AppProviderProps) {
       isOnboardingComplete,
       lastBudgetResetMonth,
       transactions,
+      vaultTransactions,
+      balanceAnchorMonth,
     ],
   );
 
@@ -212,6 +238,68 @@ export function AppProvider({ children }: AppProviderProps) {
     useLocalFallback,
     data: persistedData,
   });
+
+  const addVaultDeposit = useCallback(
+    (amount: number, note?: string) => {
+      const normalizedAmount = Number(amount);
+      if (
+        !Number.isFinite(normalizedAmount) ||
+        normalizedAmount <= 0 ||
+        normalizedAmount > monthlyBalance
+      ) {
+        return;
+      }
+      const normalizedNote = note?.trim() ? note.trim() : "Einzahlung";
+
+      const tempId = generateId();
+      const transactionAt = new Date().toISOString();
+
+      setVaultTransactions((prev) => [
+        {
+          id: tempId,
+          amount: normalizedAmount,
+          entryType: "manual_deposit",
+          note: normalizedNote,
+          goalId: null,
+          rolloverMonth: null,
+          transactionAt,
+        },
+        ...prev,
+      ]);
+
+      if (!canUseDb || !userId) return;
+      void (async () => {
+        try {
+          const vaultTransactionId = await createVaultTransaction({
+            user_id: userId,
+            amount_cents: toCents(normalizedAmount),
+            currency,
+            entry_type: "manual_deposit",
+            note: normalizedNote,
+            transaction_at: transactionAt,
+          });
+
+          setVaultTransactions((prev) =>
+            prev.map((entry) =>
+              entry.id === tempId
+                ? { ...entry, id: vaultTransactionId }
+                : entry,
+            ),
+          );
+        } catch (error) {
+          handleDbError(error, "addVaultDeposit");
+        }
+      })();
+    },
+    [
+      canUseDb,
+      currency,
+      handleDbError,
+      monthlyBalance,
+      setVaultTransactions,
+      userId,
+    ],
+  );
 
   const { goToPreviousWeek, goToNextWeek } = useWeekNavigation({
     selectedWeekOffset,
@@ -282,10 +370,10 @@ export function AppProvider({ children }: AppProviderProps) {
     isOnboardingComplete,
     goals,
     setGoals,
-    setTransactions,
+    setVaultTransactions,
+    vaultBalance,
     deleteTransaction,
     handleDbError,
-    handleSnapXp,
     awardXp,
   });
 
@@ -399,6 +487,19 @@ export function AppProvider({ children }: AppProviderProps) {
     setLastBudgetResetMonth,
   });
 
+  useMonthlyBalanceRollover({
+    userId,
+    canUseDb,
+    currency,
+    isAppLoading,
+    transactions,
+    vaultTransactions,
+    balanceAnchorMonth,
+    setVaultTransactions,
+    setBalanceAnchorMonth,
+    handleDbError,
+  });
+
   const value: AppContextType = {
     isOnboardingComplete,
     isAppLoading,
@@ -410,6 +511,8 @@ export function AppProvider({ children }: AppProviderProps) {
     budgets,
     weeklySpending,
     transactions,
+    vaultTransactions,
+    vaultBalance,
     insightCategories,
     totalIncome,
     totalFixedExpenses,
@@ -417,6 +520,7 @@ export function AppProvider({ children }: AppProviderProps) {
     totalExpenses,
     monthlyBudget,
     balance,
+    monthlyBalance,
     transactionIncomeTotal,
     transactionExpenseTotal,
     transactionBalance,
@@ -426,6 +530,7 @@ export function AppProvider({ children }: AppProviderProps) {
     incomeCategories,
     selectedWeekOffset,
     currentWeekLabel,
+    balanceAnchorMonth,
     levels,
     xpEventTypes,
     xpEventRules,
@@ -445,6 +550,7 @@ export function AppProvider({ children }: AppProviderProps) {
     updateBudgetExpense,
     deleteBudgetExpense,
     addTransaction,
+    addVaultDeposit,
     updateTransaction,
     deleteTransaction,
     completeOnboarding,

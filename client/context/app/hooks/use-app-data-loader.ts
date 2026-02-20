@@ -7,6 +7,7 @@ import type {
   IncomeEntry,
   MonthlyTrendData,
   Transaction,
+  VaultTransactionT,
 } from "@/context/app/types";
 import { fetchAppData } from "@/services/app-service";
 import type { BudgetCategoryRow, IncomeCategoryRow } from "@/services/types";
@@ -24,6 +25,9 @@ type UseAppDataLoaderParamsT = {
   setGoals: React.Dispatch<React.SetStateAction<Goal[]>>;
   setBudgets: React.Dispatch<React.SetStateAction<Budget[]>>;
   setTransactions: React.Dispatch<React.SetStateAction<Transaction[]>>;
+  setVaultTransactions: React.Dispatch<
+    React.SetStateAction<VaultTransactionT[]>
+  >;
   setMonthlyTrendData: React.Dispatch<React.SetStateAction<MonthlyTrendData[]>>;
   setBudgetCategories: React.Dispatch<
     React.SetStateAction<BudgetCategoryRow[]>
@@ -32,6 +36,7 @@ type UseAppDataLoaderParamsT = {
     React.SetStateAction<IncomeCategoryRow[]>
   >;
   setLastBudgetResetMonth: React.Dispatch<React.SetStateAction<number>>;
+  setBalanceAnchorMonth: React.Dispatch<React.SetStateAction<string | null>>;
 };
 
 /**
@@ -49,10 +54,12 @@ export const useAppDataLoader = ({
   setGoals,
   setBudgets,
   setTransactions,
+  setVaultTransactions,
   setMonthlyTrendData,
   setBudgetCategories,
   setIncomeCategories,
   setLastBudgetResetMonth,
+  setBalanceAnchorMonth,
 }: UseAppDataLoaderParamsT) => {
   const [useLocalFallback, setUseLocalFallback] = useState(false);
 
@@ -70,9 +77,11 @@ export const useAppDataLoader = ({
       setGoals(data.goals ?? []);
       setBudgets(data.budgets ?? []);
       setTransactions(data.transactions ?? []);
+      setVaultTransactions(data.vaultTransactions ?? []);
       setMonthlyTrendData([]);
       setBudgetCategories([]);
       setIncomeCategories([]);
+      setBalanceAnchorMonth(data.balanceAnchorMonth ?? null);
       if (data.lastBudgetResetMonth !== undefined) {
         setLastBudgetResetMonth(data.lastBudgetResetMonth);
       }
@@ -85,9 +94,14 @@ export const useAppDataLoader = ({
     setExpenseEntries,
     setGoals,
     setIncomeEntries,
+    setBudgetCategories,
+    setIncomeCategories,
     setIsOnboardingComplete,
     setLastBudgetResetMonth,
+    setBalanceAnchorMonth,
+    setMonthlyTrendData,
     setTransactions,
+    setVaultTransactions,
     setUserName,
   ]);
 
@@ -106,7 +120,9 @@ export const useAppDataLoader = ({
       setGoals(data.goals);
       setBudgets(data.budgets);
       setTransactions(data.transactions);
+      setVaultTransactions(data.vaultTransactions);
       setMonthlyTrendData(data.monthlyTrendData ?? []);
+      setBalanceAnchorMonth(data.balanceAnchorMonth ?? null);
 
       if (typeof data.initialSavingsCents === "number") {
         // TODO: wire this into UI if initial savings is displayed later.
@@ -122,8 +138,10 @@ export const useAppDataLoader = ({
       setIncomeEntries,
       setIncomeCategories,
       setIsOnboardingComplete,
+      setBalanceAnchorMonth,
       setMonthlyTrendData,
       setTransactions,
+      setVaultTransactions,
       setUserName,
     ],
   );

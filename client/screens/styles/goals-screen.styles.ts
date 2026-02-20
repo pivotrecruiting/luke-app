@@ -71,6 +71,51 @@ export const styles = StyleSheet.create({
   levelCardPressed: {
     opacity: 0.85,
   },
+  vaultCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  vaultHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  vaultTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  vaultIconWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "rgba(29, 78, 216, 0.12)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  vaultTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#0F172A",
+  },
+  vaultAmount: {
+    fontSize: 30,
+    fontWeight: "700",
+    color: "#1D4ED8",
+    marginBottom: 6,
+  },
+  vaultHint: {
+    fontSize: 13,
+    color: "#6B7280",
+  },
   levelHeader: {
     flexDirection: "row",
     justifyContent: "space-between",

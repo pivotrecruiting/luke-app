@@ -117,6 +117,7 @@ export default function GoalDetailScreen() {
           goalIcon={goal.icon ?? "🎯"}
           goalCurrent={goal.current}
           goalTarget={goal.target}
+          vaultBalance={derived.availableVault}
           depositAmount={state.depositAmount}
           selectedDate={state.selectedDate}
           showDatePicker={state.showDatePicker}

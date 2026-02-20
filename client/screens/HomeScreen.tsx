@@ -204,24 +204,25 @@ export default function HomeScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
   const swipeableRefs = useRef<Record<string, Swipeable | null>>({});
 
-  const openEditTransactionModal = useCallback((transaction: Transaction) => {
-    const isExpense = transaction.amount < 0;
-    const categories = isExpense ? budgetCategories : incomeCategories;
-    const category = categories.find(
-      (c) => c.name.toLowerCase() === transaction.category.toLowerCase(),
-    );
-    setAllTransactionsVisible(false);
-    setEditingTransactionId(transaction.id);
-    setEditName(transaction.name);
-    setEditAmount(
-      Math.abs(transaction.amount).toString().replace(".", ","),
-    );
-    setEditSelectedCategoryId(category?.id ?? null);
-    setEditDate(parseFormattedDate(transaction.date));
-    setEditIsExpense(isExpense);
-    setShowEditDatePicker(false);
-    setEditTransactionModalVisible(true);
-  }, [budgetCategories, incomeCategories]);
+  const openEditTransactionModal = useCallback(
+    (transaction: Transaction) => {
+      const isExpense = transaction.amount < 0;
+      const categories = isExpense ? budgetCategories : incomeCategories;
+      const category = categories.find(
+        (c) => c.name.toLowerCase() === transaction.category.toLowerCase(),
+      );
+      setAllTransactionsVisible(false);
+      setEditingTransactionId(transaction.id);
+      setEditName(transaction.name);
+      setEditAmount(Math.abs(transaction.amount).toString().replace(".", ","));
+      setEditSelectedCategoryId(category?.id ?? null);
+      setEditDate(parseFormattedDate(transaction.date));
+      setEditIsExpense(isExpense);
+      setShowEditDatePicker(false);
+      setEditTransactionModalVisible(true);
+    },
+    [budgetCategories, incomeCategories],
+  );
 
   const handleEditTransactionSave = useCallback(() => {
     if (!editingTransactionId || !editSelectedCategoryId) return;
@@ -314,7 +315,7 @@ export default function HomeScreen() {
         </LinearGradient>
 
         <View style={[styles.balanceCard, { top: insets.top + 95 }]}>
-          <Text style={styles.balanceLabel}>Balance</Text>
+          <Text style={styles.balanceLabel}>Monatsbalance</Text>
           <Text
             style={[
               styles.balanceAmount,
@@ -543,9 +544,7 @@ export default function HomeScreen() {
               <Feather
                 name="arrow-up"
                 size={12}
-                color={
-                  modalTypeFilter === "income" ? "#7340FE" : "#6B7280"
-                }
+                color={modalTypeFilter === "income" ? "#7340FE" : "#6B7280"}
               />
               <Text
                 style={[
@@ -567,9 +566,7 @@ export default function HomeScreen() {
               <Feather
                 name="arrow-down"
                 size={12}
-                color={
-                  modalTypeFilter === "expense" ? "#7340FE" : "#6B7280"
-                }
+                color={modalTypeFilter === "expense" ? "#7340FE" : "#6B7280"}
               />
               <Text
                 style={[

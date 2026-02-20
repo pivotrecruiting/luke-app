@@ -6,6 +6,7 @@ import type {
   InsightCategory,
   MonthlyTrendData,
   Transaction,
+  VaultTransactionT,
   WeeklySpending,
 } from "@/context/app/types";
 import {
@@ -16,7 +17,7 @@ import {
   getTotalFixedExpenses,
   getTotalIncome,
   getTotalVariableExpenses,
-  getTransactionBalance,
+  getTransactionBalanceForMonth,
   getTransactionExpenseTotal,
   getTransactionIncomeTotal,
 } from "@/context/app/selectors/financial-selectors";
@@ -34,6 +35,7 @@ type DerivedStateInputT = {
   expenseEntries: ExpenseEntry[];
   budgets: Budget[];
   transactions: Transaction[];
+  vaultTransactions: VaultTransactionT[];
   selectedWeekOffset: number;
 };
 
@@ -49,6 +51,8 @@ type DerivedStateT = {
   transactionIncomeTotal: number;
   transactionExpenseTotal: number;
   transactionBalance: number;
+  monthlyBalance: number;
+  vaultBalance: number;
   savingsRate: number;
   insightCategories: InsightCategory[];
   monthlyTrendData: MonthlyTrendData[];
@@ -59,6 +63,7 @@ export const useAppDerivedState = ({
   expenseEntries,
   budgets,
   transactions,
+  vaultTransactions,
   selectedWeekOffset,
 }: DerivedStateInputT): DerivedStateT => {
   const weeklySpending = useMemo(
@@ -111,9 +116,29 @@ export const useAppDerivedState = ({
     [transactions],
   );
 
-  const transactionBalance = useMemo(
-    () => getTransactionBalance(transactions),
+  const monthlyTransactionBalance = useMemo(
+    () => getTransactionBalanceForMonth(transactions, new Date()),
     [transactions],
+  );
+
+  const monthlyBalance = useMemo(() => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    const manualVaultDeposits = vaultTransactions.reduce((sum, entry) => {
+      if (entry.entryType !== "manual_deposit") return sum;
+      const entryDate = new Date(entry.transactionAt);
+      const isCurrentMonth =
+        entryDate.getFullYear() === currentYear &&
+        entryDate.getMonth() === currentMonth;
+      return isCurrentMonth ? sum + entry.amount : sum;
+    }, 0);
+    return monthlyTransactionBalance - manualVaultDeposits;
+  }, [monthlyTransactionBalance, vaultTransactions]);
+
+  const vaultBalance = useMemo(
+    () => vaultTransactions.reduce((sum, entry) => sum + entry.amount, 0),
+    [vaultTransactions],
   );
 
   const savingsRate = useMemo(
@@ -147,7 +172,9 @@ export const useAppDerivedState = ({
     balance,
     transactionIncomeTotal,
     transactionExpenseTotal,
-    transactionBalance,
+    transactionBalance: monthlyBalance,
+    monthlyBalance,
+    vaultBalance,
     savingsRate,
     insightCategories,
     monthlyTrendData,

@@ -10,6 +10,8 @@ type UseGoalsScreenReturnT = {
   data: {
     goals: ReturnType<typeof useApp>["goals"];
     budgets: ReturnType<typeof useApp>["budgets"];
+    vaultBalance: ReturnType<typeof useApp>["vaultBalance"];
+    monthlyBalance: ReturnType<typeof useApp>["monthlyBalance"];
   };
   state: {
     createModalVisible: boolean;
@@ -48,7 +50,15 @@ type UseGoalsScreenReturnT = {
 };
 
 export const useGoalsScreen = (): UseGoalsScreenReturnT => {
-  const { goals, budgets, budgetCategories, addGoal, addBudget } = useApp();
+  const {
+    goals,
+    budgets,
+    vaultBalance,
+    monthlyBalance,
+    budgetCategories,
+    addGoal,
+    addBudget,
+  } = useApp();
   const scrollViewRef = useRef<ScrollView>(null);
 
   useFocusEffect(
@@ -150,10 +160,16 @@ export const useGoalsScreen = (): UseGoalsScreenReturnT => {
     );
     resetAndCloseBudgetModal();
     setSuccessToast("budget");
-  }, [addBudget, budgetLimit, resetAndCloseBudgetModal, selectedCategory]);
+  }, [
+    addBudget,
+    budgetCategories,
+    budgetLimit,
+    resetAndCloseBudgetModal,
+    selectedCategory,
+  ]);
 
   return {
-    data: { goals, budgets },
+    data: { goals, budgets, vaultBalance, monthlyBalance },
     state: {
       createModalVisible,
       goalName,

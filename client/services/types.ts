@@ -8,6 +8,7 @@ export type UserOnboardingRow = {
 export type UserFinancialProfileRow = {
   currency: string | null;
   initial_savings_cents?: number | null;
+  balance_anchor_month?: string | null;
 };
 
 export type UserRow = {
@@ -80,6 +81,18 @@ export type TransactionRow = {
   budget_id: string | null;
   budget_category_id: string | null;
   source?: string | null;
+  transaction_at: string;
+};
+
+export type VaultTransactionRow = {
+  id: string;
+  user_id: string;
+  amount_cents: number;
+  currency: string;
+  entry_type: "monthly_rollover" | "manual_deposit" | "goal_deposit";
+  note: string | null;
+  goal_id: string | null;
+  rollover_month: string | null;
   transaction_at: string;
 };
 

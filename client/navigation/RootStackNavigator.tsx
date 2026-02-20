@@ -10,6 +10,7 @@ import GoalDetailScreen from "@/screens/GoalDetailScreen";
 import BudgetDetailScreen from "@/screens/BudgetDetailScreen";
 import IncomeScreen from "@/screens/IncomeScreen";
 import ExpensesScreen from "@/screens/ExpensesScreen";
+import VaultScreen from "@/screens/VaultScreen";
 import LevelUpScreen from "@/screens/LevelUpScreen";
 import StreakScreen from "@/screens/StreakScreen";
 import PaywallScreen from "@/screens/PaywallScreen";
@@ -28,6 +29,7 @@ export type RootStackParamList = {
   };
   Income: undefined;
   Expenses: undefined;
+  Vault: undefined;
   LevelUp: {
     levelId?: string;
     xpGained?: number;
@@ -146,6 +148,13 @@ export default function RootStackNavigator() {
                     }),
                   }
                 : undefined,
+              animation: "slide_from_right",
+            }}
+          />
+          <Stack.Screen
+            name="Vault"
+            component={VaultScreen}
+            options={{
               animation: "slide_from_right",
             }}
           />

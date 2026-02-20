@@ -7,6 +7,7 @@ import { Spacing } from "@/constants/theme";
 import { useGoalsScreen } from "@/features/goals/hooks/use-goals-screen";
 import { GoalsHeader } from "@/features/goals/components/goals-header";
 import { LevelCard } from "@/features/goals/components/level-card";
+import { VaultCard } from "@/features/goals/components/vault-card";
 import { GoalItem } from "@/features/goals/components/goal-item";
 import { BudgetItem } from "@/features/goals/components/budget-item";
 import { CreateGoalModal } from "@/features/goals/components/create-goal-modal";
@@ -48,50 +49,11 @@ export default function GoalsScreen() {
           }}
         />
 
-        {__DEV__ && (
-          <>
-            <Pressable
-              style={({ pressed }) => [
-                styles.levelCard,
-                pressed && styles.levelCardPressed,
-                { marginBottom: 12, opacity: pressed ? 0.8 : 1 },
-              ]}
-              onPress={() =>
-                navigation.navigate("Streak", {
-                  variant: "ongoing",
-                  xpGained: 50,
-                })
-              }
-            >
-              <View style={styles.levelHeader}>
-                <View style={styles.levelLeft}>
-                  <Text style={styles.foxEmoji}>🔥</Text>
-                  <Text style={styles.levelTitle}>Test Streak Ongoing</Text>
-                </View>
-              </View>
-            </Pressable>
-            <Pressable
-              style={({ pressed }) => [
-                styles.levelCard,
-                pressed && styles.levelCardPressed,
-                { marginBottom: 24, opacity: pressed ? 0.8 : 1 },
-              ]}
-              onPress={() =>
-                navigation.navigate("Streak", {
-                  variant: "completed",
-                  xpGained: 150,
-                })
-              }
-            >
-              <View style={styles.levelHeader}>
-                <View style={styles.levelLeft}>
-                  <Text style={styles.foxEmoji}>🏆</Text>
-                  <Text style={styles.levelTitle}>Test Streak Completed</Text>
-                </View>
-              </View>
-            </Pressable>
-          </>
-        )}
+        <VaultCard
+          vaultBalance={data.vaultBalance}
+          monthlyBalance={data.monthlyBalance}
+          onPress={() => navigation.navigate("Vault")}
+        />
 
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Goals</Text>

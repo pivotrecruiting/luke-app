@@ -1,5 +1,4 @@
 import { Text, View } from "react-native";
-import { Feather } from "@expo/vector-icons";
 import { useApp } from "@/context/AppContext";
 import { getCurrencySymbol } from "@/utils/currency-format";
 import { styles } from "@/screens/styles/insights-screen.styles";
@@ -22,15 +21,14 @@ type IncomeExpensesViewPropsT = {
  * Renders a balance header and vertical bar chart comparing income vs expenses per period.
  */
 export const IncomeExpensesView = ({
-  income,
-  expenses,
+  income: _income,
+  expenses: _expenses,
   periodIncomeExpenses,
-  timeFilter,
+  timeFilter: _timeFilter,
 }: IncomeExpensesViewPropsT) => {
-  const { currency } = useApp();
+  const { currency, monthlyBalance } = useApp();
   const currencySymbol = getCurrencySymbol(currency);
-  const balance = income - expenses;
-  const isPositive = balance >= 0;
+  const balance = monthlyBalance;
 
   const maxValue = Math.max(
     1,
@@ -42,7 +40,7 @@ export const IncomeExpensesView = ({
       <View style={styles.incomeExpensesContainer}>
         <View style={styles.summaryCard}>
           <View style={styles.balanceHeader}>
-            <Text style={styles.balanceTitle}>Balance</Text>
+            <Text style={styles.balanceTitle}>Monatsbalance</Text>
             <Text style={styles.balanceAmount}>
               {currencySymbol} {formatCurrency(balance, currency)}
             </Text>
@@ -59,7 +57,7 @@ export const IncomeExpensesView = ({
     <View style={styles.incomeExpensesContainer}>
       <View style={styles.summaryCard}>
         <View style={styles.balanceHeader}>
-          <Text style={styles.balanceTitle}>Balance</Text>
+          <Text style={styles.balanceTitle}>Monatsbalance</Text>
           <Text style={styles.balanceAmount}>
             {currencySymbol} {formatCurrency(balance, currency)}
           </Text>

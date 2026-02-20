@@ -19,6 +19,7 @@ type AddDepositModalPropsT = {
   goalIcon: string;
   goalCurrent: number;
   goalTarget: number;
+  vaultBalance: number;
   depositAmount: string;
   selectedDate: Date;
   showDatePicker: boolean;
@@ -41,6 +42,7 @@ export const AddDepositModal = ({
   goalIcon,
   goalCurrent,
   goalTarget,
+  vaultBalance,
   depositAmount,
   onChangeAmount,
   onSave,
@@ -61,6 +63,7 @@ export const AddDepositModal = ({
 
   const newStand = goalCurrent + parsedAmount;
   const newPercent = goalTarget > 0 ? (newStand / goalTarget) * 100 : 0;
+  const isSaveDisabled = parsedAmount <= 0 || parsedAmount > vaultBalance;
 
   const handleDigit = useCallback(
     (digit: string) => {
@@ -91,13 +94,13 @@ export const AddDepositModal = ({
   }, [depositAmount, onChangeAmount]);
 
   const displayAmount = useMemo(
-    () =>
-      formatCurrencyValue(depositAmount || "0", currency) || "0,00",
+    () => formatCurrencyValue(depositAmount || "0", currency) || "0,00",
     [depositAmount, currency],
   );
   const formattedNewStand = formatCurrency(newStand, currency);
   const formattedCurrent = formatCurrency(goalCurrent, currency);
   const formattedTarget = formatCurrency(goalTarget, currency);
+  const formattedVaultBalance = formatCurrency(vaultBalance, currency);
 
   return (
     <AppModal
@@ -137,6 +140,12 @@ export const AddDepositModal = ({
             {currencySymbol} {displayAmount}
           </Text>
           <View style={styles.depositMetaRow}>
+            <Text style={styles.depositMetaLabel}>Im Tresor verfügbar</Text>
+            <Text style={styles.depositMetaValue}>
+              {currencySymbol} {formattedVaultBalance}
+            </Text>
+          </View>
+          <View style={styles.depositMetaRow}>
             <Text style={styles.depositMetaLabel}>Neuer Stand</Text>
             <Text style={styles.depositMetaValue}>
               {currencySymbol} {formattedNewStand}
@@ -145,7 +154,8 @@ export const AddDepositModal = ({
           <View style={styles.depositMetaRow}>
             <Text style={styles.depositMetaLabel}>Fortschritt</Text>
             <Text style={styles.depositMetaValue}>
-              {currentPercent.toFixed(1).replace(".", ",")}% → {newPercent.toFixed(1).replace(".", ",")}%
+              {currentPercent.toFixed(1).replace(".", ",")}% →{" "}
+              {newPercent.toFixed(1).replace(".", ",")}%
             </Text>
           </View>
         </LinearGradient>
@@ -162,7 +172,14 @@ export const AddDepositModal = ({
           <Pressable style={styles.depositCancelButton} onPress={onCancel}>
             <Text style={styles.modalCancelButtonText}>Abbrechen</Text>
           </Pressable>
-          <Pressable style={styles.depositConfirmButton} onPress={onSave}>
+          <Pressable
+            style={[
+              styles.depositConfirmButton,
+              isSaveDisabled && { opacity: 0.5 },
+            ]}
+            onPress={onSave}
+            disabled={isSaveDisabled}
+          >
             <Text style={styles.depositConfirmButtonText}>Bestätigen</Text>
           </Pressable>
         </View>
