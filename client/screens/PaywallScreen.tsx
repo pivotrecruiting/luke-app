@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import { Feather } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useApp } from "@/context/AppContext";
 import { Spacing, Colors } from "@/constants/theme";
 import { styles } from "./styles/paywall-screen.styles";
@@ -17,13 +17,13 @@ import { styles } from "./styles/paywall-screen.styles";
 type PlanT = "monthly" | "yearly" | "lifetime";
 
 const FEATURES: {
-  icon: keyof typeof Feather.glyphMap;
+  icon: keyof typeof MaterialCommunityIcons.glyphMap;
   text: string;
   semibold?: boolean;
 }[] = [
   { icon: "eye", text: "Behalte stets den Überblick", semibold: true },
-  { icon: "credit-card", text: "Nie wieder Mahngebühren zahlen" },
-  { icon: "bar-chart-2", text: "Einfacher als jede Excel-Liste" },
+  { icon: "bank-check", text: "Nie wieder Mahngebühren zahlen" },
+  { icon: "chart-bar", text: "Einfacher als jede Excel-Liste" },
 ];
 
 /**
@@ -153,7 +153,11 @@ export default function PaywallScreen() {
             {FEATURES.map(({ icon, text, semibold }) => (
               <View key={text} style={styles.featureRow}>
                 <View style={styles.featureIcon}>
-                  <Feather name={icon} size={22} color={Colors.light.primary} />
+                  <MaterialCommunityIcons
+                    name={icon}
+                    size={22}
+                    color={Colors.light.primary}
+                  />
                 </View>
                 <Text
                   style={[
