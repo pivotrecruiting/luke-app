@@ -38,6 +38,7 @@ export const styles = StyleSheet.create({
     backgroundColor: Colors.light.backgroundRoot,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
+    paddingVertical: Spacing.xl,
     marginHorizontal: Spacing.xl,
     marginTop: -Spacing["2xl"],
     marginBottom: Spacing.xl,
