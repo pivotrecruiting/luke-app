@@ -11,6 +11,7 @@ import BudgetDetailScreen from "@/screens/BudgetDetailScreen";
 import IncomeScreen from "@/screens/IncomeScreen";
 import ExpensesScreen from "@/screens/ExpensesScreen";
 import LevelUpScreen from "@/screens/LevelUpScreen";
+import StreakScreen from "@/screens/StreakScreen";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import { Colors } from "@/constants/theme";
@@ -28,6 +29,9 @@ export type RootStackParamList = {
   Expenses: undefined;
   LevelUp: {
     levelId?: string;
+    xpGained?: number;
+  };
+  Streak: {
     xpGained?: number;
   };
 };
@@ -145,6 +149,15 @@ export default function RootStackNavigator() {
           <Stack.Screen
             name="LevelUp"
             component={LevelUpScreen}
+            options={{
+              presentation: "modal",
+              animation: "fade_from_bottom",
+              animationDuration: 300,
+            }}
+          />
+          <Stack.Screen
+            name="Streak"
+            component={StreakScreen}
             options={{
               presentation: "modal",
               animation: "fade_from_bottom",

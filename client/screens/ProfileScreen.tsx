@@ -401,6 +401,26 @@ export default function ProfileScreen() {
                   </ThemedText>
                 </Pressable>
               ))}
+              <ThemedText style={styles.devToolsTitle}>
+                Test Streak Screen
+              </ThemedText>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.devToolsButton,
+                  { opacity: pressed ? 0.8 : 1 },
+                ]}
+                onPress={() => {
+                  navigation.navigate("Streak", { xpGained: 50 });
+                }}
+              >
+                <ThemedText
+                  type="small"
+                  style={styles.devToolsButtonText}
+                  lightColor="#FFFFFF"
+                >
+                  Streak Screen - 50 XP
+                </ThemedText>
+              </Pressable>
             </View>
           </>
         )}
