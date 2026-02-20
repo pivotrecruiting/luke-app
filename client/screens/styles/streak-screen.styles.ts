@@ -10,17 +10,16 @@ export const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    justifyContent: "flex-start",
-    paddingHorizontal: Spacing.xl,
-    paddingBottom: Spacing["3xl"],
+    justifyContent: "space-between",
   },
-  scrollContent: {
-    flexGrow: 1,
-    paddingVertical: Spacing["3xl"],
-    paddingBottom: Spacing["3xl"],
+  contentWrapper: {
+    flex: 1,
+    paddingHorizontal: Spacing.xl,
   },
   middleSection: {
-    marginTop: Spacing.xl,
+    flex: 1,
+    flexShrink: 1,
+    justifyContent: "center",
   },
   iconContainer: {},
   xpContainer: {

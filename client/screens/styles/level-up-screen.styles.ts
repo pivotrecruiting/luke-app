@@ -10,18 +10,17 @@ export const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    justifyContent: "flex-start",
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing["3xl"],
-    paddingBottom: Spacing["3xl"],
+    justifyContent: "space-between",
   },
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: "center",
-    paddingVertical: Spacing["3xl"],
+  contentWrapper: {
+    flex: 1,
+    paddingHorizontal: Spacing.xl,
+  },
+  topSection: {
+    flexShrink: 1,
   },
   titleContainer: {
-    marginBottom: Spacing["3xl"],
+    marginBottom: Spacing["2xl"],
   },
   descriptionContainer: {
     marginBottom: Spacing.md,
@@ -32,7 +31,9 @@ export const styles = StyleSheet.create({
     marginBottom: 0,
   },
   middleSection: {
-    marginTop: Spacing.xl,
+    flex: 1,
+    flexShrink: 1,
+    justifyContent: "center",
   },
   iconContainer: {
     // Centered in middle section
@@ -43,6 +44,6 @@ export const styles = StyleSheet.create({
   },
   buttonContainer: {
     width: "100%",
-    marginTop: "auto",
+    marginTop: Spacing["4xl"],
   },
 });

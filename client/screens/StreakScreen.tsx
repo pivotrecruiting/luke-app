@@ -1,5 +1,5 @@
 import React from "react";
-import { View, ScrollView, Text } from "react-native";
+import { View, Text } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -72,12 +72,14 @@ export default function StreakScreen() {
         end={{ x: 0, y: 1 }}
         style={styles.gradient}
       >
-        <ScrollView
-          contentContainerStyle={[
-            styles.scrollContent,
-            { paddingTop: insets.top + 140, paddingBottom: insets.bottom + 20 },
+        <View
+          style={[
+            styles.contentWrapper,
+            {
+              paddingTop: insets.top + 60,
+              paddingBottom: insets.bottom + 24,
+            },
           ]}
-          showsVerticalScrollIndicator={false}
         >
           <View style={styles.content}>
             <View style={styles.middleSection}>
@@ -108,7 +110,7 @@ export default function StreakScreen() {
               />
             </View>
           </View>
-        </ScrollView>
+        </View>
       </LinearGradient>
     </View>
   );

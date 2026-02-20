@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { View, ScrollView } from "react-native";
+import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -90,15 +90,17 @@ export default function LevelUpScreen() {
         end={{ x: 0, y: 1 }}
         style={styles.gradient}
       >
-        <ScrollView
-          contentContainerStyle={[
-            styles.scrollContent,
-            { paddingTop: insets.top + 40, paddingBottom: insets.bottom + 20 },
+        <View
+          style={[
+            styles.contentWrapper,
+            {
+              paddingTop: insets.top + 60,
+              paddingBottom: insets.bottom + 24,
+            },
           ]}
-          showsVerticalScrollIndicator={false}
         >
           <View style={styles.content}>
-            <View>
+            <View style={styles.topSection}>
               <View style={styles.titleContainer}>
                 <LevelUpTitle userName={firstName} />
               </View>
@@ -132,7 +134,7 @@ export default function LevelUpScreen() {
               <ContinueButton onPress={handleContinue} />
             </View>
           </View>
-        </ScrollView>
+        </View>
       </LinearGradient>
     </View>
   );
