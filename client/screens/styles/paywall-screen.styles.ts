@@ -105,6 +105,7 @@ export const styles = StyleSheet.create({
   },
   planCard: {
     flex: 1,
+    justifyContent: "space-between",
     backgroundColor: Colors.light.backgroundRoot,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
@@ -137,6 +138,9 @@ export const styles = StyleSheet.create({
     fontWeight: "600",
     color: Colors.light.buttonText,
   },
+  planCardContent: {
+    alignItems: "center",
+  },
   planCardTitle: {
     ...Typography.small,
     fontWeight: "700",
@@ -156,8 +160,9 @@ export const styles = StyleSheet.create({
   planCardDescription: {
     ...Typography.tiny,
     color: Colors.light.textSecondary,
-    marginTop: 2,
+    marginTop: Spacing.sm,
     textAlign: "center",
+    alignSelf: "stretch",
   },
 
   // Pre-CTA text
