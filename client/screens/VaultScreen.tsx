@@ -20,7 +20,10 @@ import {
   formatCurrencyAmount,
   getCurrencySymbol,
 } from "@/utils/currency-format";
-import { styles } from "./styles/vault-screen.styles";
+import {
+  styles,
+  CARD_OVERLAP_HALF_HEIGHT,
+} from "./styles/vault-screen.styles";
 
 const getEntryTitle = (entry: {
   entryType: "monthly_rollover" | "manual_deposit" | "goal_deposit";
@@ -128,7 +131,13 @@ export default function VaultScreen() {
         colors={["rgba(42, 58, 230, 0.69)", "rgba(23, 32, 128, 0.69)"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
-        style={[styles.header, { paddingTop: insets.top + Spacing.lg }]}
+        style={[
+          styles.header,
+          {
+            paddingTop: insets.top + Spacing.lg,
+            paddingBottom: 28 + CARD_OVERLAP_HALF_HEIGHT,
+          },
+        ]}
       >
         <View style={styles.headerRow}>
           <Pressable
@@ -145,14 +154,11 @@ export default function VaultScreen() {
         </View>
       </LinearGradient>
 
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: insets.bottom + 120 },
+      <View
+        style={[
+          styles.overlapCardWrapper,
+          { marginTop: -CARD_OVERLAP_HALF_HEIGHT },
         ]}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
       >
         <View style={styles.balanceCard}>
           <View style={styles.balanceHeaderRow}>
@@ -168,7 +174,17 @@ export default function VaultScreen() {
             <LockIcon size={38} />
           </View>
         </View>
+      </View>
 
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: insets.bottom + 120 },
+        ]}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
         <Text style={styles.sectionTitle}>Transaktionen</Text>
 
         {sortedEntries.length === 0 ? (

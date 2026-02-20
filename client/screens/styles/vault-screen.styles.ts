@@ -1,5 +1,8 @@
 import { StyleSheet } from "react-native";
 
+/** Half of card height for 50/50 overlap with header (balance card). */
+export const CARD_OVERLAP_HALF_HEIGHT = 64;
+
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -44,8 +47,15 @@ export const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
+  /** Wrapper for overlapping card - ensures card renders above header. */
+  overlapCardWrapper: {
+    zIndex: 100,
+    elevation: 10,
+    marginHorizontal: 20,
+  },
   scrollContent: {
     padding: 20,
+    paddingTop: 24,
     gap: 12,
   },
   balanceCard: {
@@ -57,7 +67,7 @@ export const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 3,
-    marginBottom: 4,
+    marginBottom: 24,
   },
   balanceHeaderRow: {
     flexDirection: "row",
