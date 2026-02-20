@@ -86,14 +86,7 @@ export default function PaywallScreen() {
         >
           {title}
         </Text>
-        <Text
-          style={[
-            styles.planCardPrice,
-            isSelected && styles.planCardPriceSelected,
-          ]}
-        >
-          {price}
-        </Text>
+        <Text style={styles.planCardPrice}>{price}</Text>
         <Text style={styles.planCardDescription}>{description}</Text>
       </Pressable>
     );

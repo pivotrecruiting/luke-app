@@ -127,9 +127,10 @@ export const styles = StyleSheet.create({
     left: 0,
     backgroundColor: Colors.light.primary,
     paddingHorizontal: Spacing.sm,
-    paddingVertical: 2,
+    paddingVertical: 4,
     borderTopLeftRadius: 10,
     borderBottomRightRadius: 10,
+    width: 90,
   },
   planCardBadgeText: {
     fontSize: 9,
@@ -148,12 +149,9 @@ export const styles = StyleSheet.create({
   },
   planCardPrice: {
     fontSize: 18,
-    fontWeight: "700",
-    color: Colors.light.text,
-    textAlign: "center",
-  },
-  planCardPriceSelected: {
+    fontWeight: "600",
     color: Colors.light.primary,
+    textAlign: "center",
   },
   planCardDescription: {
     ...Typography.tiny,
