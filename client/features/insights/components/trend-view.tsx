@@ -140,10 +140,6 @@ export const TrendView = ({
     safeSelectedMonth !== null && selectedData
       ? selectedData.amount
       : currentSavings;
-  const headerSubtitle =
-    safeSelectedMonth !== null && selectedData
-      ? `${selectedData.month} - ${timeFilterLabel}`
-      : `${lastMonthData?.month ?? ""} - ${timeFilterLabel}`;
   const headerTitle =
     safeSelectedMonth !== null && selectedData
       ? `Ersparnisse ${selectedData.month}`
@@ -171,7 +167,6 @@ export const TrendView = ({
           <Text style={styles.trendSavingsValue}>
             {currencySymbol} {formatCurrency(headerAmount, currency)}
           </Text>
-          <Text style={styles.trendSubtitle}>{headerSubtitle}</Text>
         </View>
 
         <View style={styles.chartContainer}>
