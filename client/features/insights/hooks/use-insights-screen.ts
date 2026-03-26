@@ -114,7 +114,7 @@ export const useInsightsScreen = (): UseInsightsScreenReturnT => {
     deleteExpenseEntry,
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState<InsightsTabT>("ausgaben");
+  const [activeTab, setActiveTab] = useState<InsightsTabT>("analytics");
   const [activeFilter, setActiveFilter] =
     useState<InsightsFilterT>("kategorien");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
