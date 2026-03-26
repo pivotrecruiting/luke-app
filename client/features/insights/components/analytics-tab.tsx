@@ -283,6 +283,7 @@ export const AnalyticsTab = ({
             <TrendView
               monthlyData={monthlyTrendData}
               timeFilter={selectedTimeFilter}
+              currentSavings={totalIncome - totalExpenses}
               selectedMonth={selectedTrendMonth}
               onSelectMonth={onSelectTrendMonth}
             />

@@ -404,6 +404,17 @@ export const styles = StyleSheet.create({
     color: "#6B7280",
     marginTop: 4,
   },
+  trendSavingsValue: {
+    fontSize: 36,
+    fontWeight: "800",
+    color: "#111827",
+    marginTop: 8,
+  },
+  trendLineLabel: {
+    fontSize: 12,
+    lineHeight: 16,
+    color: "#9CA3AF",
+  },
   trendStatsRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -437,6 +448,8 @@ export const styles = StyleSheet.create({
   chartContainer: {
     alignItems: "center",
     marginBottom: 12,
+    paddingBottom: 4,
+    overflow: "visible",
   },
   trendChartSelectedAmount: {
     backgroundColor: "#5B6BBE",

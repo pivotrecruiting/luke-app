@@ -1,41 +1,42 @@
-import { Pressable, Text, View } from "react-native";
-import { Feather } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
+import { useMemo } from "react";
+import { Text, View, useWindowDimensions } from "react-native";
+import { LineChart } from "react-native-gifted-charts";
 import { useApp } from "@/context/AppContext";
 import { getCurrencySymbol } from "@/utils/currency-format";
 import { styles } from "@/screens/styles/insights-screen.styles";
 import { formatCurrency } from "../utils/format";
 import type { MonthlyTrendT, TimeFilterT } from "../types/insights-types";
 
-/** Keep these values aligned with `trendBarWrapper` to preserve proportional bars across devices. */
-const TREND_BAR_WRAPPER_HEIGHT_PX = 180;
-const TREND_BAR_MAX_HEIGHT_PX = TREND_BAR_WRAPPER_HEIGHT_PX - 4;
+const CHART_HORIZONTAL_PADDING_PX = 80;
 
 type TrendViewPropsT = {
   monthlyData: MonthlyTrendT[];
   timeFilter: TimeFilterT;
+  currentSavings: number;
   selectedMonth: number | null;
   onSelectMonth: (index: number | null) => void;
 };
 
 /**
- * Renders the expense trend card: stats, interactive bar chart, and month-over-month change.
- * Month selection is via the chart only (no separate insight cards).
+ * Renders a responsive savings card with a line chart and month selection.
  */
 export const TrendView = ({
   monthlyData,
   timeFilter,
+  currentSavings,
   selectedMonth,
   onSelectMonth,
 }: TrendViewPropsT) => {
   const { currency } = useApp();
+  const { width: windowWidth } = useWindowDimensions();
   const currencySymbol = getCurrencySymbol(currency);
+
   if (monthlyData.length === 0) {
     return (
       <View style={styles.trendContainer}>
         <View style={styles.summaryCard}>
           <View style={styles.trendHeader}>
-            <Text style={styles.summaryTitle}>Ausgaben-Entwicklung</Text>
+            <Text style={styles.summaryTitle}>Aktuelle Ersparnisse</Text>
             <Text style={styles.trendSubtitle}>Keine Daten</Text>
           </View>
           <Text style={styles.trendHint}>Keine Trenddaten verfügbar</Text>
@@ -51,21 +52,12 @@ export const TrendView = ({
       ? selectedMonth
       : null;
 
-  const maxAmount = Math.max(...monthlyData.map((d) => d.amount), 1);
-
-  const averageBase = monthlyData.filter((d) => d.amount > 0);
-  const average =
-    averageBase.length > 0
-      ? averageBase.reduce((sum, d) => sum + d.amount, 0) / averageBase.length
-      : 0;
-  const currentMonthData = monthlyData[monthlyData.length - 1];
-  const previousMonthData =
-    monthlyData.length > 1 ? monthlyData[monthlyData.length - 2] : null;
-
-  const displayedData =
+  const lastMonthData = monthlyData[monthlyData.length - 1];
+  const selectedData =
     safeSelectedMonth !== null
       ? monthlyData[safeSelectedMonth]
-      : currentMonthData;
+      : lastMonthData;
+
   const timeFilterLabel = (() => {
     switch (timeFilter) {
       case "thisMonth":
@@ -82,105 +74,84 @@ export const TrendView = ({
         return "Dieser Monat";
     }
   })();
-  const displayLabel =
-    safeSelectedMonth !== null
-      ? monthlyData[safeSelectedMonth].month
-      : timeFilterLabel;
+  const chartWidth = useMemo(() => {
+    return Math.max(windowWidth - CHART_HORIZONTAL_PADDING_PX, 240);
+  }, [windowWidth]);
+  const lineData = useMemo(() => {
+    return monthlyData.map((item) => ({
+      value: Math.max(item.amount, 0),
+      label: item.month,
+    }));
+  }, [monthlyData]);
 
-  const changePercent =
-    previousMonthData && previousMonthData.amount > 0
-      ? ((currentMonthData.amount - previousMonthData.amount) /
-          previousMonthData.amount) *
-        100
-      : 0;
-  const isImproving = changePercent <= 0;
+  const handleMonthIndex = (index: number) => {
+    if (index < 0 || index >= monthlyData.length) {
+      return;
+    }
+    onSelectMonth(selectedMonth === index ? null : index);
+  };
+
+  const headerAmount =
+    safeSelectedMonth !== null ? selectedData.amount : currentSavings;
+  const headerSubtitle =
+    safeSelectedMonth !== null
+      ? `${selectedData.month} - ${timeFilterLabel}`
+      : `${lastMonthData.month} - ${timeFilterLabel}`;
 
   return (
     <View style={styles.trendContainer}>
       <View style={styles.summaryCard}>
         <View style={styles.trendHeader}>
-          <Text style={styles.summaryTitle}>Ausgaben-Entwicklung</Text>
-          <Text style={styles.trendSubtitle}>{timeFilterLabel}</Text>
-        </View>
-
-        <View style={styles.trendStatsRow}>
-          <View style={styles.trendStat}>
-            <Text style={styles.trendStatLabel}>Durchschnitt</Text>
-            <Text style={styles.trendStatValue}>
-              {currencySymbol} {formatCurrency(average, currency)}
-            </Text>
-          </View>
-          <View style={styles.trendStatDivider} />
-          <View style={styles.trendStat}>
-            <Text style={styles.trendStatLabel}>{displayLabel}</Text>
-            <Text
-              style={[
-                styles.trendStatValue,
-                displayedData.amount <= average
-                  ? styles.trendPositive
-                  : styles.trendNegative,
-              ]}
-            >
-              {currencySymbol} {formatCurrency(displayedData.amount, currency)}
-            </Text>
-          </View>
+          <Text style={styles.summaryTitle}>
+            {safeSelectedMonth !== null
+              ? `Ersparnisse ${selectedData.month}`
+              : "Aktuelle Ersparnisse"}
+          </Text>
+          <Text style={styles.trendSavingsValue}>
+            {currencySymbol} {formatCurrency(headerAmount, currency)}
+          </Text>
+          <Text style={styles.trendSubtitle}>{headerSubtitle}</Text>
         </View>
 
         <View style={styles.chartContainer}>
-          <View style={styles.trendChartBars}>
-            {monthlyData.map((data, index) => {
-              const isZero = data.amount <= 0;
-              const barHeight = isZero
-                ? 6
-                : Math.max(
-                    (data.amount / maxAmount) * TREND_BAR_MAX_HEIGHT_PX,
-                    8,
-                  );
-              const isSelected = safeSelectedMonth === index;
-              const isCurrentMonth = index === monthlyData.length - 1;
-              const hasSelection = selectedMonth !== null;
-              const isActive =
-                !isZero && (isSelected || (isCurrentMonth && !hasSelection));
-              const barColors = isActive
-                ? (["#5B6BBE", "#3B4B9E"] as const)
-                : (["#A5B4FC", "#7B8CDE"] as const);
-
-              return (
-                <Pressable
-                  key={index}
-                  style={styles.trendBarContainer}
-                  onPress={() => onSelectMonth(isSelected ? null : index)}
-                >
-                  <View style={styles.trendBarWrapper}>
-                    <LinearGradient
-                      colors={barColors}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 0, y: 1 }}
-                      style={[
-                        styles.trendBar,
-                        { height: barHeight },
-                        isActive && styles.trendBarSelected,
-                        hasSelection &&
-                          !isSelected &&
-                          !isZero &&
-                          styles.trendBarDimmed,
-                        isZero && styles.trendBarZero,
-                      ]}
-                    />
-                  </View>
-                  <Text
-                    style={[
-                      styles.trendBarLabel,
-                      isActive && styles.trendBarLabelSelected,
-                    ]}
-                  >
-                    {data.month}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
+          <LineChart
+            data={lineData}
+            width={chartWidth}
+            height={200}
+            areaChart
+            labelsExtraHeight={32}
+            xAxisLabelsHeight={22}
+            focusEnabled
+            showStripOnFocus={false}
+            color="#3B5BDB"
+            thickness={3}
+            hideYAxisText
+            yAxisThickness={0}
+            xAxisThickness={1}
+            xAxisColor="#D1D5DB"
+            xAxisLabelTextStyle={styles.trendLineLabel}
+            noOfSections={4}
+            rulesType="dashed"
+            rulesColor="#E5E7EB"
+            startFillColor="rgba(59, 91, 219, 0.25)"
+            endFillColor="rgba(59, 91, 219, 0.04)"
+            startOpacity={0.8}
+            endOpacity={0.1}
+            dataPointsColor="#3B5BDB"
+            dataPointsRadius={6}
+            focusedDataPointIndex={safeSelectedMonth ?? -1}
+            onFocus={(_item: unknown, index: number) => {
+              handleMonthIndex(index);
+            }}
+            onPress={(_item: unknown, index: number) => {
+              handleMonthIndex(index);
+            }}
+          />
         </View>
+
+        <Text style={styles.trendHint}>
+          Tippe auf einen Monat, um die Summe oben zu sehen
+        </Text>
       </View>
     </View>
   );
