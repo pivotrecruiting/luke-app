@@ -7,6 +7,9 @@ import { styles } from "@/screens/styles/insights-screen.styles";
 import { formatCurrency } from "../utils/format";
 import type { MonthlyTrendT, TimeFilterT } from "../types/insights-types";
 
+/** Max bar height in px; must match `trendBarWrapper` height in insights-screen.styles. */
+const TREND_BAR_MAX_HEIGHT_PX = 180;
+
 type TrendViewPropsT = {
   monthlyData: MonthlyTrendT[];
   timeFilter: TimeFilterT;
@@ -15,7 +18,8 @@ type TrendViewPropsT = {
 };
 
 /**
- * Renders a monthly trend chart with selectable months and highlights.
+ * Renders the expense trend card: stats, interactive bar chart, and month-over-month change.
+ * Month selection is via the chart only (no separate insight cards).
  */
 export const TrendView = ({
   monthlyData,
@@ -90,15 +94,6 @@ export const TrendView = ({
       : 0;
   const isImproving = changePercent <= 0;
 
-  const bestMonthIndex = monthlyData.reduce(
-    (min, d, i, arr) => (d.amount < arr[min].amount ? i : min),
-    0,
-  );
-  const worstMonthIndex = monthlyData.reduce(
-    (max, d, i, arr) => (d.amount > arr[max].amount ? i : max),
-    0,
-  );
-
   return (
     <View style={styles.trendContainer}>
       <View style={styles.summaryCard}>
@@ -136,7 +131,10 @@ export const TrendView = ({
               const isZero = data.amount <= 0;
               const barHeight = isZero
                 ? 6
-                : Math.max((data.amount / maxAmount) * 100, 8);
+                : Math.max(
+                    (data.amount / maxAmount) * TREND_BAR_MAX_HEIGHT_PX,
+                    8,
+                  );
               const isSelected = safeSelectedMonth === index;
               const isCurrentMonth = index === monthlyData.length - 1;
               const hasSelection = selectedMonth !== null;
@@ -210,51 +208,6 @@ export const TrendView = ({
             </Text>
           </View>
         </View>
-      </View>
-
-      <View style={styles.insightCards}>
-        <Pressable
-          style={[
-            styles.insightCard,
-            selectedMonth === bestMonthIndex && styles.insightCardSelected,
-          ]}
-          onPress={() =>
-            onSelectMonth(
-              selectedMonth === bestMonthIndex ? null : bestMonthIndex,
-            )
-          }
-        >
-          <View style={[styles.insightIcon, { backgroundColor: "#EFF6FF" }]}>
-            <Feather name="calendar" size={18} color="#3B5BDB" />
-          </View>
-          <View style={styles.insightContent}>
-            <Text style={styles.insightLabel}>Bester Monat</Text>
-            <Text style={styles.insightValue}>
-              {monthlyData[bestMonthIndex].month}
-            </Text>
-          </View>
-        </Pressable>
-        <Pressable
-          style={[
-            styles.insightCard,
-            selectedMonth === worstMonthIndex && styles.insightCardSelected,
-          ]}
-          onPress={() =>
-            onSelectMonth(
-              selectedMonth === worstMonthIndex ? null : worstMonthIndex,
-            )
-          }
-        >
-          <View style={[styles.insightIcon, { backgroundColor: "#FEF3C7" }]}>
-            <Feather name="alert-circle" size={18} color="#F59E0B" />
-          </View>
-          <View style={styles.insightContent}>
-            <Text style={styles.insightLabel}>Teuerster Monat</Text>
-            <Text style={styles.insightValue}>
-              {monthlyData[worstMonthIndex].month}
-            </Text>
-          </View>
-        </Pressable>
       </View>
     </View>
   );

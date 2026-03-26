@@ -160,7 +160,7 @@ export const styles = StyleSheet.create({
   },
   pagerView: {
     flex: 1,
-    minHeight: 550,
+    minHeight: 540,
   },
   pagerPage: {
     flex: 1,
@@ -435,7 +435,7 @@ export const styles = StyleSheet.create({
   },
   chartContainer: {
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 12,
   },
   trendChartSelectedAmount: {
     backgroundColor: "#5B6BBE",
@@ -454,7 +454,7 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-end",
-    height: 130,
+    height: 210,
     width: "100%",
   },
   trendBarContainer: {
@@ -462,7 +462,7 @@ export const styles = StyleSheet.create({
     flex: 1,
   },
   trendBarWrapper: {
-    height: 100,
+    height: 180,
     justifyContent: "flex-end",
   },
   trendBar: {
@@ -492,7 +492,7 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     color: "#9CA3AF",
     textAlign: "center",
-    marginBottom: 12,
+    marginBottom: 16,
   },
   trendChangeRow: {
     alignItems: "center",
@@ -520,50 +520,6 @@ export const styles = StyleSheet.create({
   },
   changeTextNegative: {
     color: "#DC2626",
-  },
-  insightCards: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  insightCard: {
-    flex: 1,
-    flexDirection: "row",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 14,
-    alignItems: "center",
-    gap: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-    borderWidth: 2,
-    borderColor: "transparent",
-  },
-  insightCardSelected: {
-    borderColor: "#3B5BDB",
-    backgroundColor: "#F0F4FF",
-  },
-  insightIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  insightContent: {
-    flex: 1,
-  },
-  insightLabel: {
-    fontSize: 11,
-    color: "#6B7280",
-    marginBottom: 2,
-  },
-  insightValue: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#000000",
   },
   modalOverlay: {
     flex: 1,
