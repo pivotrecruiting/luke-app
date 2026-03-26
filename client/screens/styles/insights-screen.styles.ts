@@ -415,6 +415,12 @@ export const styles = StyleSheet.create({
     lineHeight: 16,
     color: "#9CA3AF",
   },
+  trendLineLabelSelected: {
+    fontSize: 12,
+    lineHeight: 16,
+    color: "#1D4ED8",
+    fontWeight: "700",
+  },
   trendStatsRow: {
     flexDirection: "row",
     alignItems: "center",

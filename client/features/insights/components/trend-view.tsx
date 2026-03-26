@@ -11,6 +11,18 @@ const CHART_HORIZONTAL_PADDING_PX = 80;
 const CHART_HEIGHT_PX = 200;
 const CHART_INITIAL_SPACING_PX = 24;
 const DATA_POINT_RADIUS_PX = 6;
+const SELECTED_DATA_POINT_COLOR = "#C4B5FD";
+const CHART_LABEL_STYLE = {
+  fontSize: 12,
+  lineHeight: 16,
+  color: "#9CA3AF",
+};
+const CHART_LABEL_SELECTED_STYLE = {
+  fontSize: 12,
+  lineHeight: 16,
+  color: "#1D4ED8",
+  fontWeight: "700" as const,
+};
 
 type TrendViewPropsT = {
   monthlyData: MonthlyTrendT[];
@@ -95,11 +107,18 @@ export const TrendView = ({
     return monthlyData.map((item, index) => ({
       value: Math.max(item.amount, 0),
       label: item.month,
+      labelTextStyle:
+        safeSelectedMonth === index
+          ? { ...CHART_LABEL_SELECTED_STYLE }
+          : { ...CHART_LABEL_STYLE },
       dataPointRadius:
         safeSelectedMonth === index
-          ? DATA_POINT_RADIUS_PX + 1
+          ? DATA_POINT_RADIUS_PX + 2
           : DATA_POINT_RADIUS_PX,
-      dataPointColor: "#3B5BDB",
+      dataPointColor:
+        safeSelectedMonth === index
+          ? SELECTED_DATA_POINT_COLOR
+          : "#3B5BDB",
     }));
   }, [monthlyData, safeSelectedMonth]);
 
@@ -187,7 +206,6 @@ export const TrendView = ({
             yAxisThickness={0}
             xAxisThickness={1}
             xAxisColor="#D1D5DB"
-            xAxisLabelTextStyle={styles.trendLineLabel}
             noOfSections={4}
             rulesType="dashed"
             rulesColor="#E5E7EB"
