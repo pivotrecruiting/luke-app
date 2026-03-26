@@ -11,6 +11,9 @@ const CHART_HORIZONTAL_PADDING_PX = 80;
 const CHART_HEIGHT_PX = 200;
 const CHART_INITIAL_SPACING_PX = 24;
 const DATA_POINT_RADIUS_PX = 6;
+const CHART_OVERFLOW_BOTTOM_PX = 10;
+const CHART_LABELS_EXTRA_HEIGHT_PX = 10;
+const CHART_X_AXIS_LABELS_HEIGHT_PX = 18;
 const SELECTED_DATA_POINT_COLOR = "#C4B5FD";
 const CHART_LABEL_STYLE = {
   fontSize: 12,
@@ -45,33 +48,21 @@ export const TrendView = ({
   const { currency } = useApp();
   const { width: windowWidth } = useWindowDimensions();
   const currencySymbol = getCurrencySymbol(currency);
-
-  if (monthlyData.length === 0) {
-    return (
-      <View style={styles.trendContainer}>
-        <View style={styles.summaryCard}>
-          <View style={styles.trendHeader}>
-            <Text style={styles.summaryTitle}>Aktuelle Ersparnisse</Text>
-            <Text style={styles.trendSubtitle}>Keine Daten</Text>
-          </View>
-          <Text style={styles.trendHint}>Keine Trenddaten verfügbar</Text>
-        </View>
-      </View>
-    );
-  }
+  const hasMonthlyData = monthlyData.length > 0;
 
   const safeSelectedMonth =
+    hasMonthlyData &&
     selectedMonth !== null &&
     selectedMonth >= 0 &&
     selectedMonth < monthlyData.length
       ? selectedMonth
       : null;
 
-  const lastMonthData = monthlyData[monthlyData.length - 1];
+  const lastMonthData = hasMonthlyData
+    ? monthlyData[monthlyData.length - 1]
+    : null;
   const selectedData =
-    safeSelectedMonth !== null
-      ? monthlyData[safeSelectedMonth]
-      : lastMonthData;
+    safeSelectedMonth !== null ? monthlyData[safeSelectedMonth] : lastMonthData;
 
   const timeFilterLabel = (() => {
     switch (timeFilter) {
@@ -116,9 +107,7 @@ export const TrendView = ({
           ? DATA_POINT_RADIUS_PX + 2
           : DATA_POINT_RADIUS_PX,
       dataPointColor:
-        safeSelectedMonth === index
-          ? SELECTED_DATA_POINT_COLOR
-          : "#3B5BDB",
+        safeSelectedMonth === index ? SELECTED_DATA_POINT_COLOR : "#3B5BDB",
     }));
   }, [monthlyData, safeSelectedMonth]);
 
@@ -148,21 +137,37 @@ export const TrendView = ({
   };
 
   const headerAmount =
-    safeSelectedMonth !== null ? selectedData.amount : currentSavings;
+    safeSelectedMonth !== null && selectedData
+      ? selectedData.amount
+      : currentSavings;
   const headerSubtitle =
-    safeSelectedMonth !== null
+    safeSelectedMonth !== null && selectedData
       ? `${selectedData.month} - ${timeFilterLabel}`
-      : `${lastMonthData.month} - ${timeFilterLabel}`;
+      : `${lastMonthData?.month ?? ""} - ${timeFilterLabel}`;
+  const headerTitle =
+    safeSelectedMonth !== null && selectedData
+      ? `Ersparnisse ${selectedData.month}`
+      : "Aktuelle Ersparnisse";
+
+  if (!hasMonthlyData) {
+    return (
+      <View style={styles.trendContainer}>
+        <View style={styles.summaryCard}>
+          <View style={styles.trendHeader}>
+            <Text style={styles.summaryTitle}>Aktuelle Ersparnisse</Text>
+            <Text style={styles.trendSubtitle}>Keine Daten</Text>
+          </View>
+          <Text style={styles.trendHint}>Keine Trenddaten verfügbar</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.trendContainer}>
       <View style={styles.summaryCard}>
         <View style={styles.trendHeader}>
-          <Text style={styles.summaryTitle}>
-            {safeSelectedMonth !== null
-              ? `Ersparnisse ${selectedData.month}`
-              : "Aktuelle Ersparnisse"}
-          </Text>
+          <Text style={styles.summaryTitle}>{headerTitle}</Text>
           <Text style={styles.trendSavingsValue}>
             {currencySymbol} {formatCurrency(headerAmount, currency)}
           </Text>
@@ -183,7 +188,11 @@ export const TrendView = ({
                 accessibilityLabel={`Wert fuer ${area.month} auswaehlen`}
                 style={[
                   styles.trendChartHitArea,
-                  { left: area.left, width: area.width, height: CHART_HEIGHT_PX },
+                  {
+                    left: area.left,
+                    width: area.width,
+                    height: CHART_HEIGHT_PX,
+                  },
                 ]}
                 onPress={() => handleMonthIndex(index)}
               />
@@ -195,10 +204,11 @@ export const TrendView = ({
             width={chartWidth}
             height={CHART_HEIGHT_PX}
             areaChart
+            overflowBottom={CHART_OVERFLOW_BOTTOM_PX}
             initialSpacing={CHART_INITIAL_SPACING_PX}
             spacing={chartSpacing}
-            labelsExtraHeight={32}
-            xAxisLabelsHeight={22}
+            labelsExtraHeight={CHART_LABELS_EXTRA_HEIGHT_PX}
+            xAxisLabelsHeight={CHART_X_AXIS_LABELS_HEIGHT_PX}
             showStripOnFocus={false}
             color="#3B5BDB"
             thickness={3}
