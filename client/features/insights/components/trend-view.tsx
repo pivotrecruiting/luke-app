@@ -7,8 +7,9 @@ import { styles } from "@/screens/styles/insights-screen.styles";
 import { formatCurrency } from "../utils/format";
 import type { MonthlyTrendT, TimeFilterT } from "../types/insights-types";
 
-/** Max bar height in px; must match `trendBarWrapper` height in insights-screen.styles. */
-const TREND_BAR_MAX_HEIGHT_PX = 180;
+/** Keep these values aligned with `trendBarWrapper` to preserve proportional bars across devices. */
+const TREND_BAR_WRAPPER_HEIGHT_PX = 180;
+const TREND_BAR_MAX_HEIGHT_PX = TREND_BAR_WRAPPER_HEIGHT_PX - 4;
 
 type TrendViewPropsT = {
   monthlyData: MonthlyTrendT[];
@@ -178,34 +179,6 @@ export const TrendView = ({
                 </Pressable>
               );
             })}
-          </View>
-        </View>
-
-        <Text style={styles.trendHint}>Tippe auf einen Monat für Details</Text>
-
-        <View style={styles.trendChangeRow}>
-          <View
-            style={[
-              styles.changeIndicator,
-              isImproving ? styles.changePositive : styles.changeNegative,
-            ]}
-          >
-            <Feather
-              name={isImproving ? "arrow-down" : "arrow-up"}
-              size={16}
-              color={isImproving ? "#059669" : "#DC2626"}
-            />
-            <Text
-              style={[
-                styles.changeText,
-                isImproving
-                  ? styles.changeTextPositive
-                  : styles.changeTextNegative,
-              ]}
-            >
-              {Math.abs(changePercent).toFixed(1)}%{" "}
-              {isImproving ? "weniger" : "mehr"} als letzten Monat
-            </Text>
           </View>
         </View>
       </View>

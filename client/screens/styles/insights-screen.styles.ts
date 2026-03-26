@@ -158,12 +158,13 @@ export const styles = StyleSheet.create({
     color: "#3B5BDB",
     marginTop: 2,
   },
+  /** No flex:1 here — inside ScrollView it would stretch to the viewport and add empty scroll space. */
   pagerView: {
-    flex: 1,
-    minHeight: 540,
+    alignSelf: "stretch",
   },
-  pagerPage: {
-    flex: 1,
+  pagerPage: {},
+  pagerPageContent: {
+    width: "100%",
   },
   incomeExpensesContainer: {
     gap: 16,
