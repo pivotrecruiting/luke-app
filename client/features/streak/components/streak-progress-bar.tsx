@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { addDays, getLocalDateKey } from "@/features/xp/utils/dates";
 import { Spacing } from "@/constants/theme";
+import { startOfWeek } from "date-fns";
 
 const DAY_LABELS = ["SO", "MO", "DI", "MI", "DO", "FR", "SA"] as const;
 
@@ -19,11 +20,11 @@ export const StreakProgressBar = ({
 }: StreakProgressBarProps) => {
   const dayStates = useMemo(() => {
     const today = new Date();
+    const emptyWeekStart = startOfWeek(today, { weekStartsOn: 1 });
 
     if (!lastStreakDate || currentStreak <= 0) {
-      const windowStart = addDays(today, -6);
       return Array.from({ length: 7 }, (_, i) => {
-        const date = addDays(windowStart, i);
+        const date = addDays(emptyWeekStart, i);
         return {
           label: DAY_LABELS[date.getDay()],
           isActive: false,
@@ -36,13 +37,13 @@ export const StreakProgressBar = ({
     const lastDate = new Date(year, month - 1, day);
     const cycleDayCount = ((currentStreak - 1) % 7) + 1;
     const cycleStart = addDays(lastDate, -(cycleDayCount - 1));
-    const windowStart = addDays(lastDate, -6);
+    const weekStart = startOfWeek(lastDate, { weekStartsOn: 1 });
     const cycleStartKey = getLocalDateKey(cycleStart);
     const lastStreakKey = getLocalDateKey(lastDate);
     const todayKey = getLocalDateKey(today);
 
     return Array.from({ length: 7 }, (_, i) => {
-      const date = addDays(windowStart, i);
+      const date = addDays(weekStart, i);
       const dateKey = getLocalDateKey(date);
       const isActive = dateKey >= cycleStartKey && dateKey <= lastStreakKey;
       const isCurrentDay = dateKey === todayKey;
