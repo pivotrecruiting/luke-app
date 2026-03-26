@@ -450,6 +450,17 @@ export const styles = StyleSheet.create({
     marginBottom: 12,
     paddingBottom: 4,
     overflow: "visible",
+    position: "relative",
+  },
+  trendChartTouchableArea: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    zIndex: 2,
+  },
+  trendChartHitArea: {
+    position: "absolute",
+    top: 0,
   },
   trendChartSelectedAmount: {
     backgroundColor: "#5B6BBE",

@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Text, View, useWindowDimensions } from "react-native";
+import { Pressable, Text, View, useWindowDimensions } from "react-native";
 import { LineChart } from "react-native-gifted-charts";
 import { useApp } from "@/context/AppContext";
 import { getCurrencySymbol } from "@/utils/currency-format";
@@ -8,6 +8,9 @@ import { formatCurrency } from "../utils/format";
 import type { MonthlyTrendT, TimeFilterT } from "../types/insights-types";
 
 const CHART_HORIZONTAL_PADDING_PX = 80;
+const CHART_HEIGHT_PX = 200;
+const CHART_INITIAL_SPACING_PX = 24;
+const DATA_POINT_RADIUS_PX = 6;
 
 type TrendViewPropsT = {
   monthlyData: MonthlyTrendT[];
@@ -77,12 +80,46 @@ export const TrendView = ({
   const chartWidth = useMemo(() => {
     return Math.max(windowWidth - CHART_HORIZONTAL_PADDING_PX, 240);
   }, [windowWidth]);
+
+  const chartSpacing = useMemo(() => {
+    if (monthlyData.length <= 1) {
+      return 0;
+    }
+
+    return (
+      (chartWidth - CHART_INITIAL_SPACING_PX * 2) / (monthlyData.length - 1)
+    );
+  }, [chartWidth, monthlyData.length]);
+
   const lineData = useMemo(() => {
-    return monthlyData.map((item) => ({
+    return monthlyData.map((item, index) => ({
       value: Math.max(item.amount, 0),
       label: item.month,
+      dataPointRadius:
+        safeSelectedMonth === index
+          ? DATA_POINT_RADIUS_PX + 1
+          : DATA_POINT_RADIUS_PX,
+      dataPointColor: "#3B5BDB",
     }));
-  }, [monthlyData]);
+  }, [monthlyData, safeSelectedMonth]);
+
+  const hitAreas = useMemo(() => {
+    return monthlyData.map((item, index) => {
+      const currentX = CHART_INITIAL_SPACING_PX + chartSpacing * index;
+      const previousX = CHART_INITIAL_SPACING_PX + chartSpacing * (index - 1);
+      const nextX = CHART_INITIAL_SPACING_PX + chartSpacing * (index + 1);
+      const left = index === 0 ? 0 : (previousX + currentX) / 2;
+      const right =
+        index === monthlyData.length - 1 ? chartWidth : (currentX + nextX) / 2;
+
+      return {
+        key: `${item.month}-${index}`,
+        month: item.month,
+        left,
+        width: Math.max(right - left, 1),
+      };
+    });
+  }, [chartSpacing, chartWidth, monthlyData]);
 
   const handleMonthIndex = (index: number) => {
     if (index < 0 || index >= monthlyData.length) {
@@ -114,14 +151,35 @@ export const TrendView = ({
         </View>
 
         <View style={styles.chartContainer}>
+          <View
+            style={[
+              styles.trendChartTouchableArea,
+              { width: chartWidth, height: CHART_HEIGHT_PX },
+            ]}
+          >
+            {hitAreas.map((area, index) => (
+              <Pressable
+                key={area.key}
+                accessibilityRole="button"
+                accessibilityLabel={`Wert fuer ${area.month} auswaehlen`}
+                style={[
+                  styles.trendChartHitArea,
+                  { left: area.left, width: area.width, height: CHART_HEIGHT_PX },
+                ]}
+                onPress={() => handleMonthIndex(index)}
+              />
+            ))}
+          </View>
+
           <LineChart
             data={lineData}
             width={chartWidth}
-            height={200}
+            height={CHART_HEIGHT_PX}
             areaChart
+            initialSpacing={CHART_INITIAL_SPACING_PX}
+            spacing={chartSpacing}
             labelsExtraHeight={32}
             xAxisLabelsHeight={22}
-            focusEnabled
             showStripOnFocus={false}
             color="#3B5BDB"
             thickness={3}
@@ -138,14 +196,7 @@ export const TrendView = ({
             startOpacity={0.8}
             endOpacity={0.1}
             dataPointsColor="#3B5BDB"
-            dataPointsRadius={6}
-            focusedDataPointIndex={safeSelectedMonth ?? -1}
-            onFocus={(_item: unknown, index: number) => {
-              handleMonthIndex(index);
-            }}
-            onPress={(_item: unknown, index: number) => {
-              handleMonthIndex(index);
-            }}
+            dataPointsRadius={DATA_POINT_RADIUS_PX}
           />
         </View>
 
