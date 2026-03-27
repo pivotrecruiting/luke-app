@@ -54,7 +54,8 @@ import { useOnboardingActions } from "@/context/app/hooks/use-onboarding-actions
 import { useSnapXp } from "@/context/app/hooks/use-snap-xp";
 import { useMonthlyBudgetReset } from "@/context/app/hooks/use-monthly-budget-reset";
 import { useIncomeCategoryResolver } from "@/context/app/hooks/use-income-category-resolver";
-import { useMonthlyBalanceRollover } from "@/context/app/hooks/use-monthly-balance-rollover";
+import { useCurrentReferenceDate } from "@/context/app/hooks/use-current-reference-date";
+import { useMonthlyBalanceStateSync } from "@/context/app/hooks/use-monthly-balance-state-sync";
 import { generateId } from "@/utils/ids";
 import { toCents } from "@/utils/money";
 
@@ -101,9 +102,7 @@ export function AppProvider({ children }: AppProviderProps) {
   const [monthlyBalanceSnapshots, setMonthlyBalanceSnapshots] = useState<
     MonthlyBalanceSnapshotT[]
   >([]);
-  const [monthlyTrendData, setMonthlyTrendData] = useState<MonthlyTrendData[]>(
-    [],
-  );
+  const [, setMonthlyTrendData] = useState<MonthlyTrendData[]>([]);
   const [selectedWeekOffset, setSelectedWeekOffset] = useState(0);
   const [lastBudgetResetMonth, setLastBudgetResetMonth] = useState(() =>
     new Date().getMonth(),
@@ -121,6 +120,7 @@ export function AppProvider({ children }: AppProviderProps) {
   const [balanceAnchorMonth, setBalanceAnchorMonth] = useState<string | null>(
     null,
   );
+  const referenceDate = useCurrentReferenceDate();
 
   const { user } = useAuth();
   const userId = user?.id ?? null;
@@ -212,10 +212,10 @@ export function AppProvider({ children }: AppProviderProps) {
     vaultTransactions,
     monthlyBalanceSnapshots,
     selectedWeekOffset,
+    referenceDate,
   });
 
-  const effectiveMonthlyTrendData =
-    monthlyTrendData.length > 0 ? monthlyTrendData : fallbackMonthlyTrendData;
+  const effectiveMonthlyTrendData = fallbackMonthlyTrendData;
 
   const persistedData = useMemo<PersistedData>(
     () => ({
@@ -500,15 +500,13 @@ export function AppProvider({ children }: AppProviderProps) {
     setLastBudgetResetMonth,
   });
 
-  useMonthlyBalanceRollover({
+  useMonthlyBalanceStateSync({
     userId,
     canUseDb,
-    currency,
     isAppLoading,
-    transactions,
-    vaultTransactions,
-    balanceAnchorMonth,
+    referenceDate,
     setVaultTransactions,
+    setMonthlyBalanceSnapshots,
     setBalanceAnchorMonth,
     handleDbError,
   });

@@ -39,6 +39,7 @@ type DerivedStateInputT = {
   vaultTransactions: VaultTransactionT[];
   monthlyBalanceSnapshots: MonthlyBalanceSnapshotT[];
   selectedWeekOffset: number;
+  referenceDate: Date;
 };
 
 type DerivedStateT = {
@@ -68,6 +69,7 @@ export const useAppDerivedState = ({
   vaultTransactions,
   monthlyBalanceSnapshots,
   selectedWeekOffset,
+  referenceDate,
 }: DerivedStateInputT): DerivedStateT => {
   const weeklySpending = useMemo(
     () => getWeeklySpending(transactions, selectedWeekOffset),
@@ -120,14 +122,13 @@ export const useAppDerivedState = ({
   );
 
   const monthlyTransactionBalance = useMemo(
-    () => getTransactionBalanceForMonth(transactions, new Date()),
-    [transactions],
+    () => getTransactionBalanceForMonth(transactions, referenceDate),
+    [referenceDate, transactions],
   );
 
   const monthlyBalance = useMemo(() => {
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth();
+    const currentYear = referenceDate.getFullYear();
+    const currentMonth = referenceDate.getMonth();
     const manualVaultDeposits = vaultTransactions.reduce((sum, entry) => {
       if (entry.entryType !== "manual_deposit") return sum;
       const entryDate = new Date(entry.transactionAt);
@@ -137,7 +138,7 @@ export const useAppDerivedState = ({
       return isCurrentMonth ? sum + entry.amount : sum;
     }, 0);
     return monthlyTransactionBalance - manualVaultDeposits;
-  }, [monthlyTransactionBalance, vaultTransactions]);
+  }, [monthlyTransactionBalance, referenceDate, vaultTransactions]);
 
   const vaultBalance = useMemo(
     () => vaultTransactions.reduce((sum, entry) => sum + entry.amount, 0),
@@ -161,8 +162,9 @@ export const useAppDerivedState = ({
         vaultTransactions,
         monthlyBalanceSnapshots,
         12,
+        referenceDate,
       ),
-    [monthlyBalanceSnapshots, transactions, vaultTransactions],
+    [monthlyBalanceSnapshots, referenceDate, transactions, vaultTransactions],
   );
 
   return {

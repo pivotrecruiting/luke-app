@@ -5,12 +5,11 @@ import type {
   Goal,
   IncomeEntry,
   MonthlyBalanceSnapshotT,
-  MonthlyTrendData,
   Transaction,
   TransactionSourceT,
   VaultTransactionT,
+  MonthlyTrendData,
 } from "@/context/app/types";
-import { GERMAN_MONTHS_SHORT } from "@/context/app/constants";
 import type {
   UserProgressT,
   XpEventRuleT,
@@ -38,7 +37,6 @@ import type {
   IncomeCategoryRow,
   IncomeSourceRow,
   MonthlyBalanceSnapshotRow,
-  MonthlyTrendRow,
   LevelRow,
   TransactionRow,
   VaultTransactionRow,
@@ -83,22 +81,6 @@ export type AppDataPayload = {
   balanceAnchorMonth?: string | null;
 };
 
-const mapMonthlyTrendData = (rows: MonthlyTrendRow[]): MonthlyTrendData[] => {
-  return rows.map((row) => {
-    const [year, month] = row.month_start.split("-").map(Number);
-    const monthDate = new Date(year ?? 1970, (month ?? 1) - 1, 1, 12, 0, 0, 0);
-    const monthIndex = monthDate.getMonth();
-    return {
-      month: GERMAN_MONTHS_SHORT[monthIndex] ?? "",
-      monthIndex,
-      monthStart: row.month_start,
-      amount: fromCents(row.amount_cents),
-      isSnapshot: row.is_snapshot,
-      isCurrentMonth: row.is_current_month,
-    };
-  });
-};
-
 const mapMonthlyBalanceSnapshots = (
   rows: MonthlyBalanceSnapshotRow[],
 ): MonthlyBalanceSnapshotT[] =>
@@ -122,6 +104,12 @@ const mapVaultTransactions = (
     rolloverMonth: row.rollover_month ?? null,
     transactionAt: row.transaction_at,
   }));
+
+export type MonthlyBalanceStatePayloadT = {
+  vaultTransactions: VaultTransactionT[];
+  monthlyBalanceSnapshots: MonthlyBalanceSnapshotT[];
+  balanceAnchorMonth: string | null;
+};
 
 const ensureUserRow = async (userId: string): Promise<void> => {
   const { error } = await supabase
@@ -307,17 +295,64 @@ const ensureRecurringTransactionsForMonth = async ({
   return data as TransactionRow[];
 };
 
+export const syncMonthlyBalanceState = async (): Promise<void> => {
+  const { error } = await supabase.rpc("sync_my_monthly_balance_snapshots");
+  if (error) {
+    throw error;
+  }
+};
+
+export const fetchMonthlyBalanceState = async (
+  userId: string,
+): Promise<MonthlyBalanceStatePayloadT> => {
+  const [profileRes, vaultTransactionsRes, monthlyBalanceSnapshotsRes] =
+    await Promise.all([
+      supabase
+        .from("user_financial_profiles")
+        .select("balance_anchor_month")
+        .eq("user_id", userId)
+        .maybeSingle(),
+      supabase
+        .from("vault_transactions")
+        .select(
+          "id, user_id, amount_cents, currency, entry_type, note, goal_id, rollover_month, transaction_at",
+        )
+        .eq("user_id", userId)
+        .order("transaction_at", { ascending: false }),
+      supabase
+        .from("monthly_balance_snapshots")
+        .select("id, user_id, month_start, amount_cents, currency, snapshot_at")
+        .eq("user_id", userId)
+        .order("month_start", { ascending: true }),
+    ]);
+
+  const firstError =
+    profileRes.error ||
+    vaultTransactionsRes.error ||
+    monthlyBalanceSnapshotsRes.error;
+  if (firstError) {
+    throw firstError;
+  }
+
+  const profile = profileRes.data as UserFinancialProfileRow | null;
+
+  return {
+    vaultTransactions: mapVaultTransactions(
+      (vaultTransactionsRes.data ?? []) as VaultTransactionRow[],
+    ),
+    monthlyBalanceSnapshots: mapMonthlyBalanceSnapshots(
+      (monthlyBalanceSnapshotsRes.data ?? []) as MonthlyBalanceSnapshotRow[],
+    ),
+    balanceAnchorMonth: profile?.balance_anchor_month ?? null,
+  };
+};
+
 export const fetchAppData = async (
   userId: string,
   onboardingVersion: string,
 ): Promise<AppDataPayload> => {
   await ensureUserRow(userId);
-  const { error: syncSnapshotsError } = await supabase.rpc(
-    "sync_my_monthly_balance_snapshots",
-  );
-  if (syncSnapshotsError) {
-    throw syncSnapshotsError;
-  }
+  await syncMonthlyBalanceState();
   const [
     onboardingRes,
     profileRes,
@@ -332,7 +367,6 @@ export const fetchAppData = async (
     transactionsRes,
     vaultTransactionsRes,
     monthlyBalanceSnapshotsRes,
-    monthlyTrendRes,
   ] = await Promise.all([
     supabase
       .from("user_onboarding")
@@ -394,9 +428,6 @@ export const fetchAppData = async (
       .select("id, user_id, month_start, amount_cents, currency, snapshot_at")
       .eq("user_id", userId)
       .order("month_start", { ascending: true }),
-    supabase.rpc("get_monthly_balance_trend", {
-      months_back: 12,
-    }),
   ]);
 
   const firstError =
@@ -412,8 +443,7 @@ export const fetchAppData = async (
     budgetsRes.error ||
     transactionsRes.error ||
     vaultTransactionsRes.error ||
-    monthlyBalanceSnapshotsRes.error ||
-    monthlyTrendRes.error;
+    monthlyBalanceSnapshotsRes.error;
   if (firstError) {
     throw firstError;
   }
@@ -474,23 +504,6 @@ export const fetchAppData = async (
     budgetCategories,
     combinedTransactions,
   );
-  let monthlyTrendRows = (monthlyTrendRes.data ?? []) as MonthlyTrendRow[];
-  if (recurringTransactions.length > 0) {
-    const { data: refreshedTrend, error: refreshedTrendError } =
-      await supabase.rpc("get_monthly_balance_trend", {
-        months_back: 12,
-      });
-    if (refreshedTrendError) {
-      console.warn(
-        "Failed to refresh monthly balance trend data:",
-        refreshedTrendError,
-      );
-    } else if (refreshedTrend) {
-      monthlyTrendRows = refreshedTrend as MonthlyTrendRow[];
-    }
-  }
-
-  const monthlyTrendData = mapMonthlyTrendData(monthlyTrendRows);
   const monthlyBalanceSnapshots = mapMonthlyBalanceSnapshots(
     (monthlyBalanceSnapshotsRes.data ?? []) as MonthlyBalanceSnapshotRow[],
   );
@@ -512,7 +525,7 @@ export const fetchAppData = async (
     transactions,
     vaultTransactions,
     monthlyBalanceSnapshots,
-    monthlyTrendData,
+    monthlyTrendData: [],
     budgetCategories,
     incomeCategories,
     initialSavingsCents: profile?.initial_savings_cents ?? null,
