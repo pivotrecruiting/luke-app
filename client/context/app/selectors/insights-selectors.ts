@@ -15,10 +15,14 @@ export const getInsightCategories = (
   expenseEntries: ExpenseEntry[],
 ): InsightCategory[] => {
   const categories: Record<string, number> = {};
+  const colorsByName: Record<string, string> = {};
 
   budgets.forEach((budget) => {
     const categoryName = budget.name;
     categories[categoryName] = (categories[categoryName] || 0) + budget.current;
+    if (colorsByName[categoryName] === undefined) {
+      colorsByName[categoryName] = budget.iconColor;
+    }
   });
 
   const fixedCategories: Record<string, string[]> = {
@@ -31,12 +35,18 @@ export const getInsightCategories = (
     for (const [category, keywords] of Object.entries(fixedCategories)) {
       if (keywords.some((keyword) => entry.type.includes(keyword))) {
         categories[category] = (categories[category] || 0) + entry.amount;
+        if (colorsByName[category] === undefined) {
+          colorsByName[category] = CATEGORY_COLORS[category] || "#6B7280";
+        }
         matched = true;
         break;
       }
     }
     if (!matched) {
       categories["Sonstiges"] = (categories["Sonstiges"] || 0) + entry.amount;
+      if (colorsByName["Sonstiges"] === undefined) {
+        colorsByName["Sonstiges"] = CATEGORY_COLORS["Sonstiges"] || "#6B7280";
+      }
     }
   });
 
@@ -45,7 +55,7 @@ export const getInsightCategories = (
     .map(([name, amount]) => ({
       name,
       amount,
-      color: CATEGORY_COLORS[name] || "#6B7280",
+      color: colorsByName[name] || CATEGORY_COLORS[name] || "#6B7280",
     }))
     .sort((a, b) => b.amount - a.amount);
 };

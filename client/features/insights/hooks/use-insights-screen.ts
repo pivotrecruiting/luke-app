@@ -153,6 +153,7 @@ export const useInsightsScreen = (): UseInsightsScreenReturnT => {
   const filteredCategories = useMemo<CategoryT[]>(() => {
     const { start, end } = getDateRangeForFilter(selectedTimeFilter);
     const categoryTotals: Record<string, number> = {};
+    const categoryColors: Record<string, string> = {};
 
     budgets.forEach((budget) => {
       const filteredExpenses = budget.expenses.filter((expense) => {
@@ -169,13 +170,16 @@ export const useInsightsScreen = (): UseInsightsScreenReturnT => {
       if (totalForCategory > 0) {
         categoryTotals[budget.name] =
           (categoryTotals[budget.name] || 0) + totalForCategory;
+        if (categoryColors[budget.name] === undefined) {
+          categoryColors[budget.name] = budget.iconColor;
+        }
       }
     });
 
     const categories = Object.entries(categoryTotals).map(([name, amount]) => ({
       name,
       amount,
-      color: CATEGORY_COLORS[name] || "#7B8CDE",
+      color: categoryColors[name] || CATEGORY_COLORS[name] || "#7B8CDE",
     }));
     return categories;
   }, [budgets, selectedTimeFilter]);

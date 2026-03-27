@@ -6,6 +6,16 @@ import { styles } from "@/screens/styles/insights-screen.styles";
 import { formatCurrency } from "../utils/format";
 import type { CategoryT } from "../types/insights-types";
 
+/** Angular gap per joint (degrees); converted to arc length. */
+const GAP_DEGREES_PER_JOINT = 2;
+/**
+ * Thick strokes visually "close" narrow centerline gaps on the outer rim — min gap must scale with strokeWidth.
+ */
+const minGapLengthForStroke = (strokeWidth: number) =>
+  Math.max(22, Math.round(strokeWidth * 1.15));
+/** Cap total gap area so many thin segments do not erase the ring. */
+const MAX_TOTAL_GAP_FRACTION = 0.14;
+
 type DonutChartPropsT = {
   categories: CategoryT[];
   total: number;
@@ -29,8 +39,15 @@ export const DonutChart = ({
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const center = size / 2;
-  /** No gap between category arcs (stroke segments meet). */
-  const gap = 0;
+
+  const segmentCount = categories.length;
+  const angularGap = (GAP_DEGREES_PER_JOINT / 360) * circumference;
+  const rawGapLength = Math.max(angularGap, minGapLengthForStroke(strokeWidth));
+  const maxGapPerSegment =
+    segmentCount > 0
+      ? (MAX_TOTAL_GAP_FRACTION * circumference) / segmentCount
+      : rawGapLength;
+  const gapLength = Math.min(rawGapLength, maxGapPerSegment);
 
   let currentAngle = -90;
 
@@ -39,7 +56,10 @@ export const DonutChart = ({
   const segments = hasTotal
     ? categories.map((category) => {
         const percentage = category.amount / total;
-        const segmentLength = circumference * percentage - gap;
+        const segmentLength = Math.max(
+          0,
+          circumference * percentage - gapLength,
+        );
         const strokeDasharray = `${segmentLength} ${circumference - segmentLength}`;
         const rotation = currentAngle;
         currentAngle += percentage * 360;
@@ -100,7 +120,7 @@ export const DonutChart = ({
                 strokeDashoffset={0}
                 rotation={segment.rotation}
                 origin={`${center}, ${center}`}
-                strokeLinecap="butt"
+                strokeLinecap="round"
                 opacity={segmentOpacity}
               />
             );
