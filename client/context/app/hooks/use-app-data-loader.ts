@@ -5,6 +5,7 @@ import type {
   ExpenseEntry,
   Goal,
   IncomeEntry,
+  MonthlyBalanceSnapshotT,
   MonthlyTrendData,
   Transaction,
   VaultTransactionT,
@@ -27,6 +28,9 @@ type UseAppDataLoaderParamsT = {
   setTransactions: React.Dispatch<React.SetStateAction<Transaction[]>>;
   setVaultTransactions: React.Dispatch<
     React.SetStateAction<VaultTransactionT[]>
+  >;
+  setMonthlyBalanceSnapshots: React.Dispatch<
+    React.SetStateAction<MonthlyBalanceSnapshotT[]>
   >;
   setMonthlyTrendData: React.Dispatch<React.SetStateAction<MonthlyTrendData[]>>;
   setBudgetCategories: React.Dispatch<
@@ -55,6 +59,7 @@ export const useAppDataLoader = ({
   setBudgets,
   setTransactions,
   setVaultTransactions,
+  setMonthlyBalanceSnapshots,
   setMonthlyTrendData,
   setBudgetCategories,
   setIncomeCategories,
@@ -78,6 +83,7 @@ export const useAppDataLoader = ({
       setBudgets(data.budgets ?? []);
       setTransactions(data.transactions ?? []);
       setVaultTransactions(data.vaultTransactions ?? []);
+      setMonthlyBalanceSnapshots(data.monthlyBalanceSnapshots ?? []);
       setMonthlyTrendData([]);
       setBudgetCategories([]);
       setIncomeCategories([]);
@@ -102,6 +108,7 @@ export const useAppDataLoader = ({
     setMonthlyTrendData,
     setTransactions,
     setVaultTransactions,
+    setMonthlyBalanceSnapshots,
     setUserName,
   ]);
 
@@ -121,6 +128,7 @@ export const useAppDataLoader = ({
       setBudgets(data.budgets);
       setTransactions(data.transactions);
       setVaultTransactions(data.vaultTransactions);
+      setMonthlyBalanceSnapshots(data.monthlyBalanceSnapshots ?? []);
       setMonthlyTrendData(data.monthlyTrendData ?? []);
       setBalanceAnchorMonth(data.balanceAnchorMonth ?? null);
 
@@ -142,6 +150,7 @@ export const useAppDataLoader = ({
       setMonthlyTrendData,
       setTransactions,
       setVaultTransactions,
+      setMonthlyBalanceSnapshots,
       setUserName,
     ],
   );

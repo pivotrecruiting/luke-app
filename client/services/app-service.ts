@@ -4,6 +4,7 @@ import type {
   ExpenseEntry,
   Goal,
   IncomeEntry,
+  MonthlyBalanceSnapshotT,
   MonthlyTrendData,
   Transaction,
   TransactionSourceT,
@@ -36,6 +37,7 @@ import type {
   GoalRow,
   IncomeCategoryRow,
   IncomeSourceRow,
+  MonthlyBalanceSnapshotRow,
   MonthlyTrendRow,
   LevelRow,
   TransactionRow,
@@ -73,6 +75,7 @@ export type AppDataPayload = {
   }[];
   transactions: Transaction[];
   vaultTransactions: VaultTransactionT[];
+  monthlyBalanceSnapshots: MonthlyBalanceSnapshotT[];
   monthlyTrendData: MonthlyTrendData[];
   budgetCategories: BudgetCategoryRow[];
   incomeCategories: IncomeCategoryRow[];
@@ -82,16 +85,30 @@ export type AppDataPayload = {
 
 const mapMonthlyTrendData = (rows: MonthlyTrendRow[]): MonthlyTrendData[] => {
   return rows.map((row) => {
-    const monthDate = new Date(`${row.month_start}T00:00:00Z`);
-    const monthIndex = monthDate.getUTCMonth();
+    const [year, month] = row.month_start.split("-").map(Number);
+    const monthDate = new Date(year ?? 1970, (month ?? 1) - 1, 1, 12, 0, 0, 0);
+    const monthIndex = monthDate.getMonth();
     return {
       month: GERMAN_MONTHS_SHORT[monthIndex] ?? "",
       monthIndex,
       monthStart: row.month_start,
       amount: fromCents(row.amount_cents),
+      isSnapshot: row.is_snapshot,
+      isCurrentMonth: row.is_current_month,
     };
   });
 };
+
+const mapMonthlyBalanceSnapshots = (
+  rows: MonthlyBalanceSnapshotRow[],
+): MonthlyBalanceSnapshotT[] =>
+  rows.map((row) => ({
+    id: row.id,
+    monthStart: row.month_start,
+    amount: fromCents(row.amount_cents),
+    currency: row.currency as CurrencyCode,
+    snapshotAt: row.snapshot_at,
+  }));
 
 const mapVaultTransactions = (
   rows: VaultTransactionRow[],
@@ -295,6 +312,12 @@ export const fetchAppData = async (
   onboardingVersion: string,
 ): Promise<AppDataPayload> => {
   await ensureUserRow(userId);
+  const { error: syncSnapshotsError } = await supabase.rpc(
+    "sync_my_monthly_balance_snapshots",
+  );
+  if (syncSnapshotsError) {
+    throw syncSnapshotsError;
+  }
   const [
     onboardingRes,
     profileRes,
@@ -308,6 +331,7 @@ export const fetchAppData = async (
     budgetsRes,
     transactionsRes,
     vaultTransactionsRes,
+    monthlyBalanceSnapshotsRes,
     monthlyTrendRes,
   ] = await Promise.all([
     supabase
@@ -365,8 +389,12 @@ export const fetchAppData = async (
       )
       .eq("user_id", userId)
       .order("transaction_at", { ascending: false }),
-    supabase.rpc("get_monthly_expense_trend", {
-      target_user_id: userId,
+    supabase
+      .from("monthly_balance_snapshots")
+      .select("id, user_id, month_start, amount_cents, currency, snapshot_at")
+      .eq("user_id", userId)
+      .order("month_start", { ascending: true }),
+    supabase.rpc("get_monthly_balance_trend", {
       months_back: 12,
     }),
   ]);
@@ -383,7 +411,9 @@ export const fetchAppData = async (
     incomeCategoriesRes.error ||
     budgetsRes.error ||
     transactionsRes.error ||
-    vaultTransactionsRes.error;
+    vaultTransactionsRes.error ||
+    monthlyBalanceSnapshotsRes.error ||
+    monthlyTrendRes.error;
   if (firstError) {
     throw firstError;
   }
@@ -445,24 +475,25 @@ export const fetchAppData = async (
     combinedTransactions,
   );
   let monthlyTrendRows = (monthlyTrendRes.data ?? []) as MonthlyTrendRow[];
-  if (monthlyTrendRes.error) {
-    console.warn("Failed to load monthly trend data:", monthlyTrendRes.error);
-  }
   if (recurringTransactions.length > 0) {
-    const { data: refreshedTrend, error: refreshedError } = await supabase.rpc(
-      "get_monthly_expense_trend",
-      {
-        target_user_id: userId,
+    const { data: refreshedTrend, error: refreshedTrendError } =
+      await supabase.rpc("get_monthly_balance_trend", {
         months_back: 12,
-      },
-    );
-    if (refreshedError) {
-      console.warn("Failed to refresh monthly trend data:", refreshedError);
+      });
+    if (refreshedTrendError) {
+      console.warn(
+        "Failed to refresh monthly balance trend data:",
+        refreshedTrendError,
+      );
     } else if (refreshedTrend) {
       monthlyTrendRows = refreshedTrend as MonthlyTrendRow[];
     }
   }
+
   const monthlyTrendData = mapMonthlyTrendData(monthlyTrendRows);
+  const monthlyBalanceSnapshots = mapMonthlyBalanceSnapshots(
+    (monthlyBalanceSnapshotsRes.data ?? []) as MonthlyBalanceSnapshotRow[],
+  );
   const vaultTransactions = mapVaultTransactions(
     (vaultTransactionsRes.data ?? []) as VaultTransactionRow[],
   );
@@ -480,6 +511,7 @@ export const fetchAppData = async (
     budgets,
     transactions,
     vaultTransactions,
+    monthlyBalanceSnapshots,
     monthlyTrendData,
     budgetCategories,
     incomeCategories,

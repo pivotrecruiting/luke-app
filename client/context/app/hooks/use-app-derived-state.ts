@@ -4,6 +4,7 @@ import type {
   ExpenseEntry,
   IncomeEntry,
   InsightCategory,
+  MonthlyBalanceSnapshotT,
   MonthlyTrendData,
   Transaction,
   VaultTransactionT,
@@ -36,6 +37,7 @@ type DerivedStateInputT = {
   budgets: Budget[];
   transactions: Transaction[];
   vaultTransactions: VaultTransactionT[];
+  monthlyBalanceSnapshots: MonthlyBalanceSnapshotT[];
   selectedWeekOffset: number;
 };
 
@@ -64,6 +66,7 @@ export const useAppDerivedState = ({
   budgets,
   transactions,
   vaultTransactions,
+  monthlyBalanceSnapshots,
   selectedWeekOffset,
 }: DerivedStateInputT): DerivedStateT => {
   const weeklySpending = useMemo(
@@ -154,11 +157,12 @@ export const useAppDerivedState = ({
   const monthlyTrendData = useMemo(
     () =>
       getMonthlyTrendData(
-        totalExpenses,
-        totalFixedExpenses,
-        totalVariableExpenses,
+        transactions,
+        vaultTransactions,
+        monthlyBalanceSnapshots,
+        12,
       ),
-    [totalExpenses, totalFixedExpenses, totalVariableExpenses],
+    [monthlyBalanceSnapshots, transactions, vaultTransactions],
   );
 
   return {

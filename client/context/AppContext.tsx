@@ -22,6 +22,7 @@ import type {
   ExpenseEntry,
   Goal,
   IncomeEntry,
+  MonthlyBalanceSnapshotT,
   MonthlyTrendData,
   PersistedData,
   Transaction,
@@ -66,6 +67,7 @@ export type {
   Goal,
   GoalDeposit,
   IncomeEntry,
+  MonthlyBalanceSnapshotT,
   MonthlyTrendData,
   PersistedData,
   Transaction,
@@ -95,6 +97,9 @@ export function AppProvider({ children }: AppProviderProps) {
     useState<Transaction[]>(INITIAL_TRANSACTIONS);
   const [vaultTransactions, setVaultTransactions] = useState<
     VaultTransactionT[]
+  >([]);
+  const [monthlyBalanceSnapshots, setMonthlyBalanceSnapshots] = useState<
+    MonthlyBalanceSnapshotT[]
   >([]);
   const [monthlyTrendData, setMonthlyTrendData] = useState<MonthlyTrendData[]>(
     [],
@@ -132,6 +137,7 @@ export function AppProvider({ children }: AppProviderProps) {
     setBudgets,
     setTransactions,
     setVaultTransactions,
+    setMonthlyBalanceSnapshots,
     setMonthlyTrendData,
     setBudgetCategories,
     setIncomeCategories,
@@ -197,14 +203,19 @@ export function AppProvider({ children }: AppProviderProps) {
     vaultBalance,
     savingsRate,
     insightCategories,
+    monthlyTrendData: fallbackMonthlyTrendData,
   } = useAppDerivedState({
     incomeEntries,
     expenseEntries,
     budgets,
     transactions,
     vaultTransactions,
+    monthlyBalanceSnapshots,
     selectedWeekOffset,
   });
+
+  const effectiveMonthlyTrendData =
+    monthlyTrendData.length > 0 ? monthlyTrendData : fallbackMonthlyTrendData;
 
   const persistedData = useMemo<PersistedData>(
     () => ({
@@ -216,6 +227,7 @@ export function AppProvider({ children }: AppProviderProps) {
       budgets,
       transactions,
       vaultTransactions,
+      monthlyBalanceSnapshots,
       lastBudgetResetMonth,
       balanceAnchorMonth,
     }),
@@ -227,6 +239,7 @@ export function AppProvider({ children }: AppProviderProps) {
       incomeEntries,
       isOnboardingComplete,
       lastBudgetResetMonth,
+      monthlyBalanceSnapshots,
       transactions,
       vaultTransactions,
       balanceAnchorMonth,
@@ -512,6 +525,7 @@ export function AppProvider({ children }: AppProviderProps) {
     weeklySpending,
     transactions,
     vaultTransactions,
+    monthlyBalanceSnapshots,
     vaultBalance,
     insightCategories,
     totalIncome,
@@ -525,7 +539,7 @@ export function AppProvider({ children }: AppProviderProps) {
     transactionExpenseTotal,
     transactionBalance,
     savingsRate,
-    monthlyTrendData,
+    monthlyTrendData: effectiveMonthlyTrendData,
     budgetCategories,
     incomeCategories,
     selectedWeekOffset,

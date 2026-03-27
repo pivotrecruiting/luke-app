@@ -77,6 +77,14 @@ export type VaultTransactionT = {
   transactionAt: string;
 };
 
+export type MonthlyBalanceSnapshotT = {
+  id: string;
+  monthStart: string;
+  amount: number;
+  currency: CurrencyCode;
+  snapshotAt: string;
+};
+
 export type WeeklySpending = {
   day: string;
   amount: number;
@@ -105,6 +113,8 @@ export type MonthlyTrendData = {
   monthIndex: number;
   monthStart: string;
   amount: number;
+  isSnapshot: boolean;
+  isCurrentMonth: boolean;
 };
 
 export type AppState = {
@@ -120,6 +130,7 @@ export type AppState = {
   weeklySpending: WeeklySpending[];
   transactions: Transaction[];
   vaultTransactions: VaultTransactionT[];
+  monthlyBalanceSnapshots: MonthlyBalanceSnapshotT[];
   vaultBalance: number;
   incomeCategories: IncomeCategoryRow[];
   insightCategories: InsightCategory[];
@@ -229,6 +240,7 @@ export type PersistedData = {
   budgets: Budget[];
   transactions: Transaction[];
   vaultTransactions: VaultTransactionT[];
+  monthlyBalanceSnapshots: MonthlyBalanceSnapshotT[];
   lastBudgetResetMonth: number;
   balanceAnchorMonth: string | null;
 };

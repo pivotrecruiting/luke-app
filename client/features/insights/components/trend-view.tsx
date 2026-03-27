@@ -5,7 +5,7 @@ import { useApp } from "@/context/AppContext";
 import { getCurrencySymbol } from "@/utils/currency-format";
 import { styles } from "@/screens/styles/insights-screen.styles";
 import { formatCurrency } from "../utils/format";
-import type { MonthlyTrendT, TimeFilterT } from "../types/insights-types";
+import type { MonthlyTrendT } from "../types/insights-types";
 
 const CHART_HORIZONTAL_PADDING_PX = 80;
 const CHART_HEIGHT_PX = 200;
@@ -29,8 +29,6 @@ const CHART_LABEL_SELECTED_STYLE = {
 
 type TrendViewPropsT = {
   monthlyData: MonthlyTrendT[];
-  timeFilter: TimeFilterT;
-  currentSavings: number;
   selectedMonth: number | null;
   onSelectMonth: (index: number | null) => void;
 };
@@ -40,8 +38,6 @@ type TrendViewPropsT = {
  */
 export const TrendView = ({
   monthlyData,
-  timeFilter,
-  currentSavings,
   selectedMonth,
   onSelectMonth,
 }: TrendViewPropsT) => {
@@ -64,22 +60,6 @@ export const TrendView = ({
   const selectedData =
     safeSelectedMonth !== null ? monthlyData[safeSelectedMonth] : lastMonthData;
 
-  const timeFilterLabel = (() => {
-    switch (timeFilter) {
-      case "thisMonth":
-        return "Dieser Monat";
-      case "lastMonth":
-        return "Letzter Monat";
-      case "last3Months":
-        return "3 Monate";
-      case "last6Months":
-        return "6 Monate";
-      case "thisYear":
-        return "Dieses Jahr";
-      default:
-        return "Dieser Monat";
-    }
-  })();
   const chartWidth = useMemo(() => {
     return Math.max(windowWidth - CHART_HORIZONTAL_PADDING_PX, 240);
   }, [windowWidth]);
@@ -96,7 +76,7 @@ export const TrendView = ({
 
   const lineData = useMemo(() => {
     return monthlyData.map((item, index) => ({
-      value: Math.max(item.amount, 0),
+      value: item.amount,
       label: item.month,
       labelTextStyle:
         safeSelectedMonth === index
@@ -110,6 +90,14 @@ export const TrendView = ({
         safeSelectedMonth === index ? SELECTED_DATA_POINT_COLOR : "#3B5BDB",
     }));
   }, [monthlyData, safeSelectedMonth]);
+
+  const mostNegativeValue = useMemo(() => {
+    const minAmount = monthlyData.reduce(
+      (min, item) => Math.min(min, item.amount),
+      0,
+    );
+    return minAmount < 0 ? minAmount : undefined;
+  }, [monthlyData]);
 
   const hitAreas = useMemo(() => {
     return monthlyData.map((item, index) => {
@@ -136,21 +124,19 @@ export const TrendView = ({
     onSelectMonth(selectedMonth === index ? null : index);
   };
 
-  const headerAmount =
-    safeSelectedMonth !== null && selectedData
-      ? selectedData.amount
-      : currentSavings;
-  const headerTitle =
-    safeSelectedMonth !== null && selectedData
-      ? `Ersparnisse ${selectedData.month}`
-      : "Aktuelle Ersparnisse";
+  const headerAmount = selectedData?.amount ?? 0;
+  const headerTitle = selectedData?.isCurrentMonth
+    ? "Aktuelle Monatsbalance"
+    : selectedData
+      ? `Monatsende ${selectedData.month}`
+      : "Monatsbalance";
 
   if (!hasMonthlyData) {
     return (
       <View style={styles.trendContainer}>
         <View style={styles.summaryCard}>
           <View style={styles.trendHeader}>
-            <Text style={styles.summaryTitle}>Aktuelle Ersparnisse</Text>
+            <Text style={styles.summaryTitle}>Monatsbalance</Text>
             <Text style={styles.trendSubtitle}>Keine Daten</Text>
           </View>
           <Text style={styles.trendHint}>Keine Trenddaten verfügbar</Text>
@@ -199,6 +185,7 @@ export const TrendView = ({
             width={chartWidth}
             height={CHART_HEIGHT_PX}
             areaChart
+            mostNegativeValue={mostNegativeValue}
             overflowBottom={CHART_OVERFLOW_BOTTOM_PX}
             initialSpacing={CHART_INITIAL_SPACING_PX}
             spacing={chartSpacing}
@@ -224,7 +211,7 @@ export const TrendView = ({
         </View>
 
         <Text style={styles.trendHint}>
-          Tippe auf einen Monat, um die Summe oben zu sehen
+          Tippe auf einen Monat, um den Monatswert oben zu sehen
         </Text>
       </View>
     </View>

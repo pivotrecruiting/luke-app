@@ -203,7 +203,16 @@ export const useInsightsScreen = (): UseInsightsScreenReturnT => {
     if (monthlyTrendData.length === 0) return [];
     const { start, end } = getDateRangeForFilter(selectedTimeFilter);
     return monthlyTrendData.filter((item) => {
-      const monthStart = new Date(`${item.monthStart}T00:00:00Z`);
+      const [year, month, day] = item.monthStart.split("-").map(Number);
+      const monthStart = new Date(
+        year ?? 1970,
+        (month ?? 1) - 1,
+        day ?? 1,
+        12,
+        0,
+        0,
+        0,
+      );
       return monthStart >= start && monthStart <= end;
     });
   }, [monthlyTrendData, selectedTimeFilter]);

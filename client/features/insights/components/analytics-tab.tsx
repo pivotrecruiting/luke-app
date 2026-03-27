@@ -72,11 +72,13 @@ export const AnalyticsTab = ({
 }: AnalyticsTabPropsT) => {
   const pagerRef = useRef<PagerView>(null);
   const { height: windowHeight } = useWindowDimensions();
-  const [tabHeights, setTabHeights] = useState<Record<InsightsFilterT, number>>({
-    kategorien: MIN_PAGER_HEIGHT,
-    income: MIN_PAGER_HEIGHT,
-    trend: MIN_PAGER_HEIGHT,
-  });
+  const [tabHeights, setTabHeights] = useState<Record<InsightsFilterT, number>>(
+    {
+      kategorien: MIN_PAGER_HEIGHT,
+      income: MIN_PAGER_HEIGHT,
+      trend: MIN_PAGER_HEIGHT,
+    },
+  );
 
   const timeFilterOptions = useMemo<{ id: TimeFilterT; label: string }[]>(
     () => [
@@ -94,13 +96,19 @@ export const AnalyticsTab = ({
     [],
   );
 
-  const filterToIndex = (filter: InsightsFilterT) => {
-    return filterOrder.indexOf(filter);
-  };
+  const filterToIndex = useCallback(
+    (filter: InsightsFilterT) => {
+      return filterOrder.indexOf(filter);
+    },
+    [filterOrder],
+  );
 
-  const indexToFilter = (index: number) => {
-    return filterOrder[index] ?? "kategorien";
-  };
+  const indexToFilter = useCallback(
+    (index: number) => {
+      return filterOrder[index] ?? "kategorien";
+    },
+    [filterOrder],
+  );
 
   const updateTabHeight = useCallback(
     (tab: InsightsFilterT, measuredHeight: number) => {
@@ -132,7 +140,7 @@ export const AnalyticsTab = ({
     if (targetIndex >= 0) {
       pagerRef.current?.setPage(targetIndex);
     }
-  }, [activeFilter]);
+  }, [activeFilter, filterToIndex]);
 
   const handleTabPress = (filter: InsightsFilterT) => {
     onChangeFilter(filter);
@@ -282,8 +290,6 @@ export const AnalyticsTab = ({
           >
             <TrendView
               monthlyData={monthlyTrendData}
-              timeFilter={selectedTimeFilter}
-              currentSavings={totalIncome - totalExpenses}
               selectedMonth={selectedTrendMonth}
               onSelectMonth={onSelectTrendMonth}
             />

@@ -99,6 +99,17 @@ export type VaultTransactionRow = {
 export type MonthlyTrendRow = {
   month_start: string;
   amount_cents: number;
+  is_snapshot: boolean;
+  is_current_month: boolean;
+};
+
+export type MonthlyBalanceSnapshotRow = {
+  id: string;
+  user_id: string;
+  month_start: string;
+  amount_cents: number;
+  currency: string;
+  snapshot_at: string;
 };
 
 export type LevelRow = {
