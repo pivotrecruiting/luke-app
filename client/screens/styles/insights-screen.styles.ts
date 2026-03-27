@@ -162,7 +162,10 @@ export const styles = StyleSheet.create({
   pagerView: {
     alignSelf: "stretch",
   },
-  pagerPage: {},
+  /** Horizontal inset so screen background shows between swipe pages (native pageMargin is unreliable on iOS). */
+  pagerPage: {
+    paddingHorizontal: Spacing.lg,
+  },
   pagerPageContent: {
     width: "100%",
   },
