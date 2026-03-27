@@ -29,7 +29,8 @@ export const DonutChart = ({
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const center = size / 2;
-  const gap = 4;
+  /** No gap between category arcs (stroke segments meet). */
+  const gap = 0;
 
   let currentAngle = -90;
 
