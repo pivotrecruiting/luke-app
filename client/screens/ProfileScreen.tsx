@@ -130,10 +130,7 @@ export default function ProfileScreen() {
       <View style={[styles.profileCard, { marginTop: -profileCardOverlap }]}>
         <View style={styles.profileHeader}>
           <Pressable
-            style={({ pressed }) => [
-              styles.profileAvatarButton,
-              pressed ? styles.profileAvatarButtonPressed : null,
-            ]}
+            style={styles.profileAvatarButton}
             onPress={() => {
               if (currentLevel?.id) {
                 navigation.navigate("LevelUp", { levelId: currentLevel.id });
