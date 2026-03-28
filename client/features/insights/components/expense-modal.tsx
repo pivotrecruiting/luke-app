@@ -4,6 +4,7 @@ import CurrencyInput from "@/components/CurrencyInput";
 import { styles } from "@/screens/styles/insights-screen.styles";
 import { EXPENSE_TYPES } from "../constants/insights-constants";
 import { AppModal } from "@/components/ui/app-modal";
+import { PurpleGradientButton } from "@/components/ui/purple-gradient-button";
 
 type ExpenseModalPropsT = {
   visible: boolean;
@@ -105,18 +106,15 @@ export const ExpenseModal = ({
         containerStyle={styles.incomeAmountInputContainer}
       />
 
-      <Pressable
-        style={[
-          styles.expenseSaveButton,
-          isDisabled && styles.incomeSaveButtonDisabled,
-        ]}
+      <PurpleGradientButton
+        style={styles.expenseSaveButton}
         onPress={onSave}
         disabled={isDisabled}
       >
         <Text style={styles.incomeSaveButtonText}>
           {editingExpenseId ? "Speichern" : "Hinzufügen"}
         </Text>
-      </Pressable>
+      </PurpleGradientButton>
     </AppModal>
   );
 };

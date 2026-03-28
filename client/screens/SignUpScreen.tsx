@@ -12,6 +12,7 @@ import { useNavigation } from "@react-navigation/native";
 import { AntDesign } from "@expo/vector-icons";
 import Svg, { Path } from "react-native-svg";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
+import { PurpleGradientButton } from "@/components/ui/purple-gradient-button";
 import { Spacing, BorderRadius, Typography, Colors } from "@/constants/theme";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { OnboardingStackParamList } from "@/navigation/OnboardingNavigator";
@@ -280,7 +281,7 @@ export default function SignUpScreen() {
           autoCapitalize="characters"
         />
 
-        <Pressable
+        <PurpleGradientButton
           onPress={() => {
             const validCodes = ["12345", "LUKE2024", "WORKSHOP"];
             if (validCodes.includes(workshopCode.toUpperCase())) {
@@ -295,13 +296,10 @@ export default function SignUpScreen() {
               setCodeStatus("invalid");
             }
           }}
-          style={({ pressed }) => [
-            styles.activateButton,
-            pressed && styles.buttonPressed,
-          ]}
+          style={styles.activateButton}
         >
           <Text style={styles.activateButtonText}>CODE AKTIVIEREN</Text>
-        </Pressable>
+        </PurpleGradientButton>
 
         <Text style={styles.modalFooterText}>4 Wochen kostenlos nutzen.</Text>
       </AppModal>
@@ -519,7 +517,6 @@ const styles = StyleSheet.create({
   activateButton: {
     width: "100%",
     height: 56,
-    backgroundColor: Colors.light.primary,
     borderRadius: 28,
     alignItems: "center",
     justifyContent: "center",

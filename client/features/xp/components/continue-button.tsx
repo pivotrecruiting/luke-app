@@ -1,6 +1,7 @@
 import React from "react";
-import { Pressable, Text, StyleSheet } from "react-native";
+import { Text, StyleSheet } from "react-native";
 import { Typography, Spacing, BorderRadius } from "@/constants/theme";
+import { PurpleGradientButton } from "@/components/ui/purple-gradient-button";
 
 type ContinueButtonProps = {
   onPress: () => void;
@@ -15,12 +16,9 @@ export const ContinueButton = ({
   label = "WEITER",
 }: ContinueButtonProps) => {
   return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
-    >
+    <PurpleGradientButton onPress={onPress} style={styles.button}>
       <Text style={styles.buttonText}>{label} 🚀</Text>
-    </Pressable>
+    </PurpleGradientButton>
   );
 };
 
@@ -28,13 +26,9 @@ const styles = StyleSheet.create({
   button: {
     width: "100%",
     height: Spacing.buttonHeight,
-    backgroundColor: "#8258f5",
     borderRadius: BorderRadius.md,
     alignItems: "center",
     justifyContent: "center",
-  },
-  buttonPressed: {
-    backgroundColor: "#7340FD",
   },
   buttonText: {
     ...Typography.button,

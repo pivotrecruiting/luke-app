@@ -20,7 +20,7 @@ import { Feather } from "@expo/vector-icons";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
-import { HeaderGradient, Spacing } from "@/constants/theme";
+import { Colors, HeaderGradient, Spacing } from "@/constants/theme";
 import { useApp } from "@/context/AppContext";
 import type { Transaction } from "@/context/app/types";
 import {
@@ -554,7 +554,11 @@ export default function HomeScreen() {
               <Feather
                 name="arrow-up"
                 size={12}
-                color={modalTypeFilter === "income" ? "#7340FE" : "#6B7280"}
+                color={
+                  modalTypeFilter === "income"
+                    ? Colors.light.primary
+                    : "#6B7280"
+                }
               />
               <Text
                 style={[
@@ -576,7 +580,11 @@ export default function HomeScreen() {
               <Feather
                 name="arrow-down"
                 size={12}
-                color={modalTypeFilter === "expense" ? "#7340FE" : "#6B7280"}
+                color={
+                  modalTypeFilter === "expense"
+                    ? Colors.light.primary
+                    : "#6B7280"
+                }
               />
               <Text
                 style={[

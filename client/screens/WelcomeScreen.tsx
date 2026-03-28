@@ -7,6 +7,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { OnboardingStackParamList } from "@/navigation/OnboardingNavigator";
 import { Spacing, Colors } from "@/constants/theme";
 import { ThemedText } from "@/components/ThemedText";
+import { PurpleGradientButton } from "@/components/ui/purple-gradient-button";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
@@ -29,15 +30,12 @@ export default function WelcomeScreen() {
       <View
         style={[styles.buttonContainer, { paddingBottom: insets.bottom + 50 }]}
       >
-        <Pressable
+        <PurpleGradientButton
           onPress={() => navigation.navigate("SignUp")}
-          style={({ pressed }) => [
-            styles.button,
-            pressed && styles.buttonPressed,
-          ]}
+          style={styles.button}
         >
           <ThemedText style={styles.buttonText}>Loslegen</ThemedText>
-        </Pressable>
+        </PurpleGradientButton>
       </View>
     </View>
   );
@@ -65,7 +63,6 @@ const styles = StyleSheet.create({
   button: {
     height: 70,
     borderRadius: 35,
-    backgroundColor: Colors.light.primary,
     justifyContent: "center",
     alignItems: "center",
   },

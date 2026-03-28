@@ -13,6 +13,7 @@ import { DepositsSection } from "@/features/goal-detail/components/deposits-sect
 import { EditGoalModal } from "@/features/goal-detail/components/edit-goal-modal";
 import { AddDepositModal } from "@/features/goal-detail/components/add-deposit-modal";
 import { EditDepositModal } from "@/features/goal-detail/components/edit-deposit-modal";
+import { PurpleGradientButton } from "@/components/ui/purple-gradient-button";
 import { styles } from "./styles/goal-detail-screen.styles";
 
 export default function GoalDetailScreen() {
@@ -86,12 +87,14 @@ export default function GoalDetailScreen() {
           />
         </ScrollView>
 
-        <Pressable
-          style={[styles.fab, { bottom: insets.bottom + 100 }]}
-          onPress={actions.openDepositModal}
-        >
-          <Feather name="plus" size={24} color="#FFFFFF" />
-        </Pressable>
+        <View style={[styles.fabWrapper, { bottom: insets.bottom + 100 }]}>
+          <PurpleGradientButton
+            style={styles.fab}
+            onPress={actions.openDepositModal}
+          >
+            <Feather name="plus" size={24} color="#FFFFFF" />
+          </PurpleGradientButton>
+        </View>
 
         <EditGoalModal
           visible={state.editModalVisible}

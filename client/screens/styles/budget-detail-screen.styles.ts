@@ -1,4 +1,5 @@
 import { StyleSheet } from "react-native";
+import { Colors } from "@/constants/theme";
 
 export const styles = StyleSheet.create({
   container: {
@@ -96,7 +97,7 @@ export const styles = StyleSheet.create({
   },
   progressBar: {
     height: "100%",
-    backgroundColor: "#7340FE",
+    backgroundColor: Colors.light.primary,
     borderRadius: 4,
   },
   progressBarOver: {
@@ -304,7 +305,7 @@ export const styles = StyleSheet.create({
   currencyPrefix: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#7340FE",
+    color: Colors.light.primary,
     paddingLeft: 16,
   },
   currencyInput: {
@@ -343,10 +344,9 @@ export const styles = StyleSheet.create({
   datePickerDoneText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#7340FE",
+    color: Colors.light.primary,
   },
   modalSaveButton: {
-    backgroundColor: "#7340FE",
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: "center",

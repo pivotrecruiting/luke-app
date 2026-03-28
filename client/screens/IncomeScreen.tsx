@@ -17,11 +17,12 @@ import {
   formatCurrencyAmount,
   getCurrencySymbol,
 } from "@/utils/currency-format";
-import { Spacing } from "@/constants/theme";
+import { Colors, Spacing } from "@/constants/theme";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { styles } from "./styles/income-screen.styles";
 import { AppModal } from "@/components/ui/app-modal";
+import { PurpleGradientButton } from "@/components/ui/purple-gradient-button";
 
 const INCOME_TYPES = [
   { id: "gehalt", name: "Gehalt", icon: "briefcase" },
@@ -134,7 +135,7 @@ export default function IncomeScreen() {
             style={{ marginRight: 16 }}
             hitSlop={8}
           >
-            <Feather name="plus" size={24} color="#7340fd" />
+            <Feather name="plus" size={24} color={Colors.light.primary} />
           </Pressable>
         ),
       });
@@ -157,7 +158,7 @@ export default function IncomeScreen() {
           </Pressable>
           <Text style={styles.headerTitle}>Einnahmen</Text>
           <Pressable onPress={openAddModal} style={styles.addButton}>
-            <Feather name="plus" size={24} color="#7340fd" />
+            <Feather name="plus" size={24} color={Colors.light.primary} />
           </Pressable>
         </Animated.View>
       )}
@@ -194,9 +195,12 @@ export default function IncomeScreen() {
               <Text style={styles.emptyText}>
                 Noch keine Einnahmen hinzugefügt
               </Text>
-              <Pressable style={styles.emptyButton} onPress={openAddModal}>
+              <PurpleGradientButton
+                style={styles.emptyButton}
+                onPress={openAddModal}
+              >
                 <Text style={styles.emptyButtonText}>Einnahme hinzufügen</Text>
-              </Pressable>
+              </PurpleGradientButton>
             </View>
           ) : (
             incomeEntries.map((entry, index) => (
@@ -223,7 +227,8 @@ export default function IncomeScreen() {
                   </View>
                   <View style={styles.incomeRight}>
                     <Text style={styles.incomeAmount}>
-                      {currencySymbol} {formatCurrencyAmount(entry.amount, currency)}
+                      {currencySymbol}{" "}
+                      {formatCurrencyAmount(entry.amount, currency)}
                     </Text>
                     <Pressable
                       onPress={() => setDeleteConfirmId(entry.id)}
@@ -265,7 +270,7 @@ export default function IncomeScreen() {
           style={styles.tipCard}
         >
           <View style={styles.tipHeader}>
-            <Feather name="info" size={18} color="#7340fd" />
+            <Feather name="info" size={18} color={Colors.light.primary} />
             <Text style={styles.tipTitle}>Tipp</Text>
           </View>
           <Text style={styles.tipText}>
@@ -311,7 +316,9 @@ export default function IncomeScreen() {
                 <Feather
                   name={type.icon as any}
                   size={20}
-                  color={selectedType === type.id ? "#7340fd" : "#6B7280"}
+                  color={
+                    selectedType === type.id ? Colors.light.primary : "#6B7280"
+                  }
                 />
                 <Text
                   style={[
@@ -351,18 +358,15 @@ export default function IncomeScreen() {
             />
           </View>
 
-          <Pressable
-            style={[
-              styles.saveButton,
-              (!selectedType || !amount) && styles.saveButtonDisabled,
-            ]}
+          <PurpleGradientButton
+            style={styles.saveButton}
             onPress={handleSave}
             disabled={!selectedType || !amount}
           >
             <Text style={styles.saveButtonText}>
               {editingId ? "Speichern" : "Hinzufügen"}
             </Text>
-          </Pressable>
+          </PurpleGradientButton>
         </KeyboardAwareScrollViewCompat>
       </AppModal>
     </View>

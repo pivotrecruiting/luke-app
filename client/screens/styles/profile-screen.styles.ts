@@ -264,7 +264,6 @@ export const styles = StyleSheet.create({
   },
   devToolsButton: {
     // Used for: Level test button container
-    backgroundColor: "#7340fd",
     borderRadius: BorderRadius.sm,
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.lg,

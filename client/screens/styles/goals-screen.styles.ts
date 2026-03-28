@@ -476,7 +476,6 @@ export const styles = StyleSheet.create({
     color: "#FFFFFF",
   },
   createButton: {
-    backgroundColor: "#7340FE",
     borderRadius: 24,
     paddingVertical: 14,
     paddingHorizontal: 28,
@@ -615,7 +614,6 @@ export const styles = StyleSheet.create({
     color: "#EF4444",
   },
   closeDetailButton: {
-    backgroundColor: "#7340FE",
     borderRadius: 24,
     paddingVertical: 14,
     alignItems: "center",

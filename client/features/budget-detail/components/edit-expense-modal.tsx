@@ -2,9 +2,11 @@ import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import CurrencyInput from "@/components/CurrencyInput";
+import { Colors } from "@/constants/theme";
 import { styles } from "@/screens/styles/budget-detail-screen.styles";
 import { formatDisplayDate } from "../utils/date";
 import { AppModal } from "@/components/ui/app-modal";
+import { PurpleGradientButton } from "@/components/ui/purple-gradient-button";
 
 type EditExpenseModalPropsT = {
   visible: boolean;
@@ -77,7 +79,7 @@ export const EditExpenseModal = ({
 
         <Text style={styles.modalLabel}>Datum</Text>
         <Pressable style={styles.datePickerButton} onPress={onOpenDatePicker}>
-          <Feather name="calendar" size={20} color="#7340FE" />
+          <Feather name="calendar" size={20} color={Colors.light.primary} />
           <Text style={styles.datePickerText}>
             {formatDisplayDate(editExpenseDate)}
           </Text>
@@ -104,9 +106,9 @@ export const EditExpenseModal = ({
           </View>
         ) : null}
 
-        <Pressable style={styles.modalSaveButton} onPress={onSave}>
+        <PurpleGradientButton style={styles.modalSaveButton} onPress={onSave}>
           <Text style={styles.modalSaveButtonText}>Speichern</Text>
-        </Pressable>
+        </PurpleGradientButton>
 
         <Pressable style={styles.modalCancelButton} onPress={onCancel}>
           <Text style={styles.modalCancelButtonText}>Abbrechen</Text>

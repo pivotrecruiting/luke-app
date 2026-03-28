@@ -6,6 +6,7 @@ import ProgressDots from "@/components/ProgressDots";
 import Chip from "@/components/Chip";
 import CurrencyInput from "@/components/CurrencyInput";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
+import { PurpleGradientButton } from "@/components/ui/purple-gradient-button";
 import { Spacing, BorderRadius, Typography, Colors } from "@/constants/theme";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { OnboardingStackParamList } from "@/navigation/OnboardingNavigator";
@@ -418,15 +419,9 @@ export default function Onboarding4Screen() {
           { paddingBottom: insets.bottom + Spacing.xl },
         ]}
       >
-        <Pressable
-          onPress={handleContinue}
-          style={({ pressed }) => [
-            styles.button,
-            pressed && styles.buttonPressed,
-          ]}
-        >
+        <PurpleGradientButton onPress={handleContinue} style={styles.button}>
           <Text style={styles.buttonText}>WEITER</Text>
-        </Pressable>
+        </PurpleGradientButton>
       </View>
     </View>
   );
@@ -500,7 +495,6 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.lg,
   },
   button: {
-    backgroundColor: Colors.light.buttonPrimary,
     borderRadius: BorderRadius.md,
     height: Spacing.buttonHeight,
     alignItems: "center",

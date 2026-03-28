@@ -17,6 +17,7 @@ import { formatDaysSince } from "@/utils/dates";
 import { getUserFirstName } from "@/utils/user";
 import { styles } from "./styles/profile-screen.styles";
 import { AppModal } from "@/components/ui/app-modal";
+import { PurpleGradientButton } from "@/components/ui/purple-gradient-button";
 import { ReviewModal } from "@/features/review/components/review-modal";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -381,12 +382,9 @@ export default function ProfileScreen() {
                 Test Level Up Screen
               </ThemedText>
               {levels.map((level) => (
-                <Pressable
+                <PurpleGradientButton
                   key={level.id}
-                  style={({ pressed }) => [
-                    styles.devToolsButton,
-                    { opacity: pressed ? 0.8 : 1 },
-                  ]}
+                  style={styles.devToolsButton}
                   onPress={() => {
                     navigation.navigate("LevelUp", {
                       levelId: level.id,
@@ -402,16 +400,13 @@ export default function ProfileScreen() {
                     Level {level.levelNumber} ({level.name} {level.emoji}) - 100
                     XP
                   </ThemedText>
-                </Pressable>
+                </PurpleGradientButton>
               ))}
               <ThemedText style={styles.devToolsTitle}>
                 Test Streak Screen
               </ThemedText>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.devToolsButton,
-                  { opacity: pressed ? 0.8 : 1 },
-                ]}
+              <PurpleGradientButton
+                style={styles.devToolsButton}
                 onPress={() => {
                   navigation.navigate("Streak", {
                     variant: "ongoing",
@@ -426,12 +421,9 @@ export default function ProfileScreen() {
                 >
                   Streak Ongoing (3 Tage) - 50 XP
                 </ThemedText>
-              </Pressable>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.devToolsButton,
-                  { opacity: pressed ? 0.8 : 1 },
-                ]}
+              </PurpleGradientButton>
+              <PurpleGradientButton
+                style={styles.devToolsButton}
                 onPress={() => {
                   navigation.navigate("Streak", {
                     variant: "completed",
@@ -446,15 +438,12 @@ export default function ProfileScreen() {
                 >
                   Streak Completed (7 Tage) - 150 XP
                 </ThemedText>
-              </Pressable>
+              </PurpleGradientButton>
               <ThemedText style={styles.devToolsTitle}>
                 Test Review Modal
               </ThemedText>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.devToolsButton,
-                  { opacity: pressed ? 0.8 : 1 },
-                ]}
+              <PurpleGradientButton
+                style={styles.devToolsButton}
                 onPress={() => setReviewModalVisible(true)}
               >
                 <ThemedText
@@ -464,15 +453,12 @@ export default function ProfileScreen() {
                 >
                   Review Modal öffnen
                 </ThemedText>
-              </Pressable>
+              </PurpleGradientButton>
               <ThemedText style={styles.devToolsTitle}>
                 Test Paywall Screen
               </ThemedText>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.devToolsButton,
-                  { opacity: pressed ? 0.8 : 1 },
-                ]}
+              <PurpleGradientButton
+                style={styles.devToolsButton}
                 onPress={() => navigation.navigate("Paywall")}
               >
                 <ThemedText
@@ -482,7 +468,7 @@ export default function ProfileScreen() {
                 >
                   Paywall Screen öffnen
                 </ThemedText>
-              </Pressable>
+              </PurpleGradientButton>
             </View>
           </>
         )}

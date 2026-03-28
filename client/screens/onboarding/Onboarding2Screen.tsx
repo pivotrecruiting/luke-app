@@ -18,9 +18,13 @@ import Animated, {
 
 import ProgressDots from "@/components/ProgressDots";
 import { Spacing, BorderRadius, Typography, Colors } from "@/constants/theme";
+import { PurpleGradientButton } from "@/components/ui/purple-gradient-button";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { OnboardingStackParamList } from "@/navigation/OnboardingNavigator";
-import { useOnboardingStore, type OnboardingStoreT } from "@/stores/onboarding-store";
+import {
+  useOnboardingStore,
+  type OnboardingStoreT,
+} from "@/stores/onboarding-store";
 
 type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
 
@@ -73,7 +77,7 @@ const topLeftGoals: GoalT[] = [
   {
     id: "overview",
     label: "Überblick\ngewinnen",
-    color: "#8E97FD",
+    color: Colors.light.primary,
     image: require("@assets/images/image_1767540420128.png"),
   },
   {
@@ -251,12 +255,12 @@ export default function Onboarding2Screen() {
               .filter((_, index) => index % 2 === 0)
               .map((goal) => (
                 <GoalCard
-                key={goal.id}
-                goal={goal}
-                isSelected={motivations.includes(goal.id)}
-                flexValue={0.7}
-                onToggle={toggleMotivation}
-              />
+                  key={goal.id}
+                  goal={goal}
+                  isSelected={motivations.includes(goal.id)}
+                  flexValue={0.7}
+                  onToggle={toggleMotivation}
+                />
               ))}
           </View>
           <View style={styles.rightColumn}>
@@ -264,12 +268,12 @@ export default function Onboarding2Screen() {
               .filter((_, index) => index % 2 === 1)
               .map((goal) => (
                 <GoalCard
-                key={goal.id}
-                goal={goal}
-                isSelected={motivations.includes(goal.id)}
-                flexValue={0.7}
-                onToggle={toggleMotivation}
-              />
+                  key={goal.id}
+                  goal={goal}
+                  isSelected={motivations.includes(goal.id)}
+                  flexValue={0.7}
+                  onToggle={toggleMotivation}
+                />
               ))}
           </View>
         </View>
@@ -281,15 +285,12 @@ export default function Onboarding2Screen() {
           { paddingBottom: insets.bottom + Spacing.md },
         ]}
       >
-        <Pressable
+        <PurpleGradientButton
           onPress={() => navigation.navigate("Onboarding3")}
-          style={({ pressed }) => [
-            styles.button,
-            pressed && styles.buttonPressed,
-          ]}
+          style={styles.button}
         >
           <Text style={styles.buttonText}>WEITER</Text>
-        </Pressable>
+        </PurpleGradientButton>
       </View>
     </View>
   );
@@ -399,7 +400,6 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.xs,
   },
   button: {
-    backgroundColor: Colors.light.buttonPrimary,
     borderRadius: BorderRadius.md,
     height: Spacing.buttonHeight,
     alignItems: "center",

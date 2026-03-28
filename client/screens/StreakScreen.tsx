@@ -1,12 +1,11 @@
 import React from "react";
 import { View, Text } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useApp } from "@/context/AppContext";
 import { addDays, getLocalDateKey } from "@/features/xp/utils/dates";
 import { startOfWeek } from "date-fns";
-import { HeaderGradient } from "@/constants/theme";
+import { CelebrationScreenBackground } from "@/constants/theme";
 import { StreakIcon } from "@/features/streak/components/streak-icon";
 import { StreakXpDisplay } from "@/features/streak/components/streak-xp-display";
 import { StreakProgressBar } from "@/features/streak/components/streak-progress-bar";
@@ -74,11 +73,11 @@ export default function StreakScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={HeaderGradient.colors}
-        start={HeaderGradient.start}
-        end={HeaderGradient.end}
-        style={styles.gradient}
+      <View
+        style={[
+          styles.gradient,
+          { backgroundColor: CelebrationScreenBackground },
+        ]}
       >
         <View
           style={[
@@ -116,7 +115,7 @@ export default function StreakScreen() {
             </View>
           </View>
         </View>
-      </LinearGradient>
+      </View>
     </View>
   );
 }

@@ -12,6 +12,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useApp } from "@/context/AppContext";
 import { Colors, HeaderGradient, Spacing } from "@/constants/theme";
+import { PurpleGradientButton } from "@/components/ui/purple-gradient-button";
 import { styles } from "./styles/paywall-screen.styles";
 
 type PlanT = "monthly" | "yearly" | "lifetime";
@@ -194,15 +195,12 @@ export default function PaywallScreen() {
             7 Tage kostenlos testen, danach nur €29,99/Jahr
           </Text>
 
-          <Pressable
-            style={({ pressed }) => [
-              styles.ctaButton,
-              pressed && styles.ctaButtonPressed,
-            ]}
+          <PurpleGradientButton
+            style={styles.ctaButton}
             onPress={handleCtaPress}
           >
             <Text style={styles.ctaButtonText}>Jetzt Testphase starten</Text>
-          </Pressable>
+          </PurpleGradientButton>
 
           <View style={styles.footerLinks}>
             <Pressable onPress={handleRestorePurchases}>

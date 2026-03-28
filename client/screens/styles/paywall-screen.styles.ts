@@ -179,7 +179,6 @@ export const styles = StyleSheet.create({
 
   // CTA Button
   ctaButton: {
-    backgroundColor: Colors.light.primary,
     borderRadius: BorderRadius.xl,
     height: Spacing.buttonHeight,
     justifyContent: "center",

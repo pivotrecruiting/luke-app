@@ -1,4 +1,4 @@
-import { BorderRadius, Spacing } from "@/constants/theme";
+import { BorderRadius, Colors, Spacing } from "@/constants/theme";
 import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
@@ -43,8 +43,8 @@ export const styles = StyleSheet.create({
     borderColor: "transparent",
   },
   filterBadgeActive: {
-    backgroundColor: "#EDE9FE",
-    borderColor: "#7340fd",
+    backgroundColor: Colors.light.chipBackground,
+    borderColor: Colors.light.primary,
   },
   filterBadgeText: {
     fontSize: 12,
@@ -52,7 +52,7 @@ export const styles = StyleSheet.create({
     color: "#6B7280",
   },
   filterBadgeTextActive: {
-    color: "#7340fd",
+    color: Colors.light.primary,
   },
   tabsRow: {
     flexDirection: "row",
@@ -589,7 +589,7 @@ export const styles = StyleSheet.create({
     marginBottom: 32,
   },
   modalDoneButton: {
-    backgroundColor: "#7340fd",
+    backgroundColor: Colors.light.primary,
     borderRadius: 28,
     paddingVertical: 16,
     alignItems: "center",
@@ -639,7 +639,6 @@ export const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#F3F0FF",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -668,7 +667,6 @@ export const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
   },
   incomeEmptyButton: {
-    backgroundColor: "#7340fd",
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.md,
@@ -783,7 +781,7 @@ export const styles = StyleSheet.create({
   incomeTipTitle: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#7340fd",
+    color: Colors.light.primary,
   },
   incomeTipText: {
     fontSize: 13,
@@ -843,15 +841,15 @@ export const styles = StyleSheet.create({
     borderColor: "transparent",
   },
   incomeTypeButtonSelected: {
-    backgroundColor: "#F3F0FF",
-    borderColor: "#7340fd",
+    backgroundColor: Colors.light.chipBackground,
+    borderColor: Colors.light.primary,
   },
   incomeTypeButtonText: {
     fontSize: 13,
     color: "#6B7280",
   },
   incomeTypeButtonTextSelected: {
-    color: "#7340fd",
+    color: Colors.light.primary,
     fontWeight: "500",
   },
   customTypeContainer: {
@@ -889,7 +887,6 @@ export const styles = StyleSheet.create({
     outlineStyle: "none",
   } as any,
   incomeSaveButton: {
-    backgroundColor: "#7340fd",
     paddingVertical: Spacing.md,
     borderRadius: BorderRadius.md,
     alignItems: "center",
@@ -945,7 +942,6 @@ export const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#F3F0FF",
     alignItems: "center",
     justifyContent: "center",
   },

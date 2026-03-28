@@ -1,4 +1,4 @@
-import { Spacing } from "@/constants/theme";
+import { Colors, Spacing } from "@/constants/theme";
 import { Dimensions, StyleSheet } from "react-native";
 
 const screenWidth = Dimensions.get("window").width;
@@ -372,8 +372,8 @@ export const styles = StyleSheet.create({
     borderColor: "transparent",
   },
   modalFilterBadgeActive: {
-    backgroundColor: "#EDE9FE",
-    borderColor: "#7340FE",
+    backgroundColor: Colors.light.chipBackground,
+    borderColor: Colors.light.primary,
   },
   modalFilterBadgeText: {
     fontSize: 12,
@@ -381,7 +381,7 @@ export const styles = StyleSheet.create({
     color: "#6B7280",
   },
   modalFilterBadgeTextActive: {
-    color: "#7340FE",
+    color: Colors.light.primary,
   },
   modalCategoriesScroll: {
     marginBottom: 12,
@@ -443,7 +443,7 @@ export const styles = StyleSheet.create({
     marginBottom: 8,
   },
   editTransactionCategoryIconActive: {
-    backgroundColor: "#7340FE",
+    backgroundColor: Colors.light.primary,
   },
   editTransactionCategoryName: {
     fontSize: 12,
@@ -452,7 +452,7 @@ export const styles = StyleSheet.create({
     textAlign: "center",
   },
   editTransactionCategoryNameActive: {
-    color: "#7340FE",
+    color: Colors.light.primary,
     fontWeight: "600",
   },
   editTransactionCategoriesEmpty: {
@@ -535,10 +535,9 @@ export const styles = StyleSheet.create({
   editTransactionDateDoneText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#7340FE",
+    color: Colors.light.primary,
   },
   editTransactionSaveButton: {
-    backgroundColor: "#7340FE",
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: "center",

@@ -2,9 +2,11 @@ import { Pressable, Text, TextInput, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import CurrencyInput from "@/components/CurrencyInput";
 import { styles } from "@/screens/styles/insights-screen.styles";
+import { Colors } from "@/constants/theme";
 import { INCOME_TYPES } from "../constants/insights-constants";
 import { AppModal } from "@/components/ui/app-modal";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
+import { PurpleGradientButton } from "@/components/ui/purple-gradient-button";
 
 type IncomeModalPropsT = {
   visible: boolean;
@@ -80,7 +82,11 @@ export const IncomeModal = ({
               <Feather
                 name={type.icon as any}
                 size={20}
-                color={selectedIncomeType === type.id ? "#7340fd" : "#6B7280"}
+                color={
+                  selectedIncomeType === type.id
+                    ? Colors.light.primary
+                    : "#6B7280"
+                }
               />
               <Text
                 style={[
@@ -117,18 +123,15 @@ export const IncomeModal = ({
           containerStyle={styles.incomeAmountInputContainer}
         />
 
-        <Pressable
-          style={[
-            styles.incomeSaveButton,
-            isDisabled && styles.incomeSaveButtonDisabled,
-          ]}
+        <PurpleGradientButton
+          style={styles.incomeSaveButton}
           onPress={onSave}
           disabled={isDisabled}
         >
           <Text style={styles.incomeSaveButtonText}>
             {editingIncomeId ? "Speichern" : "Hinzufügen"}
           </Text>
-        </Pressable>
+        </PurpleGradientButton>
       </KeyboardAwareScrollViewCompat>
     </AppModal>
   );

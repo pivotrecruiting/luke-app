@@ -3,6 +3,7 @@ import CurrencyInput from "@/components/CurrencyInput";
 import { styles } from "@/screens/styles/goal-detail-screen.styles";
 import { EMOJI_LIST } from "@/features/goals/constants/goals-constants";
 import { AppModal } from "@/components/ui/app-modal";
+import { PurpleGradientButton } from "@/components/ui/purple-gradient-button";
 
 type EditGoalModalPropsT = {
   visible: boolean;
@@ -103,9 +104,9 @@ export const EditGoalModal = ({
         <Text style={styles.calculationBold}>{monthsToGoal} Monaten</Text>
       </Text>
 
-      <Pressable style={styles.modalSaveButton} onPress={onSave}>
+      <PurpleGradientButton style={styles.modalSaveButton} onPress={onSave}>
         <Text style={styles.modalSaveButtonText}>Speichern</Text>
-      </Pressable>
+      </PurpleGradientButton>
 
       <Pressable style={styles.modalCancelButton} onPress={onCancel}>
         <Text style={styles.modalCancelButtonText}>Abbrechen</Text>

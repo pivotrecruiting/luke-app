@@ -1,12 +1,11 @@
 import React, { useMemo } from "react";
 import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useApp } from "@/context/AppContext";
 import { getUserFirstName } from "@/utils/user";
 import { resolveLevelByXp } from "@/features/xp/utils/levels";
-import { HeaderGradient } from "@/constants/theme";
+import { CelebrationScreenBackground } from "@/constants/theme";
 import { LevelUpTitle } from "@/features/xp/components/level-up-title";
 import { LevelUpDescription } from "@/features/xp/components/level-up-description";
 import { LevelBadge } from "@/features/xp/components/level-badge";
@@ -81,11 +80,11 @@ export default function LevelUpScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={HeaderGradient.colors}
-        start={HeaderGradient.start}
-        end={HeaderGradient.end}
-        style={styles.gradient}
+      <View
+        style={[
+          styles.gradient,
+          { backgroundColor: CelebrationScreenBackground },
+        ]}
       >
         <View
           style={[
@@ -132,7 +131,7 @@ export default function LevelUpScreen() {
             </View>
           </View>
         </View>
-      </LinearGradient>
+      </View>
     </View>
   );
 }
