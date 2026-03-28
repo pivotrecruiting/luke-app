@@ -28,12 +28,23 @@ export default function WelcomeScreen() {
       />
 
       <View style={styles.textOverlay}>
-        <ThemedText style={styles.title}>
-          Bring Licht in deine Finanzen
-        </ThemedText>
-        <ThemedText style={styles.subtitle}>
-          Einfach. Klar. Transparent.
-        </ThemedText>
+        <View style={styles.titleWrapper}>
+          <ThemedText style={styles.title}>
+            Bring Licht in deine Finanzen
+          </ThemedText>
+          <ThemedText style={styles.titleInnerShadow}>
+            Bring Licht in deine Finanzen
+          </ThemedText>
+        </View>
+
+        <View style={styles.subtitleWrapper}>
+          <ThemedText style={styles.subtitle}>
+            Einfach. Klar. Transparent.
+          </ThemedText>
+          <ThemedText style={styles.subtitleInnerShadow}>
+            Einfach. Klar. Transparent.
+          </ThemedText>
+        </View>
       </View>
 
       <View
@@ -71,24 +82,56 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
     transform: [{ translateY: -40 }],
   },
+  titleWrapper: {
+    position: "relative",
+    width: "100%",
+    minHeight: 34,
+    overflow: "hidden",
+    alignItems: "center",
+  },
   title: {
     color: "#FFFFFF",
     fontSize: 26,
     fontWeight: "700",
+    lineHeight: 32,
     textAlign: "center",
-    textShadowColor: "rgba(0, 0, 0, 0.35)",
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 6,
+  },
+  titleInnerShadow: {
+    position: "absolute",
+    top: 1,
+    left: 0,
+    right: 0,
+    color: "rgba(0, 0, 0, 0.2)",
+    fontSize: 26,
+    fontWeight: "700",
+    lineHeight: 32,
+    textAlign: "center",
+  },
+  subtitleWrapper: {
+    position: "relative",
+    width: "100%",
+    minHeight: 24,
+    marginTop: 10,
+    overflow: "hidden",
+    alignItems: "center",
   },
   subtitle: {
-    marginTop: 10,
     color: "rgba(255, 255, 255, 0.78)",
     fontSize: 16,
     fontWeight: "500",
+    lineHeight: 22,
     textAlign: "center",
-    textShadowColor: "rgba(0, 0, 0, 0.3)",
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
+  },
+  subtitleInnerShadow: {
+    position: "absolute",
+    top: 1,
+    left: 0,
+    right: 0,
+    color: "rgba(0, 0, 0, 0.2)",
+    fontSize: 16,
+    fontWeight: "500",
+    lineHeight: 22,
+    textAlign: "center",
   },
   buttonContainer: {
     position: "absolute",
