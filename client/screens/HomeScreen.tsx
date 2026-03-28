@@ -20,7 +20,7 @@ import { Feather } from "@expo/vector-icons";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
-import { Spacing } from "@/constants/theme";
+import { HeaderGradient, Spacing } from "@/constants/theme";
 import { useApp } from "@/context/AppContext";
 import type { Transaction } from "@/context/app/types";
 import {
@@ -311,9 +311,9 @@ export default function HomeScreen() {
     <View style={styles.container}>
       <View style={styles.heroSection}>
         <LinearGradient
-          colors={["rgba(42, 58, 230, 0.69)", "rgba(23, 32, 128, 0.69)"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
+          colors={HeaderGradient.colors}
+          start={HeaderGradient.start}
+          end={HeaderGradient.end}
           style={[styles.header, { paddingTop: insets.top + Spacing.lg }]}
         >
           <View style={styles.headerTextContainer}>

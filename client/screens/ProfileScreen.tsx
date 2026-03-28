@@ -8,7 +8,7 @@ import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { Feather } from "@expo/vector-icons";
 import { ThemedText } from "@/components/ThemedText";
 import { SettingsRow } from "@/components/SettingsRow";
-import { Spacing } from "@/constants/theme";
+import { HeaderGradient, Spacing } from "@/constants/theme";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
@@ -103,9 +103,9 @@ export default function ProfileScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={["rgba(115, 64, 253, 0.9)", "rgba(115, 64, 253, 0.7)"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
+        colors={HeaderGradient.colors}
+        start={HeaderGradient.start}
+        end={HeaderGradient.end}
         style={[
           styles.header,
           {

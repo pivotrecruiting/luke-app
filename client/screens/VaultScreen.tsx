@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import { Spacing } from "@/constants/theme";
+import { HeaderGradient, Spacing } from "@/constants/theme";
 import CurrencyInput from "@/components/CurrencyInput";
 import { AppModal } from "@/components/ui/app-modal";
 import { LockIcon } from "@/components/ui/lock-icon";
@@ -146,9 +146,9 @@ export default function VaultScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={["rgba(42, 58, 230, 0.69)", "rgba(23, 32, 128, 0.69)"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
+        colors={HeaderGradient.colors}
+        start={HeaderGradient.start}
+        end={HeaderGradient.end}
         style={[
           styles.header,
           {

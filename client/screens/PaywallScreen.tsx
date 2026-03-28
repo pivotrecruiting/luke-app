@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useApp } from "@/context/AppContext";
-import { Spacing, Colors } from "@/constants/theme";
+import { Colors, HeaderGradient, Spacing } from "@/constants/theme";
 import { styles } from "./styles/paywall-screen.styles";
 
 type PlanT = "monthly" | "yearly" | "lifetime";
@@ -110,13 +110,9 @@ export default function PaywallScreen() {
       >
         {/* Header - full width, CI gradient (like LevelUp/Streak) */}
         <LinearGradient
-          colors={[
-            "rgba(115, 64, 253, 0.9)",
-            "rgba(115, 64, 253, 0.7)",
-            "rgba(115, 64, 253, 0.5)",
-          ]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
+          colors={HeaderGradient.colors}
+          start={HeaderGradient.start}
+          end={HeaderGradient.end}
           style={[
             styles.header,
             {

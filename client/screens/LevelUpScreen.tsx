@@ -6,6 +6,7 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { useApp } from "@/context/AppContext";
 import { getUserFirstName } from "@/utils/user";
 import { resolveLevelByXp } from "@/features/xp/utils/levels";
+import { HeaderGradient } from "@/constants/theme";
 import { LevelUpTitle } from "@/features/xp/components/level-up-title";
 import { LevelUpDescription } from "@/features/xp/components/level-up-description";
 import { LevelBadge } from "@/features/xp/components/level-badge";
@@ -81,13 +82,9 @@ export default function LevelUpScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[
-          "rgba(115, 64, 253, 0.9)",
-          "rgba(115, 64, 253, 0.7)",
-          "rgba(115, 64, 253, 0.5)",
-        ]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
+        colors={HeaderGradient.colors}
+        start={HeaderGradient.start}
+        end={HeaderGradient.end}
         style={styles.gradient}
       >
         <View

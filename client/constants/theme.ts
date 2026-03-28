@@ -4,6 +4,10 @@ import { Platform } from "react-native";
 const primaryPurple = "#7340fd";
 const accentLavender = "#7B8CDE";
 const buttonPurple = "#8E97FD";
+const appHeaderGradientColors = [
+  "rgba(42, 58, 230, 0.69)",
+  "rgba(23, 32, 128, 0.69)",
+] as const;
 
 export const Colors = {
   light: {
@@ -72,6 +76,12 @@ export const Colors = {
     successBackground: "#052e16",
     successBorder: "#166534",
   },
+};
+
+export const HeaderGradient = {
+  colors: appHeaderGradientColors,
+  start: { x: 0, y: 0 } as const,
+  end: { x: 0, y: 1 } as const,
 };
 
 export const Spacing = {

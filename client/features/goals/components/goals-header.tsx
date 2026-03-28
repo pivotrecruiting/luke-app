@@ -1,6 +1,7 @@
 import { Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
+import { HeaderGradient } from "@/constants/theme";
 import { styles } from "@/screens/styles/goals-screen.styles";
 import type { SuccessToastT } from "../types/goals-types";
 
@@ -21,9 +22,9 @@ export const GoalsHeader = ({
 }: GoalsHeaderPropsT) => {
   return (
     <LinearGradient
-      colors={["rgba(42, 58, 230, 0.69)", "rgba(23, 32, 128, 0.69)"]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 0, y: 1 }}
+      colors={HeaderGradient.colors}
+      start={HeaderGradient.start}
+      end={HeaderGradient.end}
       style={[
         styles.header,
         {

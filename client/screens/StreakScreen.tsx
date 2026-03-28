@@ -6,6 +6,7 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { useApp } from "@/context/AppContext";
 import { addDays, getLocalDateKey } from "@/features/xp/utils/dates";
 import { startOfWeek } from "date-fns";
+import { HeaderGradient } from "@/constants/theme";
 import { StreakIcon } from "@/features/streak/components/streak-icon";
 import { StreakXpDisplay } from "@/features/streak/components/streak-xp-display";
 import { StreakProgressBar } from "@/features/streak/components/streak-progress-bar";
@@ -74,13 +75,9 @@ export default function StreakScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[
-          "rgba(115, 64, 253, 0.9)",
-          "rgba(115, 64, 253, 0.7)",
-          "rgba(115, 64, 253, 0.5)",
-        ]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
+        colors={HeaderGradient.colors}
+        start={HeaderGradient.start}
+        end={HeaderGradient.end}
         style={styles.gradient}
       >
         <View
