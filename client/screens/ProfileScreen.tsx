@@ -127,23 +127,22 @@ export default function ProfileScreen() {
       </LinearGradient>
 
       {/* User Profile Card - positioned over header */}
-      <View style={[styles.profileCard, { marginTop: -profileCardOverlap }]}>
+      <Pressable
+        style={[styles.profileCard, { marginTop: -profileCardOverlap }]}
+        onPress={() => {
+          if (currentLevel?.id) {
+            navigation.navigate("LevelUp", { levelId: currentLevel.id });
+            return;
+          }
+          navigation.navigate("LevelUp", {});
+        }}
+        accessibilityRole="button"
+        accessibilityLabel="Level Up anzeigen"
+      >
         <View style={styles.profileHeader}>
-          <Pressable
-            style={styles.profileAvatarButton}
-            onPress={() => {
-              if (currentLevel?.id) {
-                navigation.navigate("LevelUp", { levelId: currentLevel.id });
-                return;
-              }
-              navigation.navigate("LevelUp", {});
-            }}
-            accessibilityRole="button"
-            accessibilityLabel="Level Up anzeigen"
-            hitSlop={8}
-          >
+          <View style={styles.profileAvatarButton}>
             <ThemedText style={styles.profileAvatar}>{levelEmoji}</ThemedText>
-          </Pressable>
+          </View>
           <ThemedText style={styles.profileName}>{profileName}</ThemedText>
         </View>
         <View style={styles.profileStats}>
@@ -187,7 +186,7 @@ export default function ProfileScreen() {
             </ThemedText>
           </View>
         </View>
-      </View>
+      </Pressable>
 
       <ScrollView
         style={styles.scrollView}
