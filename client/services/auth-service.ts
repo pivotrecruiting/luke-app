@@ -9,6 +9,10 @@ type AuthErrorT = {
   message: string;
 };
 
+type AuthSuccessResultT = {
+  status: "success";
+};
+
 export type EmailSignUpResultT =
   | { status: "signed-in" }
   | { status: "email-confirmation-required" }
@@ -18,6 +22,8 @@ export type OAuthSignInResultT =
   | { status: "signed-in" }
   | { status: "cancelled" }
   | AuthErrorT;
+
+export type UpdateUserResultT = AuthSuccessResultT | AuthErrorT;
 
 type AuthErrorLikeT = {
   message?: string;
@@ -275,6 +281,60 @@ export const signInWithOAuth = async (
     }
 
     return await createSessionFromOAuthCallback(result.url);
+  } catch (error) {
+    return {
+      status: "error",
+      message: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+};
+
+export const updateUserFullName = async (
+  fullName: string,
+  currentMetadata?: unknown,
+): Promise<UpdateUserResultT> => {
+  try {
+    const safeMetadata =
+      currentMetadata &&
+      typeof currentMetadata === "object" &&
+      !Array.isArray(currentMetadata)
+        ? currentMetadata
+        : {};
+
+    const { error } = await supabase.auth.updateUser({
+      data: {
+        ...safeMetadata,
+        full_name: fullName.trim(),
+      },
+    });
+
+    if (error) {
+      return { status: "error", message: error.message };
+    }
+
+    return { status: "success" };
+  } catch (error) {
+    return {
+      status: "error",
+      message: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+};
+
+export const updateUserEmail = async (
+  email: string,
+): Promise<UpdateUserResultT> => {
+  try {
+    const { error } = await supabase.auth.updateUser(
+      { email: email.trim().toLowerCase() },
+      { emailRedirectTo: getAuthRedirectUrl() },
+    );
+
+    if (error) {
+      return { status: "error", message: error.message };
+    }
+
+    return { status: "success" };
   } catch (error) {
     return {
       status: "error",

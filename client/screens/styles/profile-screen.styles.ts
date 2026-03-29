@@ -186,6 +186,31 @@ export const styles = StyleSheet.create({
     fontWeight: "500",
     color: "#000000",
   },
+  accountInfoRow: {
+    // Used for: Read-only account info rows
+    paddingVertical: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E7EB",
+  },
+  accountInfoContent: {
+    // Used for: Account info text content container
+    flex: 1,
+  },
+  accountInfoLabel: {
+    // Used for: Account info row label
+    color: "#000000",
+  },
+  accountInfoValue: {
+    // Used for: Account info row value
+    marginTop: Spacing.xs,
+    color: "#000000",
+  },
+  accountInfoHint: {
+    // Used for: Account section helper text
+    ...Typography.small,
+    color: "#6B7280",
+    paddingTop: Spacing.md,
+  },
   bankConnectRow: {
     // Used for: Bank connect row container
     flexDirection: "row",
@@ -309,6 +334,62 @@ export const styles = StyleSheet.create({
     ...Typography.h3,
     fontWeight: "600",
     color: "#000000",
+  },
+  profileFormField: {
+    // Used for: Profile edit form field wrapper
+    marginBottom: Spacing.lg,
+  },
+  profileFormLabel: {
+    // Used for: Profile edit form field label
+    color: "#000000",
+    marginBottom: Spacing.sm,
+  },
+  profileFormInput: {
+    // Used for: Profile edit form text input
+    height: Spacing.inputHeight,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: BorderRadius.sm,
+    paddingHorizontal: Spacing.md,
+    color: "#000000",
+    backgroundColor: "#FFFFFF",
+  },
+  profileFormInputDisabled: {
+    // Used for: Disabled profile form text input
+    backgroundColor: "#F3F4F6",
+    color: "#9CA3AF",
+  },
+  profileFormInputError: {
+    // Used for: Profile form input error state
+    borderColor: "#EF4444",
+  },
+  profileFormHint: {
+    // Used for: Profile form helper hint
+    ...Typography.small,
+    color: "#6B7280",
+    marginTop: Spacing.xs,
+    lineHeight: 20,
+  },
+  profileFormErrorText: {
+    // Used for: Profile form field error text
+    ...Typography.small,
+    color: "#EF4444",
+    marginTop: Spacing.xs,
+  },
+  saveProfileButton: {
+    // Used for: Save profile button container
+    borderRadius: BorderRadius.md,
+    paddingVertical: Spacing.lg,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  saveProfileButtonText: {
+    // Used for: Save profile button text
+    ...Typography.body,
+    fontWeight: "600",
+    color: "#FFFFFF",
   },
   logoutButton: {
     // Used for: Logout button container

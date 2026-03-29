@@ -158,6 +158,7 @@ export type AppState = {
 };
 
 export type AppContextType = AppState & {
+  setUserName: (userName: string | null) => void;
   addIncomeEntry: (type: string, amount: number) => void;
   addExpenseEntry: (type: string, amount: number) => void;
   setIncomeEntries: (entries: { type: string; amount: number }[]) => void;

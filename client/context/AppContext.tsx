@@ -84,7 +84,7 @@ type AppProviderProps = {
 export function AppProvider({ children }: AppProviderProps) {
   const [isAppLoading, setIsAppLoading] = useState(true);
   const [isOnboardingComplete, setIsOnboardingComplete] = useState(false);
-  const [userName, setUserName] = useState<string | null>(null);
+  const [userName, setUserNameState] = useState<string | null>(null);
   const [currency, setCurrencyState] = useState<CurrencyCode>("EUR");
   const [incomeEntries, setIncomeEntries] = useState<IncomeEntry[]>(
     INITIAL_INCOME_ENTRIES,
@@ -129,7 +129,7 @@ export function AppProvider({ children }: AppProviderProps) {
     onboardingVersion: ONBOARDING_VERSION,
     setIsAppLoading,
     setIsOnboardingComplete,
-    setUserName,
+    setUserName: setUserNameState,
     setCurrencyState,
     setIncomeEntries,
     setExpenseEntries,
@@ -515,6 +515,7 @@ export function AppProvider({ children }: AppProviderProps) {
     isOnboardingComplete,
     isAppLoading,
     userName,
+    setUserName: setUserNameState,
     currency,
     incomeEntries,
     expenseEntries,

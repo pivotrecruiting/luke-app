@@ -1,9 +1,10 @@
-import React, { useMemo, useState } from "react";
-import { Alert, View, ScrollView, Pressable } from "react-native";
+import React, { useEffect, useMemo, useState } from "react";
+import { Alert, View, ScrollView, Pressable, TextInput } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { z } from "zod";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { Feather } from "@expo/vector-icons";
 import { ThemedText } from "@/components/ThemedText";
@@ -12,6 +13,8 @@ import { HeaderGradient, Spacing } from "@/constants/theme";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
+import { updateUserEmail, updateUserFullName } from "@/services/auth-service";
+import { upsertUserName } from "@/services/app-service";
 import { resolveLevelByXp } from "@/features/xp/utils/levels";
 import { formatDaysSince } from "@/utils/dates";
 import { getUserFirstName } from "@/utils/user";
@@ -22,24 +25,61 @@ import { ReviewModal } from "@/features/review/components/review-modal";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
+const profileNameSchema = z
+  .string()
+  .trim()
+  .min(1, "Bitte gib deinen Namen ein.")
+  .max(80, "Dein Name darf maximal 80 Zeichen lang sein.");
+
+const profileEmailSchema = z
+  .string()
+  .trim()
+  .email("Bitte gib eine gültige E-Mail-Adresse ein.");
+
+const getProviderLabel = (provider: string) => {
+  switch (provider) {
+    case "google":
+      return "Google";
+    case "apple":
+      return "Apple";
+    case "email":
+      return "E-Mail & Passwort";
+    case "phone":
+      return "Telefon";
+    default:
+      return provider;
+  }
+};
+
 /**
  * Profile screen displaying user information, settings, and account options.
  */
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
-  const { levels, userProgress, transactionBalance, currency, userName } =
-    useApp();
+  const {
+    levels,
+    userProgress,
+    transactionBalance,
+    currency,
+    userName,
+    setUserName,
+  } = useApp();
   const { user } = useAuth();
   const [manageModalVisible, setManageModalVisible] = useState(false);
   const [deleteAccountModalVisible, setDeleteAccountModalVisible] =
     useState(false);
   const [reviewModalVisible, setReviewModalVisible] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [profileNameInput, setProfileNameInput] = useState("");
+  const [profileEmailInput, setProfileEmailInput] = useState("");
+  const [profileNameError, setProfileNameError] = useState<string | null>(null);
+  const [profileEmailError, setProfileEmailError] = useState<string | null>(
+    null,
+  );
 
   const profileCardOverlap = Spacing["4xl"];
-
-  const loginMethod = "Google Account";
   const appVersion = "1.0.0";
 
   const formatCurrency = (value: number): string => {
@@ -65,9 +105,44 @@ export default function ProfileScreen() {
     typeof user?.user_metadata?.full_name === "string"
       ? user.user_metadata.full_name
       : null;
-  const firstName = getUserFirstName(userName ?? metadataName);
+  const currentFullName = (userName ?? metadataName ?? "").trim();
+  const firstName = getUserFirstName(currentFullName);
   const fallbackLevel = currentLevel?.levelNumber ?? 1;
   const profileName = firstName ?? `Level ${fallbackLevel}`;
+  const profileEmail = user?.email ?? null;
+  const authProviders = useMemo(() => {
+    const providerSet = new Set<string>();
+
+    if (Array.isArray(user?.app_metadata?.providers)) {
+      for (const provider of user.app_metadata.providers) {
+        if (typeof provider === "string" && provider.trim()) {
+          providerSet.add(provider);
+        }
+      }
+    }
+
+    if (typeof user?.app_metadata?.provider === "string") {
+      providerSet.add(user.app_metadata.provider);
+    }
+
+    if (providerSet.size === 0 && profileEmail) {
+      providerSet.add("email");
+    }
+
+    return Array.from(providerSet);
+  }, [
+    profileEmail,
+    user?.app_metadata?.provider,
+    user?.app_metadata?.providers,
+  ]);
+  const hasOAuthProvider = authProviders.some(
+    (provider) => provider !== "email" && provider !== "phone",
+  );
+  const canEditEmail = Boolean(profileEmail) && !hasOAuthProvider;
+  const loginMethod =
+    authProviders.length > 0
+      ? authProviders.map(getProviderLabel).join(" + ")
+      : "Unbekannt";
   const levelEmoji = currentLevel?.emoji ?? "🦊";
   const savingsLabel = transactionBalance >= 0 ? "Gespart" : "Ausgegeben";
   const savingsAmount = formatCurrency(Math.abs(transactionBalance));
@@ -77,8 +152,17 @@ export default function ProfileScreen() {
     highestStreakValue === 1 ? "Tag" : "Tage"
   }`;
 
+  useEffect(() => {
+    if (!manageModalVisible) return;
+
+    setProfileNameInput(currentFullName);
+    setProfileEmailInput(profileEmail ?? "");
+    setProfileNameError(null);
+    setProfileEmailError(null);
+  }, [currentFullName, manageModalVisible, profileEmail]);
+
   const handleLogout = async () => {
-    if (isLoggingOut) return;
+    if (isLoggingOut || isSavingProfile) return;
     setIsLoggingOut(true);
     try {
       const { error } = await supabase.auth.signOut();
@@ -93,6 +177,100 @@ export default function ProfileScreen() {
       Alert.alert("Logout fehlgeschlagen", "Bitte versuche es erneut.");
     } finally {
       setIsLoggingOut(false);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    if (!user?.id || isSavingProfile || isLoggingOut) return;
+
+    const parsedName = profileNameSchema.safeParse(profileNameInput);
+    const nextName = parsedName.success ? parsedName.data : null;
+
+    setProfileNameError(
+      parsedName.success ? null : (parsedName.error.issues[0]?.message ?? null),
+    );
+
+    let nextEmail = profileEmail?.trim().toLowerCase() ?? "";
+
+    if (canEditEmail) {
+      const parsedEmail = profileEmailSchema.safeParse(profileEmailInput);
+      setProfileEmailError(
+        parsedEmail.success
+          ? null
+          : (parsedEmail.error.issues[0]?.message ?? null),
+      );
+      if (parsedEmail.success) {
+        nextEmail = parsedEmail.data.toLowerCase();
+      }
+    } else {
+      setProfileEmailError(null);
+    }
+
+    if (!nextName || (canEditEmail && !nextEmail)) {
+      return;
+    }
+
+    const currentEmail = profileEmail?.trim().toLowerCase() ?? "";
+    const shouldUpdateName = nextName !== currentFullName;
+    const shouldUpdateEmail = canEditEmail && nextEmail !== currentEmail;
+
+    if (!shouldUpdateName && !shouldUpdateEmail) {
+      setManageModalVisible(false);
+      return;
+    }
+
+    setIsSavingProfile(true);
+    let didUpdateName = false;
+
+    try {
+      if (shouldUpdateName) {
+        await upsertUserName(user.id, nextName);
+        setUserName(nextName);
+        didUpdateName = true;
+
+        const metadataResult = await updateUserFullName(
+          nextName,
+          user.user_metadata,
+        );
+
+        if (metadataResult.status === "error") {
+          console.warn(
+            "Failed to sync full_name metadata:",
+            metadataResult.message,
+          );
+        }
+      }
+
+      if (shouldUpdateEmail) {
+        const emailResult = await updateUserEmail(nextEmail);
+
+        if (emailResult.status === "error") {
+          throw new Error(emailResult.message);
+        }
+      }
+
+      setManageModalVisible(false);
+
+      Alert.alert(
+        "Profil aktualisiert",
+        shouldUpdateEmail
+          ? "Die E-Mail-Änderung wurde gestartet. Bitte prüfe dein Postfach, um sie abzuschließen."
+          : "Dein Name wurde aktualisiert.",
+      );
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Bitte versuche es erneut.";
+
+      Alert.alert(
+        didUpdateName
+          ? "Profil teilweise aktualisiert"
+          : "Aktualisierung fehlgeschlagen",
+        didUpdateName
+          ? `Dein Name wurde gespeichert, aber die E-Mail konnte nicht geändert werden. ${errorMessage}`
+          : errorMessage,
+      );
+    } finally {
+      setIsSavingProfile(false);
     }
   };
 
@@ -224,10 +402,35 @@ export default function ProfileScreen() {
               onPress={() => setManageModalVisible(true)}
             >
               <ThemedText type="small" style={styles.loginMethodButtonText}>
-                Manage
+                Bearbeiten
               </ThemedText>
             </Pressable>
           </View>
+          <View style={styles.accountInfoRow}>
+            <View style={styles.accountInfoContent}>
+              <ThemedText type="body" style={styles.accountInfoLabel}>
+                Name
+              </ThemedText>
+              <ThemedText type="small" style={styles.accountInfoValue}>
+                {currentFullName || "Nicht hinterlegt"}
+              </ThemedText>
+            </View>
+          </View>
+          <View style={styles.accountInfoRow}>
+            <View style={styles.accountInfoContent}>
+              <ThemedText type="body" style={styles.accountInfoLabel}>
+                E-Mail
+              </ThemedText>
+              <ThemedText type="small" style={styles.accountInfoValue}>
+                {profileEmail ?? "Nicht hinterlegt"}
+              </ThemedText>
+            </View>
+          </View>
+          <ThemedText type="small" style={styles.accountInfoHint}>
+            {canEditEmail
+              ? "Name und E-Mail kannst du über Bearbeiten ändern."
+              : "Name kannst du über Bearbeiten ändern. Die E-Mail ist bei OAuth-Accounts gesperrt."}
+          </ThemedText>
           <View style={styles.bankConnectRow}>
             <View style={styles.bankConnectContent}>
               <ThemedText
@@ -475,6 +678,7 @@ export default function ProfileScreen() {
         visible={manageModalVisible}
         onClose={() => setManageModalVisible(false)}
         maxHeightPercent={70}
+        keyboardAvoidingEnabled={true}
         contentStyle={[
           styles.modalContent,
           { paddingBottom: insets.bottom + Spacing.lg },
@@ -487,13 +691,91 @@ export default function ProfileScreen() {
           </Pressable>
         </View>
 
+        <View style={styles.profileFormField}>
+          <ThemedText type="small" style={styles.profileFormLabel}>
+            Name
+          </ThemedText>
+          <TextInput
+            style={[
+              styles.profileFormInput,
+              profileNameError ? styles.profileFormInputError : null,
+            ]}
+            value={profileNameInput}
+            onChangeText={(text) => {
+              setProfileNameInput(text);
+              if (profileNameError) {
+                setProfileNameError(null);
+              }
+            }}
+            placeholder="Dein Name"
+            placeholderTextColor="#9CA3AF"
+            autoCapitalize="words"
+            autoCorrect={false}
+            editable={!isSavingProfile}
+            accessibilityLabel="Name bearbeiten"
+          />
+          {profileNameError ? (
+            <ThemedText type="small" style={styles.profileFormErrorText}>
+              {profileNameError}
+            </ThemedText>
+          ) : null}
+        </View>
+
+        <View style={styles.profileFormField}>
+          <ThemedText type="small" style={styles.profileFormLabel}>
+            E-Mail
+          </ThemedText>
+          <TextInput
+            style={[
+              styles.profileFormInput,
+              !canEditEmail ? styles.profileFormInputDisabled : null,
+              profileEmailError ? styles.profileFormInputError : null,
+            ]}
+            value={profileEmailInput}
+            onChangeText={(text) => {
+              setProfileEmailInput(text);
+              if (profileEmailError) {
+                setProfileEmailError(null);
+              }
+            }}
+            placeholder="name@beispiel.de"
+            placeholderTextColor="#9CA3AF"
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="email-address"
+            editable={canEditEmail && !isSavingProfile}
+            accessibilityLabel="E-Mail bearbeiten"
+          />
+          {profileEmailError ? (
+            <ThemedText type="small" style={styles.profileFormErrorText}>
+              {profileEmailError}
+            </ThemedText>
+          ) : null}
+          {!canEditEmail ? (
+            <ThemedText type="small" style={styles.profileFormHint}>
+              Die E-Mail kann nur bei Accounts mit E-Mail-Passwort-Login
+              geändert werden.
+            </ThemedText>
+          ) : null}
+        </View>
+
+        <PurpleGradientButton
+          style={styles.saveProfileButton}
+          onPress={handleSaveProfile}
+          disabled={isSavingProfile || isLoggingOut}
+        >
+          <ThemedText style={styles.saveProfileButtonText} lightColor="#FFFFFF">
+            {isSavingProfile ? "Speichern..." : "Änderungen speichern"}
+          </ThemedText>
+        </PurpleGradientButton>
+
         <Pressable
           style={({ pressed }) => [
             styles.logoutButton,
-            { opacity: pressed || isLoggingOut ? 0.7 : 1 },
+            { opacity: pressed || isLoggingOut || isSavingProfile ? 0.7 : 1 },
           ]}
           onPress={handleLogout}
-          disabled={isLoggingOut}
+          disabled={isLoggingOut || isSavingProfile}
         >
           <Feather name="log-out" size={20} color="#EF4444" />
           <ThemedText style={styles.logoutButtonText}>Ausloggen</ThemedText>

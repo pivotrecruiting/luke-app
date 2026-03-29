@@ -545,6 +545,26 @@ export const upsertUserCurrency = async (
   }
 };
 
+export const upsertUserName = async (
+  userId: string,
+  name: string,
+): Promise<void> => {
+  const trimmedName = name.trim();
+  await ensureUserRow(userId);
+
+  const { error } = await supabase
+    .from("users")
+    .update({
+      name: trimmedName,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", userId);
+
+  if (error) {
+    throw error;
+  }
+};
+
 export const upsertInitialSavings = async (
   userId: string,
   amount: number,
