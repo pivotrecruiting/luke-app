@@ -627,49 +627,48 @@ export default function ProfileScreen() {
               </View>
             </View>
           ) : (
-            <View style={styles.accountInfoRow}>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.accountInfoRowPressable,
-                  !canEditEmail ? styles.accountInfoRowDisabled : null,
-                  { opacity: pressed && canEditEmail ? 0.75 : 1 },
-                ]}
-                onPress={() => startEditingField("email")}
-                disabled={!canEditEmail}
-                accessibilityRole="button"
-                accessibilityLabel={
-                  canEditEmail
-                    ? "E-Mail bearbeiten"
-                    : "E-Mail kann bei OAuth nicht bearbeitet werden"
-                }
-              >
-                <View style={styles.accountInfoContent}>
-                  <ThemedText type="body" style={styles.accountInfoLabel}>
-                    E-Mail
-                  </ThemedText>
-                  <ThemedText
-                    type="small"
-                    style={[
-                      styles.accountInfoValue,
-                      !canEditEmail ? styles.accountInfoValueDisabled : null,
-                    ]}
-                  >
-                    {profileEmail ?? "Nicht hinterlegt"}
-                  </ThemedText>
-                </View>
-                <Feather
-                  name={canEditEmail ? "edit-2" : "lock"}
-                  size={16}
-                  color="#6B7280"
-                />
-              </Pressable>
-              {!canEditEmail ? (
-                <ThemedText type="small" style={styles.accountInfoHint}>
-                  Die E-Mail ist bei OAuth-Accounts gesperrt.
+            <Pressable
+              style={({ pressed }) => [
+                styles.accountInfoRow,
+                styles.accountInfoRowPressable,
+                !canEditEmail ? styles.accountInfoRowDisabled : null,
+                { opacity: pressed && canEditEmail ? 0.75 : 1 },
+              ]}
+              onPress={() => startEditingField("email")}
+              disabled={!canEditEmail}
+              accessibilityRole="button"
+              accessibilityLabel={
+                canEditEmail
+                  ? "E-Mail bearbeiten"
+                  : "E-Mail kann bei OAuth nicht bearbeitet werden"
+              }
+            >
+              <View style={styles.accountInfoContent}>
+                <ThemedText type="body" style={styles.accountInfoLabel}>
+                  E-Mail
                 </ThemedText>
-              ) : null}
-            </View>
+                <ThemedText
+                  type="small"
+                  style={[
+                    styles.accountInfoValue,
+                    !canEditEmail ? styles.accountInfoValueDisabled : null,
+                  ]}
+                >
+                  {profileEmail ?? "Nicht hinterlegt"}
+                </ThemedText>
+              </View>
+              <Feather
+                name={canEditEmail ? "edit-2" : "lock"}
+                size={16}
+                color="#6B7280"
+              />
+            </Pressable>
           )}
+          <ThemedText type="small" style={styles.accountInfoHint}>
+            {canEditEmail
+              ? "Tippe auf Name oder E-Mail, um den Wert direkt zu bearbeiten."
+              : "Tippe auf den Namen, um ihn zu bearbeiten. Die E-Mail ist bei OAuth-Accounts gesperrt."}
+          </ThemedText>
           <View style={styles.bankConnectRow}>
             <View style={styles.bankConnectContent}>
               <ThemedText

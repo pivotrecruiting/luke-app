@@ -27,11 +27,7 @@ export const StreakIcon = ({ variant = "ongoing" }: StreakIconProps) => {
         style={[styles.ornament, styles.ornamentTopRight]}
         contentFit="contain"
       />
-      <Image
-        source={foxImage}
-        style={styles.foxImage}
-        contentFit="contain"
-      />
+      <Image source={foxImage} style={styles.foxImage} contentFit="contain" />
       <Image
         source={ornamentImage}
         style={[styles.ornament, styles.ornamentBottomLeft]}

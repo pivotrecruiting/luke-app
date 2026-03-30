@@ -1,4 +1,5 @@
 import * as AppleAuthentication from "expo-apple-authentication";
+import Constants from "expo-constants";
 import * as WebBrowser from "expo-web-browser";
 import { makeRedirectUri } from "expo-auth-session";
 import { Platform } from "react-native";
@@ -41,6 +42,16 @@ type AuthErrorLikeT = {
 
 type UserMetadataT = Record<string, unknown>;
 
+type GoogleSignInModuleT =
+  typeof import("@react-native-google-signin/google-signin");
+
+type GoogleNativeConfigT = {
+  webClientId: string;
+  iosClientId?: string;
+};
+
+let isGoogleSignInConfigured = false;
+
 const isUserAlreadyRegisteredError = (error: AuthErrorLikeT) => {
   const message = error.message?.toLowerCase() ?? "";
   const code = error.code?.toLowerCase() ?? "";
@@ -73,6 +84,44 @@ const getSafeUserMetadata = (metadata: unknown): UserMetadataT =>
   metadata && typeof metadata === "object" && !Array.isArray(metadata)
     ? (metadata as UserMetadataT)
     : {};
+
+const isExpoGo = () =>
+  Constants.appOwnership === "expo" || Constants.appOwnership === "guest";
+
+const getGoogleNativeConfig = (): GoogleNativeConfigT | null => {
+  const webClientId =
+    process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID?.trim() ?? "";
+  const iosClientId =
+    process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID?.trim() ?? "";
+
+  if (!webClientId) {
+    return null;
+  }
+
+  return {
+    webClientId,
+    ...(iosClientId ? { iosClientId } : {}),
+  };
+};
+
+const loadGoogleSignInModule = async (): Promise<GoogleSignInModuleT> =>
+  // Lazy loading prevents Expo Go from resolving the native module on startup.
+  import("@react-native-google-signin/google-signin");
+
+const configureGoogleSignInIfNeeded = (
+  module: GoogleSignInModuleT,
+  config: GoogleNativeConfigT,
+) => {
+  if (isGoogleSignInConfigured) {
+    return;
+  }
+
+  module.GoogleSignin.configure({
+    webClientId: config.webClientId,
+    ...(config.iosClientId ? { iosClientId: config.iosClientId } : {}),
+  });
+  isGoogleSignInConfigured = true;
+};
 
 const createAppleNonce = (): string | null => {
   const cryptoApi = globalThis.crypto;
@@ -337,6 +386,143 @@ const signInWithNativeApple = async (): Promise<OAuthSignInResultT> => {
   }
 };
 
+const signInWithNativeGoogle = async (): Promise<OAuthSignInResultT> => {
+  const googleNativeConfig = getGoogleNativeConfig();
+
+  if (!googleNativeConfig) {
+    return {
+      status: "error",
+      message:
+        "Missing EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID for native Google Sign-In.",
+    };
+  }
+
+  let googleSignInModule: GoogleSignInModuleT | null = null;
+
+  try {
+    googleSignInModule = await loadGoogleSignInModule();
+    configureGoogleSignInIfNeeded(googleSignInModule, googleNativeConfig);
+
+    await googleSignInModule.GoogleSignin.hasPlayServices({
+      showPlayServicesUpdateDialog: true,
+    });
+
+    const response = await googleSignInModule.GoogleSignin.signIn();
+
+    if (googleSignInModule.isCancelledResponse(response)) {
+      return { status: "cancelled" };
+    }
+
+    if (!googleSignInModule.isSuccessResponse(response)) {
+      return {
+        status: "error",
+        message: "Unexpected Google Sign-In response.",
+      };
+    }
+
+    const { idToken, user } = response.data;
+
+    if (!idToken) {
+      return {
+        status: "error",
+        message:
+          "Missing Google ID token. Check your web client ID configuration.",
+      };
+    }
+
+    const googleTokens =
+      await googleSignInModule.GoogleSignin.getTokens().catch(() => null);
+
+    const googleNameMetadata = {
+      ...(user.name ? { full_name: user.name } : {}),
+      ...(user.givenName ? { given_name: user.givenName } : {}),
+      ...(user.familyName ? { family_name: user.familyName } : {}),
+    };
+
+    const { data, error } = await supabase.auth.signInWithIdToken({
+      provider: "google",
+      token: idToken,
+      access_token: googleTokens?.accessToken,
+    });
+
+    if (error) {
+      return { status: "error", message: error.message };
+    }
+
+    if (Object.keys(googleNameMetadata).length > 0) {
+      await supabase.auth
+        .updateUser({
+          data: {
+            ...getSafeUserMetadata(data.user?.user_metadata),
+            ...googleNameMetadata,
+          },
+        })
+        .catch(() => {});
+    }
+
+    return { status: "signed-in" };
+  } catch (error) {
+    if (
+      googleSignInModule &&
+      googleSignInModule.isErrorWithCode(error) &&
+      error.code === googleSignInModule.statusCodes.SIGN_IN_CANCELLED
+    ) {
+      return { status: "cancelled" };
+    }
+
+    if (
+      googleSignInModule &&
+      googleSignInModule.isErrorWithCode(error) &&
+      error.code === googleSignInModule.statusCodes.PLAY_SERVICES_NOT_AVAILABLE
+    ) {
+      return {
+        status: "error",
+        message: "Google Play Services are not available on this device.",
+      };
+    }
+
+    return {
+      status: "error",
+      message: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+};
+
+const signInWithBrowserOAuth = async (
+  provider: OAuthProviderT,
+): Promise<OAuthSignInResultT> => {
+  try {
+    const redirectTo = getAuthRedirectUrl();
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo,
+        skipBrowserRedirect: true,
+      },
+    });
+
+    if (error || !data?.url) {
+      return {
+        status: "error",
+        message: error?.message ?? "Missing OAuth URL",
+      };
+    }
+
+    const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+
+    if (result.type !== "success" || !result.url) {
+      return { status: "cancelled" };
+    }
+
+    return await createSessionFromOAuthCallback(result.url);
+  } catch (error) {
+    return {
+      status: "error",
+      message: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+};
+
 export const completeAuthSessionIfNeeded = () => {
   WebBrowser.maybeCompleteAuthSession();
 };
@@ -416,36 +602,11 @@ export const signInWithOAuth = async (
     return signInWithNativeApple();
   }
 
-  try {
-    const redirectTo = getAuthRedirectUrl();
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo,
-        skipBrowserRedirect: true,
-      },
-    });
-
-    if (error || !data?.url) {
-      return {
-        status: "error",
-        message: error?.message ?? "Missing OAuth URL",
-      };
-    }
-
-    const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
-
-    if (result.type !== "success" || !result.url) {
-      return { status: "cancelled" };
-    }
-
-    return await createSessionFromOAuthCallback(result.url);
-  } catch (error) {
-    return {
-      status: "error",
-      message: error instanceof Error ? error.message : "Unknown error",
-    };
+  if (provider === "google" && Platform.OS !== "web" && !isExpoGo()) {
+    return signInWithNativeGoogle();
   }
+
+  return signInWithBrowserOAuth(provider);
 };
 
 export const updateUserFullName = async (

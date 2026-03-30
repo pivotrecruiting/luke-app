@@ -14,6 +14,7 @@ import VaultScreen from "@/screens/VaultScreen";
 import LevelUpScreen from "@/screens/LevelUpScreen";
 import StreakScreen from "@/screens/StreakScreen";
 import PaywallScreen from "@/screens/PaywallScreen";
+import CatScreen from "@/screens/CatScreen";
 import RequestPasswordScreen from "@/screens/RequestPasswordScreen";
 import ResetPasswordScreen from "@/screens/ResetPasswordScreen";
 import { useApp } from "@/context/AppContext";
@@ -43,6 +44,7 @@ export type RootStackParamList = {
     variant?: "ongoing" | "completed";
   };
   Paywall: undefined;
+  Cat: undefined;
   RequestPassword:
     | {
         email?: string;
@@ -198,6 +200,15 @@ export default function RootStackNavigator() {
           <Stack.Screen
             name="Paywall"
             component={PaywallScreen}
+            options={{
+              presentation: "modal",
+              animation: "fade_from_bottom",
+              animationDuration: 300,
+            }}
+          />
+          <Stack.Screen
+            name="Cat"
+            component={CatScreen}
             options={{
               presentation: "modal",
               animation: "fade_from_bottom",
