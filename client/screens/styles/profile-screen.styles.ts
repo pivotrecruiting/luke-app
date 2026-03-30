@@ -186,6 +186,97 @@ export const styles = StyleSheet.create({
     fontWeight: "500",
     color: "#000000",
   },
+  accountInfoRow: {
+    // Used for: Read-only account info rows
+    paddingVertical: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E7EB",
+  },
+  accountInfoRowPressable: {
+    // Used for: Pressable account info rows
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: Spacing.md,
+  },
+  accountInfoRowDisabled: {
+    // Used for: Disabled account info row
+    opacity: 0.7,
+  },
+  accountInfoContent: {
+    // Used for: Account info text content container
+    flex: 1,
+  },
+  accountInfoEditContainer: {
+    // Used for: Inline edit content wrapper
+    gap: Spacing.sm,
+  },
+  accountInfoLabel: {
+    // Used for: Account info row label
+    color: "#000000",
+  },
+  accountInfoValue: {
+    // Used for: Account info row value
+    marginTop: Spacing.xs,
+    color: "#000000",
+  },
+  accountInfoValueDisabled: {
+    // Used for: Disabled account info value
+    color: "#6B7280",
+  },
+  accountInfoInput: {
+    // Used for: Inline editable account input
+    height: Spacing.inputHeight,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: BorderRadius.sm,
+    paddingHorizontal: Spacing.md,
+    color: "#000000",
+    backgroundColor: "#FFFFFF",
+  },
+  accountInfoInputError: {
+    // Used for: Inline account input error state
+    borderColor: "#EF4444",
+  },
+  accountInfoEditActions: {
+    // Used for: Inline account edit button row
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: Spacing.sm,
+  },
+  accountInfoActionButton: {
+    // Used for: Inline account action buttons
+    minWidth: 96,
+    borderRadius: BorderRadius.sm,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  accountInfoSecondaryButton: {
+    // Used for: Secondary inline action button
+    backgroundColor: "#F3F4F6",
+  },
+  accountInfoSecondaryButtonText: {
+    // Used for: Secondary inline action button text
+    fontWeight: "500",
+    color: "#111827",
+  },
+  accountInfoPrimaryButton: {
+    // Used for: Primary inline action button
+    backgroundColor: "#111827",
+  },
+  accountInfoPrimaryButtonText: {
+    // Used for: Primary inline action button text
+    fontWeight: "600",
+    color: "#FFFFFF",
+  },
+  accountInfoHint: {
+    // Used for: Account section helper text
+    ...Typography.small,
+    color: "#6B7280",
+    paddingTop: Spacing.md,
+  },
   bankConnectRow: {
     // Used for: Bank connect row container
     flexDirection: "row",
@@ -264,7 +355,6 @@ export const styles = StyleSheet.create({
   },
   devToolsButton: {
     // Used for: Level test button container
-    backgroundColor: "#7340fd",
     borderRadius: BorderRadius.sm,
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.lg,
@@ -308,6 +398,84 @@ export const styles = StyleSheet.create({
   modalTitle: {
     // Used for: Modal title text - black color
     ...Typography.h3,
+    fontWeight: "600",
+    color: "#000000",
+  },
+  profileFormField: {
+    // Used for: Profile edit form field wrapper
+    marginBottom: Spacing.lg,
+  },
+  profileFormLabel: {
+    // Used for: Profile edit form field label
+    color: "#000000",
+    marginBottom: Spacing.sm,
+  },
+  profileFormInput: {
+    // Used for: Profile edit form text input
+    height: Spacing.inputHeight,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: BorderRadius.sm,
+    paddingHorizontal: Spacing.md,
+    color: "#000000",
+    backgroundColor: "#FFFFFF",
+  },
+  profileFormInputDisabled: {
+    // Used for: Disabled profile form text input
+    backgroundColor: "#F3F4F6",
+    color: "#9CA3AF",
+  },
+  profileFormInputError: {
+    // Used for: Profile form input error state
+    borderColor: "#EF4444",
+  },
+  profileFormHint: {
+    // Used for: Profile form helper hint
+    ...Typography.small,
+    color: "#6B7280",
+    marginTop: Spacing.xs,
+    lineHeight: 20,
+  },
+  profileFormErrorText: {
+    // Used for: Profile form field error text
+    ...Typography.small,
+    color: "#EF4444",
+    marginTop: Spacing.xs,
+  },
+  saveProfileButton: {
+    // Used for: Save profile button container
+    borderRadius: BorderRadius.md,
+    paddingVertical: Spacing.lg,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  saveProfileButtonText: {
+    // Used for: Save profile button text
+    ...Typography.body,
+    fontWeight: "600",
+    color: "#FFFFFF",
+  },
+  secondaryActionButton: {
+    // Used for: Secondary action button container
+    borderRadius: BorderRadius.md,
+    paddingVertical: Spacing.lg,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    marginBottom: Spacing.md,
+  },
+  secondaryActionButtonDisabled: {
+    // Used for: Disabled secondary action button
+    backgroundColor: "#F3F4F6",
+    borderColor: "#E5E7EB",
+  },
+  secondaryActionButtonText: {
+    // Used for: Secondary action button text
+    ...Typography.body,
     fontWeight: "600",
     color: "#000000",
   },

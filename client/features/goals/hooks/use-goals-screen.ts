@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { RefObject } from "react";
-import { ScrollView } from "react-native";
+import { Alert, ScrollView } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { useApp } from "@/context/AppContext";
 import { calculateMonths } from "../utils/calc";
@@ -10,6 +10,8 @@ type UseGoalsScreenReturnT = {
   data: {
     goals: ReturnType<typeof useApp>["goals"];
     budgets: ReturnType<typeof useApp>["budgets"];
+    vaultBalance: ReturnType<typeof useApp>["vaultBalance"];
+    monthlyBalance: ReturnType<typeof useApp>["monthlyBalance"];
   };
   state: {
     createModalVisible: boolean;
@@ -22,6 +24,9 @@ type UseGoalsScreenReturnT = {
     selectedCategory: string | null;
     budgetLimit: string;
     successToast: SuccessToastT;
+    depositModalVisible: boolean;
+    selectedGoalForDeposit: ReturnType<typeof useApp>["goals"][number] | null;
+    depositAmount: string;
   };
   derived: {
     monthsToGoal: number;
@@ -41,6 +46,12 @@ type UseGoalsScreenReturnT = {
     handleCreateBudget: () => void;
     resetAndCloseGoalModal: () => void;
     resetAndCloseBudgetModal: () => void;
+    openDepositModal: (
+      goal: ReturnType<typeof useApp>["goals"][number],
+    ) => void;
+    setDepositAmount: (value: string) => void;
+    handleDepositSave: () => void;
+    handleDepositCancel: () => void;
   };
   refs: {
     scrollViewRef: RefObject<ScrollView | null>;
@@ -48,7 +59,16 @@ type UseGoalsScreenReturnT = {
 };
 
 export const useGoalsScreen = (): UseGoalsScreenReturnT => {
-  const { goals, budgets, budgetCategories, addGoal, addBudget } = useApp();
+  const {
+    goals,
+    budgets,
+    vaultBalance,
+    monthlyBalance,
+    budgetCategories,
+    addGoal,
+    addBudget,
+    addGoalDeposit,
+  } = useApp();
   const scrollViewRef = useRef<ScrollView>(null);
 
   useFocusEffect(
@@ -69,6 +89,12 @@ export const useGoalsScreen = (): UseGoalsScreenReturnT => {
   const [budgetLimit, setBudgetLimit] = useState("");
 
   const [successToast, setSuccessToast] = useState<SuccessToastT>(null);
+
+  const [depositModalVisible, setDepositModalVisible] = useState(false);
+  const [selectedGoalForDeposit, setSelectedGoalForDeposit] = useState<
+    ReturnType<typeof useApp>["goals"][number] | null
+  >(null);
+  const [depositAmount, setDepositAmount] = useState("");
 
   useEffect(() => {
     if (!successToast) return;
@@ -133,6 +159,37 @@ export const useGoalsScreen = (): UseGoalsScreenReturnT => {
     selectedEmoji,
   ]);
 
+  const openDepositModal = useCallback(
+    (goal: ReturnType<typeof useApp>["goals"][number]) => {
+      setSelectedGoalForDeposit(goal);
+      setDepositAmount("");
+      setDepositModalVisible(true);
+    },
+    [],
+  );
+
+  const handleDepositSave = useCallback(() => {
+    const amount = parseFloat(depositAmount.replace(",", "."));
+    if (!selectedGoalForDeposit || isNaN(amount) || amount <= 0) return;
+    if (amount > vaultBalance) {
+      Alert.alert(
+        "Nicht genug im Tresor",
+        "Die Einzahlung ist höher als dein verfügbarer Tresorbetrag.",
+      );
+      return;
+    }
+    addGoalDeposit(selectedGoalForDeposit.id, amount, new Date());
+    setDepositModalVisible(false);
+    setSelectedGoalForDeposit(null);
+    setDepositAmount("");
+  }, [addGoalDeposit, depositAmount, selectedGoalForDeposit, vaultBalance]);
+
+  const handleDepositCancel = useCallback(() => {
+    setDepositModalVisible(false);
+    setSelectedGoalForDeposit(null);
+    setDepositAmount("");
+  }, []);
+
   const handleCreateBudget = useCallback(() => {
     const limit = parseFloat(budgetLimit.replace(",", ".")) || 0;
     if (!selectedCategory || limit <= 0) return;
@@ -150,10 +207,16 @@ export const useGoalsScreen = (): UseGoalsScreenReturnT => {
     );
     resetAndCloseBudgetModal();
     setSuccessToast("budget");
-  }, [addBudget, budgetLimit, resetAndCloseBudgetModal, selectedCategory]);
+  }, [
+    addBudget,
+    budgetCategories,
+    budgetLimit,
+    resetAndCloseBudgetModal,
+    selectedCategory,
+  ]);
 
   return {
-    data: { goals, budgets },
+    data: { goals, budgets, vaultBalance, monthlyBalance },
     state: {
       createModalVisible,
       goalName,
@@ -165,6 +228,9 @@ export const useGoalsScreen = (): UseGoalsScreenReturnT => {
       selectedCategory,
       budgetLimit,
       successToast,
+      depositModalVisible,
+      selectedGoalForDeposit,
+      depositAmount,
     },
     derived: {
       monthsToGoal,
@@ -184,6 +250,10 @@ export const useGoalsScreen = (): UseGoalsScreenReturnT => {
       handleCreateBudget,
       resetAndCloseGoalModal,
       resetAndCloseBudgetModal,
+      openDepositModal,
+      setDepositAmount,
+      handleDepositSave,
+      handleDepositCancel,
     },
     refs: {
       scrollViewRef,

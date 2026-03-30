@@ -4,11 +4,12 @@ import type {
   ExpenseEntry,
   Goal,
   IncomeEntry,
-  MonthlyTrendData,
+  MonthlyBalanceSnapshotT,
   Transaction,
   TransactionSourceT,
+  VaultTransactionT,
+  MonthlyTrendData,
 } from "@/context/app/types";
-import { GERMAN_MONTHS_SHORT } from "@/context/app/constants";
 import type {
   UserProgressT,
   XpEventRuleT,
@@ -35,9 +36,10 @@ import type {
   GoalRow,
   IncomeCategoryRow,
   IncomeSourceRow,
-  MonthlyTrendRow,
+  MonthlyBalanceSnapshotRow,
   LevelRow,
   TransactionRow,
+  VaultTransactionRow,
   UserProgressRow,
   UserFinancialProfileRow,
   UserOnboardingRow,
@@ -70,23 +72,43 @@ export type AppDataPayload = {
     }[];
   }[];
   transactions: Transaction[];
+  vaultTransactions: VaultTransactionT[];
+  monthlyBalanceSnapshots: MonthlyBalanceSnapshotT[];
   monthlyTrendData: MonthlyTrendData[];
   budgetCategories: BudgetCategoryRow[];
   incomeCategories: IncomeCategoryRow[];
   initialSavingsCents?: number | null;
+  balanceAnchorMonth?: string | null;
 };
 
-const mapMonthlyTrendData = (rows: MonthlyTrendRow[]): MonthlyTrendData[] => {
-  return rows.map((row) => {
-    const monthDate = new Date(`${row.month_start}T00:00:00Z`);
-    const monthIndex = monthDate.getUTCMonth();
-    return {
-      month: GERMAN_MONTHS_SHORT[monthIndex] ?? "",
-      monthIndex,
-      monthStart: row.month_start,
-      amount: fromCents(row.amount_cents),
-    };
-  });
+const mapMonthlyBalanceSnapshots = (
+  rows: MonthlyBalanceSnapshotRow[],
+): MonthlyBalanceSnapshotT[] =>
+  rows.map((row) => ({
+    id: row.id,
+    monthStart: row.month_start,
+    amount: fromCents(row.amount_cents),
+    currency: row.currency as CurrencyCode,
+    snapshotAt: row.snapshot_at,
+  }));
+
+const mapVaultTransactions = (
+  rows: VaultTransactionRow[],
+): VaultTransactionT[] =>
+  rows.map((row) => ({
+    id: row.id,
+    amount: fromCents(row.amount_cents),
+    entryType: row.entry_type,
+    note: row.note ?? null,
+    goalId: row.goal_id ?? null,
+    rolloverMonth: row.rollover_month ?? null,
+    transactionAt: row.transaction_at,
+  }));
+
+export type MonthlyBalanceStatePayloadT = {
+  vaultTransactions: VaultTransactionT[];
+  monthlyBalanceSnapshots: MonthlyBalanceSnapshotT[];
+  balanceAnchorMonth: string | null;
 };
 
 const ensureUserRow = async (userId: string): Promise<void> => {
@@ -273,11 +295,64 @@ const ensureRecurringTransactionsForMonth = async ({
   return data as TransactionRow[];
 };
 
+export const syncMonthlyBalanceState = async (): Promise<void> => {
+  const { error } = await supabase.rpc("sync_my_monthly_balance_snapshots");
+  if (error) {
+    throw error;
+  }
+};
+
+export const fetchMonthlyBalanceState = async (
+  userId: string,
+): Promise<MonthlyBalanceStatePayloadT> => {
+  const [profileRes, vaultTransactionsRes, monthlyBalanceSnapshotsRes] =
+    await Promise.all([
+      supabase
+        .from("user_financial_profiles")
+        .select("balance_anchor_month")
+        .eq("user_id", userId)
+        .maybeSingle(),
+      supabase
+        .from("vault_transactions")
+        .select(
+          "id, user_id, amount_cents, currency, entry_type, note, goal_id, rollover_month, transaction_at",
+        )
+        .eq("user_id", userId)
+        .order("transaction_at", { ascending: false }),
+      supabase
+        .from("monthly_balance_snapshots")
+        .select("id, user_id, month_start, amount_cents, currency, snapshot_at")
+        .eq("user_id", userId)
+        .order("month_start", { ascending: true }),
+    ]);
+
+  const firstError =
+    profileRes.error ||
+    vaultTransactionsRes.error ||
+    monthlyBalanceSnapshotsRes.error;
+  if (firstError) {
+    throw firstError;
+  }
+
+  const profile = profileRes.data as UserFinancialProfileRow | null;
+
+  return {
+    vaultTransactions: mapVaultTransactions(
+      (vaultTransactionsRes.data ?? []) as VaultTransactionRow[],
+    ),
+    monthlyBalanceSnapshots: mapMonthlyBalanceSnapshots(
+      (monthlyBalanceSnapshotsRes.data ?? []) as MonthlyBalanceSnapshotRow[],
+    ),
+    balanceAnchorMonth: profile?.balance_anchor_month ?? null,
+  };
+};
+
 export const fetchAppData = async (
   userId: string,
   onboardingVersion: string,
 ): Promise<AppDataPayload> => {
   await ensureUserRow(userId);
+  await syncMonthlyBalanceState();
   const [
     onboardingRes,
     profileRes,
@@ -290,7 +365,8 @@ export const fetchAppData = async (
     incomeCategoriesRes,
     budgetsRes,
     transactionsRes,
-    monthlyTrendRes,
+    vaultTransactionsRes,
+    monthlyBalanceSnapshotsRes,
   ] = await Promise.all([
     supabase
       .from("user_onboarding")
@@ -299,7 +375,7 @@ export const fetchAppData = async (
       .maybeSingle(),
     supabase
       .from("user_financial_profiles")
-      .select("currency, initial_savings_cents")
+      .select("currency, initial_savings_cents, balance_anchor_month")
       .eq("user_id", userId)
       .maybeSingle(),
     supabase.from("users").select("name").eq("id", userId).maybeSingle(),
@@ -340,10 +416,18 @@ export const fetchAppData = async (
       )
       .eq("user_id", userId)
       .order("transaction_at", { ascending: false }),
-    supabase.rpc("get_monthly_expense_trend", {
-      target_user_id: userId,
-      months_back: 12,
-    }),
+    supabase
+      .from("vault_transactions")
+      .select(
+        "id, user_id, amount_cents, currency, entry_type, note, goal_id, rollover_month, transaction_at",
+      )
+      .eq("user_id", userId)
+      .order("transaction_at", { ascending: false }),
+    supabase
+      .from("monthly_balance_snapshots")
+      .select("id, user_id, month_start, amount_cents, currency, snapshot_at")
+      .eq("user_id", userId)
+      .order("month_start", { ascending: true }),
   ]);
 
   const firstError =
@@ -357,7 +441,9 @@ export const fetchAppData = async (
     budgetCategoriesRes.error ||
     incomeCategoriesRes.error ||
     budgetsRes.error ||
-    transactionsRes.error;
+    transactionsRes.error ||
+    vaultTransactionsRes.error ||
+    monthlyBalanceSnapshotsRes.error;
   if (firstError) {
     throw firstError;
   }
@@ -418,25 +504,12 @@ export const fetchAppData = async (
     budgetCategories,
     combinedTransactions,
   );
-  let monthlyTrendRows = (monthlyTrendRes.data ?? []) as MonthlyTrendRow[];
-  if (monthlyTrendRes.error) {
-    console.warn("Failed to load monthly trend data:", monthlyTrendRes.error);
-  }
-  if (recurringTransactions.length > 0) {
-    const { data: refreshedTrend, error: refreshedError } = await supabase.rpc(
-      "get_monthly_expense_trend",
-      {
-        target_user_id: userId,
-        months_back: 12,
-      },
-    );
-    if (refreshedError) {
-      console.warn("Failed to refresh monthly trend data:", refreshedError);
-    } else if (refreshedTrend) {
-      monthlyTrendRows = refreshedTrend as MonthlyTrendRow[];
-    }
-  }
-  const monthlyTrendData = mapMonthlyTrendData(monthlyTrendRows);
+  const monthlyBalanceSnapshots = mapMonthlyBalanceSnapshots(
+    (monthlyBalanceSnapshotsRes.data ?? []) as MonthlyBalanceSnapshotRow[],
+  );
+  const vaultTransactions = mapVaultTransactions(
+    (vaultTransactionsRes.data ?? []) as VaultTransactionRow[],
+  );
 
   const userName =
     typeof user?.name === "string" ? user.name.trim() || null : null;
@@ -450,10 +523,13 @@ export const fetchAppData = async (
     goals,
     budgets,
     transactions,
-    monthlyTrendData,
+    vaultTransactions,
+    monthlyBalanceSnapshots,
+    monthlyTrendData: [],
     budgetCategories,
     incomeCategories,
     initialSavingsCents: profile?.initial_savings_cents ?? null,
+    balanceAnchorMonth: profile?.balance_anchor_month ?? null,
   };
 };
 
@@ -469,21 +545,55 @@ export const upsertUserCurrency = async (
   }
 };
 
+export const upsertUserName = async (
+  userId: string,
+  name: string,
+): Promise<void> => {
+  const trimmedName = name.trim();
+  await ensureUserRow(userId);
+
+  const { error } = await supabase
+    .from("users")
+    .update({
+      name: trimmedName,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", userId);
+
+  if (error) {
+    throw error;
+  }
+};
+
 export const upsertInitialSavings = async (
   userId: string,
   amount: number,
   currency: CurrencyCode,
 ): Promise<void> => {
-  const { error } = await supabase
-    .from("user_financial_profiles")
-    .upsert(
-      {
-        user_id: userId,
-        initial_savings_cents: toCents(amount),
-        currency,
-      },
-      { onConflict: "user_id" },
-    );
+  const { error } = await supabase.from("user_financial_profiles").upsert(
+    {
+      user_id: userId,
+      initial_savings_cents: toCents(amount),
+      currency,
+    },
+    { onConflict: "user_id" },
+  );
+  if (error) {
+    throw error;
+  }
+};
+
+export const upsertBalanceAnchorMonth = async (
+  userId: string,
+  balanceAnchorMonth: string,
+): Promise<void> => {
+  const { error } = await supabase.from("user_financial_profiles").upsert(
+    {
+      user_id: userId,
+      balance_anchor_month: balanceAnchorMonth,
+    },
+    { onConflict: "user_id" },
+  );
   if (error) {
     throw error;
   }
@@ -802,6 +912,27 @@ export const createTransaction = async (payload: {
   return data.id as string;
 };
 
+export const createVaultTransaction = async (payload: {
+  user_id: string;
+  amount_cents: number;
+  currency: CurrencyCode;
+  entry_type: "monthly_rollover" | "manual_deposit" | "goal_deposit";
+  note?: string | null;
+  goal_id?: string | null;
+  rollover_month?: string | null;
+  transaction_at: string;
+}): Promise<string> => {
+  const { data, error } = await supabase
+    .from("vault_transactions")
+    .insert(payload)
+    .select("id")
+    .single();
+  if (error || !data) {
+    throw error ?? new Error("No vault transaction returned");
+  }
+  return data.id as string;
+};
+
 export const updateTransaction = async (
   transactionId: string,
   payload: {
@@ -848,6 +979,12 @@ export const deleteTransactionsByBudget = async (
 };
 
 export const resetUserData = async (userId: string): Promise<void> => {
+  const { error: vaultTransactionsError } = await supabase
+    .from("vault_transactions")
+    .delete()
+    .eq("user_id", userId);
+  if (vaultTransactionsError) throw vaultTransactionsError;
+
   const { error: contributionsError } = await supabase
     .from("goal_contributions")
     .delete()

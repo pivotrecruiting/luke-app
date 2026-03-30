@@ -13,12 +13,15 @@ import { queryClient } from "@/lib/query-client";
 import RootStackNavigator from "@/navigation/RootStackNavigator";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { LevelUpGate } from "@/navigation/level-up-gate";
+import { StreakGate } from "@/navigation/streak-gate";
 import { getActiveRouteName, navigationRef } from "@/navigation/navigation-ref";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AppProvider, useApp } from "@/context/AppContext";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { completeAuthCallbackFromUrl } from "@/services/auth-service";
 
 const ADD_DEEPLINK_PATH = "add";
+const AUTH_CALLBACK_PATH = "auth/callback";
 
 /**
  * Hosts the navigation container and routes deep links after app state is ready.
@@ -44,12 +47,23 @@ function AppNavigator() {
   }, [handleNavStateChange]);
 
   const handleDeepLink = useCallback(
-    (url: string | null) => {
-      if (!url || showOnboarding) return;
+    async (url: string | null) => {
+      if (!url) return;
 
       const { path } = Linking.parse(url);
       const normalizedPath = (path ?? "").replace(/\/+$/, "");
-      if (normalizedPath !== ADD_DEEPLINK_PATH) return;
+
+      if (normalizedPath === AUTH_CALLBACK_PATH) {
+        const result = await completeAuthCallbackFromUrl(url);
+
+        if (result.status === "password-recovery" && navigationRef.isReady()) {
+          navigationRef.navigate("ResetPassword");
+        }
+
+        return;
+      }
+
+      if (showOnboarding || normalizedPath !== ADD_DEEPLINK_PATH) return;
 
       if (navigationRef.isReady()) {
         navigationRef.navigate("Main", { screen: "Add" });
@@ -69,7 +83,7 @@ function AppNavigator() {
     }
 
     const subscription = Linking.addEventListener("url", ({ url }) => {
-      handleDeepLink(url);
+      void handleDeepLink(url);
     });
 
     return () => {
@@ -89,6 +103,7 @@ function AppNavigator() {
             <RootStackNavigator />
           </NavigationContainer>
           <LevelUpGate currentRouteName={currentRouteName} />
+          <StreakGate currentRouteName={currentRouteName} />
           <StatusBar style="auto" />
         </KeyboardProvider>
       </GestureHandlerRootView>

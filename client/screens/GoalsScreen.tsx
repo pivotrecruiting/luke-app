@@ -7,11 +7,13 @@ import { Spacing } from "@/constants/theme";
 import { useGoalsScreen } from "@/features/goals/hooks/use-goals-screen";
 import { GoalsHeader } from "@/features/goals/components/goals-header";
 import { LevelCard } from "@/features/goals/components/level-card";
+import { VaultCard } from "@/features/goals/components/vault-card";
 import { GoalItem } from "@/features/goals/components/goal-item";
 import { BudgetItem } from "@/features/goals/components/budget-item";
 import { CreateGoalModal } from "@/features/goals/components/create-goal-modal";
 import { CreateBudgetModal } from "@/features/goals/components/create-budget-modal";
-import { styles } from "./styles/goals-screen.styles";
+import { AddDepositModal } from "@/features/goal-detail/components/add-deposit-modal";
+import { styles, CARD_OVERLAP_HALF_HEIGHT } from "./styles/goals-screen.styles";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 
@@ -26,7 +28,26 @@ export default function GoalsScreen() {
       <GoalsHeader
         topInset={insets.top + Spacing.lg}
         successToast={state.successToast}
+        overlapBottom={CARD_OVERLAP_HALF_HEIGHT}
       />
+
+      {/* LevelCard overlapping header (like ProfileScreen). */}
+      <View
+        style={[
+          styles.overlapCardWrapper,
+          { marginTop: -CARD_OVERLAP_HALF_HEIGHT },
+        ]}
+      >
+        <LevelCard
+          onPress={(level) => {
+            if (level?.id) {
+              navigation.navigate("LevelUp", { levelId: level.id });
+              return;
+            }
+            navigation.navigate("LevelUp", {});
+          }}
+        />
+      </View>
 
       <ScrollView
         ref={refs.scrollViewRef}
@@ -38,16 +59,6 @@ export default function GoalsScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <LevelCard
-          onPress={(level) => {
-            if (level?.id) {
-              navigation.navigate("LevelUp", { levelId: level.id });
-              return;
-            }
-            navigation.navigate("LevelUp", {});
-          }}
-        />
-
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Goals</Text>
           <Pressable
@@ -58,6 +69,12 @@ export default function GoalsScreen() {
           </Pressable>
         </View>
 
+        <VaultCard
+          vaultBalance={data.vaultBalance}
+          monthlyBalance={data.monthlyBalance}
+          onPress={() => navigation.navigate("Vault")}
+        />
+
         {data.goals.map((goal) => (
           <GoalItem
             key={goal.id}
@@ -65,6 +82,7 @@ export default function GoalsScreen() {
             onPress={() =>
               navigation.navigate("GoalDetail", { goalId: goal.id })
             }
+            onDepositPress={actions.openDepositModal}
           />
         ))}
 
@@ -114,6 +132,32 @@ export default function GoalsScreen() {
         onCancel={actions.resetAndCloseBudgetModal}
         onCreate={actions.handleCreateBudget}
       />
+
+      {state.selectedGoalForDeposit && (
+        <AddDepositModal
+          visible={state.depositModalVisible}
+          bottomInset={insets.bottom}
+          depositTitle={
+            state.selectedGoalForDeposit.name.toLowerCase().includes("klarna")
+              ? "Rückzahlung"
+              : "Einzahlung"
+          }
+          goalName={state.selectedGoalForDeposit.name}
+          goalIcon={state.selectedGoalForDeposit.icon ?? "🎯"}
+          goalCurrent={state.selectedGoalForDeposit.current}
+          goalTarget={state.selectedGoalForDeposit.target}
+          vaultBalance={data.vaultBalance}
+          depositAmount={state.depositAmount}
+          selectedDate={new Date()}
+          showDatePicker={false}
+          onChangeAmount={actions.setDepositAmount}
+          onOpenDatePicker={() => {}}
+          onCloseDatePicker={() => {}}
+          onDateChange={() => {}}
+          onSave={actions.handleDepositSave}
+          onCancel={actions.handleDepositCancel}
+        />
+      )}
     </View>
   );
 }

@@ -1,12 +1,20 @@
+import * as AppleAuthentication from "expo-apple-authentication";
+import Constants from "expo-constants";
 import * as WebBrowser from "expo-web-browser";
 import { makeRedirectUri } from "expo-auth-session";
+import { Platform } from "react-native";
 import { supabase } from "@/lib/supabase";
+import { normalizeWorkshopCode } from "@/services/workshop-code-service";
 
 export type OAuthProviderT = "google" | "apple";
 
 type AuthErrorT = {
   status: "error";
   message: string;
+};
+
+type AuthSuccessResultT = {
+  status: "success";
 };
 
 export type EmailSignUpResultT =
@@ -19,12 +27,31 @@ export type OAuthSignInResultT =
   | { status: "cancelled" }
   | AuthErrorT;
 
+export type UpdateUserResultT = AuthSuccessResultT | AuthErrorT;
+
+export type AuthCallbackResultT =
+  | { status: "signed-in" }
+  | { status: "password-recovery" }
+  | AuthErrorT;
+
 type AuthErrorLikeT = {
   message?: string;
   status?: number;
   code?: string;
   name?: string;
 };
+
+type UserMetadataT = Record<string, unknown>;
+
+type GoogleSignInModuleT =
+  typeof import("@react-native-google-signin/google-signin");
+
+type GoogleNativeConfigT = {
+  webClientId: string;
+  iosClientId?: string;
+};
+
+let isGoogleSignInConfigured = false;
 
 const isUserAlreadyRegisteredError = (error: AuthErrorLikeT) => {
   const message = error.message?.toLowerCase() ?? "";
@@ -54,6 +81,449 @@ const getAuthRedirectUrl = () =>
     path: "auth/callback",
   });
 
+const getSafeUserMetadata = (metadata: unknown): UserMetadataT =>
+  metadata && typeof metadata === "object" && !Array.isArray(metadata)
+    ? (metadata as UserMetadataT)
+    : {};
+
+const isExpoGo = () =>
+  Constants.appOwnership === "expo" || Constants.appOwnership === "guest";
+
+const getGoogleNativeConfig = (): GoogleNativeConfigT | null => {
+  const webClientId =
+    process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID?.trim() ?? "";
+  const iosClientId =
+    process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID?.trim() ?? "";
+
+  if (!webClientId) {
+    return null;
+  }
+
+  return {
+    webClientId,
+    ...(iosClientId ? { iosClientId } : {}),
+  };
+};
+
+const loadGoogleSignInModule = async (): Promise<GoogleSignInModuleT> =>
+  // Lazy loading prevents Expo Go from resolving the native module on startup.
+  import("@react-native-google-signin/google-signin");
+
+const configureGoogleSignInIfNeeded = (
+  module: GoogleSignInModuleT,
+  config: GoogleNativeConfigT,
+) => {
+  if (isGoogleSignInConfigured) {
+    return;
+  }
+
+  module.GoogleSignin.configure({
+    webClientId: config.webClientId,
+    ...(config.iosClientId ? { iosClientId: config.iosClientId } : {}),
+  });
+  isGoogleSignInConfigured = true;
+};
+
+const createAppleNonce = (): string | null => {
+  const cryptoApi = globalThis.crypto;
+
+  if (!cryptoApi?.getRandomValues) {
+    return null;
+  }
+
+  const randomBytes = new Uint8Array(32);
+  cryptoApi.getRandomValues(randomBytes);
+
+  return Array.from(randomBytes, (value) =>
+    value.toString(16).padStart(2, "0"),
+  ).join("");
+};
+
+const buildAppleNameMetadata = (
+  fullName: AppleAuthentication.AppleAuthenticationFullName | null,
+): UserMetadataT | null => {
+  if (!fullName) {
+    return null;
+  }
+
+  const givenName = fullName.givenName?.trim() ?? "";
+  const familyName = fullName.familyName?.trim() ?? "";
+  const fullNameValue = [givenName, familyName]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+
+  if (!fullNameValue && !givenName && !familyName) {
+    return null;
+  }
+
+  return {
+    ...(fullNameValue ? { full_name: fullNameValue } : {}),
+    ...(givenName ? { given_name: givenName } : {}),
+    ...(familyName ? { family_name: familyName } : {}),
+  };
+};
+
+const persistAppleNameIfAvailable = async (
+  fullName: AppleAuthentication.AppleAuthenticationFullName | null,
+  currentMetadata?: unknown,
+) => {
+  const appleNameMetadata = buildAppleNameMetadata(fullName);
+
+  if (!appleNameMetadata) {
+    return;
+  }
+
+  await supabase.auth.updateUser({
+    data: {
+      ...getSafeUserMetadata(currentMetadata),
+      ...appleNameMetadata,
+    },
+  });
+};
+
+type OAuthCallbackParamsT = {
+  accessToken: string | null;
+  refreshToken: string | null;
+  code: string | null;
+  type: string | null;
+  errorCode: string | null;
+  errorDescription: string | null;
+};
+
+const getParam = (
+  searchParams: URLSearchParams | null,
+  key: string,
+): string | null => {
+  if (!searchParams) return null;
+  const value = searchParams.get(key);
+  return value && value.length > 0 ? value : null;
+};
+
+const extractOAuthCallbackParams = (url: string): OAuthCallbackParamsT => {
+  try {
+    const parsedUrl = new URL(url);
+    const hashParams = parsedUrl.hash
+      ? new URLSearchParams(parsedUrl.hash.replace(/^#/, ""))
+      : null;
+
+    const accessToken =
+      getParam(parsedUrl.searchParams, "access_token") ??
+      getParam(hashParams, "access_token");
+    const refreshToken =
+      getParam(parsedUrl.searchParams, "refresh_token") ??
+      getParam(hashParams, "refresh_token");
+    const code =
+      getParam(parsedUrl.searchParams, "code") ?? getParam(hashParams, "code");
+    const type =
+      getParam(parsedUrl.searchParams, "type") ?? getParam(hashParams, "type");
+    const errorCode =
+      getParam(parsedUrl.searchParams, "error_code") ??
+      getParam(hashParams, "error_code") ??
+      getParam(parsedUrl.searchParams, "error") ??
+      getParam(hashParams, "error");
+    const errorDescription =
+      getParam(parsedUrl.searchParams, "error_description") ??
+      getParam(hashParams, "error_description");
+
+    return {
+      accessToken,
+      refreshToken,
+      code,
+      type,
+      errorCode,
+      errorDescription,
+    };
+  } catch {
+    // Fallback for callback URLs that cannot be parsed by URL().
+    const queryMatch = url.match(/\?([^#]+)/);
+    const hashMatch = url.match(/#(.+)$/);
+    const queryParams = queryMatch ? new URLSearchParams(queryMatch[1]) : null;
+    const hashParams = hashMatch ? new URLSearchParams(hashMatch[1]) : null;
+
+    const accessToken =
+      getParam(queryParams, "access_token") ??
+      getParam(hashParams, "access_token");
+    const refreshToken =
+      getParam(queryParams, "refresh_token") ??
+      getParam(hashParams, "refresh_token");
+    const code = getParam(queryParams, "code") ?? getParam(hashParams, "code");
+    const type = getParam(queryParams, "type") ?? getParam(hashParams, "type");
+    const errorCode =
+      getParam(queryParams, "error_code") ??
+      getParam(hashParams, "error_code") ??
+      getParam(queryParams, "error") ??
+      getParam(hashParams, "error");
+    const errorDescription =
+      getParam(queryParams, "error_description") ??
+      getParam(hashParams, "error_description");
+
+    return {
+      accessToken,
+      refreshToken,
+      code,
+      type,
+      errorCode,
+      errorDescription,
+    };
+  }
+};
+
+export const completeAuthCallbackFromUrl = async (
+  callbackUrl: string,
+): Promise<AuthCallbackResultT> => {
+  const { accessToken, refreshToken, code, type, errorCode, errorDescription } =
+    extractOAuthCallbackParams(callbackUrl);
+
+  if (errorCode || errorDescription) {
+    return {
+      status: "error",
+      message: errorDescription ?? errorCode ?? "OAuth callback failed",
+    };
+  }
+
+  if (accessToken && refreshToken) {
+    const { error } = await supabase.auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    });
+
+    if (error) {
+      return { status: "error", message: error.message };
+    }
+
+    return {
+      status: type === "recovery" ? "password-recovery" : "signed-in",
+    };
+  }
+
+  if (code) {
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    if (error) {
+      return { status: "error", message: error.message };
+    }
+
+    return {
+      status: type === "recovery" ? "password-recovery" : "signed-in",
+    };
+  }
+
+  return {
+    status: "error",
+    message: "Missing auth tokens in OAuth callback URL",
+  };
+};
+
+const createSessionFromOAuthCallback = async (
+  callbackUrl: string,
+): Promise<OAuthSignInResultT> => {
+  const result = await completeAuthCallbackFromUrl(callbackUrl);
+
+  if (result.status === "error") {
+    return result;
+  }
+
+  return { status: "signed-in" };
+};
+
+const signInWithNativeApple = async (): Promise<OAuthSignInResultT> => {
+  try {
+    const isAvailable = await AppleAuthentication.isAvailableAsync();
+
+    if (!isAvailable) {
+      return {
+        status: "error",
+        message: "Apple Sign-In is not available on this device.",
+      };
+    }
+
+    const nonce = createAppleNonce();
+    const credential = await AppleAuthentication.signInAsync({
+      requestedScopes: [
+        AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+        AppleAuthentication.AppleAuthenticationScope.EMAIL,
+      ],
+      ...(nonce ? { nonce } : {}),
+    });
+
+    if (!credential.identityToken) {
+      return {
+        status: "error",
+        message: "Missing Apple identity token.",
+      };
+    }
+
+    const { data, error } = await supabase.auth.signInWithIdToken({
+      provider: "apple",
+      token: credential.identityToken,
+      access_token: credential.authorizationCode ?? undefined,
+      nonce: nonce ?? undefined,
+    });
+
+    if (error) {
+      return { status: "error", message: error.message };
+    }
+
+    await persistAppleNameIfAvailable(
+      credential.fullName,
+      data.user?.user_metadata,
+    ).catch(() => {});
+
+    return { status: "signed-in" };
+  } catch (error) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "code" in error &&
+      error.code === "ERR_REQUEST_CANCELED"
+    ) {
+      return { status: "cancelled" };
+    }
+
+    return {
+      status: "error",
+      message: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+};
+
+const signInWithNativeGoogle = async (): Promise<OAuthSignInResultT> => {
+  const googleNativeConfig = getGoogleNativeConfig();
+
+  if (!googleNativeConfig) {
+    return {
+      status: "error",
+      message:
+        "Missing EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID for native Google Sign-In.",
+    };
+  }
+
+  let googleSignInModule: GoogleSignInModuleT | null = null;
+
+  try {
+    googleSignInModule = await loadGoogleSignInModule();
+    configureGoogleSignInIfNeeded(googleSignInModule, googleNativeConfig);
+
+    await googleSignInModule.GoogleSignin.hasPlayServices({
+      showPlayServicesUpdateDialog: true,
+    });
+
+    const response = await googleSignInModule.GoogleSignin.signIn();
+
+    if (googleSignInModule.isCancelledResponse(response)) {
+      return { status: "cancelled" };
+    }
+
+    if (!googleSignInModule.isSuccessResponse(response)) {
+      return {
+        status: "error",
+        message: "Unexpected Google Sign-In response.",
+      };
+    }
+
+    const { idToken, user } = response.data;
+
+    if (!idToken) {
+      return {
+        status: "error",
+        message:
+          "Missing Google ID token. Check your web client ID configuration.",
+      };
+    }
+
+    const googleTokens =
+      await googleSignInModule.GoogleSignin.getTokens().catch(() => null);
+
+    const googleNameMetadata = {
+      ...(user.name ? { full_name: user.name } : {}),
+      ...(user.givenName ? { given_name: user.givenName } : {}),
+      ...(user.familyName ? { family_name: user.familyName } : {}),
+    };
+
+    const { data, error } = await supabase.auth.signInWithIdToken({
+      provider: "google",
+      token: idToken,
+      access_token: googleTokens?.accessToken,
+    });
+
+    if (error) {
+      return { status: "error", message: error.message };
+    }
+
+    if (Object.keys(googleNameMetadata).length > 0) {
+      await supabase.auth
+        .updateUser({
+          data: {
+            ...getSafeUserMetadata(data.user?.user_metadata),
+            ...googleNameMetadata,
+          },
+        })
+        .catch(() => {});
+    }
+
+    return { status: "signed-in" };
+  } catch (error) {
+    if (
+      googleSignInModule &&
+      googleSignInModule.isErrorWithCode(error) &&
+      error.code === googleSignInModule.statusCodes.SIGN_IN_CANCELLED
+    ) {
+      return { status: "cancelled" };
+    }
+
+    if (
+      googleSignInModule &&
+      googleSignInModule.isErrorWithCode(error) &&
+      error.code === googleSignInModule.statusCodes.PLAY_SERVICES_NOT_AVAILABLE
+    ) {
+      return {
+        status: "error",
+        message: "Google Play Services are not available on this device.",
+      };
+    }
+
+    return {
+      status: "error",
+      message: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+};
+
+const signInWithBrowserOAuth = async (
+  provider: OAuthProviderT,
+): Promise<OAuthSignInResultT> => {
+  try {
+    const redirectTo = getAuthRedirectUrl();
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo,
+        skipBrowserRedirect: true,
+      },
+    });
+
+    if (error || !data?.url) {
+      return {
+        status: "error",
+        message: error?.message ?? "Missing OAuth URL",
+      };
+    }
+
+    const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+
+    if (result.type !== "success" || !result.url) {
+      return { status: "cancelled" };
+    }
+
+    return await createSessionFromOAuthCallback(result.url);
+  } catch (error) {
+    return {
+      status: "error",
+      message: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+};
+
 export const completeAuthSessionIfNeeded = () => {
   WebBrowser.maybeCompleteAuthSession();
 };
@@ -61,13 +531,24 @@ export const completeAuthSessionIfNeeded = () => {
 export const signUpWithEmailPassword = async (
   email: string,
   password: string,
+  workshopCode?: string,
 ): Promise<EmailSignUpResultT> => {
   try {
+    const normalizedWorkshopCode = workshopCode
+      ? normalizeWorkshopCode(workshopCode)
+      : "";
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: getAuthRedirectUrl(),
+        ...(normalizedWorkshopCode
+          ? {
+              data: {
+                pending_workshop_code: normalizedWorkshopCode,
+              },
+            }
+          : {}),
       },
     });
 
@@ -129,38 +610,96 @@ export const signUpWithEmailPassword = async (
 export const signInWithOAuth = async (
   provider: OAuthProviderT,
 ): Promise<OAuthSignInResultT> => {
+  if (provider === "apple" && Platform.OS === "ios") {
+    return signInWithNativeApple();
+  }
+
+  if (provider === "google" && Platform.OS !== "web" && !isExpoGo()) {
+    return signInWithNativeGoogle();
+  }
+
+  return signInWithBrowserOAuth(provider);
+};
+
+export const updateUserFullName = async (
+  fullName: string,
+  currentMetadata?: unknown,
+): Promise<UpdateUserResultT> => {
   try {
-    const redirectTo = getAuthRedirectUrl();
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo,
-        skipBrowserRedirect: true,
+    const { error } = await supabase.auth.updateUser({
+      data: {
+        ...getSafeUserMetadata(currentMetadata),
+        full_name: fullName.trim(),
       },
     });
 
-    if (error || !data?.url) {
-      return {
-        status: "error",
-        message: error?.message ?? "Missing OAuth URL",
-      };
+    if (error) {
+      return { status: "error", message: error.message };
     }
 
-    const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+    return { status: "success" };
+  } catch (error) {
+    return {
+      status: "error",
+      message: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+};
 
-    if (result.type !== "success" || !result.url) {
-      return { status: "cancelled" };
-    }
-
-    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(
-      result.url,
+export const updateUserEmail = async (
+  email: string,
+): Promise<UpdateUserResultT> => {
+  try {
+    const { error } = await supabase.auth.updateUser(
+      { email: email.trim().toLowerCase() },
+      { emailRedirectTo: getAuthRedirectUrl() },
     );
 
-    if (exchangeError) {
-      return { status: "error", message: exchangeError.message };
+    if (error) {
+      return { status: "error", message: error.message };
     }
 
-    return { status: "signed-in" };
+    return { status: "success" };
+  } catch (error) {
+    return {
+      status: "error",
+      message: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+};
+
+export const sendPasswordResetEmail = async (
+  email: string,
+): Promise<UpdateUserResultT> => {
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: getAuthRedirectUrl(),
+    });
+
+    if (error) {
+      return { status: "error", message: error.message };
+    }
+
+    return { status: "success" };
+  } catch (error) {
+    return {
+      status: "error",
+      message: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+};
+
+export const updateUserPassword = async (
+  password: string,
+): Promise<UpdateUserResultT> => {
+  try {
+    const { error } = await supabase.auth.updateUser({ password });
+
+    if (error) {
+      return { status: "error", message: error.message };
+    }
+
+    return { status: "success" };
   } catch (error) {
     return {
       status: "error",

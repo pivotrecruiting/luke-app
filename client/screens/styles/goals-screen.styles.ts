@@ -1,5 +1,8 @@
 import { StyleSheet } from "react-native";
 
+/** Half of card height for 50/50 overlap with header (LevelCard / VaultCard). */
+export const CARD_OVERLAP_HALF_HEIGHT = 64;
+
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -8,6 +11,8 @@ export const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingBottom: 24,
+    zIndex: 0,
+    elevation: 0,
   },
   headerTitle: {
     fontSize: 32,
@@ -57,6 +62,12 @@ export const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 24,
   },
+  /** Wrapper for overlapping card - ensures card renders above header. */
+  overlapCardWrapper: {
+    zIndex: 100,
+    elevation: 10,
+    marginHorizontal: 20,
+  },
   levelCard: {
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
@@ -66,10 +77,56 @@ export const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
-    elevation: 3,
+    elevation: 10,
+    zIndex: 100,
   },
   levelCardPressed: {
     opacity: 0.85,
+  },
+  vaultCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  vaultHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  vaultTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  vaultIconWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "rgba(29, 78, 216, 0.12)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  vaultTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#0F172A",
+  },
+  vaultAmount: {
+    fontSize: 30,
+    fontWeight: "700",
+    color: "#1D4ED8",
+    marginBottom: 6,
+  },
+  vaultHint: {
+    fontSize: 13,
+    color: "#6B7280",
   },
   levelHeader: {
     flexDirection: "row",
@@ -202,6 +259,24 @@ export const styles = StyleSheet.create({
   goalRemainingValue: {
     fontSize: 20,
     fontWeight: "700",
+    color: "#3B5BDB",
+  },
+  goalFooterLeft: {
+    flex: 1,
+  },
+  goalDepositButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+  goalDepositButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
     color: "#3B5BDB",
   },
   budgetItem: {
@@ -401,7 +476,6 @@ export const styles = StyleSheet.create({
     color: "#FFFFFF",
   },
   createButton: {
-    backgroundColor: "#7340FE",
     borderRadius: 24,
     paddingVertical: 14,
     paddingHorizontal: 28,
@@ -540,7 +614,6 @@ export const styles = StyleSheet.create({
     color: "#EF4444",
   },
   closeDetailButton: {
-    backgroundColor: "#7340FE",
     borderRadius: 24,
     paddingVertical: 14,
     alignItems: "center",

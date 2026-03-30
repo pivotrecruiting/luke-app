@@ -1,24 +1,56 @@
-import React, { useMemo, useState } from "react";
-import { Alert, View, ScrollView, Pressable } from "react-native";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Alert, View, ScrollView, Pressable, TextInput } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { z } from "zod";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { Feather } from "@expo/vector-icons";
 import { ThemedText } from "@/components/ThemedText";
 import { SettingsRow } from "@/components/SettingsRow";
-import { Spacing } from "@/constants/theme";
+import { HeaderGradient, Spacing } from "@/constants/theme";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
+import { updateUserEmail, updateUserFullName } from "@/services/auth-service";
+import { upsertUserName } from "@/services/app-service";
 import { resolveLevelByXp } from "@/features/xp/utils/levels";
 import { formatDaysSince } from "@/utils/dates";
 import { getUserFirstName } from "@/utils/user";
 import { styles } from "./styles/profile-screen.styles";
 import { AppModal } from "@/components/ui/app-modal";
+import { PurpleGradientButton } from "@/components/ui/purple-gradient-button";
+import { ReviewModal } from "@/features/review/components/review-modal";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+type EditableProfileFieldT = "name" | "email";
+
+const profileNameSchema = z
+  .string()
+  .trim()
+  .min(1, "Bitte gib deinen Namen ein.")
+  .max(80, "Dein Name darf maximal 80 Zeichen lang sein.");
+
+const profileEmailSchema = z
+  .string()
+  .trim()
+  .email("Bitte gib eine gültige E-Mail-Adresse ein.");
+
+const getProviderLabel = (provider: string) => {
+  switch (provider) {
+    case "google":
+      return "Google";
+    case "apple":
+      return "Apple";
+    case "email":
+      return "E-Mail & Passwort";
+    case "phone":
+      return "Telefon";
+    default:
+      return provider;
+  }
+};
 
 /**
  * Profile screen displaying user information, settings, and account options.
@@ -26,17 +58,33 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
-  const { levels, userProgress, transactionBalance, currency, userName } =
-    useApp();
+  const {
+    levels,
+    userProgress,
+    transactionBalance,
+    currency,
+    userName,
+    setUserName,
+  } = useApp();
   const { user } = useAuth();
   const [manageModalVisible, setManageModalVisible] = useState(false);
   const [deleteAccountModalVisible, setDeleteAccountModalVisible] =
     useState(false);
+  const [reviewModalVisible, setReviewModalVisible] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [activeEditField, setActiveEditField] =
+    useState<EditableProfileFieldT | null>(null);
+  const [profileNameInput, setProfileNameInput] = useState("");
+  const [profileEmailInput, setProfileEmailInput] = useState("");
+  const [profileNameError, setProfileNameError] = useState<string | null>(null);
+  const [profileEmailError, setProfileEmailError] = useState<string | null>(
+    null,
+  );
+  const profileNameInputRef = useRef<TextInput | null>(null);
+  const profileEmailInputRef = useRef<TextInput | null>(null);
 
   const profileCardOverlap = Spacing["4xl"];
-
-  const loginMethod = "Google Account";
   const appVersion = "1.0.0";
 
   const formatCurrency = (value: number): string => {
@@ -62,9 +110,45 @@ export default function ProfileScreen() {
     typeof user?.user_metadata?.full_name === "string"
       ? user.user_metadata.full_name
       : null;
-  const firstName = getUserFirstName(userName ?? metadataName);
+  const currentFullName = (userName ?? metadataName ?? "").trim();
+  const firstName = getUserFirstName(currentFullName);
   const fallbackLevel = currentLevel?.levelNumber ?? 1;
   const profileName = firstName ?? `Level ${fallbackLevel}`;
+  const profileEmail = user?.email ?? null;
+  const authProviders = useMemo(() => {
+    const providerSet = new Set<string>();
+
+    if (Array.isArray(user?.app_metadata?.providers)) {
+      for (const provider of user.app_metadata.providers) {
+        if (typeof provider === "string" && provider.trim()) {
+          providerSet.add(provider);
+        }
+      }
+    }
+
+    if (typeof user?.app_metadata?.provider === "string") {
+      providerSet.add(user.app_metadata.provider);
+    }
+
+    if (providerSet.size === 0 && profileEmail) {
+      providerSet.add("email");
+    }
+
+    return Array.from(providerSet);
+  }, [
+    profileEmail,
+    user?.app_metadata?.provider,
+    user?.app_metadata?.providers,
+  ]);
+  const hasOAuthProvider = authProviders.some(
+    (provider) => provider !== "email" && provider !== "phone",
+  );
+  const canEditEmail = Boolean(profileEmail) && !hasOAuthProvider;
+  const canResetPassword = canEditEmail;
+  const loginMethod =
+    authProviders.length > 0
+      ? authProviders.map(getProviderLabel).join(" + ")
+      : "Unbekannt";
   const levelEmoji = currentLevel?.emoji ?? "🦊";
   const savingsLabel = transactionBalance >= 0 ? "Gespart" : "Ausgegeben";
   const savingsAmount = formatCurrency(Math.abs(transactionBalance));
@@ -74,8 +158,45 @@ export default function ProfileScreen() {
     highestStreakValue === 1 ? "Tag" : "Tage"
   }`;
 
+  useEffect(() => {
+    setProfileNameInput(currentFullName);
+    setProfileEmailInput(profileEmail ?? "");
+  }, [currentFullName, profileEmail]);
+
+  useEffect(() => {
+    if (activeEditField === "name") {
+      profileNameInputRef.current?.focus();
+    }
+
+    if (activeEditField === "email") {
+      profileEmailInputRef.current?.focus();
+    }
+  }, [activeEditField]);
+
+  const startEditingField = (field: EditableProfileFieldT) => {
+    if (isSavingProfile || isLoggingOut) return;
+
+    if (field === "email" && !canEditEmail) {
+      return;
+    }
+
+    setProfileNameInput(currentFullName);
+    setProfileEmailInput(profileEmail ?? "");
+    setProfileNameError(null);
+    setProfileEmailError(null);
+    setActiveEditField(field);
+  };
+
+  const stopEditingField = () => {
+    setProfileNameInput(currentFullName);
+    setProfileEmailInput(profileEmail ?? "");
+    setProfileNameError(null);
+    setProfileEmailError(null);
+    setActiveEditField(null);
+  };
+
   const handleLogout = async () => {
-    if (isLoggingOut) return;
+    if (isLoggingOut || isSavingProfile) return;
     setIsLoggingOut(true);
     try {
       const { error } = await supabase.auth.signOut();
@@ -93,6 +214,119 @@ export default function ProfileScreen() {
     }
   };
 
+  const handlePasswordReset = async () => {
+    if (!profileEmail || !canResetPassword || isSavingProfile || isLoggingOut) {
+      return;
+    }
+
+    navigation.navigate("RequestPassword", { email: profileEmail });
+  };
+
+  const handleSaveProfile = async (field: EditableProfileFieldT) => {
+    if (!user?.id || isSavingProfile || isLoggingOut) return;
+
+    const currentEmail = profileEmail?.trim().toLowerCase() ?? "";
+    let nextName = currentFullName;
+    let nextEmail = currentEmail;
+
+    if (field === "name") {
+      const parsedName = profileNameSchema.safeParse(profileNameInput);
+      nextName = parsedName.success ? parsedName.data : "";
+      setProfileNameError(
+        parsedName.success
+          ? null
+          : (parsedName.error.issues[0]?.message ?? null),
+      );
+      setProfileEmailError(null);
+    }
+
+    if (field === "email") {
+      if (!canEditEmail) {
+        return;
+      }
+
+      setProfileNameError(null);
+      const parsedEmail = profileEmailSchema.safeParse(profileEmailInput);
+      setProfileEmailError(
+        parsedEmail.success
+          ? null
+          : (parsedEmail.error.issues[0]?.message ?? null),
+      );
+      if (parsedEmail.success) {
+        nextEmail = parsedEmail.data.toLowerCase();
+      }
+    } else {
+      setProfileEmailError(null);
+    }
+
+    if ((field === "name" && !nextName) || (field === "email" && !nextEmail)) {
+      return;
+    }
+
+    const shouldUpdateName = field === "name" && nextName !== currentFullName;
+    const shouldUpdateEmail =
+      field === "email" && canEditEmail && nextEmail !== currentEmail;
+
+    if (!shouldUpdateName && !shouldUpdateEmail) {
+      setActiveEditField(null);
+      return;
+    }
+
+    setIsSavingProfile(true);
+    let didUpdateName = false;
+
+    try {
+      if (shouldUpdateName) {
+        await upsertUserName(user.id, nextName);
+        setUserName(nextName);
+        didUpdateName = true;
+
+        const metadataResult = await updateUserFullName(
+          nextName,
+          user.user_metadata,
+        );
+
+        if (metadataResult.status === "error") {
+          console.warn(
+            "Failed to sync full_name metadata:",
+            metadataResult.message,
+          );
+        }
+      }
+
+      if (shouldUpdateEmail) {
+        const emailResult = await updateUserEmail(nextEmail);
+
+        if (emailResult.status === "error") {
+          throw new Error(emailResult.message);
+        }
+      }
+
+      setActiveEditField(null);
+
+      Alert.alert(
+        "Profil aktualisiert",
+        shouldUpdateEmail
+          ? "Die E-Mail-Änderung wurde gestartet. Bitte prüfe dein Postfach, um sie abzuschließen."
+          : "Dein Name wurde aktualisiert.",
+      );
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Bitte versuche es erneut.";
+
+      Alert.alert(
+        didUpdateName
+          ? "Profil teilweise aktualisiert"
+          : "Aktualisierung fehlgeschlagen",
+        didUpdateName
+          ? `Dein Name wurde gespeichert, aber die E-Mail konnte nicht geändert werden. ${errorMessage}`
+          : errorMessage,
+      );
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
+
   const handleDeleteAccount = () => {
     // TODO: Implement delete account functionality
     setDeleteAccountModalVisible(false);
@@ -101,9 +335,9 @@ export default function ProfileScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={["rgba(115, 64, 253, 0.9)", "rgba(115, 64, 253, 0.7)"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
+        colors={HeaderGradient.colors}
+        start={HeaderGradient.start}
+        end={HeaderGradient.end}
         style={[
           styles.header,
           {
@@ -124,26 +358,22 @@ export default function ProfileScreen() {
       </LinearGradient>
 
       {/* User Profile Card - positioned over header */}
-      <View style={[styles.profileCard, { marginTop: -profileCardOverlap }]}>
+      <Pressable
+        style={[styles.profileCard, { marginTop: -profileCardOverlap }]}
+        onPress={() => {
+          if (currentLevel?.id) {
+            navigation.navigate("LevelUp", { levelId: currentLevel.id });
+            return;
+          }
+          navigation.navigate("LevelUp", {});
+        }}
+        accessibilityRole="button"
+        accessibilityLabel="Level Up anzeigen"
+      >
         <View style={styles.profileHeader}>
-          <Pressable
-            style={({ pressed }) => [
-              styles.profileAvatarButton,
-              pressed ? styles.profileAvatarButtonPressed : null,
-            ]}
-            onPress={() => {
-              if (currentLevel?.id) {
-                navigation.navigate("LevelUp", { levelId: currentLevel.id });
-                return;
-              }
-              navigation.navigate("LevelUp", {});
-            }}
-            accessibilityRole="button"
-            accessibilityLabel="Level Up anzeigen"
-            hitSlop={8}
-          >
+          <View style={styles.profileAvatarButton}>
             <ThemedText style={styles.profileAvatar}>{levelEmoji}</ThemedText>
-          </Pressable>
+          </View>
           <ThemedText style={styles.profileName}>{profileName}</ThemedText>
         </View>
         <View style={styles.profileStats}>
@@ -187,7 +417,7 @@ export default function ProfileScreen() {
             </ThemedText>
           </View>
         </View>
-      </View>
+      </Pressable>
 
       <ScrollView
         style={styles.scrollView}
@@ -222,13 +452,223 @@ export default function ProfileScreen() {
                 styles.loginMethodButton,
                 { opacity: pressed ? 0.7 : 1 },
               ]}
-              onPress={() => setManageModalVisible(true)}
+              onPress={() => {
+                stopEditingField();
+                setManageModalVisible(true);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Accountoptionen öffnen"
             >
               <ThemedText type="small" style={styles.loginMethodButtonText}>
-                Manage
+                Mehr
               </ThemedText>
             </Pressable>
           </View>
+          {activeEditField === "name" ? (
+            <View style={styles.accountInfoRow}>
+              <View style={styles.accountInfoEditContainer}>
+                <ThemedText type="body" style={styles.accountInfoLabel}>
+                  Name
+                </ThemedText>
+                <TextInput
+                  ref={profileNameInputRef}
+                  style={[
+                    styles.accountInfoInput,
+                    profileNameError ? styles.accountInfoInputError : null,
+                  ]}
+                  value={profileNameInput}
+                  onChangeText={(text) => {
+                    setProfileNameInput(text);
+                    if (profileNameError) {
+                      setProfileNameError(null);
+                    }
+                  }}
+                  placeholder="Dein Name"
+                  placeholderTextColor="#9CA3AF"
+                  autoCapitalize="words"
+                  autoCorrect={false}
+                  editable={!isSavingProfile}
+                  accessibilityLabel="Name bearbeiten"
+                  returnKeyType="done"
+                  onSubmitEditing={() => void handleSaveProfile("name")}
+                />
+                {profileNameError ? (
+                  <ThemedText type="small" style={styles.profileFormErrorText}>
+                    {profileNameError}
+                  </ThemedText>
+                ) : null}
+                <View style={styles.accountInfoEditActions}>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.accountInfoActionButton,
+                      styles.accountInfoSecondaryButton,
+                      { opacity: pressed || isSavingProfile ? 0.7 : 1 },
+                    ]}
+                    onPress={stopEditingField}
+                    disabled={isSavingProfile}
+                  >
+                    <ThemedText
+                      type="small"
+                      style={styles.accountInfoSecondaryButtonText}
+                    >
+                      Abbrechen
+                    </ThemedText>
+                  </Pressable>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.accountInfoActionButton,
+                      styles.accountInfoPrimaryButton,
+                      { opacity: pressed || isSavingProfile ? 0.7 : 1 },
+                    ]}
+                    onPress={() => void handleSaveProfile("name")}
+                    disabled={isSavingProfile}
+                  >
+                    <ThemedText
+                      type="small"
+                      style={styles.accountInfoPrimaryButtonText}
+                    >
+                      {isSavingProfile ? "Speichern..." : "Speichern"}
+                    </ThemedText>
+                  </Pressable>
+                </View>
+              </View>
+            </View>
+          ) : (
+            <Pressable
+              style={({ pressed }) => [
+                styles.accountInfoRow,
+                styles.accountInfoRowPressable,
+                { opacity: pressed ? 0.75 : 1 },
+              ]}
+              onPress={() => startEditingField("name")}
+              accessibilityRole="button"
+              accessibilityLabel="Name bearbeiten"
+            >
+              <View style={styles.accountInfoContent}>
+                <ThemedText type="body" style={styles.accountInfoLabel}>
+                  Name
+                </ThemedText>
+                <ThemedText type="small" style={styles.accountInfoValue}>
+                  {currentFullName || "Nicht hinterlegt"}
+                </ThemedText>
+              </View>
+              <Feather name="edit-2" size={16} color="#6B7280" />
+            </Pressable>
+          )}
+          {activeEditField === "email" ? (
+            <View style={styles.accountInfoRow}>
+              <View style={styles.accountInfoEditContainer}>
+                <ThemedText type="body" style={styles.accountInfoLabel}>
+                  E-Mail
+                </ThemedText>
+                <TextInput
+                  ref={profileEmailInputRef}
+                  style={[
+                    styles.accountInfoInput,
+                    !canEditEmail ? styles.profileFormInputDisabled : null,
+                    profileEmailError ? styles.accountInfoInputError : null,
+                  ]}
+                  value={profileEmailInput}
+                  onChangeText={(text) => {
+                    setProfileEmailInput(text);
+                    if (profileEmailError) {
+                      setProfileEmailError(null);
+                    }
+                  }}
+                  placeholder="name@beispiel.de"
+                  placeholderTextColor="#9CA3AF"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  keyboardType="email-address"
+                  editable={canEditEmail && !isSavingProfile}
+                  accessibilityLabel="E-Mail bearbeiten"
+                  returnKeyType="done"
+                  onSubmitEditing={() => void handleSaveProfile("email")}
+                />
+                {profileEmailError ? (
+                  <ThemedText type="small" style={styles.profileFormErrorText}>
+                    {profileEmailError}
+                  </ThemedText>
+                ) : null}
+                <View style={styles.accountInfoEditActions}>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.accountInfoActionButton,
+                      styles.accountInfoSecondaryButton,
+                      { opacity: pressed || isSavingProfile ? 0.7 : 1 },
+                    ]}
+                    onPress={stopEditingField}
+                    disabled={isSavingProfile}
+                  >
+                    <ThemedText
+                      type="small"
+                      style={styles.accountInfoSecondaryButtonText}
+                    >
+                      Abbrechen
+                    </ThemedText>
+                  </Pressable>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.accountInfoActionButton,
+                      styles.accountInfoPrimaryButton,
+                      { opacity: pressed || isSavingProfile ? 0.7 : 1 },
+                    ]}
+                    onPress={() => void handleSaveProfile("email")}
+                    disabled={isSavingProfile}
+                  >
+                    <ThemedText
+                      type="small"
+                      style={styles.accountInfoPrimaryButtonText}
+                    >
+                      {isSavingProfile ? "Speichern..." : "Speichern"}
+                    </ThemedText>
+                  </Pressable>
+                </View>
+              </View>
+            </View>
+          ) : (
+            <Pressable
+              style={({ pressed }) => [
+                styles.accountInfoRow,
+                styles.accountInfoRowPressable,
+                !canEditEmail ? styles.accountInfoRowDisabled : null,
+                { opacity: pressed && canEditEmail ? 0.75 : 1 },
+              ]}
+              onPress={() => startEditingField("email")}
+              disabled={!canEditEmail}
+              accessibilityRole="button"
+              accessibilityLabel={
+                canEditEmail
+                  ? "E-Mail bearbeiten"
+                  : "E-Mail kann bei OAuth nicht bearbeitet werden"
+              }
+            >
+              <View style={styles.accountInfoContent}>
+                <ThemedText type="body" style={styles.accountInfoLabel}>
+                  E-Mail
+                </ThemedText>
+                <ThemedText
+                  type="small"
+                  style={[
+                    styles.accountInfoValue,
+                    !canEditEmail ? styles.accountInfoValueDisabled : null,
+                  ]}
+                >
+                  {profileEmail ?? "Nicht hinterlegt"}
+                </ThemedText>
+              </View>
+              <Feather
+                name={canEditEmail ? "edit-2" : "lock"}
+                size={16}
+                color="#6B7280"
+              />
+            </Pressable>
+          )}
+          <ThemedText type="small" style={styles.accountInfoHint}>
+            {canEditEmail
+              ? "Tippe auf Name oder E-Mail, um den Wert direkt zu bearbeiten."
+              : "Tippe auf den Namen, um ihn zu bearbeiten. Die E-Mail ist bei OAuth-Accounts gesperrt."}
+          </ThemedText>
           <View style={styles.bankConnectRow}>
             <View style={styles.bankConnectContent}>
               <ThemedText
@@ -343,6 +783,7 @@ export default function ProfileScreen() {
             action={{
               type: "icon",
               iconName: "message-circle",
+              onPress: () => setReviewModalVisible(true),
             }}
             showDivider={false}
           />
@@ -378,12 +819,9 @@ export default function ProfileScreen() {
                 Test Level Up Screen
               </ThemedText>
               {levels.map((level) => (
-                <Pressable
+                <PurpleGradientButton
                   key={level.id}
-                  style={({ pressed }) => [
-                    styles.devToolsButton,
-                    { opacity: pressed ? 0.8 : 1 },
-                  ]}
+                  style={styles.devToolsButton}
                   onPress={() => {
                     navigation.navigate("LevelUp", {
                       levelId: level.id,
@@ -399,8 +837,90 @@ export default function ProfileScreen() {
                     Level {level.levelNumber} ({level.name} {level.emoji}) - 100
                     XP
                   </ThemedText>
-                </Pressable>
+                </PurpleGradientButton>
               ))}
+              <ThemedText style={styles.devToolsTitle}>
+                Test Streak Screen
+              </ThemedText>
+              <PurpleGradientButton
+                style={styles.devToolsButton}
+                onPress={() => {
+                  navigation.navigate("Streak", {
+                    variant: "ongoing",
+                    xpGained: 50,
+                  });
+                }}
+              >
+                <ThemedText
+                  type="small"
+                  style={styles.devToolsButtonText}
+                  lightColor="#FFFFFF"
+                >
+                  Streak Ongoing (3 Tage) - 50 XP
+                </ThemedText>
+              </PurpleGradientButton>
+              <PurpleGradientButton
+                style={styles.devToolsButton}
+                onPress={() => {
+                  navigation.navigate("Streak", {
+                    variant: "completed",
+                    xpGained: 150,
+                  });
+                }}
+              >
+                <ThemedText
+                  type="small"
+                  style={styles.devToolsButtonText}
+                  lightColor="#FFFFFF"
+                >
+                  Streak Completed (7 Tage) - 150 XP
+                </ThemedText>
+              </PurpleGradientButton>
+              <ThemedText style={styles.devToolsTitle}>
+                Test Review Modal
+              </ThemedText>
+              <PurpleGradientButton
+                style={styles.devToolsButton}
+                onPress={() => setReviewModalVisible(true)}
+              >
+                <ThemedText
+                  type="small"
+                  style={styles.devToolsButtonText}
+                  lightColor="#FFFFFF"
+                >
+                  Review Modal öffnen
+                </ThemedText>
+              </PurpleGradientButton>
+              <ThemedText style={styles.devToolsTitle}>
+                Test Paywall Screen
+              </ThemedText>
+              <PurpleGradientButton
+                style={styles.devToolsButton}
+                onPress={() => navigation.navigate("Paywall")}
+              >
+                <ThemedText
+                  type="small"
+                  style={styles.devToolsButtonText}
+                  lightColor="#FFFFFF"
+                >
+                  Paywall Screen öffnen
+                </ThemedText>
+              </PurpleGradientButton>
+              <ThemedText style={styles.devToolsTitle}>
+                Test Cat Screen
+              </ThemedText>
+              <PurpleGradientButton
+                style={styles.devToolsButton}
+                onPress={() => navigation.navigate("Cat")}
+              >
+                <ThemedText
+                  type="small"
+                  style={styles.devToolsButtonText}
+                  lightColor="#FFFFFF"
+                >
+                  Cat Screen öffnen
+                </ThemedText>
+              </PurpleGradientButton>
             </View>
           </>
         )}
@@ -411,25 +931,48 @@ export default function ProfileScreen() {
         visible={manageModalVisible}
         onClose={() => setManageModalVisible(false)}
         maxHeightPercent={70}
+        keyboardAvoidingEnabled={true}
         contentStyle={[
           styles.modalContent,
           { paddingBottom: insets.bottom + Spacing.lg },
         ]}
       >
         <View style={styles.modalHeader}>
-          <ThemedText style={styles.modalTitle}>Account verwalten</ThemedText>
+          <ThemedText style={styles.modalTitle}>Accountoptionen</ThemedText>
           <Pressable onPress={() => setManageModalVisible(false)}>
             <Feather name="x" size={24} color="#6B7280" />
           </Pressable>
         </View>
+        <ThemedText type="small" style={styles.profileFormHint}>
+          Passwort-Reset ist nur bei Accounts mit E-Mail-Passwort-Login
+          verfügbar.
+        </ThemedText>
+
+        <Pressable
+          style={({ pressed }) => [
+            styles.secondaryActionButton,
+            !canResetPassword ? styles.secondaryActionButtonDisabled : null,
+            {
+              opacity: pressed || isSavingProfile || isLoggingOut ? 0.7 : 1,
+            },
+          ]}
+          onPress={handlePasswordReset}
+          disabled={!canResetPassword || isSavingProfile || isLoggingOut}
+        >
+          <ThemedText style={styles.secondaryActionButtonText}>
+            Passwort zurücksetzen
+          </ThemedText>
+        </Pressable>
 
         <Pressable
           style={({ pressed }) => [
             styles.logoutButton,
-            { opacity: pressed || isLoggingOut ? 0.7 : 1 },
+            {
+              opacity: pressed || isLoggingOut || isSavingProfile ? 0.7 : 1,
+            },
           ]}
           onPress={handleLogout}
-          disabled={isLoggingOut}
+          disabled={isLoggingOut || isSavingProfile}
         >
           <Feather name="log-out" size={20} color="#EF4444" />
           <ThemedText style={styles.logoutButtonText}>Ausloggen</ThemedText>
@@ -483,6 +1026,11 @@ export default function ProfileScreen() {
           </Pressable>
         </View>
       </AppModal>
+
+      <ReviewModal
+        visible={reviewModalVisible}
+        onClose={() => setReviewModalVisible(false)}
+      />
     </View>
   );
 }

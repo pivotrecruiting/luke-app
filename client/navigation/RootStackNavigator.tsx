@@ -10,7 +10,13 @@ import GoalDetailScreen from "@/screens/GoalDetailScreen";
 import BudgetDetailScreen from "@/screens/BudgetDetailScreen";
 import IncomeScreen from "@/screens/IncomeScreen";
 import ExpensesScreen from "@/screens/ExpensesScreen";
+import VaultScreen from "@/screens/VaultScreen";
 import LevelUpScreen from "@/screens/LevelUpScreen";
+import StreakScreen from "@/screens/StreakScreen";
+import PaywallScreen from "@/screens/PaywallScreen";
+import CatScreen from "@/screens/CatScreen";
+import RequestPasswordScreen from "@/screens/RequestPasswordScreen";
+import ResetPasswordScreen from "@/screens/ResetPasswordScreen";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import { Colors } from "@/constants/theme";
@@ -20,16 +26,31 @@ export type RootStackParamList = {
   Main: NavigatorScreenParams<MainTabParamList> | undefined;
   GoalDetail: {
     goalId: string;
+    /** When true, opens the deposit modal immediately. */
+    openDeposit?: boolean;
   };
   BudgetDetail: {
     budgetId: string;
   };
   Income: undefined;
   Expenses: undefined;
+  Vault: undefined;
   LevelUp: {
     levelId?: string;
     xpGained?: number;
   };
+  Streak: {
+    xpGained?: number;
+    variant?: "ongoing" | "completed";
+  };
+  Paywall: undefined;
+  Cat: undefined;
+  RequestPassword:
+    | {
+        email?: string;
+      }
+    | undefined;
+  ResetPassword: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -80,6 +101,15 @@ export default function RootStackNavigator() {
       ) : (
         <Stack.Screen name="Main" component={MainTabNavigator} />
       )}
+      <Stack.Screen
+        name="RequestPassword"
+        component={RequestPasswordScreen}
+        options={{
+          presentation: "modal",
+          animation: "slide_from_bottom",
+          headerShown: false,
+        }}
+      />
       {isAuthenticated && (
         <>
           <Stack.Screen
@@ -143,12 +173,55 @@ export default function RootStackNavigator() {
             }}
           />
           <Stack.Screen
+            name="Vault"
+            component={VaultScreen}
+            options={{
+              animation: "slide_from_right",
+            }}
+          />
+          <Stack.Screen
             name="LevelUp"
             component={LevelUpScreen}
             options={{
               presentation: "modal",
               animation: "fade_from_bottom",
               animationDuration: 300,
+            }}
+          />
+          <Stack.Screen
+            name="Streak"
+            component={StreakScreen}
+            options={{
+              presentation: "modal",
+              animation: "fade_from_bottom",
+              animationDuration: 300,
+            }}
+          />
+          <Stack.Screen
+            name="Paywall"
+            component={PaywallScreen}
+            options={{
+              presentation: "modal",
+              animation: "fade_from_bottom",
+              animationDuration: 300,
+            }}
+          />
+          <Stack.Screen
+            name="Cat"
+            component={CatScreen}
+            options={{
+              presentation: "modal",
+              animation: "fade_from_bottom",
+              animationDuration: 300,
+            }}
+          />
+          <Stack.Screen
+            name="ResetPassword"
+            component={ResetPasswordScreen}
+            options={{
+              presentation: "modal",
+              animation: "slide_from_bottom",
+              headerShown: false,
             }}
           />
         </>

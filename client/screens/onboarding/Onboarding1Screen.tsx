@@ -6,6 +6,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { OnboardingStackParamList } from "@/navigation/OnboardingNavigator";
 import ProgressDots from "@/components/ProgressDots";
 import { BorderRadius, Colors, Spacing, Typography } from "@/constants/theme";
+import { PurpleGradientButton } from "@/components/ui/purple-gradient-button";
 import { useApp, type CurrencyCode } from "@/context/AppContext";
 
 const CURRENCIES: {
@@ -79,15 +80,9 @@ export default function Onboarding1Screen() {
           { paddingBottom: insets.bottom + Spacing.xl },
         ]}
       >
-        <Pressable
-          onPress={handleContinue}
-          style={({ pressed }) => [
-            styles.button,
-            pressed && styles.buttonPressed,
-          ]}
-        >
+        <PurpleGradientButton onPress={handleContinue} style={styles.button}>
           <Text style={styles.buttonText}>WEITER</Text>
-        </Pressable>
+        </PurpleGradientButton>
       </View>
     </View>
   );
@@ -159,7 +154,6 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.md,
   },
   button: {
-    backgroundColor: Colors.light.buttonPrimary,
     borderRadius: BorderRadius.md,
     height: Spacing.buttonHeight,
     alignItems: "center",

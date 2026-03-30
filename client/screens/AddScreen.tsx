@@ -15,7 +15,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import { HeaderTabToggle } from "@/components/ui/header-tab-toggle";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { Spacing } from "@/constants/theme";
+import { Colors, HeaderGradient, Spacing } from "@/constants/theme";
+import { PurpleGradientButton } from "@/components/ui/purple-gradient-button";
 import { useApp } from "@/context/AppContext";
 import {
   formatCurrencyAmount,
@@ -153,9 +154,9 @@ export default function AddScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={["rgba(42, 58, 230, 0.69)", "rgba(23, 32, 128, 0.69)"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
+        colors={HeaderGradient.colors}
+        start={HeaderGradient.start}
+        end={HeaderGradient.end}
         style={[styles.header, { paddingTop: insets.top + Spacing.lg }]}
       >
         <Text style={styles.headerTitle}>Transaktion</Text>
@@ -210,7 +211,7 @@ export default function AddScreen() {
               setShowDatePicker(!showDatePicker);
             }}
           >
-            <Feather name="calendar" size={20} color="#7340fd" />
+            <Feather name="calendar" size={20} color={Colors.light.primary} />
             <Text style={styles.dateButtonText}>
               {formatDateDisplay(selectedDate)}
             </Text>
@@ -228,7 +229,7 @@ export default function AddScreen() {
               onChange={handleDateChange}
               maximumDate={new Date()}
               locale="de-DE"
-              accentColor="#7340fd"
+              accentColor={Colors.light.primary}
               themeVariant="light"
               style={Platform.OS === "ios" ? styles.iosDatePicker : undefined}
             />
@@ -307,11 +308,8 @@ export default function AddScreen() {
           </View>
         </View>
 
-        <Pressable
-          style={[
-            styles.saveButton,
-            isSaveDisabled && styles.saveButtonDisabled,
-          ]}
+        <PurpleGradientButton
+          style={styles.saveButton}
           onPress={handleSave}
           disabled={isSaveDisabled}
         >
@@ -320,7 +318,7 @@ export default function AddScreen() {
               ? "Ausgabe speichern"
               : "Einnahme speichern"}
           </Text>
-        </Pressable>
+        </PurpleGradientButton>
       </ScrollView>
     </View>
   );
@@ -375,7 +373,7 @@ const styles = StyleSheet.create({
   currencySymbol: {
     fontSize: 32,
     fontWeight: "700",
-    color: "#7340fd",
+    color: Colors.light.primary,
     marginRight: 8,
   },
   amountInput: {
@@ -416,7 +414,7 @@ const styles = StyleSheet.create({
     height: 150,
   },
   datePickerDone: {
-    backgroundColor: "#7340fd",
+    backgroundColor: Colors.light.primary,
     paddingVertical: 12,
     alignItems: "center",
   },
@@ -451,7 +449,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   categoryIconActive: {
-    backgroundColor: "#7340fd",
+    backgroundColor: Colors.light.primary,
   },
   categoryName: {
     fontSize: 12,
@@ -460,7 +458,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   categoryNameActive: {
-    color: "#7340fd",
+    color: Colors.light.primary,
     fontWeight: "600",
   },
   emptyState: {
@@ -482,7 +480,6 @@ const styles = StyleSheet.create({
     color: "#9CA3AF",
   },
   saveButton: {
-    backgroundColor: "#7340fd",
     borderRadius: 28,
     paddingVertical: 16,
     alignItems: "center",

@@ -1,5 +1,5 @@
 import React, { ReactNode } from "react";
-import { StyleSheet, Pressable, ViewStyle, StyleProp } from "react-native";
+import { StyleSheet, ViewStyle, StyleProp } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -10,6 +10,7 @@ import Animated, {
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { BorderRadius, Spacing } from "@/constants/theme";
+import { PurpleGradientButton } from "@/components/ui/purple-gradient-button";
 
 interface ButtonProps {
   onPress?: () => void;
@@ -25,8 +26,6 @@ const springConfig: WithSpringConfig = {
   overshootClamping: true,
   energyThreshold: 0.001,
 };
-
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export function Button({
   onPress,
@@ -54,28 +53,28 @@ export function Button({
   };
 
   return (
-    <AnimatedPressable
-      onPress={disabled ? undefined : onPress}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      disabled={disabled}
-      style={[
-        styles.button,
-        {
-          backgroundColor: theme.link,
-          opacity: disabled ? 0.5 : 1,
-        },
-        style,
-        animatedStyle,
-      ]}
-    >
-      <ThemedText
-        type="body"
-        style={[styles.buttonText, { color: theme.buttonText }]}
+    <Animated.View style={animatedStyle}>
+      <PurpleGradientButton
+        onPress={disabled ? undefined : onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        disabled={disabled}
+        style={[
+          styles.button,
+          {
+            opacity: disabled ? 0.5 : 1,
+          },
+          style,
+        ]}
       >
-        {children}
-      </ThemedText>
-    </AnimatedPressable>
+        <ThemedText
+          type="body"
+          style={[styles.buttonText, { color: theme.buttonText }]}
+        >
+          {children}
+        </ThemedText>
+      </PurpleGradientButton>
+    </Animated.View>
   );
 }
 

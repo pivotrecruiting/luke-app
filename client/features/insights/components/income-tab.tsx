@@ -1,11 +1,13 @@
 import { useRef, useCallback } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import Swipeable from "react-native-gesture-handler/Swipeable";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useApp } from "@/context/AppContext";
 import { getCurrencySymbol } from "@/utils/currency-format";
 import { styles } from "@/screens/styles/insights-screen.styles";
+import { Colors } from "@/constants/theme";
+import { PurpleGradientButton } from "@/components/ui/purple-gradient-button";
 import { formatCurrency } from "../utils/format";
 import type { IncomeEntry } from "@/context/AppContext";
 import { SwipeableIncomeItem } from "./swipeable-income-item";
@@ -66,9 +68,12 @@ export const IncomeTab = ({
             {currencySymbol} {formatCurrency(totalIncome, currency)}
           </Text>
         </View>
-        <Pressable style={styles.addIncomeButton} onPress={onAddIncome}>
-          <Feather name="plus" size={20} color="#7340fd" />
-        </Pressable>
+        <PurpleGradientButton
+          style={styles.addIncomeButton}
+          onPress={onAddIncome}
+        >
+          <Feather name="plus" size={20} color="#FFFFFF" />
+        </PurpleGradientButton>
       </View>
 
       <Text style={styles.incomeSectionTitle}>Einnahmequellen</Text>
@@ -82,11 +87,14 @@ export const IncomeTab = ({
           <Text style={styles.incomeEmptyText}>
             Noch keine Einnahmen hinzugefügt
           </Text>
-          <Pressable style={styles.incomeEmptyButton} onPress={onAddIncome}>
+          <PurpleGradientButton
+            style={styles.incomeEmptyButton}
+            onPress={onAddIncome}
+          >
             <Text style={styles.incomeEmptyButtonText}>
               Einnahme hinzufügen
             </Text>
-          </Pressable>
+          </PurpleGradientButton>
         </View>
       ) : (
         incomeEntries.map((entry, index) => (
@@ -114,7 +122,7 @@ export const IncomeTab = ({
 
       <View style={styles.incomeTipCard}>
         <View style={styles.incomeTipHeader}>
-          <Feather name="info" size={18} color="#7340fd" />
+          <Feather name="info" size={18} color={Colors.light.primary} />
           <Text style={styles.incomeTipTitle}>Tipp</Text>
         </View>
         <Text style={styles.incomeTipText}>

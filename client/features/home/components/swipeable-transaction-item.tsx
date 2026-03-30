@@ -1,9 +1,10 @@
 import React, { useRef, useCallback } from "react";
-import { Alert, Pressable, Text, View } from "react-native";
+import { Alert, View } from "react-native";
 import { RectButton } from "react-native-gesture-handler";
 import Swipeable from "react-native-gesture-handler/Swipeable";
 import { Feather } from "@expo/vector-icons";
 import type { Transaction } from "@/context/app/types";
+import { TransactionItem } from "@/components/ui/transaction-item";
 import { styles } from "@/screens/styles/home-screen.styles";
 
 type SwipeableTransactionItemPropsT = {
@@ -12,6 +13,9 @@ type SwipeableTransactionItemPropsT = {
   onEdit: () => void;
   onDelete: () => void;
   onSwipeOpen: (id: string) => void;
+  /** Card: standalone with shadow; flat: inside a parent card with divider. */
+  variant?: "card" | "flat";
+  showDivider?: boolean;
 };
 
 /**
@@ -21,7 +25,15 @@ export const SwipeableTransactionItem = React.forwardRef<
   Swipeable,
   SwipeableTransactionItemPropsT
 >(function SwipeableTransactionItem(
-  { transaction, formatCurrency, onEdit, onDelete, onSwipeOpen },
+  {
+    transaction,
+    formatCurrency,
+    onEdit,
+    onDelete,
+    onSwipeOpen,
+    variant = "card",
+    showDivider = false,
+  },
   ref,
 ) {
   const internalRef = useRef<Swipeable | null>(null);
@@ -86,10 +98,7 @@ export const SwipeableTransactionItem = React.forwardRef<
 
   const renderRightActions = useCallback(
     () => (
-      <RectButton
-        style={styles.swipeableDeleteAction}
-        onPress={handleDelete}
-      >
+      <RectButton style={styles.swipeableDeleteAction} onPress={handleDelete}>
         <Feather name="trash-2" size={20} color="#FFFFFF" />
       </RectButton>
     ),
@@ -97,7 +106,12 @@ export const SwipeableTransactionItem = React.forwardRef<
   );
 
   return (
-    <View style={styles.transactionItemWrapper}>
+    <View
+      style={[
+        styles.transactionItemWrapper,
+        variant === "flat" && styles.transactionItemWrapperFlat,
+      ]}
+    >
       <Swipeable
         ref={setRef}
         renderRightActions={renderRightActions}
@@ -105,35 +119,28 @@ export const SwipeableTransactionItem = React.forwardRef<
         onSwipeableOpen={(direction) => handleSwipeOpen(direction)}
         rightThreshold={40}
         friction={2}
+        containerStyle={variant === "flat" ? { overflow: "hidden" } : undefined}
       >
-        <Pressable
-          style={styles.transactionItem}
-          onPress={handleRowPress}
-          onLongPress={() => internalRef.current?.openRight()}
-        >
-          <View style={styles.transactionIconContainer}>
+        <TransactionItem
+          icon={
             <Feather
-              name={transaction.icon as any}
+              name={
+                transaction.icon as React.ComponentProps<typeof Feather>["name"]
+              }
               size={20}
               color="#7B8CDE"
             />
-          </View>
-          <View style={styles.transactionDetails}>
-            <Text style={styles.transactionName}>{transaction.name}</Text>
-            <Text style={styles.transactionCategory}>
-              {transaction.category}
-            </Text>
-            <Text style={styles.transactionDate}>{transaction.date}</Text>
-          </View>
-          <Text
-            style={[
-              styles.transactionAmount,
-              transaction.amount >= 0 && styles.transactionAmountIncome,
-            ]}
-          >
-            {formatCurrency(transaction.amount)}
-          </Text>
-        </Pressable>
+          }
+          title={transaction.name}
+          subtitle={transaction.category}
+          date={transaction.date}
+          amountFormatted={formatCurrency(transaction.amount)}
+          isIncome={transaction.amount >= 0}
+          variant={variant}
+          showDivider={showDivider}
+          onPress={handleRowPress}
+          onLongPress={() => internalRef.current?.openRight()}
+        />
       </Swipeable>
     </View>
   );

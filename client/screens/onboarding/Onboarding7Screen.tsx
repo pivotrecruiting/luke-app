@@ -1,8 +1,9 @@
 import React, { useMemo } from "react";
-import { View, Text, StyleSheet, Pressable } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import ProgressDots from "@/components/ProgressDots";
+import { PurpleGradientButton } from "@/components/ui/purple-gradient-button";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { OnboardingStackParamList } from "@/navigation/OnboardingNavigator";
@@ -92,15 +93,12 @@ export default function Onboarding7Screen() {
           { paddingBottom: insets.bottom + Spacing.lg },
         ]}
       >
-        <Pressable
-          style={({ pressed }) => [
-            styles.continueButton,
-            pressed && styles.buttonPressed,
-          ]}
+        <PurpleGradientButton
+          style={styles.continueButton}
           onPress={handleContinue}
         >
           <Text style={styles.continueButtonText}>BUDGET FESTLEGEN</Text>
-        </Pressable>
+        </PurpleGradientButton>
       </View>
     </View>
   );
@@ -193,7 +191,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
   continueButton: {
-    backgroundColor: "#8E97FD",
     height: 56,
     borderRadius: BorderRadius.md,
     justifyContent: "center",

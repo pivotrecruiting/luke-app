@@ -1,9 +1,14 @@
 import { Platform } from "react-native";
 
 // Luke App Theme - Finance app colors
-const primaryPurple = "#7340fd";
+const primaryPurple = "#7340FE";
 const accentLavender = "#7B8CDE";
-const buttonPurple = "#8E97FD";
+const buttonPurple = primaryPurple;
+const purpleButtonGradientColors = ["#7A4AFF", primaryPurple] as const;
+const appHeaderGradientColors = [
+  "rgba(42, 58, 230, 0.69)",
+  "rgba(23, 32, 128, 0.69)",
+] as const;
 
 export const Colors = {
   light: {
@@ -73,6 +78,21 @@ export const Colors = {
     successBorder: "#166534",
   },
 };
+
+export const HeaderGradient = {
+  colors: appHeaderGradientColors,
+  start: { x: 0, y: 0 } as const,
+  end: { x: 0, y: 1 } as const,
+};
+
+export const PurpleButtonGradient = {
+  colors: purpleButtonGradientColors,
+  disabledColors: ["#D1D5DB", "#D1D5DB"] as const,
+  start: { x: 0, y: 0 } as const,
+  end: { x: 1, y: 1 } as const,
+};
+
+export const CelebrationScreenBackground = "#7E6DA1";
 
 export const Spacing = {
   xs: 4,

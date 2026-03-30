@@ -1,7 +1,9 @@
 import { LinearGradient } from "expo-linear-gradient";
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import {
-  KeyboardAvoidingView,
+  Animated,
+  Easing,
+  Keyboard,
   Modal,
   Platform,
   Pressable,
@@ -21,6 +23,7 @@ type AppModalPropsT = {
   contentStyle?: StyleProp<ViewStyle>;
   keyboardAvoidingEnabled?: boolean;
   keyboardVerticalOffset?: number;
+  keyboardShiftFactor?: number;
 };
 
 /**
@@ -35,12 +38,66 @@ export const AppModal = ({
   contentStyle,
   keyboardAvoidingEnabled = false,
   keyboardVerticalOffset = 0,
+  keyboardShiftFactor = 0.5,
 }: AppModalPropsT) => {
   const { height } = useWindowDimensions();
+  const keyboardTranslateY = useRef(new Animated.Value(0)).current;
   const maxHeightValue = Math.min(Math.max(maxHeightPercent, 0), 100);
   const maxHeightStyle = {
     maxHeight: (height * maxHeightValue) / 100,
   };
+
+  useEffect(() => {
+    if (!keyboardAvoidingEnabled) {
+      keyboardTranslateY.setValue(0);
+      return;
+    }
+
+    const animateTo = (keyboardHeight: number, duration?: number) => {
+      const adjustedShift = Math.max(
+        (keyboardHeight - keyboardVerticalOffset) * keyboardShiftFactor,
+        0,
+      );
+
+      Animated.timing(keyboardTranslateY, {
+        toValue: -adjustedShift,
+        duration: duration ?? 220,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }).start();
+    };
+
+    const keyboardShowEvent =
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const keyboardHideEvent =
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+
+    const showSubscription = Keyboard.addListener(
+      keyboardShowEvent,
+      (event) => {
+        animateTo(event.endCoordinates.height, event.duration);
+      },
+    );
+
+    const hideSubscription = Keyboard.addListener(
+      keyboardHideEvent,
+      (event) => {
+        animateTo(0, event.duration);
+      },
+    );
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+      keyboardTranslateY.stopAnimation();
+      keyboardTranslateY.setValue(0);
+    };
+  }, [
+    keyboardAvoidingEnabled,
+    keyboardShiftFactor,
+    keyboardTranslateY,
+    keyboardVerticalOffset,
+  ]);
 
   const content = (
     <View style={[styles.content, maxHeightStyle, contentStyle]}>
@@ -64,14 +121,15 @@ export const AppModal = ({
           />
         </Pressable>
         {keyboardAvoidingEnabled ? (
-          <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            keyboardVerticalOffset={keyboardVerticalOffset}
-            style={styles.contentWrapper}
+          <Animated.View
+            style={[
+              styles.contentWrapper,
+              { transform: [{ translateY: keyboardTranslateY }] },
+            ]}
             pointerEvents="box-none"
           >
             {content}
-          </KeyboardAvoidingView>
+          </Animated.View>
         ) : (
           <View style={styles.contentWrapper} pointerEvents="box-none">
             {content}

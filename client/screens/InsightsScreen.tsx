@@ -74,6 +74,7 @@ export default function InsightsScreen() {
           onSelectTrendMonth={actions.setSelectedTrendMonth}
           totalIncome={derived.filteredComparisonTotals.income}
           totalExpenses={derived.filteredComparisonTotals.expenses}
+          periodIncomeExpenses={derived.periodIncomeExpenses}
         />
       )}
 

@@ -18,8 +18,13 @@ import type {
   CategoryT,
   InsightsFilterT,
   InsightsTabT,
+  PeriodIncomeExpensesT,
   TimeFilterT,
 } from "../types/insights-types";
+import {
+  aggregateByPeriods,
+  getPeriodsForTimeFilter,
+} from "../utils/period-income-expenses";
 
 type UseInsightsScreenReturnT = {
   appData: {
@@ -56,6 +61,7 @@ type UseInsightsScreenReturnT = {
     totalCategoryExpenses: number;
     filteredMonthlyTrendData: ReturnType<typeof useApp>["monthlyTrendData"];
     filteredComparisonTotals: { income: number; expenses: number };
+    periodIncomeExpenses: PeriodIncomeExpensesT[];
   };
   actions: {
     setActiveTab: (value: InsightsTabT) => void;
@@ -108,7 +114,7 @@ export const useInsightsScreen = (): UseInsightsScreenReturnT => {
     deleteExpenseEntry,
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState<InsightsTabT>("ausgaben");
+  const [activeTab, setActiveTab] = useState<InsightsTabT>("analytics");
   const [activeFilter, setActiveFilter] =
     useState<InsightsFilterT>("kategorien");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -147,6 +153,7 @@ export const useInsightsScreen = (): UseInsightsScreenReturnT => {
   const filteredCategories = useMemo<CategoryT[]>(() => {
     const { start, end } = getDateRangeForFilter(selectedTimeFilter);
     const categoryTotals: Record<string, number> = {};
+    const categoryColors: Record<string, string> = {};
 
     budgets.forEach((budget) => {
       const filteredExpenses = budget.expenses.filter((expense) => {
@@ -163,13 +170,16 @@ export const useInsightsScreen = (): UseInsightsScreenReturnT => {
       if (totalForCategory > 0) {
         categoryTotals[budget.name] =
           (categoryTotals[budget.name] || 0) + totalForCategory;
+        if (categoryColors[budget.name] === undefined) {
+          categoryColors[budget.name] = budget.iconColor;
+        }
       }
     });
 
     const categories = Object.entries(categoryTotals).map(([name, amount]) => ({
       name,
       amount,
-      color: CATEGORY_COLORS[name] || "#7B8CDE",
+      color: categoryColors[name] || CATEGORY_COLORS[name] || "#7B8CDE",
     }));
     return categories;
   }, [budgets, selectedTimeFilter]);
@@ -197,7 +207,16 @@ export const useInsightsScreen = (): UseInsightsScreenReturnT => {
     if (monthlyTrendData.length === 0) return [];
     const { start, end } = getDateRangeForFilter(selectedTimeFilter);
     return monthlyTrendData.filter((item) => {
-      const monthStart = new Date(`${item.monthStart}T00:00:00Z`);
+      const [year, month, day] = item.monthStart.split("-").map(Number);
+      const monthStart = new Date(
+        year ?? 1970,
+        (month ?? 1) - 1,
+        day ?? 1,
+        12,
+        0,
+        0,
+        0,
+      );
       return monthStart >= start && monthStart <= end;
     });
   }, [monthlyTrendData, selectedTimeFilter]);
@@ -233,6 +252,11 @@ export const useInsightsScreen = (): UseInsightsScreenReturnT => {
       income: variableIncome,
       expenses: variableExpenses,
     };
+  }, [selectedTimeFilter, transactions]);
+
+  const periodIncomeExpenses = useMemo(() => {
+    const periods = getPeriodsForTimeFilter(selectedTimeFilter);
+    return aggregateByPeriods(transactions, periods);
   }, [selectedTimeFilter, transactions]);
 
   const openAddIncomeModal = useCallback(() => {
@@ -416,6 +440,7 @@ export const useInsightsScreen = (): UseInsightsScreenReturnT => {
       totalCategoryExpenses,
       filteredMonthlyTrendData,
       filteredComparisonTotals,
+      periodIncomeExpenses,
     },
     actions: {
       setActiveTab,

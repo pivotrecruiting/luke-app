@@ -1,114 +1,220 @@
-import React from "react";
-import { View, Text, StyleSheet, Pressable } from "react-native";
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  Pressable,
+  ScrollView,
+  useWindowDimensions,
+  Alert,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import { Spacing, BorderRadius } from "@/constants/theme";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useApp } from "@/context/AppContext";
+import { Colors, HeaderGradient, Spacing } from "@/constants/theme";
+import { PurpleGradientButton } from "@/components/ui/purple-gradient-button";
+import { styles } from "./styles/paywall-screen.styles";
 
+type PlanT = "monthly" | "yearly" | "lifetime";
+
+const FEATURES: {
+  icon: keyof typeof MaterialCommunityIcons.glyphMap;
+  text: string;
+  semibold?: boolean;
+}[] = [
+  { icon: "eye", text: "Behalte stets den Überblick", semibold: true },
+  { icon: "bank-check", text: "Nie wieder Mahngebühren zahlen" },
+  { icon: "chart-bar", text: "Einfacher als jede Excel-Liste" },
+];
+
+/**
+ * Paywall screen displayed during onboarding. Offers subscription plans
+ * and calls completeOnboarding on CTA press.
+ */
 export default function PaywallScreen() {
   const insets = useSafeAreaInsets();
+  const { height } = useWindowDimensions();
   const { completeOnboarding } = useApp();
+  const [selectedPlan, setSelectedPlan] = useState<PlanT>("yearly");
 
-  const handleContinue = () => {
+  const headerMinHeight = Math.max(height * 0.27, 140);
+  const studyCardOverlap = Spacing["5xl"];
+
+  const handleCtaPress = () => {
     completeOnboarding();
   };
 
-  return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.content}>
-        <Text style={styles.placeholder}>Paywall Platzhalter</Text>
-        <Text style={styles.subtext}>Design wird später implementiert</Text>
-      </View>
+  const handleRestorePurchases = () => {
+    Alert.alert("Käufe wiederherstellen", "Funktion wird noch implementiert.");
+  };
 
-      <View
-        style={[
-          styles.buttonContainer,
-          { paddingBottom: insets.bottom + Spacing.lg },
+  const handleTermsAndPrivacy = () => {
+    Alert.alert(
+      "Nutzungsbedingungen & Datenschutz",
+      "Funktion wird noch implementiert.",
+    );
+  };
+
+  const PlanCard = ({
+    plan,
+    title,
+    price,
+    description,
+    badge,
+  }: {
+    plan: PlanT;
+    title: string;
+    price: string;
+    description: string;
+    badge?: string;
+  }) => {
+    const isSelected = selectedPlan === plan;
+    return (
+      <Pressable
+        style={({ pressed }) => [
+          styles.planCard,
+          isSelected && styles.planCardSelected,
+          { opacity: pressed ? 0.9 : 1 },
         ]}
+        onPress={() => setSelectedPlan(plan)}
       >
-        <Pressable
-          style={({ pressed }) => [
-            styles.continueButtonOuter,
-            pressed && styles.buttonPressed,
-          ]}
-          onPress={handleContinue}
-        >
-          <LinearGradient
-            colors={["#9B7DFF", "#7340fd"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.continueButton}
+        {badge && (
+          <View style={styles.planCardBadge}>
+            <Text style={styles.planCardBadgeText}>{badge}</Text>
+          </View>
+        )}
+        <View style={styles.planCardContent}>
+          <Text
+            style={[
+              styles.planCardTitle,
+              badge && styles.planCardTitleWithBadge,
+            ]}
           >
-            <Text style={styles.continueButtonText}>CONTINUE</Text>
-          </LinearGradient>
-        </Pressable>
+            {title}
+          </Text>
+          <Text style={styles.planCardPrice}>{price}</Text>
+        </View>
+        <Text style={styles.planCardDescription}>{description}</Text>
+      </Pressable>
+    );
+  };
 
-        <Text style={styles.disclaimer}>
-          This subscription automatically renews after the 7-day free trial. You
-          can cancel anytime.
-        </Text>
-      </View>
+  return (
+    <View style={styles.container}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: insets.bottom + Spacing.xl },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header - full width, CI gradient (like LevelUp/Streak) */}
+        <LinearGradient
+          colors={HeaderGradient.colors}
+          start={HeaderGradient.start}
+          end={HeaderGradient.end}
+          style={[
+            styles.header,
+            {
+              paddingTop: insets.top + Spacing.xl,
+              minHeight: headerMinHeight,
+            },
+          ]}
+        >
+          <Text style={styles.headerTitle}>
+            Sparen - diesmal ohne Ausreden.
+          </Text>
+          <Text style={styles.headerSubtitle}>
+            Starte jetzt deine Testphase und mach den ersten echten Schritt zu
+            deinem Sparziel.
+          </Text>
+        </LinearGradient>
+
+        {/* Study card - white, overlapping */}
+        <View style={[styles.studyCard, { marginTop: -studyCardOverlap }]}>
+          <Text style={styles.studyCardTitle}>Studien zeigen:</Text>
+          <Text style={styles.studyCardBody}>
+            Wer Ausgaben aktiv visualisiert, reduziert Impulskäufe um bis zu
+            30%.
+          </Text>
+        </View>
+
+        {/* Content - light gray background */}
+        <View style={styles.contentSection}>
+          <Text style={styles.headline}>
+            Starte jetzt deine Reise für mehr Geld am Monatsende.
+          </Text>
+
+          <View style={styles.featuresWrapper}>
+            {FEATURES.map(({ icon, text, semibold }) => (
+              <View key={text} style={styles.featureRow}>
+                <View style={styles.featureIcon}>
+                  <MaterialCommunityIcons
+                    name={icon}
+                    size={22}
+                    color={Colors.light.primary}
+                  />
+                </View>
+                <Text
+                  style={[
+                    styles.featureText,
+                    semibold && styles.featureTextSemibold,
+                  ]}
+                >
+                  {text}
+                </Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Plan cards */}
+          <View style={styles.plansContainer}>
+            <PlanCard
+              plan="monthly"
+              title="Monthly"
+              price="€ 2,99/mo"
+              description="monatliche Abrechnung"
+            />
+            <PlanCard
+              plan="yearly"
+              title="Yearly"
+              price="€ 29,99/an"
+              description="jährliche Abrechnung"
+              badge="2 Monate gratis"
+            />
+            <PlanCard
+              plan="lifetime"
+              title="Lifetime"
+              price="€ 89,99"
+              description="einmalige Abrechnung"
+            />
+          </View>
+
+          <Text style={styles.preCtaText}>
+            7 Tage kostenlos testen, danach nur €29,99/Jahr
+          </Text>
+
+          <PurpleGradientButton
+            style={styles.ctaButton}
+            onPress={handleCtaPress}
+          >
+            <Text style={styles.ctaButtonText}>Jetzt Testphase starten</Text>
+          </PurpleGradientButton>
+
+          <View style={styles.footerLinks}>
+            <Pressable onPress={handleRestorePurchases}>
+              <Text style={styles.footerLink}>Käufe wiederherstellen</Text>
+            </Pressable>
+            <Text style={styles.footerSeparator}>•</Text>
+            <Pressable onPress={handleTermsAndPrivacy}>
+              <Text style={styles.footerLink}>
+                Nutzungsbedingungen & Datenschutz
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </ScrollView>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "rgba(157, 113, 245, 0.5)",
-  },
-  content: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: Spacing.xl,
-  },
-  placeholder: {
-    fontSize: 32,
-    fontWeight: "700",
-    color: "#FFFFFF",
-    textAlign: "center",
-  },
-  subtext: {
-    fontSize: 16,
-    color: "rgba(255,255,255,0.7)",
-    textAlign: "center",
-    marginTop: Spacing.md,
-  },
-  buttonContainer: {
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.lg,
-  },
-  continueButtonOuter: {
-    borderRadius: BorderRadius.xl,
-    borderWidth: 3,
-    borderColor: "rgba(255,255,255,0.3)",
-    shadowColor: "#7340fd",
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  continueButton: {
-    height: 56,
-    borderRadius: BorderRadius.xl - 3,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  buttonPressed: {
-    opacity: 0.8,
-  },
-  continueButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "700",
-    letterSpacing: 1,
-  },
-  disclaimer: {
-    fontSize: 12,
-    color: "rgba(255,255,255,0.7)",
-    textAlign: "center",
-    marginTop: Spacing.lg,
-    lineHeight: 18,
-  },
-});

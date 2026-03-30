@@ -1,4 +1,5 @@
 import type {
+  XpStreakPayloadT,
   UserProgressT,
   XpEventRuleT,
   XpEventTypeT,
@@ -61,6 +62,29 @@ export type Budget = {
 
 export type TransactionSourceT = "manual" | "recurring" | "onboarding";
 
+export type VaultEntryTypeT =
+  | "monthly_rollover"
+  | "manual_deposit"
+  | "goal_deposit";
+
+export type VaultTransactionT = {
+  id: string;
+  amount: number;
+  entryType: VaultEntryTypeT;
+  note: string | null;
+  goalId: string | null;
+  rolloverMonth: string | null;
+  transactionAt: string;
+};
+
+export type MonthlyBalanceSnapshotT = {
+  id: string;
+  monthStart: string;
+  amount: number;
+  currency: CurrencyCode;
+  snapshotAt: string;
+};
+
 export type WeeklySpending = {
   day: string;
   amount: number;
@@ -89,6 +113,8 @@ export type MonthlyTrendData = {
   monthIndex: number;
   monthStart: string;
   amount: number;
+  isSnapshot: boolean;
+  isCurrentMonth: boolean;
 };
 
 export type AppState = {
@@ -103,6 +129,9 @@ export type AppState = {
   budgetCategories: BudgetCategoryRow[];
   weeklySpending: WeeklySpending[];
   transactions: Transaction[];
+  vaultTransactions: VaultTransactionT[];
+  monthlyBalanceSnapshots: MonthlyBalanceSnapshotT[];
+  vaultBalance: number;
   incomeCategories: IncomeCategoryRow[];
   insightCategories: InsightCategory[];
   totalIncome: number;
@@ -111,6 +140,7 @@ export type AppState = {
   totalExpenses: number;
   monthlyBudget: number;
   balance: number;
+  monthlyBalance: number;
   transactionIncomeTotal: number;
   transactionExpenseTotal: number;
   transactionBalance: number;
@@ -118,14 +148,17 @@ export type AppState = {
   monthlyTrendData: MonthlyTrendData[];
   selectedWeekOffset: number;
   currentWeekLabel: string;
+  balanceAnchorMonth: string | null;
   levels: XpLevelT[];
   xpEventTypes: XpEventTypeT[];
   xpEventRules: XpEventRuleT[];
   userProgress: UserProgressT | null;
   pendingLevelUps: XpLevelUpPayloadT[];
+  pendingStreaks: XpStreakPayloadT[];
 };
 
 export type AppContextType = AppState & {
+  setUserName: (userName: string | null) => void;
   addIncomeEntry: (type: string, amount: number) => void;
   addExpenseEntry: (type: string, amount: number) => void;
   setIncomeEntries: (entries: { type: string; amount: number }[]) => void;
@@ -154,6 +187,7 @@ export type AppContextType = AppState & {
   ) => void;
   deleteBudgetExpense: (budgetId: string, expenseId: string) => void;
   addTransaction: (transaction: Omit<Transaction, "id">) => void;
+  addVaultDeposit: (amount: number, note?: string) => void;
   updateTransaction: (
     transactionId: string,
     updates: Partial<Omit<Transaction, "id">>,
@@ -193,6 +227,8 @@ export type AppContextType = AppState & {
   lastBudgetResetMonth: number;
   enqueueLevelUp: (payload: XpLevelUpPayloadT) => void;
   consumeNextLevelUp: () => void;
+  enqueueStreak: (payload: XpStreakPayloadT) => void;
+  consumeNextStreak: () => void;
   submitOnboarding: () => void;
 };
 
@@ -204,5 +240,8 @@ export type PersistedData = {
   goals: Goal[];
   budgets: Budget[];
   transactions: Transaction[];
+  vaultTransactions: VaultTransactionT[];
+  monthlyBalanceSnapshots: MonthlyBalanceSnapshotT[];
   lastBudgetResetMonth: number;
+  balanceAnchorMonth: string | null;
 };

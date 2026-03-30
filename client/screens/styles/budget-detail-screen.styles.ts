@@ -1,4 +1,5 @@
 import { StyleSheet } from "react-native";
+import { Colors } from "@/constants/theme";
 
 export const styles = StyleSheet.create({
   container: {
@@ -96,7 +97,7 @@ export const styles = StyleSheet.create({
   },
   progressBar: {
     height: "100%",
-    backgroundColor: "#7340FE",
+    backgroundColor: Colors.light.primary,
     borderRadius: 4,
   },
   progressBarOver: {
@@ -137,8 +138,8 @@ export const styles = StyleSheet.create({
   },
   monthTitle: {
     fontSize: 16,
-    fontWeight: "600",
-    color: "#000000",
+    fontWeight: "700",
+    color: "#111827",
     marginBottom: 12,
   },
   emptyState: {
@@ -188,10 +189,25 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  transactionItemWrapper: {
+    overflow: "hidden",
+    borderRadius: 0,
+  },
+  transactionIconContainerBudget: {
+    backgroundColor: "#F3F4F6",
+    borderRadius: 12,
+  },
   transactionsList: {
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
     overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 2,
   },
   transactionItem: {
     flexDirection: "row",
@@ -289,7 +305,7 @@ export const styles = StyleSheet.create({
   currencyPrefix: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#7340FE",
+    color: Colors.light.primary,
     paddingLeft: 16,
   },
   currencyInput: {
@@ -328,10 +344,9 @@ export const styles = StyleSheet.create({
   datePickerDoneText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#7340FE",
+    color: Colors.light.primary,
   },
   modalSaveButton: {
-    backgroundColor: "#7340FE",
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: "center",

@@ -29,7 +29,6 @@ export const DonutChart = ({
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const center = size / 2;
-  const gap = 4;
 
   let currentAngle = -90;
 
@@ -38,7 +37,7 @@ export const DonutChart = ({
   const segments = hasTotal
     ? categories.map((category) => {
         const percentage = category.amount / total;
-        const segmentLength = circumference * percentage - gap;
+        const segmentLength = circumference * percentage;
         const strokeDasharray = `${segmentLength} ${circumference - segmentLength}`;
         const rotation = currentAngle;
         currentAngle += percentage * 360;
@@ -99,7 +98,7 @@ export const DonutChart = ({
                 strokeDashoffset={0}
                 rotation={segment.rotation}
                 origin={`${center}, ${center}`}
-                strokeLinecap="butt"
+                strokeLinecap="round"
                 opacity={segmentOpacity}
               />
             );

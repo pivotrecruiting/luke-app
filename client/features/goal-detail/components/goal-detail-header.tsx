@@ -1,6 +1,7 @@
 import { Pressable, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
+import { HeaderGradient } from "@/constants/theme";
 import { styles } from "@/screens/styles/goal-detail-screen.styles";
 
 type GoalDetailHeaderPropsT = {
@@ -26,9 +27,9 @@ export const GoalDetailHeader = ({
 }: GoalDetailHeaderPropsT) => {
   return (
     <LinearGradient
-      colors={["#7340fd", "#3B5BDB"]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
+      colors={HeaderGradient.colors}
+      start={HeaderGradient.start}
+      end={HeaderGradient.end}
       style={[styles.header, { paddingTop: topInset }]}
     >
       <View style={styles.headerRow}>

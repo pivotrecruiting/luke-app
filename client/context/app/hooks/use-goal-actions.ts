@@ -3,21 +3,21 @@ import type {
   CurrencyCode,
   Goal,
   GoalDeposit,
-  Transaction,
+  VaultTransactionT,
 } from "@/context/app/types";
 import {
   createGoal as createGoalInDb,
   createGoalContribution,
-  createTransaction,
+  createVaultTransaction,
   deleteGoal as deleteGoalInDb,
   deleteGoalContribution,
   updateGoal as updateGoalInDb,
   updateGoalContribution,
 } from "@/services/app-service";
-import type { UserProgressT } from "@/types/xp-types";
 import { formatDate, parseFormattedDate } from "@/utils/dates";
 import { generateId } from "@/utils/ids";
 import { toCents } from "@/utils/money";
+import type { UserProgressT } from "@/types/xp-types";
 
 type GoalActionsDepsT = {
   userId: string | null;
@@ -26,10 +26,12 @@ type GoalActionsDepsT = {
   isOnboardingComplete: boolean;
   goals: Goal[];
   setGoals: React.Dispatch<React.SetStateAction<Goal[]>>;
-  setTransactions: React.Dispatch<React.SetStateAction<Transaction[]>>;
+  setVaultTransactions: React.Dispatch<
+    React.SetStateAction<VaultTransactionT[]>
+  >;
+  vaultBalance: number;
   deleteTransaction: (transactionId: string) => void;
   handleDbError: (error: unknown, context: string) => void;
-  handleSnapXp: (transactionId: string) => Promise<UserProgressT | null>;
   awardXp: (params: {
     eventKey: string;
     sourceType?: string | null;
@@ -49,21 +51,74 @@ export const useGoalActions = ({
   isOnboardingComplete,
   goals,
   setGoals,
-  setTransactions,
+  setVaultTransactions,
+  vaultBalance,
   deleteTransaction,
   handleDbError,
-  handleSnapXp,
   awardXp,
 }: GoalActionsDepsT) => {
+  const appendVaultGoalTransaction = useCallback(
+    (
+      amount: number,
+      goalId: string,
+      note: string,
+      transactionAt: Date = new Date(),
+    ) => {
+      if (!Number.isFinite(amount) || amount === 0) return;
+
+      const tempId = generateId();
+      const transactionAtIso = transactionAt.toISOString();
+      setVaultTransactions((prev) => [
+        {
+          id: tempId,
+          amount,
+          entryType: "goal_deposit",
+          note,
+          goalId,
+          rolloverMonth: null,
+          transactionAt: transactionAtIso,
+        },
+        ...prev,
+      ]);
+
+      if (!canUseDb || !userId) return;
+      void (async () => {
+        try {
+          const vaultTransactionId = await createVaultTransaction({
+            user_id: userId,
+            amount_cents: toCents(amount),
+            currency,
+            entry_type: "goal_deposit",
+            note,
+            goal_id: goalId,
+            transaction_at: transactionAtIso,
+          });
+
+          setVaultTransactions((prev) =>
+            prev.map((entry) =>
+              entry.id === tempId
+                ? { ...entry, id: vaultTransactionId }
+                : entry,
+            ),
+          );
+        } catch (error) {
+          handleDbError(error, "appendVaultGoalTransaction");
+        }
+      })();
+    },
+    [canUseDb, currency, handleDbError, setVaultTransactions, userId],
+  );
+
   const addGoalDeposit = useCallback(
     (goalId: string, amount: number, customDate?: Date) => {
+      if (amount <= 0 || amount > vaultBalance) return;
+
       const goal = goals.find((g) => g.id === goalId);
       if (!goal) return;
 
       const depositDate = customDate || new Date();
       const isRepayment = goal.name.toLowerCase().includes("klarna");
       const tempDepositId = generateId();
-      const tempTransactionId = generateId();
       const shouldAwardGoalReached =
         goal.current < goal.target && goal.current + amount >= goal.target;
 
@@ -93,33 +148,16 @@ export const useGoalActions = ({
           return g;
         }),
       );
-
-      setTransactions((prev) => [
-        {
-          id: tempTransactionId,
-          name: goal.name,
-          category: "Sparziel",
-          date: formatDate(depositDate),
-          amount: -amount,
-          icon: "target",
-        },
-        ...prev,
-      ]);
+      appendVaultGoalTransaction(
+        -amount,
+        goalId,
+        `Goal: ${goal.name}`,
+        depositDate,
+      );
 
       if (!canUseDb || !userId) return;
       void (async () => {
         try {
-          const transactionId = await createTransaction({
-            user_id: userId,
-            type: "expense",
-            amount_cents: toCents(amount),
-            currency,
-            name: goal.name,
-            category_name: "Sparziel",
-            transaction_at: depositDate.toISOString(),
-            source: "manual",
-          });
-
           const contributionId = await createGoalContribution({
             user_id: userId,
             goal_id: goalId,
@@ -127,7 +165,6 @@ export const useGoalActions = ({
             currency,
             contribution_type: isRepayment ? "repayment" : "deposit",
             contribution_at: depositDate.toISOString(),
-            transaction_id: transactionId,
           });
 
           setGoals((prev) =>
@@ -140,28 +177,18 @@ export const useGoalActions = ({
                     ? {
                         ...deposit,
                         id: contributionId,
-                        transactionId: transactionId,
                       }
                     : deposit,
                 ),
               };
             }),
           );
-
-          setTransactions((prev) =>
-            prev.map((tx) =>
-              tx.id === tempTransactionId ? { ...tx, id: transactionId } : tx,
-            ),
-          );
-
-          const progressAfterSnap = await handleSnapXp(transactionId);
           if (shouldAwardGoalReached) {
             await awardXp({
               eventKey: "goal_reached",
               sourceType: "goal",
               sourceId: goalId,
               meta: { goalId },
-              progressOverride: progressAfterSnap ?? null,
             });
           }
         } catch (error) {
@@ -175,10 +202,10 @@ export const useGoalActions = ({
       currency,
       goals,
       handleDbError,
-      handleSnapXp,
+      appendVaultGoalTransaction,
       setGoals,
-      setTransactions,
       userId,
+      vaultBalance,
     ],
   );
 
@@ -188,11 +215,12 @@ export const useGoalActions = ({
       const existingDeposit = existingGoal?.deposits.find(
         (deposit) => deposit.id === depositId,
       );
-      const amountDiff = existingDeposit ? amount - existingDeposit.amount : 0;
-      const nextCurrent =
-        existingGoal && existingDeposit
-          ? existingGoal.current + amountDiff
-          : null;
+      if (!existingGoal || !existingDeposit) return;
+
+      const amountDiff = amount - existingDeposit.amount;
+      if (amountDiff > 0 && amountDiff > vaultBalance) return;
+
+      const nextCurrent = existingGoal.current + amountDiff;
       const shouldAwardGoalReached = Boolean(
         existingGoal &&
           existingDeposit &&
@@ -239,10 +267,16 @@ export const useGoalActions = ({
         }),
       );
 
+      if (amountDiff !== 0) {
+        appendVaultGoalTransaction(
+          -amountDiff,
+          goalId,
+          `Goal Anpassung: ${existingGoal.name}`,
+        );
+      }
+
       if (!canUseDb) return;
-      const fallbackDate = existingDeposit
-        ? parseFormattedDate(existingDeposit.date)
-        : new Date();
+      const fallbackDate = parseFormattedDate(existingDeposit.date);
       const contributionAt = date || fallbackDate;
       void (async () => {
         try {
@@ -264,7 +298,15 @@ export const useGoalActions = ({
         }
       })();
     },
-    [awardXp, canUseDb, goals, handleDbError, setGoals],
+    [
+      appendVaultGoalTransaction,
+      awardXp,
+      canUseDb,
+      goals,
+      handleDbError,
+      setGoals,
+      vaultBalance,
+    ],
   );
 
   const deleteGoalDeposit = useCallback(
@@ -292,6 +334,13 @@ export const useGoalActions = ({
       if (transactionIdToRemove) {
         deleteTransaction(transactionIdToRemove);
       }
+      if (goal && depositToDelete) {
+        appendVaultGoalTransaction(
+          depositToDelete.amount,
+          goalId,
+          `Goal Rückbuchung: ${goal.name}`,
+        );
+      }
 
       if (!canUseDb) return;
       void (async () => {
@@ -302,7 +351,14 @@ export const useGoalActions = ({
         }
       })();
     },
-    [canUseDb, deleteTransaction, goals, handleDbError, setGoals],
+    [
+      appendVaultGoalTransaction,
+      canUseDb,
+      deleteTransaction,
+      goals,
+      handleDbError,
+      setGoals,
+    ],
   );
 
   const addGoal = useCallback(

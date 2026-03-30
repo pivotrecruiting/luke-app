@@ -1,9 +1,10 @@
 import React from "react";
-import { View, Text, StyleSheet, Pressable } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useApp } from "@/context/AppContext";
 import { Image } from "expo-image";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
+import { PurpleGradientButton } from "@/components/ui/purple-gradient-button";
 import { Spacing, BorderRadius, Typography, Colors } from "@/constants/theme";
 
 /**
@@ -49,15 +50,9 @@ export default function AllesStartklarScreen() {
           { paddingBottom: insets.bottom + Spacing.xl },
         ]}
       >
-        <Pressable
-          onPress={handleContinue}
-          style={({ pressed }) => [
-            styles.button,
-            pressed && styles.buttonPressed,
-          ]}
-        >
+        <PurpleGradientButton onPress={handleContinue} style={styles.button}>
           <Text style={styles.buttonText}>Los geht&apos;s</Text>
-        </Pressable>
+        </PurpleGradientButton>
       </View>
     </View>
   );
@@ -109,7 +104,6 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.lg,
   },
   button: {
-    backgroundColor: Colors.light.buttonPrimary,
     borderRadius: BorderRadius.md,
     height: Spacing.buttonHeight,
     alignItems: "center",

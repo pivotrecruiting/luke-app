@@ -1,18 +1,21 @@
-import React, { useState } from "react";
+import * as AppleAuthentication from "expo-apple-authentication";
+import React, { useEffect, useState } from "react";
 import {
   Alert,
-  View,
+  Platform,
+  Pressable,
+  StyleSheet,
   Text,
   TextInput,
-  StyleSheet,
-  Pressable,
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { AntDesign } from "@expo/vector-icons";
 import Svg, { Path } from "react-native-svg";
-import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
-import { Spacing, BorderRadius, Typography, Colors } from "@/constants/theme";
+import { AuthScreenLayout } from "@/components/auth-screen-layout";
+import { PurpleGradientButton } from "@/components/ui/purple-gradient-button";
+import { Colors, Spacing, Typography } from "@/constants/theme";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { OnboardingStackParamList } from "@/navigation/OnboardingNavigator";
 import {
@@ -22,7 +25,18 @@ import {
   type OAuthProviderT,
 } from "@/services/auth-service";
 import { AppModal } from "@/components/ui/app-modal";
+import { authScreenStyles } from "@/screens/styles/auth-screen.styles";
 import { isValidEmail } from "@/utils/validation";
+import {
+  clearPendingWorkshopCode,
+  loadPendingWorkshopCode,
+} from "@/services/local-storage";
+import {
+  normalizeWorkshopCode,
+  rememberPendingWorkshopCode,
+  type SignupMethodT,
+  validateWorkshopCode,
+} from "@/services/workshop-code-service";
 
 type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
 completeAuthSessionIfNeeded();
@@ -56,12 +70,85 @@ export default function SignUpScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showWorkshopModal, setShowWorkshopModal] = useState(false);
-  const [workshopCode, setWorkshopCode] = useState("");
+  const [workshopCodeInput, setWorkshopCodeInput] = useState("");
+  const [appliedWorkshopCode, setAppliedWorkshopCode] = useState("");
   const [codeStatus, setCodeStatus] = useState<"neutral" | "valid" | "invalid">(
     "neutral",
   );
   const [isAuthLoading, setIsAuthLoading] = useState(false);
+  const [isAppleAuthAvailable, setIsAppleAuthAvailable] = useState(false);
+  const [isWorkshopCodeLoading, setIsWorkshopCodeLoading] = useState(false);
+  const [workshopCodeMessage, setWorkshopCodeMessage] = useState<string | null>(
+    null,
+  );
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    if (Platform.OS !== "ios") {
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    AppleAuthentication.isAvailableAsync()
+      .then((isAvailable) => {
+        if (isMounted) {
+          setIsAppleAuthAvailable(isAvailable);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setIsAppleAuthAvailable(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    void loadPendingWorkshopCode()
+      .then((pendingWorkshopCode) => {
+        if (!isMounted || !pendingWorkshopCode?.code) {
+          return;
+        }
+
+        setAppliedWorkshopCode(pendingWorkshopCode.code);
+        setWorkshopCodeInput(pendingWorkshopCode.code);
+        setCodeStatus("valid");
+        setWorkshopCodeMessage(null);
+      })
+      .catch(() => {});
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const handleOpenRequestPassword = () => {
+    navigation.navigate("RequestPassword", {
+      email: email.trim().toLowerCase() || undefined,
+    });
+  };
+
+  const persistWorkshopCodeForSignup = async (
+    signupMethod: SignupMethodT,
+  ): Promise<string | null> => {
+    const normalizedCode = normalizeWorkshopCode(appliedWorkshopCode);
+
+    if (!normalizedCode) {
+      await clearPendingWorkshopCode();
+      return null;
+    }
+
+    await rememberPendingWorkshopCode(normalizedCode, signupMethod);
+    return normalizedCode;
+  };
 
   const handleEmailSignUp = async () => {
     if (isAuthLoading) return;
@@ -80,7 +167,13 @@ export default function SignUpScreen() {
 
     setIsAuthLoading(true);
     try {
-      const result = await signUpWithEmailPassword(trimmedEmail, password);
+      const normalizedWorkshopCode =
+        await persistWorkshopCodeForSignup("email");
+      const result = await signUpWithEmailPassword(
+        trimmedEmail,
+        password,
+        normalizedWorkshopCode ?? undefined,
+      );
 
       if (result.status === "signed-in") {
         return;
@@ -104,6 +197,7 @@ export default function SignUpScreen() {
     if (isAuthLoading) return;
     setIsAuthLoading(true);
     try {
+      await persistWorkshopCodeForSignup(provider);
       const result = await signInWithOAuth(provider);
 
       if (result.status === "signed-in") {
@@ -122,354 +216,290 @@ export default function SignUpScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <KeyboardAwareScrollViewCompat
-        contentContainerStyle={[
-          styles.scrollContent,
-          {
-            paddingTop: insets.top + 80,
-            paddingBottom: insets.bottom + Spacing.xl,
-          },
-        ]}
-      >
-        <Text style={styles.logo}>Luke</Text>
-
-        <View style={styles.formContainer}>
-          <Text style={styles.title}>Erstelle einen Account</Text>
-          <Text style={styles.subtitle}>
-            Melde dich mit deiner E-Mail an, um loszulegen.
-          </Text>
-
-          <TextInput
-            style={styles.input}
-            placeholder="email@domain.com"
-            placeholderTextColor="#9CA3AF"
-            value={email}
-            onChangeText={(value) => {
-              setEmail(value);
-              if (successMessage) {
-                setSuccessMessage(null);
-              }
-            }}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-            autoComplete="email"
-            textContentType="emailAddress"
-          />
-
-          <TextInput
-            style={[styles.input, styles.passwordInput]}
-            placeholder="Passwort"
-            placeholderTextColor="#9CA3AF"
-            value={password}
-            onChangeText={(value) => {
-              setPassword(value);
-              if (successMessage) {
-                setSuccessMessage(null);
-              }
-            }}
-            autoCapitalize="none"
-            autoCorrect={false}
-            autoComplete="password"
-            textContentType="newPassword"
-            secureTextEntry={true}
-            onSubmitEditing={handleEmailSignUp}
-          />
-
-          <Pressable
-            onPress={handleEmailSignUp}
-            style={({ pressed }) => [
-              styles.continueButton,
-              isAuthLoading && styles.buttonDisabled,
-              pressed && styles.buttonPressed,
-            ]}
-            disabled={isAuthLoading}
-          >
-            <Text style={styles.continueButtonText}>
-              {isAuthLoading ? "Bitte warten..." : "Fortfahren"}
-            </Text>
-          </Pressable>
-
-          {successMessage ? (
-            <View style={styles.successMessageContainer} accessible={true}>
-              <Text
-                style={styles.successMessageText}
-                accessibilityRole="text"
-                accessibilityLiveRegion="polite"
-              >
-                {successMessage}
-              </Text>
-            </View>
-          ) : null}
-
-          <View style={styles.dividerContainer}>
-            <View style={styles.divider} />
-            <Text style={styles.dividerText}>oder</Text>
-            <View style={styles.divider} />
-          </View>
-
-          <Pressable
-            onPress={() => handleOAuthSignIn("google")}
-            style={({ pressed }) => [
-              styles.socialButton,
-              isAuthLoading && styles.buttonDisabled,
-              pressed && styles.buttonPressed,
-            ]}
-            disabled={isAuthLoading}
-          >
-            <GoogleLogo size={20} />
-            <Text style={styles.socialButtonText}>Anmelden über Google</Text>
-          </Pressable>
-
-          <Pressable
-            onPress={() => handleOAuthSignIn("apple")}
-            style={({ pressed }) => [
-              styles.socialButton,
-              isAuthLoading && styles.buttonDisabled,
-              pressed && styles.buttonPressed,
-            ]}
-            disabled={isAuthLoading}
-          >
-            <AntDesign name="apple" size={20} color="#000000" />
-            <Text style={styles.socialButtonText}>Anmelden über Apple</Text>
-          </Pressable>
-
-          <Text style={styles.termsText}>
+    <AuthScreenLayout
+      title="Erstelle einen Account"
+      subtitle="Melde dich mit deiner E-Mail an, um loszulegen."
+      footer={
+        <>
+          <Text style={authScreenStyles.termsText}>
             Durch das Fortfahren stimmst du unseren{" "}
-            <Text style={styles.termsLink}>AGB</Text> und dem{" "}
-            <Text style={styles.termsLink}>Datenschutz</Text> zu.
+            <Text style={authScreenStyles.termsLink}>AGB</Text> und dem{" "}
+            <Text style={authScreenStyles.termsLink}>Datenschutz</Text> zu.
           </Text>
 
           <Pressable
-            style={styles.workshopCodeButton}
+            style={authScreenStyles.workshopCodeButton}
             onPress={() => setShowWorkshopModal(true)}
           >
-            <Text style={styles.workshopCodeText}>
-              Du hast einen Workshop-Code?
+            <Text style={authScreenStyles.workshopCodeText}>
+              {appliedWorkshopCode
+                ? `Workshop-Code ${appliedWorkshopCode} aktiv`
+                : "Du hast einen Workshop-Code?"}
             </Text>
           </Pressable>
+        </>
+      }
+    >
+      <TextInput
+        style={authScreenStyles.input}
+        placeholder="email@domain.com"
+        placeholderTextColor="#9CA3AF"
+        value={email}
+        onChangeText={(value) => {
+          setEmail(value);
+          if (successMessage) {
+            setSuccessMessage(null);
+          }
+        }}
+        keyboardType="email-address"
+        autoCapitalize="none"
+        autoCorrect={false}
+        autoComplete="email"
+        textContentType="emailAddress"
+      />
+
+      <TextInput
+        style={[authScreenStyles.input, authScreenStyles.inputWithTightSpacing]}
+        placeholder="Passwort"
+        placeholderTextColor="#9CA3AF"
+        value={password}
+        onChangeText={(value) => {
+          setPassword(value);
+          if (successMessage) {
+            setSuccessMessage(null);
+          }
+        }}
+        autoCapitalize="none"
+        autoCorrect={false}
+        autoComplete="password"
+        textContentType="newPassword"
+        secureTextEntry={true}
+        onSubmitEditing={handleEmailSignUp}
+      />
+
+      <Pressable
+        style={({ pressed }) => [
+          authScreenStyles.forgotPasswordButton,
+          { opacity: pressed ? 0.7 : 1 },
+        ]}
+        onPress={handleOpenRequestPassword}
+      >
+        <Text style={authScreenStyles.forgotPasswordText}>
+          Passwort vergessen?
+        </Text>
+      </Pressable>
+
+      <Pressable
+        onPress={handleEmailSignUp}
+        style={({ pressed }) => [
+          authScreenStyles.primaryButton,
+          isAuthLoading && authScreenStyles.buttonDisabled,
+          pressed && authScreenStyles.buttonPressed,
+        ]}
+        disabled={isAuthLoading}
+      >
+        <Text style={authScreenStyles.primaryButtonText}>
+          {isAuthLoading ? "Bitte warten..." : "Fortfahren"}
+        </Text>
+      </Pressable>
+
+      {successMessage ? (
+        <View
+          style={authScreenStyles.successMessageContainer}
+          accessible={true}
+        >
+          <Text
+            style={authScreenStyles.successMessageText}
+            accessibilityRole="text"
+            accessibilityLiveRegion="polite"
+          >
+            {successMessage}
+          </Text>
         </View>
-      </KeyboardAwareScrollViewCompat>
+      ) : null}
+
+      <View style={authScreenStyles.dividerContainer}>
+        <View style={authScreenStyles.divider} />
+        <Text style={authScreenStyles.dividerText}>oder</Text>
+        <View style={authScreenStyles.divider} />
+      </View>
+
+      <Pressable
+        onPress={() => handleOAuthSignIn("google")}
+        style={({ pressed }) => [
+          authScreenStyles.socialButton,
+          isAuthLoading && authScreenStyles.buttonDisabled,
+          pressed && authScreenStyles.buttonPressed,
+        ]}
+        disabled={isAuthLoading}
+      >
+        <GoogleLogo size={20} />
+        <Text style={authScreenStyles.socialButtonText}>
+          Anmelden über Google
+        </Text>
+      </Pressable>
+
+      {Platform.OS === "ios" ? (
+        isAppleAuthAvailable ? (
+          <View
+            style={[
+              signUpScreenStyles.appleButtonContainer,
+              isAuthLoading && authScreenStyles.buttonDisabled,
+            ]}
+          >
+            <AppleAuthentication.AppleAuthenticationButton
+              buttonType={
+                AppleAuthentication.AppleAuthenticationButtonType.SIGN_UP
+              }
+              buttonStyle={
+                AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
+              }
+              cornerRadius={12}
+              style={signUpScreenStyles.appleButton}
+              onPress={() => {
+                void handleOAuthSignIn("apple");
+              }}
+            />
+          </View>
+        ) : null
+      ) : (
+        <Pressable
+          onPress={() => handleOAuthSignIn("apple")}
+          style={({ pressed }) => [
+            authScreenStyles.socialButton,
+            isAuthLoading && authScreenStyles.buttonDisabled,
+            pressed && authScreenStyles.buttonPressed,
+          ]}
+          disabled={isAuthLoading}
+        >
+          <AntDesign name="apple" size={20} color="#000000" />
+          <Text style={authScreenStyles.socialButtonText}>
+            Anmelden über Apple
+          </Text>
+        </Pressable>
+      )}
 
       <AppModal
         visible={showWorkshopModal}
         onClose={() => setShowWorkshopModal(false)}
+        keyboardAvoidingEnabled={true}
+        keyboardVerticalOffset={Spacing.lg}
+        keyboardShiftFactor={1}
         contentStyle={[
-          styles.modalContent,
+          modalStyles.modalContent,
           { paddingBottom: insets.bottom + Spacing.xl },
         ]}
       >
-        <View style={styles.modalHandle} />
-        <Text style={styles.modalTitle}>Workshop-Zugang freischalten</Text>
-        <Text style={styles.modalSubtitle}>Gib dein persönlichen Code ein</Text>
+        <View style={modalStyles.modalHandle} />
+        <Text style={modalStyles.modalTitle}>Workshop-Zugang freischalten</Text>
+        <Text style={modalStyles.modalSubtitle}>
+          Gib dein persönlichen Code ein
+        </Text>
 
         <TextInput
           style={[
-            styles.modalInput,
-            codeStatus === "valid" && styles.inputValid,
-            codeStatus === "invalid" && styles.inputInvalid,
+            modalStyles.modalInput,
+            codeStatus === "valid" && modalStyles.inputValid,
+            codeStatus === "invalid" && modalStyles.inputInvalid,
           ]}
           placeholder="DEIN CODE HIER"
           placeholderTextColor="#9CA3AF"
-          value={workshopCode}
+          value={workshopCodeInput}
           onChangeText={(text) => {
-            setWorkshopCode(text);
+            setWorkshopCodeInput(text);
             setCodeStatus("neutral");
+            setWorkshopCodeMessage(null);
           }}
           autoCapitalize="characters"
         />
 
-        <Pressable
-          onPress={() => {
-            const validCodes = ["12345", "LUKE2024", "WORKSHOP"];
-            if (validCodes.includes(workshopCode.toUpperCase())) {
-              setCodeStatus("valid");
-              setTimeout(() => {
-                setShowWorkshopModal(false);
-                setWorkshopCode("");
-                setCodeStatus("neutral");
-                navigation.navigate("Onboarding1");
-              }, 600);
-            } else {
+        <PurpleGradientButton
+          onPress={async () => {
+            const normalizedCode = normalizeWorkshopCode(workshopCodeInput);
+
+            if (!normalizedCode) {
               setCodeStatus("invalid");
+              setWorkshopCodeMessage("Bitte gib einen Workshop-Code ein.");
+              return;
+            }
+
+            setIsWorkshopCodeLoading(true);
+            try {
+              const validationResult =
+                await validateWorkshopCode(normalizedCode);
+
+              if (validationResult.status !== "valid") {
+                setCodeStatus("invalid");
+                setWorkshopCodeMessage(
+                  validationResult.message ??
+                    "Dieser Workshop-Code ist nicht verfügbar.",
+                );
+                return;
+              }
+
+              await rememberPendingWorkshopCode(normalizedCode);
+              setAppliedWorkshopCode(normalizedCode);
+              setWorkshopCodeInput(normalizedCode);
+              setCodeStatus("valid");
+              setWorkshopCodeMessage(null);
+              setShowWorkshopModal(false);
+            } finally {
+              setIsWorkshopCodeLoading(false);
             }
           }}
-          style={({ pressed }) => [
-            styles.activateButton,
-            pressed && styles.buttonPressed,
-          ]}
+          style={modalStyles.activateButton}
+          disabled={isWorkshopCodeLoading}
         >
-          <Text style={styles.activateButtonText}>CODE AKTIVIEREN</Text>
-        </Pressable>
+          <Text style={modalStyles.activateButtonText}>
+            {isWorkshopCodeLoading ? "CODE WIRD GEPRUEFT..." : "CODE SPEICHERN"}
+          </Text>
+        </PurpleGradientButton>
 
-        <Text style={styles.modalFooterText}>4 Wochen kostenlos nutzen.</Text>
+        {workshopCodeMessage ? (
+          <Text style={modalStyles.errorText}>{workshopCodeMessage}</Text>
+        ) : null}
+
+        {appliedWorkshopCode ? (
+          <Text style={modalStyles.modalFooterText}>
+            Code {appliedWorkshopCode} wird beim Signup serverseitig geprueft.
+          </Text>
+        ) : (
+          <Text style={modalStyles.modalFooterText}>
+            Der Code wird erst beim Signup im Hintergrund ausgewertet.
+          </Text>
+        )}
+
+        {appliedWorkshopCode ? (
+          <Pressable
+            onPress={async () => {
+              await clearPendingWorkshopCode();
+              setAppliedWorkshopCode("");
+              setWorkshopCodeInput("");
+              setCodeStatus("neutral");
+              setWorkshopCodeMessage(null);
+            }}
+            style={modalStyles.clearButton}
+          >
+            <Text style={modalStyles.clearButtonText}>Code entfernen</Text>
+          </Pressable>
+        ) : null}
       </AppModal>
-    </View>
+    </AuthScreenLayout>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.light.backgroundRoot,
-  },
-  tealBlur: {
-    position: "absolute",
-    left: -80,
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: Colors.light.teal,
-    opacity: 0.6,
-  },
-  purpleBlur: {
-    position: "absolute",
-    bottom: -50,
-    right: -80,
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: Colors.light.primary,
-    opacity: 0.5,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    alignItems: "center",
-  },
-  logo: {
-    ...Typography.h1,
-    color: Colors.light.text,
-    fontWeight: "700",
-    fontSize: 30,
-  },
-  formContainer: {
-    marginTop: 64,
-    paddingHorizontal: Spacing["2xl"],
-    width: "100%",
-    maxWidth: 350,
-    alignItems: "center",
-  },
-  title: {
-    ...Typography.h3,
-    color: Colors.light.text,
-    textAlign: "center",
-  },
-  subtitle: {
-    ...Typography.small,
-    color: "#6B7280",
-    textAlign: "center",
-    marginTop: Spacing.sm,
-  },
-  input: {
-    width: "100%",
-    height: 48,
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    borderRadius: BorderRadius.xs,
-    paddingHorizontal: Spacing.lg,
-    marginTop: Spacing["3xl"],
-    ...Typography.body,
-    color: Colors.light.text,
-    outlineStyle: "none",
-  } as any,
-  passwordInput: {
-    marginTop: Spacing.md,
-  },
-  continueButton: {
-    width: "100%",
-    height: 48,
-    backgroundColor: "#1A1A1A",
-    borderRadius: BorderRadius.xs,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: Spacing.lg,
-  },
-  continueButtonText: {
-    ...Typography.body,
-    fontWeight: "600",
-    color: "#FFFFFF",
-  },
-  successMessageContainer: {
+const signUpScreenStyles = StyleSheet.create({
+  appleButtonContainer: {
     width: "100%",
     marginTop: Spacing.md,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.lg,
-    borderRadius: BorderRadius.xs,
-    backgroundColor: Colors.light.successBackground,
-    borderWidth: 1,
-    borderColor: Colors.light.successBorder,
   },
-  successMessageText: {
-    ...Typography.small,
-    color: Colors.light.success,
-    textAlign: "center",
-  },
-  buttonPressed: {
-    opacity: 0.8,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  dividerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    width: "100%",
-    marginTop: Spacing["2xl"],
-  },
-  divider: {
-    flex: 1,
-    height: 1,
-    backgroundColor: "#E5E7EB",
-  },
-  dividerText: {
-    ...Typography.small,
-    color: "#9CA3AF",
-    paddingHorizontal: Spacing.lg,
-  },
-  socialButton: {
+  appleButton: {
     width: "100%",
     height: 48,
-    backgroundColor: "#F3F4F6",
-    borderRadius: BorderRadius.xs,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: Spacing.sm,
-    marginTop: Spacing.md,
   },
-  socialButtonText: {
-    ...Typography.body,
-    fontWeight: "500",
-    color: "#000000",
-  },
-  termsText: {
-    ...Typography.tiny,
-    color: "#9CA3AF",
-    textAlign: "center",
-    marginTop: Spacing["3xl"],
-    lineHeight: 18,
-  },
-  termsLink: {
-    color: "#6B7280",
-    fontWeight: "500",
-  },
-  workshopCodeButton: {
-    marginTop: Spacing.xl,
-    borderBottomWidth: 1,
-    borderBottomColor: "#4F46E5",
-    paddingBottom: 2,
-  },
-  workshopCodeText: {
-    ...Typography.small,
-    color: "#4F46E5",
-    fontWeight: "500",
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.4)",
-    justifyContent: "flex-end",
-  },
+});
+
+const modalStyles = StyleSheet.create({
   modalContent: {
     backgroundColor: "#FFFFFF",
     borderTopLeftRadius: 24,
@@ -508,8 +538,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 16,
     color: Colors.light.text,
-    outlineStyle: "none",
-  } as any,
+  },
   inputValid: {
     borderColor: "#22C55E",
   },
@@ -519,21 +548,36 @@ const styles = StyleSheet.create({
   activateButton: {
     width: "100%",
     height: 56,
-    backgroundColor: Colors.light.primary,
-    borderRadius: 28,
+    paddingHorizontal: Spacing.xl,
+    borderRadius: 32,
     alignItems: "center",
     justifyContent: "center",
     marginTop: Spacing["2xl"],
   },
   activateButtonText: {
     color: "#FFFFFF",
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: "700",
   },
   modalFooterText: {
     ...Typography.tiny,
     color: "#9CA3AF",
     marginTop: Spacing.md,
+    textAlign: "center",
+  },
+  errorText: {
+    ...Typography.small,
+    color: "#EF4444",
+    marginTop: Spacing.md,
+    textAlign: "center",
+  },
+  clearButton: {
+    marginTop: Spacing.md,
+    paddingVertical: Spacing.sm,
+  },
+  clearButtonText: {
+    ...Typography.small,
+    color: Colors.light.textSecondary,
     textAlign: "center",
   },
 });

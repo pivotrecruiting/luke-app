@@ -8,6 +8,7 @@ import { Image } from "expo-image";
 import ProgressDots from "@/components/ProgressDots";
 import CurrencyInput from "@/components/CurrencyInput";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
+import { PurpleGradientButton } from "@/components/ui/purple-gradient-button";
 import { Spacing, BorderRadius, Typography, Colors } from "@/constants/theme";
 import {
   useOnboardingStore,
@@ -102,18 +103,15 @@ export default function Onboarding3Screen() {
           <Text style={styles.skipButtonText}>Nein, hab ich nicht</Text>
         </Pressable>
 
-        <Pressable
+        <PurpleGradientButton
           onPress={() => {
             setInitialSavingsAmount(parseAmount(amount));
             navigation.navigate("Onboarding4");
           }}
-          style={({ pressed }) => [
-            styles.continueButton,
-            pressed && styles.buttonPressed,
-          ]}
+          style={styles.continueButton}
         >
           <Text style={styles.continueButtonText}>WEITER</Text>
-        </Pressable>
+        </PurpleGradientButton>
       </View>
     </View>
   );
@@ -186,7 +184,6 @@ const styles = StyleSheet.create({
     color: Colors.light.accent,
   },
   continueButton: {
-    backgroundColor: Colors.light.buttonPrimary,
     borderRadius: BorderRadius.md,
     height: Spacing.buttonHeight,
     alignItems: "center",

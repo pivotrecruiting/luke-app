@@ -1,4 +1,4 @@
-import { BorderRadius, Spacing } from "@/constants/theme";
+import { BorderRadius, Colors, Spacing } from "@/constants/theme";
 import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
@@ -43,8 +43,8 @@ export const styles = StyleSheet.create({
     borderColor: "transparent",
   },
   filterBadgeActive: {
-    backgroundColor: "#EDE9FE",
-    borderColor: "#7340fd",
+    backgroundColor: Colors.light.chipBackground,
+    borderColor: Colors.light.primary,
   },
   filterBadgeText: {
     fontSize: 12,
@@ -52,7 +52,7 @@ export const styles = StyleSheet.create({
     color: "#6B7280",
   },
   filterBadgeTextActive: {
-    color: "#7340fd",
+    color: Colors.light.primary,
   },
   tabsRow: {
     flexDirection: "row",
@@ -158,15 +158,94 @@ export const styles = StyleSheet.create({
     color: "#3B5BDB",
     marginTop: 2,
   },
+  /** No flex:1 here — inside ScrollView it would stretch to the viewport and add empty scroll space. */
   pagerView: {
-    flex: 1,
-    minHeight: 550,
+    alignSelf: "stretch",
   },
+  /** Horizontal inset so screen background shows between swipe pages (native pageMargin is unreliable on iOS). */
   pagerPage: {
-    flex: 1,
+    paddingHorizontal: Spacing.lg,
+  },
+  pagerPageContent: {
+    width: "100%",
   },
   incomeExpensesContainer: {
     gap: 16,
+  },
+  balanceHeader: {
+    marginBottom: 20,
+  },
+  balanceTitle: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#6B7280",
+    marginBottom: 4,
+  },
+  balanceAmount: {
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#000000",
+  },
+  incomeExpensesChartContainer: {
+    width: "100%",
+    marginBottom: 16,
+  },
+  incomeExpensesChartBars: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-end",
+    height: 120,
+    width: "100%",
+  },
+  incomeExpensesPeriodGroup: {
+    flex: 1,
+    alignItems: "center",
+  },
+  incomeExpensesBarWrapper: {
+    height: 100,
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "center",
+    gap: 4,
+  },
+  incomeExpensesBar: {
+    width: 12,
+    borderRadius: 4,
+    minHeight: 4,
+  },
+  incomeExpensesBarExpenses: {
+    backgroundColor: "#B45309",
+  },
+  incomeExpensesBarIncome: {
+    backgroundColor: "#22C55E",
+  },
+  incomeExpensesPeriodLabel: {
+    fontSize: 12,
+    color: "#9CA3AF",
+    marginTop: 8,
+    textAlign: "center",
+  },
+  incomeExpensesLegend: {
+    flexDirection: "row",
+    justifyContent: "flex-start",
+    alignItems: "center",
+    gap: 16,
+    marginTop: 12,
+  },
+  incomeExpensesLegendItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  incomeExpensesLegendDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  incomeExpensesLegendText: {
+    fontSize: 12,
+    color: "#6B7280",
+    fontWeight: "500",
   },
   summaryCard: {
     backgroundColor: "#FFFFFF",
@@ -328,6 +407,23 @@ export const styles = StyleSheet.create({
     color: "#6B7280",
     marginTop: 4,
   },
+  trendSavingsValue: {
+    fontSize: 36,
+    fontWeight: "800",
+    color: "#111827",
+    marginTop: 8,
+  },
+  trendLineLabel: {
+    fontSize: 12,
+    lineHeight: 16,
+    color: "#9CA3AF",
+  },
+  trendLineLabelSelected: {
+    fontSize: 12,
+    lineHeight: 16,
+    color: "#1D4ED8",
+    fontWeight: "700",
+  },
   trendStatsRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -360,7 +456,20 @@ export const styles = StyleSheet.create({
   },
   chartContainer: {
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 12,
+    paddingBottom: 4,
+    overflow: "visible",
+    position: "relative",
+  },
+  trendChartTouchableArea: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    zIndex: 2,
+  },
+  trendChartHitArea: {
+    position: "absolute",
+    top: 0,
   },
   trendChartSelectedAmount: {
     backgroundColor: "#5B6BBE",
@@ -379,7 +488,7 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-end",
-    height: 130,
+    height: 210,
     width: "100%",
   },
   trendBarContainer: {
@@ -387,7 +496,7 @@ export const styles = StyleSheet.create({
     flex: 1,
   },
   trendBarWrapper: {
-    height: 100,
+    height: 180,
     justifyContent: "flex-end",
   },
   trendBar: {
@@ -417,7 +526,7 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     color: "#9CA3AF",
     textAlign: "center",
-    marginBottom: 12,
+    marginBottom: 16,
   },
   trendChangeRow: {
     alignItems: "center",
@@ -445,50 +554,6 @@ export const styles = StyleSheet.create({
   },
   changeTextNegative: {
     color: "#DC2626",
-  },
-  insightCards: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  insightCard: {
-    flex: 1,
-    flexDirection: "row",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 14,
-    alignItems: "center",
-    gap: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-    borderWidth: 2,
-    borderColor: "transparent",
-  },
-  insightCardSelected: {
-    borderColor: "#3B5BDB",
-    backgroundColor: "#F0F4FF",
-  },
-  insightIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  insightContent: {
-    flex: 1,
-  },
-  insightLabel: {
-    fontSize: 11,
-    color: "#6B7280",
-    marginBottom: 2,
-  },
-  insightValue: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#000000",
   },
   modalOverlay: {
     flex: 1,
@@ -524,7 +589,7 @@ export const styles = StyleSheet.create({
     marginBottom: 32,
   },
   modalDoneButton: {
-    backgroundColor: "#7340fd",
+    backgroundColor: Colors.light.primary,
     borderRadius: 28,
     paddingVertical: 16,
     alignItems: "center",
@@ -574,7 +639,6 @@ export const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#F3F0FF",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -603,7 +667,6 @@ export const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
   },
   incomeEmptyButton: {
-    backgroundColor: "#7340fd",
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.md,
@@ -718,7 +781,7 @@ export const styles = StyleSheet.create({
   incomeTipTitle: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#7340fd",
+    color: Colors.light.primary,
   },
   incomeTipText: {
     fontSize: 13,
@@ -778,15 +841,15 @@ export const styles = StyleSheet.create({
     borderColor: "transparent",
   },
   incomeTypeButtonSelected: {
-    backgroundColor: "#F3F0FF",
-    borderColor: "#7340fd",
+    backgroundColor: Colors.light.chipBackground,
+    borderColor: Colors.light.primary,
   },
   incomeTypeButtonText: {
     fontSize: 13,
     color: "#6B7280",
   },
   incomeTypeButtonTextSelected: {
-    color: "#7340fd",
+    color: Colors.light.primary,
     fontWeight: "500",
   },
   customTypeContainer: {
@@ -824,7 +887,6 @@ export const styles = StyleSheet.create({
     outlineStyle: "none",
   } as any,
   incomeSaveButton: {
-    backgroundColor: "#7340fd",
     paddingVertical: Spacing.md,
     borderRadius: BorderRadius.md,
     alignItems: "center",
@@ -880,7 +942,6 @@ export const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#F3F0FF",
     alignItems: "center",
     justifyContent: "center",
   },

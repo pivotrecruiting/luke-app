@@ -50,10 +50,7 @@ export const LevelCard = ({ onPress }: LevelCardPropsT) => {
 
   return (
     <Pressable
-      style={({ pressed }) => [
-        styles.levelCard,
-        isPressable && pressed ? styles.levelCardPressed : null,
-      ]}
+      style={styles.levelCard}
       onPress={isPressable ? () => onPress?.(currentLevel) : undefined}
       accessibilityRole={isPressable ? "button" : undefined}
       accessibilityLabel={isPressable ? "Level up details" : undefined}

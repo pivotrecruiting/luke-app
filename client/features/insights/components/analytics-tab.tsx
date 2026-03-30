@@ -1,5 +1,18 @@
-import { useEffect, useMemo, useRef, type RefObject } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type RefObject,
+} from "react";
+import {
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+  useWindowDimensions,
+} from "react-native";
 import PagerView from "react-native-pager-view";
 import { styles } from "@/screens/styles/insights-screen.styles";
 import { CategoriesPanel } from "./categories-panel";
@@ -9,8 +22,11 @@ import type {
   CategoryT,
   InsightsFilterT,
   MonthlyTrendT,
+  PeriodIncomeExpensesT,
   TimeFilterT,
 } from "../types/insights-types";
+
+const MIN_PAGER_HEIGHT = 280;
 
 type AnalyticsTabPropsT = {
   scrollViewRef: RefObject<ScrollView | null>;
@@ -29,6 +45,7 @@ type AnalyticsTabPropsT = {
   onSelectTrendMonth: (index: number | null) => void;
   totalIncome: number;
   totalExpenses: number;
+  periodIncomeExpenses: PeriodIncomeExpensesT[];
 };
 
 /**
@@ -51,8 +68,17 @@ export const AnalyticsTab = ({
   onSelectTrendMonth,
   totalIncome,
   totalExpenses,
+  periodIncomeExpenses,
 }: AnalyticsTabPropsT) => {
   const pagerRef = useRef<PagerView>(null);
+  const { height: windowHeight } = useWindowDimensions();
+  const [tabHeights, setTabHeights] = useState<Record<InsightsFilterT, number>>(
+    {
+      kategorien: MIN_PAGER_HEIGHT,
+      income: MIN_PAGER_HEIGHT,
+      trend: MIN_PAGER_HEIGHT,
+    },
+  );
 
   const timeFilterOptions = useMemo<{ id: TimeFilterT; label: string }[]>(
     () => [
@@ -70,20 +96,51 @@ export const AnalyticsTab = ({
     [],
   );
 
-  const filterToIndex = (filter: InsightsFilterT) => {
-    return filterOrder.indexOf(filter);
-  };
+  const filterToIndex = useCallback(
+    (filter: InsightsFilterT) => {
+      return filterOrder.indexOf(filter);
+    },
+    [filterOrder],
+  );
 
-  const indexToFilter = (index: number) => {
-    return filterOrder[index] ?? "kategorien";
-  };
+  const indexToFilter = useCallback(
+    (index: number) => {
+      return filterOrder[index] ?? "kategorien";
+    },
+    [filterOrder],
+  );
+
+  const updateTabHeight = useCallback(
+    (tab: InsightsFilterT, measuredHeight: number) => {
+      const nextHeight = Math.max(MIN_PAGER_HEIGHT, Math.ceil(measuredHeight));
+      setTabHeights((prev) => {
+        if (Math.abs(prev[tab] - nextHeight) < 2) {
+          return prev;
+        }
+        return {
+          ...prev,
+          [tab]: nextHeight,
+        };
+      });
+    },
+    [],
+  );
+
+  const fallbackPagerHeight = useMemo(() => {
+    return Math.max(MIN_PAGER_HEIGHT, Math.round(windowHeight * 0.45));
+  }, [windowHeight]);
+
+  const pagerHeight = useMemo(() => {
+    const measuredHeight = tabHeights[activeFilter];
+    return Math.max(fallbackPagerHeight, measuredHeight);
+  }, [activeFilter, fallbackPagerHeight, tabHeights]);
 
   useEffect(() => {
     const targetIndex = filterToIndex(activeFilter);
     if (targetIndex >= 0) {
       pagerRef.current?.setPage(targetIndex);
     }
-  }, [activeFilter]);
+  }, [activeFilter, filterToIndex]);
 
   const handleTabPress = (filter: InsightsFilterT) => {
     onChangeFilter(filter);
@@ -99,7 +156,7 @@ export const AnalyticsTab = ({
       style={styles.scrollView}
       contentContainerStyle={[
         styles.scrollContent,
-        { paddingBottom: bottomInset + 100 },
+        { paddingBottom: bottomInset + 20 },
       ]}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
@@ -182,7 +239,7 @@ export const AnalyticsTab = ({
 
       <PagerView
         ref={pagerRef}
-        style={styles.pagerView}
+        style={[styles.pagerView, { height: pagerHeight }]}
         initialPage={filterToIndex(activeFilter)}
         onPageSelected={(event) => {
           const nextFilter = indexToFilter(event.nativeEvent.position);
@@ -192,30 +249,51 @@ export const AnalyticsTab = ({
         }}
       >
         <View key="kategorien" style={styles.pagerPage}>
-          <CategoriesPanel
-            categories={categories}
-            total={totalCategoryExpenses}
-            selectedCategory={selectedCategory}
-            onSelectCategory={onSelectCategory}
-            onToggleCategory={onToggleCategory}
-          />
+          <View
+            style={styles.pagerPageContent}
+            onLayout={(event) => {
+              updateTabHeight("kategorien", event.nativeEvent.layout.height);
+            }}
+          >
+            <CategoriesPanel
+              categories={categories}
+              total={totalCategoryExpenses}
+              selectedCategory={selectedCategory}
+              onSelectCategory={onSelectCategory}
+              onToggleCategory={onToggleCategory}
+            />
+          </View>
         </View>
 
         <View key="income" style={styles.pagerPage}>
-          <IncomeExpensesView
-            income={totalIncome}
-            expenses={totalExpenses}
-            timeFilter={selectedTimeFilter}
-          />
+          <View
+            style={styles.pagerPageContent}
+            onLayout={(event) => {
+              updateTabHeight("income", event.nativeEvent.layout.height);
+            }}
+          >
+            <IncomeExpensesView
+              income={totalIncome}
+              expenses={totalExpenses}
+              periodIncomeExpenses={periodIncomeExpenses}
+              timeFilter={selectedTimeFilter}
+            />
+          </View>
         </View>
 
         <View key="trend" style={styles.pagerPage}>
-          <TrendView
-            monthlyData={monthlyTrendData}
-            timeFilter={selectedTimeFilter}
-            selectedMonth={selectedTrendMonth}
-            onSelectMonth={onSelectTrendMonth}
-          />
+          <View
+            style={styles.pagerPageContent}
+            onLayout={(event) => {
+              updateTabHeight("trend", event.nativeEvent.layout.height);
+            }}
+          >
+            <TrendView
+              monthlyData={monthlyTrendData}
+              selectedMonth={selectedTrendMonth}
+              onSelectMonth={onSelectTrendMonth}
+            />
+          </View>
         </View>
       </PagerView>
     </ScrollView>

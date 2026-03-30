@@ -36,7 +36,8 @@ export const GoalSummaryCard = ({
           <View>
             <Text style={styles.goalName}>{name}</Text>
             <Text style={styles.goalProgress}>
-              {currencySymbol} {formatCurrency(current, currency)} / {currencySymbol} {formatCurrency(target, currency)}
+              {currencySymbol} {formatCurrency(current, currency)} /{" "}
+              {currencySymbol} {formatCurrency(target, currency)}
             </Text>
           </View>
         </View>

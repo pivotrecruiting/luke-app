@@ -1,36 +1,142 @@
-import { Pressable, Text, View } from "react-native";
-import { Feather } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
+import { useMemo } from "react";
+import { Pressable, Text, View, useWindowDimensions } from "react-native";
+import { LineChart } from "react-native-gifted-charts";
 import { useApp } from "@/context/AppContext";
 import { getCurrencySymbol } from "@/utils/currency-format";
 import { styles } from "@/screens/styles/insights-screen.styles";
 import { formatCurrency } from "../utils/format";
-import type { MonthlyTrendT, TimeFilterT } from "../types/insights-types";
+import type { MonthlyTrendT } from "../types/insights-types";
+
+const CHART_HORIZONTAL_PADDING_PX = 80;
+const CHART_HEIGHT_PX = 200;
+const CHART_INITIAL_SPACING_PX = 24;
+const DATA_POINT_RADIUS_PX = 6;
+const CHART_OVERFLOW_BOTTOM_PX = 10;
+const CHART_LABELS_EXTRA_HEIGHT_PX = 10;
+const CHART_X_AXIS_LABELS_HEIGHT_PX = 18;
+const SELECTED_DATA_POINT_COLOR = "#C4B5FD";
+const CHART_LABEL_STYLE = {
+  fontSize: 12,
+  lineHeight: 16,
+  color: "#9CA3AF",
+};
+const CHART_LABEL_SELECTED_STYLE = {
+  fontSize: 12,
+  lineHeight: 16,
+  color: "#1D4ED8",
+  fontWeight: "700" as const,
+};
 
 type TrendViewPropsT = {
   monthlyData: MonthlyTrendT[];
-  timeFilter: TimeFilterT;
   selectedMonth: number | null;
   onSelectMonth: (index: number | null) => void;
 };
 
 /**
- * Renders a monthly trend chart with selectable months and highlights.
+ * Renders a responsive savings card with a line chart and month selection.
  */
 export const TrendView = ({
   monthlyData,
-  timeFilter,
   selectedMonth,
   onSelectMonth,
 }: TrendViewPropsT) => {
   const { currency } = useApp();
+  const { width: windowWidth } = useWindowDimensions();
   const currencySymbol = getCurrencySymbol(currency);
-  if (monthlyData.length === 0) {
+  const hasMonthlyData = monthlyData.length > 0;
+
+  const safeSelectedMonth =
+    hasMonthlyData &&
+    selectedMonth !== null &&
+    selectedMonth >= 0 &&
+    selectedMonth < monthlyData.length
+      ? selectedMonth
+      : null;
+
+  const lastMonthData = hasMonthlyData
+    ? monthlyData[monthlyData.length - 1]
+    : null;
+  const selectedData =
+    safeSelectedMonth !== null ? monthlyData[safeSelectedMonth] : lastMonthData;
+
+  const chartWidth = useMemo(() => {
+    return Math.max(windowWidth - CHART_HORIZONTAL_PADDING_PX, 240);
+  }, [windowWidth]);
+
+  const chartSpacing = useMemo(() => {
+    if (monthlyData.length <= 1) {
+      return 0;
+    }
+
+    return (
+      (chartWidth - CHART_INITIAL_SPACING_PX * 2) / (monthlyData.length - 1)
+    );
+  }, [chartWidth, monthlyData.length]);
+
+  const lineData = useMemo(() => {
+    return monthlyData.map((item, index) => ({
+      value: item.amount,
+      label: item.month,
+      labelTextStyle:
+        safeSelectedMonth === index
+          ? { ...CHART_LABEL_SELECTED_STYLE }
+          : { ...CHART_LABEL_STYLE },
+      dataPointRadius:
+        safeSelectedMonth === index
+          ? DATA_POINT_RADIUS_PX + 2
+          : DATA_POINT_RADIUS_PX,
+      dataPointColor:
+        safeSelectedMonth === index ? SELECTED_DATA_POINT_COLOR : "#3B5BDB",
+    }));
+  }, [monthlyData, safeSelectedMonth]);
+
+  const mostNegativeValue = useMemo(() => {
+    const minAmount = monthlyData.reduce(
+      (min, item) => Math.min(min, item.amount),
+      0,
+    );
+    return minAmount < 0 ? minAmount : undefined;
+  }, [monthlyData]);
+
+  const hitAreas = useMemo(() => {
+    return monthlyData.map((item, index) => {
+      const currentX = CHART_INITIAL_SPACING_PX + chartSpacing * index;
+      const previousX = CHART_INITIAL_SPACING_PX + chartSpacing * (index - 1);
+      const nextX = CHART_INITIAL_SPACING_PX + chartSpacing * (index + 1);
+      const left = index === 0 ? 0 : (previousX + currentX) / 2;
+      const right =
+        index === monthlyData.length - 1 ? chartWidth : (currentX + nextX) / 2;
+
+      return {
+        key: `${item.month}-${index}`,
+        month: item.month,
+        left,
+        width: Math.max(right - left, 1),
+      };
+    });
+  }, [chartSpacing, chartWidth, monthlyData]);
+
+  const handleMonthIndex = (index: number) => {
+    if (index < 0 || index >= monthlyData.length) {
+      return;
+    }
+    onSelectMonth(selectedMonth === index ? null : index);
+  };
+
+  const headerAmount = selectedData?.amount ?? 0;
+  const headerTitle = selectedData?.isCurrentMonth
+    ? "Aktuelle Monatsbalance"
+    : selectedData
+      ? `Monatsende ${selectedData.month}`
+      : "Monatsbalance";
+
+  if (!hasMonthlyData) {
     return (
       <View style={styles.trendContainer}>
         <View style={styles.summaryCard}>
           <View style={styles.trendHeader}>
-            <Text style={styles.summaryTitle}>Ausgaben-Entwicklung</Text>
+            <Text style={styles.summaryTitle}>Monatsbalance</Text>
             <Text style={styles.trendSubtitle}>Keine Daten</Text>
           </View>
           <Text style={styles.trendHint}>Keine Trenddaten verfügbar</Text>
@@ -39,222 +145,74 @@ export const TrendView = ({
     );
   }
 
-  const safeSelectedMonth =
-    selectedMonth !== null &&
-    selectedMonth >= 0 &&
-    selectedMonth < monthlyData.length
-      ? selectedMonth
-      : null;
-
-  const maxAmount = Math.max(...monthlyData.map((d) => d.amount), 1);
-
-  const averageBase = monthlyData.filter((d) => d.amount > 0);
-  const average =
-    averageBase.length > 0
-      ? averageBase.reduce((sum, d) => sum + d.amount, 0) / averageBase.length
-      : 0;
-  const currentMonthData = monthlyData[monthlyData.length - 1];
-  const previousMonthData =
-    monthlyData.length > 1 ? monthlyData[monthlyData.length - 2] : null;
-
-  const displayedData =
-    safeSelectedMonth !== null
-      ? monthlyData[safeSelectedMonth]
-      : currentMonthData;
-  const timeFilterLabel = (() => {
-    switch (timeFilter) {
-      case "thisMonth":
-        return "Dieser Monat";
-      case "lastMonth":
-        return "Letzter Monat";
-      case "last3Months":
-        return "3 Monate";
-      case "last6Months":
-        return "6 Monate";
-      case "thisYear":
-        return "Dieses Jahr";
-      default:
-        return "Dieser Monat";
-    }
-  })();
-  const displayLabel =
-    safeSelectedMonth !== null
-      ? monthlyData[safeSelectedMonth].month
-      : timeFilterLabel;
-
-  const changePercent =
-    previousMonthData && previousMonthData.amount > 0
-      ? ((currentMonthData.amount - previousMonthData.amount) /
-          previousMonthData.amount) *
-        100
-      : 0;
-  const isImproving = changePercent <= 0;
-
-  const bestMonthIndex = monthlyData.reduce(
-    (min, d, i, arr) => (d.amount < arr[min].amount ? i : min),
-    0,
-  );
-  const worstMonthIndex = monthlyData.reduce(
-    (max, d, i, arr) => (d.amount > arr[max].amount ? i : max),
-    0,
-  );
-
   return (
     <View style={styles.trendContainer}>
       <View style={styles.summaryCard}>
         <View style={styles.trendHeader}>
-          <Text style={styles.summaryTitle}>Ausgaben-Entwicklung</Text>
-          <Text style={styles.trendSubtitle}>{timeFilterLabel}</Text>
-        </View>
-
-        <View style={styles.trendStatsRow}>
-          <View style={styles.trendStat}>
-            <Text style={styles.trendStatLabel}>Durchschnitt</Text>
-            <Text style={styles.trendStatValue}>
-              {currencySymbol} {formatCurrency(average, currency)}
-            </Text>
-          </View>
-          <View style={styles.trendStatDivider} />
-          <View style={styles.trendStat}>
-            <Text style={styles.trendStatLabel}>{displayLabel}</Text>
-            <Text
-              style={[
-                styles.trendStatValue,
-                displayedData.amount <= average
-                  ? styles.trendPositive
-                  : styles.trendNegative,
-              ]}
-            >
-              {currencySymbol} {formatCurrency(displayedData.amount, currency)}
-            </Text>
-          </View>
+          <Text style={styles.summaryTitle}>{headerTitle}</Text>
+          <Text style={styles.trendSavingsValue}>
+            {currencySymbol} {formatCurrency(headerAmount, currency)}
+          </Text>
         </View>
 
         <View style={styles.chartContainer}>
-          <View style={styles.trendChartBars}>
-            {monthlyData.map((data, index) => {
-              const isZero = data.amount <= 0;
-              const barHeight = isZero
-                ? 6
-                : Math.max((data.amount / maxAmount) * 100, 8);
-              const isSelected = safeSelectedMonth === index;
-              const isCurrentMonth = index === monthlyData.length - 1;
-              const hasSelection = selectedMonth !== null;
-              const isActive =
-                !isZero && (isSelected || (isCurrentMonth && !hasSelection));
-              const barColors = isActive
-                ? (["#5B6BBE", "#3B4B9E"] as const)
-                : (["#A5B4FC", "#7B8CDE"] as const);
-
-              return (
-                <Pressable
-                  key={index}
-                  style={styles.trendBarContainer}
-                  onPress={() => onSelectMonth(isSelected ? null : index)}
-                >
-                  <View style={styles.trendBarWrapper}>
-                    <LinearGradient
-                      colors={barColors}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 0, y: 1 }}
-                      style={[
-                        styles.trendBar,
-                        { height: barHeight },
-                        isActive && styles.trendBarSelected,
-                        hasSelection &&
-                          !isSelected &&
-                          !isZero &&
-                          styles.trendBarDimmed,
-                        isZero && styles.trendBarZero,
-                      ]}
-                    />
-                  </View>
-                  <Text
-                    style={[
-                      styles.trendBarLabel,
-                      isActive && styles.trendBarLabelSelected,
-                    ]}
-                  >
-                    {data.month}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </View>
-
-        <Text style={styles.trendHint}>Tippe auf einen Monat für Details</Text>
-
-        <View style={styles.trendChangeRow}>
           <View
             style={[
-              styles.changeIndicator,
-              isImproving ? styles.changePositive : styles.changeNegative,
+              styles.trendChartTouchableArea,
+              { width: chartWidth, height: CHART_HEIGHT_PX },
             ]}
           >
-            <Feather
-              name={isImproving ? "arrow-down" : "arrow-up"}
-              size={16}
-              color={isImproving ? "#059669" : "#DC2626"}
-            />
-            <Text
-              style={[
-                styles.changeText,
-                isImproving
-                  ? styles.changeTextPositive
-                  : styles.changeTextNegative,
-              ]}
-            >
-              {Math.abs(changePercent).toFixed(1)}%{" "}
-              {isImproving ? "weniger" : "mehr"} als letzten Monat
-            </Text>
+            {hitAreas.map((area, index) => (
+              <Pressable
+                key={area.key}
+                accessibilityRole="button"
+                accessibilityLabel={`Wert fuer ${area.month} auswaehlen`}
+                style={[
+                  styles.trendChartHitArea,
+                  {
+                    left: area.left,
+                    width: area.width,
+                    height: CHART_HEIGHT_PX,
+                  },
+                ]}
+                onPress={() => handleMonthIndex(index)}
+              />
+            ))}
           </View>
-        </View>
-      </View>
 
-      <View style={styles.insightCards}>
-        <Pressable
-          style={[
-            styles.insightCard,
-            selectedMonth === bestMonthIndex && styles.insightCardSelected,
-          ]}
-          onPress={() =>
-            onSelectMonth(
-              selectedMonth === bestMonthIndex ? null : bestMonthIndex,
-            )
-          }
-        >
-          <View style={[styles.insightIcon, { backgroundColor: "#EFF6FF" }]}>
-            <Feather name="calendar" size={18} color="#3B5BDB" />
-          </View>
-          <View style={styles.insightContent}>
-            <Text style={styles.insightLabel}>Bester Monat</Text>
-            <Text style={styles.insightValue}>
-              {monthlyData[bestMonthIndex].month}
-            </Text>
-          </View>
-        </Pressable>
-        <Pressable
-          style={[
-            styles.insightCard,
-            selectedMonth === worstMonthIndex && styles.insightCardSelected,
-          ]}
-          onPress={() =>
-            onSelectMonth(
-              selectedMonth === worstMonthIndex ? null : worstMonthIndex,
-            )
-          }
-        >
-          <View style={[styles.insightIcon, { backgroundColor: "#FEF3C7" }]}>
-            <Feather name="alert-circle" size={18} color="#F59E0B" />
-          </View>
-          <View style={styles.insightContent}>
-            <Text style={styles.insightLabel}>Teuerster Monat</Text>
-            <Text style={styles.insightValue}>
-              {monthlyData[worstMonthIndex].month}
-            </Text>
-          </View>
-        </Pressable>
+          <LineChart
+            data={lineData}
+            width={chartWidth}
+            height={CHART_HEIGHT_PX}
+            areaChart
+            mostNegativeValue={mostNegativeValue}
+            overflowBottom={CHART_OVERFLOW_BOTTOM_PX}
+            initialSpacing={CHART_INITIAL_SPACING_PX}
+            spacing={chartSpacing}
+            labelsExtraHeight={CHART_LABELS_EXTRA_HEIGHT_PX}
+            xAxisLabelsHeight={CHART_X_AXIS_LABELS_HEIGHT_PX}
+            showStripOnFocus={false}
+            color="#3B5BDB"
+            thickness={3}
+            hideYAxisText
+            yAxisThickness={0}
+            xAxisThickness={1}
+            xAxisColor="#D1D5DB"
+            noOfSections={4}
+            rulesType="dashed"
+            rulesColor="#E5E7EB"
+            startFillColor="rgba(59, 91, 219, 0.25)"
+            endFillColor="rgba(59, 91, 219, 0.04)"
+            startOpacity={0.8}
+            endOpacity={0.1}
+            dataPointsColor="#3B5BDB"
+            dataPointsRadius={DATA_POINT_RADIUS_PX}
+          />
+        </View>
+
+        <Text style={styles.trendHint}>
+          Tippe auf einen Monat, um den Monatswert oben zu sehen
+        </Text>
       </View>
     </View>
   );
