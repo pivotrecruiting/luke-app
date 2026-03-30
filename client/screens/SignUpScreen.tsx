@@ -384,6 +384,7 @@ export default function SignUpScreen() {
         onClose={() => setShowWorkshopModal(false)}
         keyboardAvoidingEnabled={true}
         keyboardVerticalOffset={Spacing.lg}
+        keyboardShiftFactor={1}
         contentStyle={[
           modalStyles.modalContent,
           { paddingBottom: insets.bottom + Spacing.xl },
