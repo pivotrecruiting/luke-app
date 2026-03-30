@@ -36,7 +36,7 @@ export default function CatScreen() {
           <View style={styles.textSection}>
             <Text style={styles.title}>Die Zeit vergeht so schnell..</Text>
             <Text style={styles.subtitle}>
-              Du hast im letzten Monat{" "}
+              Du hast im letzten Monat {/* TODO: Replace with actual amount */}
               <Text style={styles.subtitleStrong}>150 €</Text> mehr in der
               Tasche behalten!
             </Text>
@@ -61,6 +61,7 @@ export default function CatScreen() {
           </View>
 
           <View style={styles.bottomSection}>
+            {/* TODO: Replace with actual amount */}
             <Text style={styles.amount}>+ 150 Euro</Text>
             <Text style={styles.description}>
               Für nur 2,99 € (weniger als ein Snack){"\n"}
