@@ -548,14 +548,15 @@ const modalStyles = StyleSheet.create({
   activateButton: {
     width: "100%",
     height: 56,
-    borderRadius: 28,
+    paddingHorizontal: Spacing.xl,
+    borderRadius: 32,
     alignItems: "center",
     justifyContent: "center",
     marginTop: Spacing["2xl"],
   },
   activateButtonText: {
     color: "#FFFFFF",
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: "700",
   },
   modalFooterText: {
