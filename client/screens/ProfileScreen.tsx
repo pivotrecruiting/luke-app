@@ -139,6 +139,7 @@ export default function ProfileScreen() {
     (provider) => provider !== "email" && provider !== "phone",
   );
   const canEditEmail = Boolean(profileEmail) && !hasOAuthProvider;
+  const canResetPassword = canEditEmail;
   const loginMethod =
     authProviders.length > 0
       ? authProviders.map(getProviderLabel).join(" + ")
@@ -178,6 +179,14 @@ export default function ProfileScreen() {
     } finally {
       setIsLoggingOut(false);
     }
+  };
+
+  const handlePasswordReset = async () => {
+    if (!profileEmail || !canResetPassword || isSavingProfile || isLoggingOut) {
+      return;
+    }
+
+    navigation.navigate("RequestPassword", { email: profileEmail });
   };
 
   const handleSaveProfile = async () => {
@@ -771,8 +780,26 @@ export default function ProfileScreen() {
 
         <Pressable
           style={({ pressed }) => [
+            styles.secondaryActionButton,
+            !canResetPassword ? styles.secondaryActionButtonDisabled : null,
+            {
+              opacity: pressed || isSavingProfile || isLoggingOut ? 0.7 : 1,
+            },
+          ]}
+          onPress={handlePasswordReset}
+          disabled={!canResetPassword || isSavingProfile || isLoggingOut}
+        >
+          <ThemedText style={styles.secondaryActionButtonText}>
+            Passwort zurücksetzen
+          </ThemedText>
+        </Pressable>
+
+        <Pressable
+          style={({ pressed }) => [
             styles.logoutButton,
-            { opacity: pressed || isLoggingOut || isSavingProfile ? 0.7 : 1 },
+            {
+              opacity: pressed || isLoggingOut || isSavingProfile ? 0.7 : 1,
+            },
           ]}
           onPress={handleLogout}
           disabled={isLoggingOut || isSavingProfile}

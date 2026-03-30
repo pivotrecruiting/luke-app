@@ -14,6 +14,8 @@ import VaultScreen from "@/screens/VaultScreen";
 import LevelUpScreen from "@/screens/LevelUpScreen";
 import StreakScreen from "@/screens/StreakScreen";
 import PaywallScreen from "@/screens/PaywallScreen";
+import RequestPasswordScreen from "@/screens/RequestPasswordScreen";
+import ResetPasswordScreen from "@/screens/ResetPasswordScreen";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import { Colors } from "@/constants/theme";
@@ -41,6 +43,12 @@ export type RootStackParamList = {
     variant?: "ongoing" | "completed";
   };
   Paywall: undefined;
+  RequestPassword:
+    | {
+        email?: string;
+      }
+    | undefined;
+  ResetPassword: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -91,6 +99,15 @@ export default function RootStackNavigator() {
       ) : (
         <Stack.Screen name="Main" component={MainTabNavigator} />
       )}
+      <Stack.Screen
+        name="RequestPassword"
+        component={RequestPasswordScreen}
+        options={{
+          presentation: "modal",
+          animation: "slide_from_bottom",
+          headerShown: false,
+        }}
+      />
       {isAuthenticated && (
         <>
           <Stack.Screen
@@ -185,6 +202,15 @@ export default function RootStackNavigator() {
               presentation: "modal",
               animation: "fade_from_bottom",
               animationDuration: 300,
+            }}
+          />
+          <Stack.Screen
+            name="ResetPassword"
+            component={ResetPasswordScreen}
+            options={{
+              presentation: "modal",
+              animation: "slide_from_bottom",
+              headerShown: false,
             }}
           />
         </>

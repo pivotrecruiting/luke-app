@@ -391,6 +391,28 @@ export const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#FFFFFF",
   },
+  secondaryActionButton: {
+    // Used for: Secondary action button container
+    borderRadius: BorderRadius.md,
+    paddingVertical: Spacing.lg,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    marginBottom: Spacing.md,
+  },
+  secondaryActionButtonDisabled: {
+    // Used for: Disabled secondary action button
+    backgroundColor: "#F3F4F6",
+    borderColor: "#E5E7EB",
+  },
+  secondaryActionButtonText: {
+    // Used for: Secondary action button text
+    ...Typography.body,
+    fontWeight: "600",
+    color: "#000000",
+  },
   logoutButton: {
     // Used for: Logout button container
     flexDirection: "row",

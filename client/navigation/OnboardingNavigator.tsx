@@ -11,11 +11,17 @@ import Onboarding6Screen from "@/screens/onboarding/Onboarding6Screen";
 import Onboarding7Screen from "@/screens/onboarding/Onboarding7Screen";
 import Onboarding8Screen from "@/screens/onboarding/Onboarding8Screen";
 import AllesStartklarScreen from "@/screens/onboarding/AllesStartklarScreen";
+import RequestPasswordScreen from "@/screens/RequestPasswordScreen";
 import { useAuth } from "@/context/AuthContext";
 
 export type OnboardingStackParamList = {
   Welcome: undefined;
   SignUp: undefined;
+  RequestPassword:
+    | {
+        email?: string;
+      }
+    | undefined;
   Onboarding1: undefined;
   Onboarding2: undefined;
   Onboarding3: undefined;
@@ -44,6 +50,7 @@ export default function OnboardingNavigator() {
     >
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
       <Stack.Screen name="SignUp" component={SignUpScreen} />
+      <Stack.Screen name="RequestPassword" component={RequestPasswordScreen} />
       <Stack.Screen name="Onboarding1" component={Onboarding1Screen} />
       <Stack.Screen name="Onboarding2" component={Onboarding2Screen} />
       <Stack.Screen name="Onboarding3" component={Onboarding3Screen} />

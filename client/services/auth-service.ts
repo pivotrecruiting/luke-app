@@ -25,6 +25,11 @@ export type OAuthSignInResultT =
 
 export type UpdateUserResultT = AuthSuccessResultT | AuthErrorT;
 
+export type AuthCallbackResultT =
+  | { status: "signed-in" }
+  | { status: "password-recovery" }
+  | AuthErrorT;
+
 type AuthErrorLikeT = {
   message?: string;
   status?: number;
@@ -64,6 +69,7 @@ type OAuthCallbackParamsT = {
   accessToken: string | null;
   refreshToken: string | null;
   code: string | null;
+  type: string | null;
   errorCode: string | null;
   errorDescription: string | null;
 };
@@ -92,6 +98,8 @@ const extractOAuthCallbackParams = (url: string): OAuthCallbackParamsT => {
       getParam(hashParams, "refresh_token");
     const code =
       getParam(parsedUrl.searchParams, "code") ?? getParam(hashParams, "code");
+    const type =
+      getParam(parsedUrl.searchParams, "type") ?? getParam(hashParams, "type");
     const errorCode =
       getParam(parsedUrl.searchParams, "error_code") ??
       getParam(hashParams, "error_code") ??
@@ -105,6 +113,7 @@ const extractOAuthCallbackParams = (url: string): OAuthCallbackParamsT => {
       accessToken,
       refreshToken,
       code,
+      type,
       errorCode,
       errorDescription,
     };
@@ -122,6 +131,7 @@ const extractOAuthCallbackParams = (url: string): OAuthCallbackParamsT => {
       getParam(queryParams, "refresh_token") ??
       getParam(hashParams, "refresh_token");
     const code = getParam(queryParams, "code") ?? getParam(hashParams, "code");
+    const type = getParam(queryParams, "type") ?? getParam(hashParams, "type");
     const errorCode =
       getParam(queryParams, "error_code") ??
       getParam(hashParams, "error_code") ??
@@ -135,16 +145,17 @@ const extractOAuthCallbackParams = (url: string): OAuthCallbackParamsT => {
       accessToken,
       refreshToken,
       code,
+      type,
       errorCode,
       errorDescription,
     };
   }
 };
 
-const createSessionFromOAuthCallback = async (
+export const completeAuthCallbackFromUrl = async (
   callbackUrl: string,
-): Promise<OAuthSignInResultT> => {
-  const { accessToken, refreshToken, code, errorCode, errorDescription } =
+): Promise<AuthCallbackResultT> => {
+  const { accessToken, refreshToken, code, type, errorCode, errorDescription } =
     extractOAuthCallbackParams(callbackUrl);
 
   if (errorCode || errorDescription) {
@@ -164,7 +175,9 @@ const createSessionFromOAuthCallback = async (
       return { status: "error", message: error.message };
     }
 
-    return { status: "signed-in" };
+    return {
+      status: type === "recovery" ? "password-recovery" : "signed-in",
+    };
   }
 
   if (code) {
@@ -173,13 +186,27 @@ const createSessionFromOAuthCallback = async (
       return { status: "error", message: error.message };
     }
 
-    return { status: "signed-in" };
+    return {
+      status: type === "recovery" ? "password-recovery" : "signed-in",
+    };
   }
 
   return {
     status: "error",
     message: "Missing auth tokens in OAuth callback URL",
   };
+};
+
+const createSessionFromOAuthCallback = async (
+  callbackUrl: string,
+): Promise<OAuthSignInResultT> => {
+  const result = await completeAuthCallbackFromUrl(callbackUrl);
+
+  if (result.status === "error") {
+    return result;
+  }
+
+  return { status: "signed-in" };
 };
 
 export const completeAuthSessionIfNeeded = () => {
@@ -329,6 +356,46 @@ export const updateUserEmail = async (
       { email: email.trim().toLowerCase() },
       { emailRedirectTo: getAuthRedirectUrl() },
     );
+
+    if (error) {
+      return { status: "error", message: error.message };
+    }
+
+    return { status: "success" };
+  } catch (error) {
+    return {
+      status: "error",
+      message: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+};
+
+export const sendPasswordResetEmail = async (
+  email: string,
+): Promise<UpdateUserResultT> => {
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: getAuthRedirectUrl(),
+    });
+
+    if (error) {
+      return { status: "error", message: error.message };
+    }
+
+    return { status: "success" };
+  } catch (error) {
+    return {
+      status: "error",
+      message: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+};
+
+export const updateUserPassword = async (
+  password: string,
+): Promise<UpdateUserResultT> => {
+  try {
+    const { error } = await supabase.auth.updateUser({ password });
 
     if (error) {
       return { status: "error", message: error.message };

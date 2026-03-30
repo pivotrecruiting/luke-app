@@ -1,19 +1,19 @@
 import React, { useState } from "react";
 import {
   Alert,
-  View,
+  Pressable,
+  StyleSheet,
   Text,
   TextInput,
-  StyleSheet,
-  Pressable,
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { AntDesign } from "@expo/vector-icons";
 import Svg, { Path } from "react-native-svg";
-import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
+import { AuthScreenLayout } from "@/components/auth-screen-layout";
 import { PurpleGradientButton } from "@/components/ui/purple-gradient-button";
-import { Spacing, BorderRadius, Typography, Colors } from "@/constants/theme";
+import { Colors, Spacing, Typography } from "@/constants/theme";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { OnboardingStackParamList } from "@/navigation/OnboardingNavigator";
 import {
@@ -23,6 +23,7 @@ import {
   type OAuthProviderT,
 } from "@/services/auth-service";
 import { AppModal } from "@/components/ui/app-modal";
+import { authScreenStyles } from "@/screens/styles/auth-screen.styles";
 import { isValidEmail } from "@/utils/validation";
 
 type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
@@ -63,6 +64,12 @@ export default function SignUpScreen() {
   );
   const [isAuthLoading, setIsAuthLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const handleOpenRequestPassword = () => {
+    navigation.navigate("RequestPassword", {
+      email: email.trim().toLowerCase() || undefined,
+    });
+  };
 
   const handleEmailSignUp = async () => {
     if (isAuthLoading) return;
@@ -123,153 +130,161 @@ export default function SignUpScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <KeyboardAwareScrollViewCompat
-        contentContainerStyle={[
-          styles.scrollContent,
-          {
-            paddingTop: insets.top + 80,
-            paddingBottom: insets.bottom + Spacing.xl,
-          },
-        ]}
-      >
-        <Text style={styles.logo}>Luke</Text>
-
-        <View style={styles.formContainer}>
-          <Text style={styles.title}>Erstelle einen Account</Text>
-          <Text style={styles.subtitle}>
-            Melde dich mit deiner E-Mail an, um loszulegen.
-          </Text>
-
-          <TextInput
-            style={styles.input}
-            placeholder="email@domain.com"
-            placeholderTextColor="#9CA3AF"
-            value={email}
-            onChangeText={(value) => {
-              setEmail(value);
-              if (successMessage) {
-                setSuccessMessage(null);
-              }
-            }}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-            autoComplete="email"
-            textContentType="emailAddress"
-          />
-
-          <TextInput
-            style={[styles.input, styles.passwordInput]}
-            placeholder="Passwort"
-            placeholderTextColor="#9CA3AF"
-            value={password}
-            onChangeText={(value) => {
-              setPassword(value);
-              if (successMessage) {
-                setSuccessMessage(null);
-              }
-            }}
-            autoCapitalize="none"
-            autoCorrect={false}
-            autoComplete="password"
-            textContentType="newPassword"
-            secureTextEntry={true}
-            onSubmitEditing={handleEmailSignUp}
-          />
-
-          <Pressable
-            onPress={handleEmailSignUp}
-            style={({ pressed }) => [
-              styles.continueButton,
-              isAuthLoading && styles.buttonDisabled,
-              pressed && styles.buttonPressed,
-            ]}
-            disabled={isAuthLoading}
-          >
-            <Text style={styles.continueButtonText}>
-              {isAuthLoading ? "Bitte warten..." : "Fortfahren"}
-            </Text>
-          </Pressable>
-
-          {successMessage ? (
-            <View style={styles.successMessageContainer} accessible={true}>
-              <Text
-                style={styles.successMessageText}
-                accessibilityRole="text"
-                accessibilityLiveRegion="polite"
-              >
-                {successMessage}
-              </Text>
-            </View>
-          ) : null}
-
-          <View style={styles.dividerContainer}>
-            <View style={styles.divider} />
-            <Text style={styles.dividerText}>oder</Text>
-            <View style={styles.divider} />
-          </View>
-
-          <Pressable
-            onPress={() => handleOAuthSignIn("google")}
-            style={({ pressed }) => [
-              styles.socialButton,
-              isAuthLoading && styles.buttonDisabled,
-              pressed && styles.buttonPressed,
-            ]}
-            disabled={isAuthLoading}
-          >
-            <GoogleLogo size={20} />
-            <Text style={styles.socialButtonText}>Anmelden über Google</Text>
-          </Pressable>
-
-          <Pressable
-            onPress={() => handleOAuthSignIn("apple")}
-            style={({ pressed }) => [
-              styles.socialButton,
-              isAuthLoading && styles.buttonDisabled,
-              pressed && styles.buttonPressed,
-            ]}
-            disabled={isAuthLoading}
-          >
-            <AntDesign name="apple" size={20} color="#000000" />
-            <Text style={styles.socialButtonText}>Anmelden über Apple</Text>
-          </Pressable>
-
-          <Text style={styles.termsText}>
+    <AuthScreenLayout
+      title="Erstelle einen Account"
+      subtitle="Melde dich mit deiner E-Mail an, um loszulegen."
+      footer={
+        <>
+          <Text style={authScreenStyles.termsText}>
             Durch das Fortfahren stimmst du unseren{" "}
-            <Text style={styles.termsLink}>AGB</Text> und dem{" "}
-            <Text style={styles.termsLink}>Datenschutz</Text> zu.
+            <Text style={authScreenStyles.termsLink}>AGB</Text> und dem{" "}
+            <Text style={authScreenStyles.termsLink}>Datenschutz</Text> zu.
           </Text>
 
           <Pressable
-            style={styles.workshopCodeButton}
+            style={authScreenStyles.workshopCodeButton}
             onPress={() => setShowWorkshopModal(true)}
           >
-            <Text style={styles.workshopCodeText}>
+            <Text style={authScreenStyles.workshopCodeText}>
               Du hast einen Workshop-Code?
             </Text>
           </Pressable>
+        </>
+      }
+    >
+      <TextInput
+        style={authScreenStyles.input}
+        placeholder="email@domain.com"
+        placeholderTextColor="#9CA3AF"
+        value={email}
+        onChangeText={(value) => {
+          setEmail(value);
+          if (successMessage) {
+            setSuccessMessage(null);
+          }
+        }}
+        keyboardType="email-address"
+        autoCapitalize="none"
+        autoCorrect={false}
+        autoComplete="email"
+        textContentType="emailAddress"
+      />
+
+      <TextInput
+        style={[authScreenStyles.input, authScreenStyles.inputWithTightSpacing]}
+        placeholder="Passwort"
+        placeholderTextColor="#9CA3AF"
+        value={password}
+        onChangeText={(value) => {
+          setPassword(value);
+          if (successMessage) {
+            setSuccessMessage(null);
+          }
+        }}
+        autoCapitalize="none"
+        autoCorrect={false}
+        autoComplete="password"
+        textContentType="newPassword"
+        secureTextEntry={true}
+        onSubmitEditing={handleEmailSignUp}
+      />
+
+      <Pressable
+        style={({ pressed }) => [
+          authScreenStyles.forgotPasswordButton,
+          { opacity: pressed ? 0.7 : 1 },
+        ]}
+        onPress={handleOpenRequestPassword}
+      >
+        <Text style={authScreenStyles.forgotPasswordText}>
+          Passwort vergessen?
+        </Text>
+      </Pressable>
+
+      <Pressable
+        onPress={handleEmailSignUp}
+        style={({ pressed }) => [
+          authScreenStyles.primaryButton,
+          isAuthLoading && authScreenStyles.buttonDisabled,
+          pressed && authScreenStyles.buttonPressed,
+        ]}
+        disabled={isAuthLoading}
+      >
+        <Text style={authScreenStyles.primaryButtonText}>
+          {isAuthLoading ? "Bitte warten..." : "Fortfahren"}
+        </Text>
+      </Pressable>
+
+      {successMessage ? (
+        <View
+          style={authScreenStyles.successMessageContainer}
+          accessible={true}
+        >
+          <Text
+            style={authScreenStyles.successMessageText}
+            accessibilityRole="text"
+            accessibilityLiveRegion="polite"
+          >
+            {successMessage}
+          </Text>
         </View>
-      </KeyboardAwareScrollViewCompat>
+      ) : null}
+
+      <View style={authScreenStyles.dividerContainer}>
+        <View style={authScreenStyles.divider} />
+        <Text style={authScreenStyles.dividerText}>oder</Text>
+        <View style={authScreenStyles.divider} />
+      </View>
+
+      <Pressable
+        onPress={() => handleOAuthSignIn("google")}
+        style={({ pressed }) => [
+          authScreenStyles.socialButton,
+          isAuthLoading && authScreenStyles.buttonDisabled,
+          pressed && authScreenStyles.buttonPressed,
+        ]}
+        disabled={isAuthLoading}
+      >
+        <GoogleLogo size={20} />
+        <Text style={authScreenStyles.socialButtonText}>
+          Anmelden über Google
+        </Text>
+      </Pressable>
+
+      <Pressable
+        onPress={() => handleOAuthSignIn("apple")}
+        style={({ pressed }) => [
+          authScreenStyles.socialButton,
+          isAuthLoading && authScreenStyles.buttonDisabled,
+          pressed && authScreenStyles.buttonPressed,
+        ]}
+        disabled={isAuthLoading}
+      >
+        <AntDesign name="apple" size={20} color="#000000" />
+        <Text style={authScreenStyles.socialButtonText}>
+          Anmelden über Apple
+        </Text>
+      </Pressable>
 
       <AppModal
         visible={showWorkshopModal}
         onClose={() => setShowWorkshopModal(false)}
         contentStyle={[
-          styles.modalContent,
+          modalStyles.modalContent,
           { paddingBottom: insets.bottom + Spacing.xl },
         ]}
       >
-        <View style={styles.modalHandle} />
-        <Text style={styles.modalTitle}>Workshop-Zugang freischalten</Text>
-        <Text style={styles.modalSubtitle}>Gib dein persönlichen Code ein</Text>
+        <View style={modalStyles.modalHandle} />
+        <Text style={modalStyles.modalTitle}>Workshop-Zugang freischalten</Text>
+        <Text style={modalStyles.modalSubtitle}>
+          Gib dein persönlichen Code ein
+        </Text>
 
         <TextInput
           style={[
-            styles.modalInput,
-            codeStatus === "valid" && styles.inputValid,
-            codeStatus === "invalid" && styles.inputInvalid,
+            modalStyles.modalInput,
+            codeStatus === "valid" && modalStyles.inputValid,
+            codeStatus === "invalid" && modalStyles.inputInvalid,
           ]}
           placeholder="DEIN CODE HIER"
           placeholderTextColor="#9CA3AF"
@@ -296,178 +311,20 @@ export default function SignUpScreen() {
               setCodeStatus("invalid");
             }
           }}
-          style={styles.activateButton}
+          style={modalStyles.activateButton}
         >
-          <Text style={styles.activateButtonText}>CODE AKTIVIEREN</Text>
+          <Text style={modalStyles.activateButtonText}>CODE AKTIVIEREN</Text>
         </PurpleGradientButton>
 
-        <Text style={styles.modalFooterText}>4 Wochen kostenlos nutzen.</Text>
+        <Text style={modalStyles.modalFooterText}>
+          4 Wochen kostenlos nutzen.
+        </Text>
       </AppModal>
-    </View>
+    </AuthScreenLayout>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.light.backgroundRoot,
-  },
-  tealBlur: {
-    position: "absolute",
-    left: -80,
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: Colors.light.teal,
-    opacity: 0.6,
-  },
-  purpleBlur: {
-    position: "absolute",
-    bottom: -50,
-    right: -80,
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: Colors.light.primary,
-    opacity: 0.5,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    alignItems: "center",
-  },
-  logo: {
-    ...Typography.h1,
-    color: Colors.light.text,
-    fontWeight: "700",
-    fontSize: 30,
-  },
-  formContainer: {
-    marginTop: 64,
-    paddingHorizontal: Spacing["2xl"],
-    width: "100%",
-    maxWidth: 350,
-    alignItems: "center",
-  },
-  title: {
-    ...Typography.h3,
-    color: Colors.light.text,
-    textAlign: "center",
-  },
-  subtitle: {
-    ...Typography.small,
-    color: "#6B7280",
-    textAlign: "center",
-    marginTop: Spacing.sm,
-  },
-  input: {
-    width: "100%",
-    height: 48,
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    borderRadius: BorderRadius.xs,
-    paddingHorizontal: Spacing.lg,
-    marginTop: Spacing["3xl"],
-    ...Typography.body,
-    color: Colors.light.text,
-    outlineStyle: "none",
-  } as any,
-  passwordInput: {
-    marginTop: Spacing.md,
-  },
-  continueButton: {
-    width: "100%",
-    height: 48,
-    backgroundColor: "#1A1A1A",
-    borderRadius: BorderRadius.xs,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: Spacing.lg,
-  },
-  continueButtonText: {
-    ...Typography.body,
-    fontWeight: "600",
-    color: "#FFFFFF",
-  },
-  successMessageContainer: {
-    width: "100%",
-    marginTop: Spacing.md,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.lg,
-    borderRadius: BorderRadius.xs,
-    backgroundColor: Colors.light.successBackground,
-    borderWidth: 1,
-    borderColor: Colors.light.successBorder,
-  },
-  successMessageText: {
-    ...Typography.small,
-    color: Colors.light.success,
-    textAlign: "center",
-  },
-  buttonPressed: {
-    opacity: 0.8,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  dividerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    width: "100%",
-    marginTop: Spacing["2xl"],
-  },
-  divider: {
-    flex: 1,
-    height: 1,
-    backgroundColor: "#E5E7EB",
-  },
-  dividerText: {
-    ...Typography.small,
-    color: "#9CA3AF",
-    paddingHorizontal: Spacing.lg,
-  },
-  socialButton: {
-    width: "100%",
-    height: 48,
-    backgroundColor: "#F3F4F6",
-    borderRadius: BorderRadius.xs,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: Spacing.sm,
-    marginTop: Spacing.md,
-  },
-  socialButtonText: {
-    ...Typography.body,
-    fontWeight: "500",
-    color: "#000000",
-  },
-  termsText: {
-    ...Typography.tiny,
-    color: "#9CA3AF",
-    textAlign: "center",
-    marginTop: Spacing["3xl"],
-    lineHeight: 18,
-  },
-  termsLink: {
-    color: "#6B7280",
-    fontWeight: "500",
-  },
-  workshopCodeButton: {
-    marginTop: Spacing.xl,
-    borderBottomWidth: 1,
-    borderBottomColor: "#4F46E5",
-    paddingBottom: 2,
-  },
-  workshopCodeText: {
-    ...Typography.small,
-    color: "#4F46E5",
-    fontWeight: "500",
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.4)",
-    justifyContent: "flex-end",
-  },
+const modalStyles = StyleSheet.create({
   modalContent: {
     backgroundColor: "#FFFFFF",
     borderTopLeftRadius: 24,
@@ -506,8 +363,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 16,
     color: Colors.light.text,
-    outlineStyle: "none",
-  } as any,
+  },
   inputValid: {
     borderColor: "#22C55E",
   },
