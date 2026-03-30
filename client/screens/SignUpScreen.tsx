@@ -27,6 +27,16 @@ import {
 import { AppModal } from "@/components/ui/app-modal";
 import { authScreenStyles } from "@/screens/styles/auth-screen.styles";
 import { isValidEmail } from "@/utils/validation";
+import {
+  clearPendingWorkshopCode,
+  loadPendingWorkshopCode,
+} from "@/services/local-storage";
+import {
+  normalizeWorkshopCode,
+  rememberPendingWorkshopCode,
+  type SignupMethodT,
+  validateWorkshopCode,
+} from "@/services/workshop-code-service";
 
 type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
 completeAuthSessionIfNeeded();
@@ -60,12 +70,17 @@ export default function SignUpScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showWorkshopModal, setShowWorkshopModal] = useState(false);
-  const [workshopCode, setWorkshopCode] = useState("");
+  const [workshopCodeInput, setWorkshopCodeInput] = useState("");
+  const [appliedWorkshopCode, setAppliedWorkshopCode] = useState("");
   const [codeStatus, setCodeStatus] = useState<"neutral" | "valid" | "invalid">(
     "neutral",
   );
   const [isAuthLoading, setIsAuthLoading] = useState(false);
   const [isAppleAuthAvailable, setIsAppleAuthAvailable] = useState(false);
+  const [isWorkshopCodeLoading, setIsWorkshopCodeLoading] = useState(false);
+  const [workshopCodeMessage, setWorkshopCodeMessage] = useState<string | null>(
+    null,
+  );
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -94,10 +109,45 @@ export default function SignUpScreen() {
     };
   }, []);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    void loadPendingWorkshopCode()
+      .then((pendingWorkshopCode) => {
+        if (!isMounted || !pendingWorkshopCode?.code) {
+          return;
+        }
+
+        setAppliedWorkshopCode(pendingWorkshopCode.code);
+        setWorkshopCodeInput(pendingWorkshopCode.code);
+        setCodeStatus("valid");
+        setWorkshopCodeMessage(null);
+      })
+      .catch(() => {});
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const handleOpenRequestPassword = () => {
     navigation.navigate("RequestPassword", {
       email: email.trim().toLowerCase() || undefined,
     });
+  };
+
+  const persistWorkshopCodeForSignup = async (
+    signupMethod: SignupMethodT,
+  ): Promise<string | null> => {
+    const normalizedCode = normalizeWorkshopCode(appliedWorkshopCode);
+
+    if (!normalizedCode) {
+      await clearPendingWorkshopCode();
+      return null;
+    }
+
+    await rememberPendingWorkshopCode(normalizedCode, signupMethod);
+    return normalizedCode;
   };
 
   const handleEmailSignUp = async () => {
@@ -117,7 +167,13 @@ export default function SignUpScreen() {
 
     setIsAuthLoading(true);
     try {
-      const result = await signUpWithEmailPassword(trimmedEmail, password);
+      const normalizedWorkshopCode =
+        await persistWorkshopCodeForSignup("email");
+      const result = await signUpWithEmailPassword(
+        trimmedEmail,
+        password,
+        normalizedWorkshopCode ?? undefined,
+      );
 
       if (result.status === "signed-in") {
         return;
@@ -141,6 +197,7 @@ export default function SignUpScreen() {
     if (isAuthLoading) return;
     setIsAuthLoading(true);
     try {
+      await persistWorkshopCodeForSignup(provider);
       const result = await signInWithOAuth(provider);
 
       if (result.status === "signed-in") {
@@ -175,7 +232,9 @@ export default function SignUpScreen() {
             onPress={() => setShowWorkshopModal(true)}
           >
             <Text style={authScreenStyles.workshopCodeText}>
-              Du hast einen Workshop-Code?
+              {appliedWorkshopCode
+                ? `Workshop-Code ${appliedWorkshopCode} aktiv`
+                : "Du hast einen Workshop-Code?"}
             </Text>
           </Pressable>
         </>
@@ -323,6 +382,8 @@ export default function SignUpScreen() {
       <AppModal
         visible={showWorkshopModal}
         onClose={() => setShowWorkshopModal(false)}
+        keyboardAvoidingEnabled={true}
+        keyboardVerticalOffset={Spacing.lg}
         contentStyle={[
           modalStyles.modalContent,
           { paddingBottom: insets.bottom + Spacing.xl },
@@ -342,37 +403,85 @@ export default function SignUpScreen() {
           ]}
           placeholder="DEIN CODE HIER"
           placeholderTextColor="#9CA3AF"
-          value={workshopCode}
+          value={workshopCodeInput}
           onChangeText={(text) => {
-            setWorkshopCode(text);
+            setWorkshopCodeInput(text);
             setCodeStatus("neutral");
+            setWorkshopCodeMessage(null);
           }}
           autoCapitalize="characters"
         />
 
         <PurpleGradientButton
-          onPress={() => {
-            const validCodes = ["12345", "LUKE2024", "WORKSHOP"];
-            if (validCodes.includes(workshopCode.toUpperCase())) {
-              setCodeStatus("valid");
-              setTimeout(() => {
-                setShowWorkshopModal(false);
-                setWorkshopCode("");
-                setCodeStatus("neutral");
-                navigation.navigate("Onboarding1");
-              }, 600);
-            } else {
+          onPress={async () => {
+            const normalizedCode = normalizeWorkshopCode(workshopCodeInput);
+
+            if (!normalizedCode) {
               setCodeStatus("invalid");
+              setWorkshopCodeMessage("Bitte gib einen Workshop-Code ein.");
+              return;
+            }
+
+            setIsWorkshopCodeLoading(true);
+            try {
+              const validationResult =
+                await validateWorkshopCode(normalizedCode);
+
+              if (validationResult.status !== "valid") {
+                setCodeStatus("invalid");
+                setWorkshopCodeMessage(
+                  validationResult.message ??
+                    "Dieser Workshop-Code ist nicht verfügbar.",
+                );
+                return;
+              }
+
+              await rememberPendingWorkshopCode(normalizedCode);
+              setAppliedWorkshopCode(normalizedCode);
+              setWorkshopCodeInput(normalizedCode);
+              setCodeStatus("valid");
+              setWorkshopCodeMessage(null);
+              setShowWorkshopModal(false);
+            } finally {
+              setIsWorkshopCodeLoading(false);
             }
           }}
           style={modalStyles.activateButton}
+          disabled={isWorkshopCodeLoading}
         >
-          <Text style={modalStyles.activateButtonText}>CODE AKTIVIEREN</Text>
+          <Text style={modalStyles.activateButtonText}>
+            {isWorkshopCodeLoading ? "CODE WIRD GEPRUEFT..." : "CODE SPEICHERN"}
+          </Text>
         </PurpleGradientButton>
 
-        <Text style={modalStyles.modalFooterText}>
-          4 Wochen kostenlos nutzen.
-        </Text>
+        {workshopCodeMessage ? (
+          <Text style={modalStyles.errorText}>{workshopCodeMessage}</Text>
+        ) : null}
+
+        {appliedWorkshopCode ? (
+          <Text style={modalStyles.modalFooterText}>
+            Code {appliedWorkshopCode} wird beim Signup serverseitig geprueft.
+          </Text>
+        ) : (
+          <Text style={modalStyles.modalFooterText}>
+            Der Code wird erst beim Signup im Hintergrund ausgewertet.
+          </Text>
+        )}
+
+        {appliedWorkshopCode ? (
+          <Pressable
+            onPress={async () => {
+              await clearPendingWorkshopCode();
+              setAppliedWorkshopCode("");
+              setWorkshopCodeInput("");
+              setCodeStatus("neutral");
+              setWorkshopCodeMessage(null);
+            }}
+            style={modalStyles.clearButton}
+          >
+            <Text style={modalStyles.clearButtonText}>Code entfernen</Text>
+          </Pressable>
+        ) : null}
       </AppModal>
     </AuthScreenLayout>
   );
@@ -452,6 +561,21 @@ const modalStyles = StyleSheet.create({
     ...Typography.tiny,
     color: "#9CA3AF",
     marginTop: Spacing.md,
+    textAlign: "center",
+  },
+  errorText: {
+    ...Typography.small,
+    color: "#EF4444",
+    marginTop: Spacing.md,
+    textAlign: "center",
+  },
+  clearButton: {
+    marginTop: Spacing.md,
+    paddingVertical: Spacing.sm,
+  },
+  clearButtonText: {
+    ...Typography.small,
+    color: Colors.light.textSecondary,
     textAlign: "center",
   },
 });

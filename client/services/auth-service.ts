@@ -4,6 +4,7 @@ import * as WebBrowser from "expo-web-browser";
 import { makeRedirectUri } from "expo-auth-session";
 import { Platform } from "react-native";
 import { supabase } from "@/lib/supabase";
+import { normalizeWorkshopCode } from "@/services/workshop-code-service";
 
 export type OAuthProviderT = "google" | "apple";
 
@@ -530,13 +531,24 @@ export const completeAuthSessionIfNeeded = () => {
 export const signUpWithEmailPassword = async (
   email: string,
   password: string,
+  workshopCode?: string,
 ): Promise<EmailSignUpResultT> => {
   try {
+    const normalizedWorkshopCode = workshopCode
+      ? normalizeWorkshopCode(workshopCode)
+      : "";
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: getAuthRedirectUrl(),
+        ...(normalizedWorkshopCode
+          ? {
+              data: {
+                pending_workshop_code: normalizedWorkshopCode,
+              },
+            }
+          : {}),
       },
     });
 
