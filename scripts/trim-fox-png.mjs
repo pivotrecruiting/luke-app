@@ -8,7 +8,13 @@ import fs from "fs";
 import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const inputPath = path.join(__dirname, "..", "assets", "images", "review-fox.png");
+const inputPath = path.join(
+  __dirname,
+  "..",
+  "assets",
+  "images",
+  "review-fox.png",
+);
 
 async function main() {
   const buffer = await sharp(inputPath)

@@ -1,5 +1,5 @@
 import { useRef, useCallback } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import Swipeable from "react-native-gesture-handler/Swipeable";
 import Animated, { FadeInDown } from "react-native-reanimated";

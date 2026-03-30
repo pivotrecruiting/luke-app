@@ -72,7 +72,8 @@ export const useOnboardingStore = create<OnboardingStoreT>()(
             ? state.motivations.filter((item) => item !== id)
             : [...state.motivations, id],
         })),
-      setInitialSavingsAmount: (amount) => set({ initialSavingsAmount: amount }),
+      setInitialSavingsAmount: (amount) =>
+        set({ initialSavingsAmount: amount }),
       setGoalDraft: (draft) => set({ goalDraft: draft }),
       setIncomeEntries: (entries) => set({ incomeEntries: entries }),
       setExpenseEntries: (entries) => set({ expenseEntries: entries }),

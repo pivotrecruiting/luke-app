@@ -92,10 +92,7 @@ export const SwipeableDeposit = React.forwardRef<
 
   const renderRightActions = useCallback(
     () => (
-      <RectButton
-        style={styles.swipeableDeleteAction}
-        onPress={handleDelete}
-      >
+      <RectButton style={styles.swipeableDeleteAction} onPress={handleDelete}>
         <Feather name="trash-2" size={20} color="#FFFFFF" />
       </RectButton>
     ),
@@ -114,21 +111,21 @@ export const SwipeableDeposit = React.forwardRef<
       >
         <Pressable
           style={styles.transactionItem}
-        onPress={handleRowPress}
-        onLongPress={() => internalRef.current?.openRight()}
-      >
-        <View style={styles.transactionLeft}>
-          <Text style={styles.transactionIcon}>{goalIcon}</Text>
-          <View>
-            <Text style={styles.transactionType}>{deposit.type}</Text>
-            <Text style={styles.transactionDate}>{deposit.date}</Text>
+          onPress={handleRowPress}
+          onLongPress={() => internalRef.current?.openRight()}
+        >
+          <View style={styles.transactionLeft}>
+            <Text style={styles.transactionIcon}>{goalIcon}</Text>
+            <View>
+              <Text style={styles.transactionType}>{deposit.type}</Text>
+              <Text style={styles.transactionDate}>{deposit.date}</Text>
+            </View>
           </View>
-        </View>
-        <Text style={styles.transactionAmount}>
-          {currencySymbol} {formatCurrency(deposit.amount, currency)}
-        </Text>
-      </Pressable>
-    </Swipeable>
+          <Text style={styles.transactionAmount}>
+            {currencySymbol} {formatCurrency(deposit.amount, currency)}
+          </Text>
+        </Pressable>
+      </Swipeable>
     </View>
   );
 });

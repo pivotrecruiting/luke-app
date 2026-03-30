@@ -24,10 +24,7 @@ export const NumericKeypad = ({
         {digits.slice(0, 3).map((d) => (
           <Pressable
             key={d}
-            style={({ pressed }) => [
-              styles.key,
-              pressed && styles.keyPressed,
-            ]}
+            style={({ pressed }) => [styles.key, pressed && styles.keyPressed]}
             onPress={() => onDigit(d)}
             accessibilityLabel={`Digit ${d}`}
             accessibilityRole="button"
@@ -40,10 +37,7 @@ export const NumericKeypad = ({
         {digits.slice(3, 6).map((d) => (
           <Pressable
             key={d}
-            style={({ pressed }) => [
-              styles.key,
-              pressed && styles.keyPressed,
-            ]}
+            style={({ pressed }) => [styles.key, pressed && styles.keyPressed]}
             onPress={() => onDigit(d)}
             accessibilityLabel={`Digit ${d}`}
             accessibilityRole="button"
@@ -56,10 +50,7 @@ export const NumericKeypad = ({
         {digits.slice(6, 9).map((d) => (
           <Pressable
             key={d}
-            style={({ pressed }) => [
-              styles.key,
-              pressed && styles.keyPressed,
-            ]}
+            style={({ pressed }) => [styles.key, pressed && styles.keyPressed]}
             onPress={() => onDigit(d)}
             accessibilityLabel={`Digit ${d}`}
             accessibilityRole="button"
@@ -70,10 +61,7 @@ export const NumericKeypad = ({
       </View>
       <View style={styles.row}>
         <Pressable
-          style={({ pressed }) => [
-            styles.key,
-            pressed && styles.keyPressed,
-          ]}
+          style={({ pressed }) => [styles.key, pressed && styles.keyPressed]}
           onPress={onDecimal}
           accessibilityLabel="Decimal separator"
           accessibilityRole="button"
@@ -81,10 +69,7 @@ export const NumericKeypad = ({
           <Text style={styles.keyText}>,</Text>
         </Pressable>
         <Pressable
-          style={({ pressed }) => [
-            styles.key,
-            pressed && styles.keyPressed,
-          ]}
+          style={({ pressed }) => [styles.key, pressed && styles.keyPressed]}
           onPress={() => onDigit("0")}
           accessibilityLabel="Digit 0"
           accessibilityRole="button"
@@ -92,10 +77,7 @@ export const NumericKeypad = ({
           <Text style={styles.keyText}>0</Text>
         </Pressable>
         <Pressable
-          style={({ pressed }) => [
-            styles.key,
-            pressed && styles.keyPressed,
-          ]}
+          style={({ pressed }) => [styles.key, pressed && styles.keyPressed]}
           onPress={onBackspace}
           accessibilityLabel="Delete"
           accessibilityRole="button"

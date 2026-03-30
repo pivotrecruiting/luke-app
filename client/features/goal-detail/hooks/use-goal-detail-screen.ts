@@ -129,7 +129,7 @@ export const useGoalDetailScreen = ({
     if (openDeposit && goal) {
       setDepositModalVisible(true);
     }
-  }, [openDeposit, goal?.id]);
+  }, [openDeposit, goal]);
 
   const groupedDeposits = useMemo(() => {
     if (!goal?.deposits) return {};

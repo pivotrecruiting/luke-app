@@ -182,7 +182,8 @@ export default function ExpensesScreen() {
           <View style={styles.summaryContent}>
             <Text style={styles.summaryLabel}>Monatliche Fixkosten</Text>
             <Text style={styles.summaryAmount}>
-              {currencySymbol} {formatCurrencyAmount(totalFixedExpenses, currency)}
+              {currencySymbol}{" "}
+              {formatCurrencyAmount(totalFixedExpenses, currency)}
             </Text>
           </View>
         </Animated.View>
@@ -225,7 +226,8 @@ export default function ExpensesScreen() {
                   </View>
                   <View style={styles.expenseRight}>
                     <Text style={styles.expenseAmount}>
-                      {currencySymbol} {formatCurrencyAmount(entry.amount, currency)}
+                      {currencySymbol}{" "}
+                      {formatCurrencyAmount(entry.amount, currency)}
                     </Text>
                     <Pressable
                       onPress={() => setDeleteConfirmId(entry.id)}

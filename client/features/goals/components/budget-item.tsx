@@ -41,7 +41,8 @@ export const BudgetItem = ({ budget, onPress }: BudgetItemPropsT) => {
                 isOverBudget && styles.budgetProgressOver,
               ]}
             >
-              {currencySymbol} {formatCurrency(budget.current, currency)} / {currencySymbol} {formatCurrency(budget.limit, currency)}
+              {currencySymbol} {formatCurrency(budget.current, currency)} /{" "}
+              {currencySymbol} {formatCurrency(budget.limit, currency)}
             </Text>
           </View>
         </View>

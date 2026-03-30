@@ -94,10 +94,7 @@ export const SwipeableExpense = React.forwardRef<
 
   const renderRightActions = useCallback(
     () => (
-      <RectButton
-        style={styles.swipeableDeleteAction}
-        onPress={handleDelete}
-      >
+      <RectButton style={styles.swipeableDeleteAction} onPress={handleDelete}>
         <Feather name="trash-2" size={20} color="#FFFFFF" />
       </RectButton>
     ),

@@ -1,7 +1,10 @@
 import { parseFormattedDate } from "@/utils/dates";
 import type { Transaction } from "@/context/app/types";
 import { getDateRangeForFilter } from "./date";
-import type { PeriodIncomeExpensesT, TimeFilterT } from "../types/insights-types";
+import type {
+  PeriodIncomeExpensesT,
+  TimeFilterT,
+} from "../types/insights-types";
 
 type PeriodBoundsT = {
   start: Date;

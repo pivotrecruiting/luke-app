@@ -34,8 +34,7 @@ export const TransactionListByMonth = ({
     >();
 
     const sorted = [...items].sort(
-      (a, b) =>
-        new Date(b.dateStr).getTime() - new Date(a.dateStr).getTime(),
+      (a, b) => new Date(b.dateStr).getTime() - new Date(a.dateStr).getTime(),
     );
 
     for (const item of sorted) {

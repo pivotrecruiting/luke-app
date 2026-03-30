@@ -1,4 +1,4 @@
-import { Pressable, Text, TextInput, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useApp } from "@/context/AppContext";
 import CurrencyInput from "@/components/CurrencyInput";

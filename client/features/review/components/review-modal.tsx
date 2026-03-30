@@ -40,10 +40,7 @@ export const ReviewModal = ({
       visible={visible}
       onClose={onClose}
       maxHeightPercent={95}
-      contentStyle={[
-        styles.content,
-        { paddingBottom: insets.bottom + 12 },
-      ]}
+      contentStyle={[styles.content, { paddingBottom: insets.bottom + 12 }]}
     >
       <View style={styles.contentInner}>
         <View style={styles.header}>

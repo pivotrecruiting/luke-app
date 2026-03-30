@@ -98,10 +98,7 @@ export const SwipeableTransactionItem = React.forwardRef<
 
   const renderRightActions = useCallback(
     () => (
-      <RectButton
-        style={styles.swipeableDeleteAction}
-        onPress={handleDelete}
-      >
+      <RectButton style={styles.swipeableDeleteAction} onPress={handleDelete}>
         <Feather name="trash-2" size={20} color="#FFFFFF" />
       </RectButton>
     ),
@@ -127,9 +124,9 @@ export const SwipeableTransactionItem = React.forwardRef<
         <TransactionItem
           icon={
             <Feather
-              name={transaction.icon as React.ComponentProps<
-                typeof Feather
-              >["name"]}
+              name={
+                transaction.icon as React.ComponentProps<typeof Feather>["name"]
+              }
               size={20}
               color="#7B8CDE"
             />

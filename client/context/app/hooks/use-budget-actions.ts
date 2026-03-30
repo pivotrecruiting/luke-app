@@ -5,7 +5,6 @@ import type {
   CurrencyCode,
   Transaction,
 } from "@/context/app/types";
-import { AUTOBUDGET_CATEGORY_COLORS } from "@/context/app/constants";
 import {
   createBudget as createBudgetInDb,
   createTransaction,
@@ -426,7 +425,9 @@ export const useBudgetActions = ({
             });
             setTransactions((prev) =>
               prev.map((tx) =>
-                tx.name === name && tx.category === categoryName && tx.amount === -amount
+                tx.name === name &&
+                tx.category === categoryName &&
+                tx.amount === -amount
                   ? { ...tx, id: transactionId }
                   : tx,
               ),

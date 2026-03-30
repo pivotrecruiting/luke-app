@@ -46,7 +46,9 @@ type UseGoalsScreenReturnT = {
     handleCreateBudget: () => void;
     resetAndCloseGoalModal: () => void;
     resetAndCloseBudgetModal: () => void;
-    openDepositModal: (goal: ReturnType<typeof useApp>["goals"][number]) => void;
+    openDepositModal: (
+      goal: ReturnType<typeof useApp>["goals"][number],
+    ) => void;
     setDepositAmount: (value: string) => void;
     handleDepositSave: () => void;
     handleDepositCancel: () => void;
@@ -180,12 +182,7 @@ export const useGoalsScreen = (): UseGoalsScreenReturnT => {
     setDepositModalVisible(false);
     setSelectedGoalForDeposit(null);
     setDepositAmount("");
-  }, [
-    addGoalDeposit,
-    depositAmount,
-    selectedGoalForDeposit,
-    vaultBalance,
-  ]);
+  }, [addGoalDeposit, depositAmount, selectedGoalForDeposit, vaultBalance]);
 
   const handleDepositCancel = useCallback(() => {
     setDepositModalVisible(false);

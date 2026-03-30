@@ -14,10 +14,7 @@ if (!privateKeyFilename || !teamId || !clientId || !keyId) {
   );
 }
 
-const privateKeyPath = path.join(
-  secretsDirectoryPath,
-  privateKeyFilename,
-);
+const privateKeyPath = path.join(secretsDirectoryPath, privateKeyFilename);
 const outputPath = path.join(secretsDirectoryPath, "apple-client-secret.txt");
 
 const privateKey = fs.readFileSync(privateKeyPath);

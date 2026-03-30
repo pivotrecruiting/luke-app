@@ -13,10 +13,7 @@ import { BudgetItem } from "@/features/goals/components/budget-item";
 import { CreateGoalModal } from "@/features/goals/components/create-goal-modal";
 import { CreateBudgetModal } from "@/features/goals/components/create-budget-modal";
 import { AddDepositModal } from "@/features/goal-detail/components/add-deposit-modal";
-import {
-  styles,
-  CARD_OVERLAP_HALF_HEIGHT,
-} from "./styles/goals-screen.styles";
+import { styles, CARD_OVERLAP_HALF_HEIGHT } from "./styles/goals-screen.styles";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 

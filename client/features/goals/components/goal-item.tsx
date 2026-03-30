@@ -33,9 +33,7 @@ export const GoalItem = ({ goal, onPress, onDepositPress }: GoalItemPropsT) => {
           </Text>
         </View>
         <View style={styles.goalProgressBarContainer}>
-          <View
-            style={[styles.goalProgressBar, { width: `${percentage}%` }]}
-          />
+          <View style={[styles.goalProgressBar, { width: `${percentage}%` }]} />
         </View>
       </Pressable>
       <View style={styles.goalFooter}>
