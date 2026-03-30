@@ -12,6 +12,7 @@ import type { UserProgressUpdatePayloadT } from "@/services/app-service";
 import type {
   UserProgressT,
   XpEventRuleT,
+  XpStreakPayloadT,
   XpEventTypeT,
   XpLevelT,
   XpLevelUpPayloadT,
@@ -34,12 +35,18 @@ type UseXpParamsT = {
   userId: string | null;
   canUseDb: boolean;
   onLevelUp?: (payload: XpLevelUpPayloadT) => void;
+  onStreakReached?: (payload: XpStreakPayloadT) => void;
 };
 
 /**
  * Manages XP state, rules, and awarding logic.
  */
-export const useXp = ({ userId, canUseDb, onLevelUp }: UseXpParamsT) => {
+export const useXp = ({
+  userId,
+  canUseDb,
+  onLevelUp,
+  onStreakReached,
+}: UseXpParamsT) => {
   const [levels, setLevels] = useState<XpLevelT[]>([]);
   const [xpEventTypes, setXpEventTypes] = useState<XpEventTypeT[]>([]);
   const [xpEventRules, setXpEventRules] = useState<XpEventRuleT[]>([]);
@@ -48,6 +55,9 @@ export const useXp = ({ userId, canUseDb, onLevelUp }: UseXpParamsT) => {
   const onLevelUpRef = useRef<((payload: XpLevelUpPayloadT) => void) | null>(
     onLevelUp ?? null,
   );
+  const onStreakReachedRef = useRef<
+    ((payload: XpStreakPayloadT) => void) | null
+  >(onStreakReached ?? null);
   const appStateRef = useRef(AppState.currentState);
 
   useEffect(() => {
@@ -57,6 +67,10 @@ export const useXp = ({ userId, canUseDb, onLevelUp }: UseXpParamsT) => {
   useEffect(() => {
     onLevelUpRef.current = onLevelUp ?? null;
   }, [onLevelUp]);
+
+  useEffect(() => {
+    onStreakReachedRef.current = onStreakReached ?? null;
+  }, [onStreakReached]);
 
   const handleXpError = useCallback((error: unknown, context: string) => {
     console.error(`XP error during ${context}:`, error);
@@ -226,6 +240,7 @@ export const useXp = ({ userId, canUseDb, onLevelUp }: UseXpParamsT) => {
     const isContinuing = progress.lastStreakDate === yesterdayKey;
     const nextStreak = isContinuing ? progress.currentStreak + 1 : 1;
     const nextLongest = Math.max(progress.longestStreak, nextStreak);
+    const previousTotal = progress.xpTotal;
 
     const updatedProgress = await awardXp({
       eventKey: "daily_login",
@@ -239,13 +254,28 @@ export const useXp = ({ userId, canUseDb, onLevelUp }: UseXpParamsT) => {
       meta: { date: todayKey },
     });
 
-    if (updatedProgress && nextStreak % 7 === 0) {
-      await awardXp({
+    if (!updatedProgress || updatedProgress.lastStreakDate !== todayKey) {
+      return;
+    }
+
+    let latestProgress = updatedProgress;
+
+    if (nextStreak % 7 === 0) {
+      const bonusProgress = await awardXp({
         eventKey: "streak_7_bonus",
         progressOverride: updatedProgress,
         meta: { streak: nextStreak },
       });
+      if (bonusProgress) {
+        latestProgress = bonusProgress;
+      }
     }
+
+    const gainedXp = Math.max(0, latestProgress.xpTotal - previousTotal);
+    onStreakReachedRef.current?.({
+      xpGained: gainedXp,
+      variant: nextStreak % 7 === 0 ? "completed" : "ongoing",
+    });
   }, [awardXp, canUseDb, userId]);
 
   useEffect(() => {

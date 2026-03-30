@@ -15,12 +15,12 @@ import {
 import Swipeable from "react-native-gesture-handler/Swipeable";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import { Image } from "expo-image";
+// import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
-import { Spacing } from "@/constants/theme";
+import { Colors, HeaderGradient, Spacing } from "@/constants/theme";
 import { useApp } from "@/context/AppContext";
 import type { Transaction } from "@/context/app/types";
 import {
@@ -32,9 +32,9 @@ import { getUserFirstName } from "@/utils/user";
 import { styles } from "./styles/home-screen.styles";
 import { AppModal } from "@/components/ui/app-modal";
 import Chip from "@/components/Chip";
-import { SwipeableTransactionItem } from "@/features/home/components/swipeable-transaction-item";
+import { SwipeableTransactionListByMonth } from "@/features/home/components/swipeable-transaction-list-by-month";
 import { EditTransactionModal } from "@/features/home/components/edit-transaction-modal";
-const businessmanFigure = require("../../assets/images/businessman-figure.png");
+// const businessmanFigure = require("../../assets/images/businessman-figure.png");
 
 type ModalTypeFilterT = "all" | "income" | "expense";
 
@@ -204,24 +204,25 @@ export default function HomeScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
   const swipeableRefs = useRef<Record<string, Swipeable | null>>({});
 
-  const openEditTransactionModal = useCallback((transaction: Transaction) => {
-    const isExpense = transaction.amount < 0;
-    const categories = isExpense ? budgetCategories : incomeCategories;
-    const category = categories.find(
-      (c) => c.name.toLowerCase() === transaction.category.toLowerCase(),
-    );
-    setAllTransactionsVisible(false);
-    setEditingTransactionId(transaction.id);
-    setEditName(transaction.name);
-    setEditAmount(
-      Math.abs(transaction.amount).toString().replace(".", ","),
-    );
-    setEditSelectedCategoryId(category?.id ?? null);
-    setEditDate(parseFormattedDate(transaction.date));
-    setEditIsExpense(isExpense);
-    setShowEditDatePicker(false);
-    setEditTransactionModalVisible(true);
-  }, [budgetCategories, incomeCategories]);
+  const openEditTransactionModal = useCallback(
+    (transaction: Transaction) => {
+      const isExpense = transaction.amount < 0;
+      const categories = isExpense ? budgetCategories : incomeCategories;
+      const category = categories.find(
+        (c) => c.name.toLowerCase() === transaction.category.toLowerCase(),
+      );
+      setAllTransactionsVisible(false);
+      setEditingTransactionId(transaction.id);
+      setEditName(transaction.name);
+      setEditAmount(Math.abs(transaction.amount).toString().replace(".", ","));
+      setEditSelectedCategoryId(category?.id ?? null);
+      setEditDate(parseFormattedDate(transaction.date));
+      setEditIsExpense(isExpense);
+      setShowEditDatePicker(false);
+      setEditTransactionModalVisible(true);
+    },
+    [budgetCategories, incomeCategories],
+  );
 
   const handleEditTransactionSave = useCallback(() => {
     if (!editingTransactionId || !editSelectedCategoryId) return;
@@ -296,13 +297,23 @@ export default function HomeScreen() {
     setSelectedDay(selectedDay === day ? null : day);
   };
 
+  const transactionsEmptyStyle = {
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+    paddingVertical: 32,
+  };
+  const transactionsEmptyTextStyle = {
+    fontSize: 14,
+    color: "#9CA3AF",
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.heroSection}>
         <LinearGradient
-          colors={["rgba(42, 58, 230, 0.69)", "rgba(23, 32, 128, 0.69)"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
+          colors={HeaderGradient.colors}
+          start={HeaderGradient.start}
+          end={HeaderGradient.end}
           style={[styles.header, { paddingTop: insets.top + Spacing.lg }]}
         >
           <View style={styles.headerTextContainer}>
@@ -314,7 +325,7 @@ export default function HomeScreen() {
         </LinearGradient>
 
         <View style={[styles.balanceCard, { top: insets.top + 95 }]}>
-          <Text style={styles.balanceLabel}>Balance</Text>
+          <Text style={styles.balanceLabel}>Monatsbalance</Text>
           <Text
             style={[
               styles.balanceAmount,
@@ -327,11 +338,11 @@ export default function HomeScreen() {
           </Text>
         </View>
 
-        <Image
+        {/* <Image
           source={businessmanFigure}
           style={[styles.businessmanFigure, { top: insets.top + 45 }]}
           contentFit="contain"
-        />
+        /> */}
       </View>
 
       <ScrollView
@@ -467,24 +478,24 @@ export default function HomeScreen() {
             Tippen zum Bearbeiten · Wischen zum Löschen
           </Text>
 
-          {sortedTransactions.slice(0, 2).map((transaction) => (
-            <SwipeableTransactionItem
-              key={`list-${transaction.id}`}
-              ref={(r) => {
-                const key = `list-${transaction.id}`;
-                if (r) {
-                  swipeableRefs.current[key] = r;
-                } else {
-                  delete swipeableRefs.current[key];
-                }
-              }}
-              transaction={transaction}
+          {sortedTransactions.length === 0 ? (
+            <View style={transactionsEmptyStyle}>
+              <Text style={transactionsEmptyTextStyle}>
+                Noch keine Transaktionen
+              </Text>
+            </View>
+          ) : (
+            <SwipeableTransactionListByMonth
+              transactions={sortedTransactions.slice(0, 3)}
+              parseDate={parseTransactionDate}
               formatCurrency={formatCurrency}
-              onEdit={() => openEditTransactionModal(transaction)}
-              onDelete={() => deleteTransaction(transaction.id)}
-              onSwipeOpen={(id) => handleSwipeOpen(`list-${id}`)}
+              onEdit={openEditTransactionModal}
+              onDelete={deleteTransaction}
+              onSwipeOpen={handleSwipeOpen}
+              swipeableRefs={swipeableRefs}
+              refKeyPrefix="list"
             />
-          ))}
+          )}
         </View>
       </ScrollView>
 
@@ -544,7 +555,9 @@ export default function HomeScreen() {
                 name="arrow-up"
                 size={12}
                 color={
-                  modalTypeFilter === "income" ? "#7340FE" : "#6B7280"
+                  modalTypeFilter === "income"
+                    ? Colors.light.primary
+                    : "#6B7280"
                 }
               />
               <Text
@@ -568,7 +581,9 @@ export default function HomeScreen() {
                 name="arrow-down"
                 size={12}
                 color={
-                  modalTypeFilter === "expense" ? "#7340FE" : "#6B7280"
+                  modalTypeFilter === "expense"
+                    ? Colors.light.primary
+                    : "#6B7280"
                 }
               />
               <Text
@@ -614,24 +629,24 @@ export default function HomeScreen() {
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={styles.modalScrollViewContent}
         >
-          {modalFilteredTransactions.map((transaction) => (
-            <SwipeableTransactionItem
-              key={`modal-${transaction.id}`}
-              ref={(r) => {
-                const key = `modal-${transaction.id}`;
-                if (r) {
-                  swipeableRefs.current[key] = r;
-                } else {
-                  delete swipeableRefs.current[key];
-                }
-              }}
-              transaction={transaction}
+          {modalFilteredTransactions.length === 0 ? (
+            <View style={transactionsEmptyStyle}>
+              <Text style={transactionsEmptyTextStyle}>
+                Keine Transaktionen gefunden
+              </Text>
+            </View>
+          ) : (
+            <SwipeableTransactionListByMonth
+              transactions={modalFilteredTransactions}
+              parseDate={parseTransactionDate}
               formatCurrency={formatCurrency}
-              onEdit={() => openEditTransactionModal(transaction)}
-              onDelete={() => deleteTransaction(transaction.id)}
-              onSwipeOpen={(id) => handleSwipeOpen(`modal-${id}`)}
+              onEdit={openEditTransactionModal}
+              onDelete={deleteTransaction}
+              onSwipeOpen={handleSwipeOpen}
+              swipeableRefs={swipeableRefs}
+              refKeyPrefix="modal"
             />
-          ))}
+          )}
         </ScrollView>
       </AppModal>
 

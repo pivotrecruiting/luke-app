@@ -4,6 +4,7 @@ import type {
   IncomeEntry,
   Transaction,
 } from "@/context/app/types";
+import { parseFormattedDate } from "@/utils/dates";
 
 export const getTotalIncome = (incomeEntries: IncomeEntry[]): number =>
   incomeEntries.reduce((sum, entry) => sum + entry.amount, 0);
@@ -34,6 +35,24 @@ export const getTransactionExpenseTotal = (
 
 export const getTransactionBalance = (transactions: Transaction[]): number =>
   transactions.reduce((sum, transaction) => sum + transaction.amount, 0);
+
+export const getTransactionBalanceForMonth = (
+  transactions: Transaction[],
+  monthDate: Date,
+): number => {
+  const targetYear = monthDate.getFullYear();
+  const targetMonth = monthDate.getMonth();
+
+  return transactions.reduce((sum, transaction) => {
+    const transactionDate = transaction.timestamp
+      ? new Date(transaction.timestamp)
+      : parseFormattedDate(transaction.date);
+    const isSameMonth =
+      transactionDate.getFullYear() === targetYear &&
+      transactionDate.getMonth() === targetMonth;
+    return isSameMonth ? sum + transaction.amount : sum;
+  }, 0);
+};
 
 export const getMonthlyBudget = (
   totalIncome: number,

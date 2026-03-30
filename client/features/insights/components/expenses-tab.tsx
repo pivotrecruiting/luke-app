@@ -6,6 +6,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { useApp } from "@/context/AppContext";
 import { getCurrencySymbol } from "@/utils/currency-format";
 import { styles } from "@/screens/styles/insights-screen.styles";
+import { PurpleGradientButton } from "@/components/ui/purple-gradient-button";
 import { formatCurrency } from "../utils/format";
 import type { ExpenseEntry } from "@/context/AppContext";
 import { SwipeableExpenseItem } from "./swipeable-expense-item";
@@ -67,9 +68,12 @@ export const ExpensesTab = ({
             {currencySymbol} {formatCurrency(totalFixedExpenses, currency)}
           </Text>
         </View>
-        <Pressable style={styles.addExpenseButton} onPress={onAddExpense}>
-          <Feather name="plus" size={20} color="#7340fd" />
-        </Pressable>
+        <PurpleGradientButton
+          style={styles.addExpenseButton}
+          onPress={onAddExpense}
+        >
+          <Feather name="plus" size={20} color="#FFFFFF" />
+        </PurpleGradientButton>
       </View>
 
       <Text style={styles.expenseSectionTitle}>Fixkosten</Text>

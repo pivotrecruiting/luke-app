@@ -1,9 +1,10 @@
-import { Pressable, Text, TextInput, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useApp } from "@/context/AppContext";
 import CurrencyInput from "@/components/CurrencyInput";
 import { styles } from "@/screens/styles/goals-screen.styles";
 import { AppModal } from "@/components/ui/app-modal";
+import { PurpleGradientButton } from "@/components/ui/purple-gradient-button";
 
 type CreateBudgetModalPropsT = {
   visible: boolean;
@@ -85,9 +86,9 @@ export const CreateBudgetModal = ({
         <Pressable style={styles.cancelButton} onPress={onCancel}>
           <Text style={styles.cancelButtonText}>abbrechen</Text>
         </Pressable>
-        <Pressable style={styles.createButton} onPress={onCreate}>
+        <PurpleGradientButton style={styles.createButton} onPress={onCreate}>
           <Text style={styles.createButtonText}>Hinzufügen</Text>
-        </Pressable>
+        </PurpleGradientButton>
       </View>
     </AppModal>
   );

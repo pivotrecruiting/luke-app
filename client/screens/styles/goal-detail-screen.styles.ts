@@ -1,4 +1,5 @@
 import { StyleSheet } from "react-native";
+import { Colors } from "@/constants/theme";
 
 export const styles = StyleSheet.create({
   container: {
@@ -234,13 +235,14 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     color: "#9CA3AF",
   },
-  fab: {
+  fabWrapper: {
     position: "absolute",
     right: 20,
+  },
+  fab: {
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: "#7340FE",
     justifyContent: "center",
     alignItems: "center",
     elevation: 4,
@@ -355,7 +357,6 @@ export const styles = StyleSheet.create({
     color: "#000000",
   },
   modalSaveButton: {
-    backgroundColor: "#7340FE",
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: "center",
@@ -428,7 +429,7 @@ export const styles = StyleSheet.create({
   datePickerDoneText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#7340FE",
+    color: Colors.light.primary,
   },
   depositModalGoalHeader: {
     flexDirection: "row",

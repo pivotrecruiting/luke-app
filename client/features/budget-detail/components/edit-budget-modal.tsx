@@ -2,6 +2,7 @@ import { Pressable, Text, View } from "react-native";
 import CurrencyInput from "@/components/CurrencyInput";
 import { styles } from "@/screens/styles/budget-detail-screen.styles";
 import { AppModal } from "@/components/ui/app-modal";
+import { PurpleGradientButton } from "@/components/ui/purple-gradient-button";
 
 type EditBudgetModalPropsT = {
   visible: boolean;
@@ -43,9 +44,9 @@ export const EditBudgetModal = ({
         autoFocus
       />
 
-      <Pressable style={styles.modalSaveButton} onPress={onSave}>
+      <PurpleGradientButton style={styles.modalSaveButton} onPress={onSave}>
         <Text style={styles.modalSaveButtonText}>Speichern</Text>
-      </Pressable>
+      </PurpleGradientButton>
 
       <Pressable style={styles.modalCancelButton} onPress={onCancel}>
         <Text style={styles.modalCancelButtonText}>Abbrechen</Text>

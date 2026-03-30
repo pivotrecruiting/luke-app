@@ -29,5 +29,14 @@ export type ExpenseTypeT = {
 
 export type MonthlyTrendT = {
   month: string;
+  monthStart: string;
   amount: number;
+  isSnapshot: boolean;
+  isCurrentMonth: boolean;
+};
+
+export type PeriodIncomeExpensesT = {
+  label: string;
+  income: number;
+  expenses: number;
 };

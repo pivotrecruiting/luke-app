@@ -91,10 +91,7 @@ export const SwipeableExpenseItem = React.forwardRef<
 
   const renderRightActions = useCallback(
     () => (
-      <RectButton
-        style={styles.swipeableDeleteAction}
-        onPress={handleDelete}
-      >
+      <RectButton style={styles.swipeableDeleteAction} onPress={handleDelete}>
         <Feather name="trash-2" size={20} color="#FFFFFF" />
       </RectButton>
     ),
@@ -113,27 +110,27 @@ export const SwipeableExpenseItem = React.forwardRef<
       >
         <Pressable
           style={styles.expenseItem}
-        onPress={handleRowPress}
-        onLongPress={() => internalRef.current?.openRight()}
-      >
-        <View style={styles.expenseLeft}>
-          <View style={styles.expenseIconContainer}>
-            <Feather
-              name={getIconForExpenseType(entry.type) as any}
-              size={20}
-              color="#EF4444"
-            />
+          onPress={handleRowPress}
+          onLongPress={() => internalRef.current?.openRight()}
+        >
+          <View style={styles.expenseLeft}>
+            <View style={styles.expenseIconContainer}>
+              <Feather
+                name={getIconForExpenseType(entry.type) as any}
+                size={20}
+                color="#EF4444"
+              />
+            </View>
+            <View>
+              <Text style={styles.expenseType}>{entry.type}</Text>
+              <Text style={styles.expenseFrequency}>Monatlich</Text>
+            </View>
           </View>
-          <View>
-            <Text style={styles.expenseType}>{entry.type}</Text>
-            <Text style={styles.expenseFrequency}>Monatlich</Text>
-          </View>
-        </View>
-        <Text style={styles.expenseAmount}>
-          {currencySymbol} {formatCurrency(entry.amount, currency)}
-        </Text>
-      </Pressable>
-    </Swipeable>
+          <Text style={styles.expenseAmount}>
+            {currencySymbol} {formatCurrency(entry.amount, currency)}
+          </Text>
+        </Pressable>
+      </Swipeable>
     </View>
   );
 });

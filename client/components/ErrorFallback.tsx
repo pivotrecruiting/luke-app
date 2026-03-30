@@ -4,6 +4,7 @@ import { StyleSheet, View, Pressable, ScrollView, Text } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
+import { PurpleGradientButton } from "@/components/ui/purple-gradient-button";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Fonts } from "@/constants/theme";
 import { AppModal } from "@/components/ui/app-modal";
@@ -60,16 +61,10 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
           Please reload the app to continue.
         </ThemedText>
 
-        <Pressable
+        <PurpleGradientButton
           onPress={handleRestart}
-          style={({ pressed }) => [
-            styles.button,
-            {
-              backgroundColor: theme.link,
-              opacity: pressed ? 0.9 : 1,
-              transform: [{ scale: pressed ? 0.98 : 1 }],
-            },
-          ]}
+          style={styles.button}
+          pressedOpacity={0.9}
         >
           <ThemedText
             type="body"
@@ -77,7 +72,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
           >
             Try Again
           </ThemedText>
-        </Pressable>
+        </PurpleGradientButton>
       </View>
 
       {__DEV__ ? (

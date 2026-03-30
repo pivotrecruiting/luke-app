@@ -83,6 +83,16 @@ export const formatWeekLabel = (weekOffset: number): string => {
   return `${formatDay(start)} - ${formatDay(end)}`;
 };
 
+/**
+ * Formats a date as "November 2025" (month name + year) for section headers.
+ */
+export const formatMonthYear = (date: Date): string => {
+  return new Intl.DateTimeFormat("de-DE", {
+    month: "long",
+    year: "numeric",
+  }).format(date);
+};
+
 export const formatDate = (date: Date): string => {
   const today = new Date();
   const yesterday = new Date(today);

@@ -57,10 +57,7 @@ export function HeaderTabToggle<T extends string>({
         return (
           <Pressable
             key={tab.value}
-            style={[
-              styles.toggleButton,
-              isActive && styles.toggleButtonActive,
-            ]}
+            style={[styles.toggleButton, isActive && styles.toggleButtonActive]}
             onPress={() => onChange(tab.value)}
           >
             <Text

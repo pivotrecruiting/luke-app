@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert, Platform } from "react-native";
 import { useApp } from "@/context/AppContext";
 import type { GoalDeposit } from "@/context/app/types";
@@ -9,6 +9,8 @@ import { parseDepositDate } from "../utils/date";
 type UseGoalDetailScreenParamsT = {
   goalId?: string | null;
   goalName?: string | null;
+  /** When true, opens the deposit modal on mount. */
+  openDeposit?: boolean;
   onNavigateBack: () => void;
 };
 
@@ -21,6 +23,7 @@ type UseGoalDetailScreenReturnT = {
     isCompleted: boolean;
     depositTitle: string;
     monthsToGoal: number;
+    availableVault: number;
   };
   state: {
     editModalVisible: boolean;
@@ -73,6 +76,7 @@ type UseGoalDetailScreenReturnT = {
 export const useGoalDetailScreen = ({
   goalId,
   goalName,
+  openDeposit = false,
   onNavigateBack,
 }: UseGoalDetailScreenParamsT): UseGoalDetailScreenReturnT => {
   const {
@@ -82,6 +86,7 @@ export const useGoalDetailScreen = ({
     deleteGoalDeposit,
     updateGoal,
     deleteGoal,
+    vaultBalance,
   } = useApp();
 
   const goal = useMemo(() => {
@@ -119,6 +124,12 @@ export const useGoalDetailScreen = ({
   const [editDepositDate, setEditDepositDate] = useState(new Date());
   const [showEditDatePicker, setShowEditDatePicker] = useState(false);
   const [activeSwipeId, setActiveSwipeId] = useState<string>("");
+
+  useEffect(() => {
+    if (openDeposit && goal) {
+      setDepositModalVisible(true);
+    }
+  }, [openDeposit, goal]);
 
   const groupedDeposits = useMemo(() => {
     if (!goal?.deposits) return {};
@@ -223,12 +234,19 @@ export const useGoalDetailScreen = ({
   const handleDepositSave = useCallback(() => {
     const amount = parseFloat(depositAmount.replace(",", "."));
     if (!isNaN(amount) && amount > 0 && goal) {
+      if (amount > vaultBalance) {
+        Alert.alert(
+          "Nicht genug im Tresor",
+          "Die Einzahlung ist höher als dein verfügbarer Tresorbetrag.",
+        );
+        return;
+      }
       addGoalDeposit(goal.id, amount, selectedDate);
       setDepositModalVisible(false);
       setDepositAmount("");
       setSelectedDate(new Date());
     }
-  }, [addGoalDeposit, depositAmount, goal, selectedDate]);
+  }, [addGoalDeposit, depositAmount, goal, selectedDate, vaultBalance]);
 
   const handleDepositCancel = useCallback(() => {
     setDepositModalVisible(false);
@@ -247,6 +265,14 @@ export const useGoalDetailScreen = ({
   const handleEditDepositSave = useCallback(() => {
     const amount = parseFloat(editDepositAmount.replace(",", "."));
     if (!isNaN(amount) && amount > 0 && goal && editingDeposit) {
+      const amountDiff = amount - editingDeposit.amount;
+      if (amountDiff > 0 && amountDiff > vaultBalance) {
+        Alert.alert(
+          "Nicht genug im Tresor",
+          "Die Erhöhung ist höher als dein verfügbarer Tresorbetrag.",
+        );
+        return;
+      }
       updateGoalDeposit(goal.id, editingDeposit.id, amount, editDepositDate);
       setEditDepositModalVisible(false);
       setEditingDeposit(null);
@@ -258,6 +284,7 @@ export const useGoalDetailScreen = ({
     editingDeposit,
     goal,
     updateGoalDeposit,
+    vaultBalance,
   ]);
 
   const handleEditDepositCancel = useCallback(() => {
@@ -302,6 +329,7 @@ export const useGoalDetailScreen = ({
       isCompleted,
       depositTitle,
       monthsToGoal,
+      availableVault: vaultBalance,
     },
     state: {
       editModalVisible,

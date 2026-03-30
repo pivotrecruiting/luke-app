@@ -9,6 +9,7 @@ import ProgressDots from "@/components/ProgressDots";
 import Chip from "@/components/Chip";
 import CurrencyInput from "@/components/CurrencyInput";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
+import { PurpleGradientButton } from "@/components/ui/purple-gradient-button";
 import { Spacing, BorderRadius, Typography, Colors } from "@/constants/theme";
 import { useApp } from "@/context/AppContext";
 import {
@@ -161,15 +162,9 @@ export default function Onboarding6Screen() {
           { paddingBottom: insets.bottom + Spacing.xl },
         ]}
       >
-        <Pressable
-          onPress={handleContinue}
-          style={({ pressed }) => [
-            styles.button,
-            pressed && styles.buttonPressed,
-          ]}
-        >
+        <PurpleGradientButton onPress={handleContinue} style={styles.button}>
           <Text style={styles.buttonText}>WEITER</Text>
-        </Pressable>
+        </PurpleGradientButton>
       </View>
     </View>
   );
@@ -208,7 +203,7 @@ const styles = StyleSheet.create({
   addButton: {
     backgroundColor: "transparent",
     borderWidth: 1,
-    borderColor: "#7340FE",
+    borderColor: Colors.light.primary,
     borderRadius: 12,
     height: Spacing.buttonHeight,
     alignItems: "center",
@@ -221,7 +216,7 @@ const styles = StyleSheet.create({
   addButtonText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#7340FE",
+    color: Colors.light.primary,
   },
   entriesContainer: {
     marginTop: Spacing.xl,
@@ -277,7 +272,6 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.lg,
   },
   button: {
-    backgroundColor: Colors.light.buttonPrimary,
     borderRadius: BorderRadius.md,
     height: Spacing.buttonHeight,
     alignItems: "center",

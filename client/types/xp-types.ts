@@ -12,6 +12,11 @@ export type XpLevelUpPayloadT = {
   xpGained: number;
 };
 
+export type XpStreakPayloadT = {
+  xpGained: number;
+  variant: "ongoing" | "completed";
+};
+
 export type XpEventTypeT = {
   id: string;
   key: string;

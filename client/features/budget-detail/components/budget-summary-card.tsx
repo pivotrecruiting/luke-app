@@ -47,7 +47,8 @@ export const BudgetSummaryCard = ({
               isOverBudget && styles.overBudgetText,
             ]}
           >
-            {currencySymbol} {formatCurrency(current, currency)} / {currencySymbol} {formatCurrency(limit, currency)}
+            {currencySymbol} {formatCurrency(current, currency)} /{" "}
+            {currencySymbol} {formatCurrency(limit, currency)}
           </Text>
         </View>
       </View>
@@ -73,11 +74,15 @@ export const BudgetSummaryCard = ({
         </View>
         <View style={styles.statItem}>
           <Text style={styles.statLabel}>Übrig</Text>
-          <Text style={styles.statValue}>{currencySymbol} {formatCurrency(remaining, currency)}</Text>
+          <Text style={styles.statValue}>
+            {currencySymbol} {formatCurrency(remaining, currency)}
+          </Text>
         </View>
         <View style={styles.statItem}>
           <Text style={styles.statLabel}>Limit</Text>
-          <Text style={styles.statValue}>{currencySymbol} {formatCurrency(limit, currency)}</Text>
+          <Text style={styles.statValue}>
+            {currencySymbol} {formatCurrency(limit, currency)}
+          </Text>
         </View>
       </View>
     </View>

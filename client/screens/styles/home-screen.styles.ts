@@ -1,4 +1,4 @@
-import { Spacing } from "@/constants/theme";
+import { Colors, Spacing } from "@/constants/theme";
 import { Dimensions, StyleSheet } from "react-native";
 
 const screenWidth = Dimensions.get("window").width;
@@ -246,6 +246,31 @@ export const styles = StyleSheet.create({
     overflow: "hidden",
     marginBottom: Spacing.sm,
   },
+  transactionItemWrapperFlat: {
+    borderRadius: 0,
+    marginBottom: 0,
+  },
+  transactionListMonthSection: {
+    marginBottom: 24,
+  },
+  transactionListMonthHeader: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#111827",
+    marginBottom: 12,
+  },
+  transactionListCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 2,
+  },
   swipeableDeleteAction: {
     width: 80,
     backgroundColor: "#EF4444",
@@ -347,8 +372,8 @@ export const styles = StyleSheet.create({
     borderColor: "transparent",
   },
   modalFilterBadgeActive: {
-    backgroundColor: "#EDE9FE",
-    borderColor: "#7340FE",
+    backgroundColor: Colors.light.chipBackground,
+    borderColor: Colors.light.primary,
   },
   modalFilterBadgeText: {
     fontSize: 12,
@@ -356,7 +381,7 @@ export const styles = StyleSheet.create({
     color: "#6B7280",
   },
   modalFilterBadgeTextActive: {
-    color: "#7340FE",
+    color: Colors.light.primary,
   },
   modalCategoriesScroll: {
     marginBottom: 12,
@@ -418,7 +443,7 @@ export const styles = StyleSheet.create({
     marginBottom: 8,
   },
   editTransactionCategoryIconActive: {
-    backgroundColor: "#7340FE",
+    backgroundColor: Colors.light.primary,
   },
   editTransactionCategoryName: {
     fontSize: 12,
@@ -427,7 +452,7 @@ export const styles = StyleSheet.create({
     textAlign: "center",
   },
   editTransactionCategoryNameActive: {
-    color: "#7340FE",
+    color: Colors.light.primary,
     fontWeight: "600",
   },
   editTransactionCategoriesEmpty: {
@@ -510,10 +535,9 @@ export const styles = StyleSheet.create({
   editTransactionDateDoneText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#7340FE",
+    color: Colors.light.primary,
   },
   editTransactionSaveButton: {
-    backgroundColor: "#7340FE",
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: "center",

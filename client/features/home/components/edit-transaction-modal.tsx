@@ -9,9 +9,11 @@ import {
 import { Feather } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import CurrencyInput from "@/components/CurrencyInput";
+import { Colors } from "@/constants/theme";
 import { styles } from "@/screens/styles/home-screen.styles";
 import { formatDisplayDate } from "@/features/budget-detail/utils/date";
 import { AppModal } from "@/components/ui/app-modal";
+import { PurpleGradientButton } from "@/components/ui/purple-gradient-button";
 
 type CategoryOptionT = {
   id: string;
@@ -177,8 +179,11 @@ export const EditTransactionModal = ({
         />
 
         <Text style={styles.editTransactionModalLabel}>Datum</Text>
-        <Pressable style={styles.editTransactionDateButton} onPress={onOpenDatePicker}>
-          <Feather name="calendar" size={20} color="#7340FE" />
+        <Pressable
+          style={styles.editTransactionDateButton}
+          onPress={onOpenDatePicker}
+        >
+          <Feather name="calendar" size={20} color={Colors.light.primary} />
           <Text style={styles.editTransactionDateText}>
             {formatDisplayDate(editDate)}
           </Text>
@@ -205,11 +210,17 @@ export const EditTransactionModal = ({
           </View>
         ) : null}
 
-        <Pressable style={styles.editTransactionSaveButton} onPress={onSave}>
+        <PurpleGradientButton
+          style={styles.editTransactionSaveButton}
+          onPress={onSave}
+        >
           <Text style={styles.editTransactionSaveButtonText}>Speichern</Text>
-        </Pressable>
+        </PurpleGradientButton>
 
-        <Pressable style={styles.editTransactionCancelButton} onPress={onCancel}>
+        <Pressable
+          style={styles.editTransactionCancelButton}
+          onPress={onCancel}
+        >
           <Text style={styles.editTransactionCancelButtonText}>Abbrechen</Text>
         </Pressable>
       </ScrollView>

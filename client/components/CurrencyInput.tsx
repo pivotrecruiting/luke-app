@@ -96,7 +96,11 @@ export default function CurrencyInput({
     <View
       style={[
         styles.container,
-        variant === "modal" ? styles.modal : highlighted ? styles.highlighted : styles.normal,
+        variant === "modal"
+          ? styles.modal
+          : highlighted
+            ? styles.highlighted
+            : styles.normal,
         containerStyle,
       ]}
     >

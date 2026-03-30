@@ -3,10 +3,12 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
+import { processPendingWorkshopCode } from "@/services/workshop-code-service";
 
 type AuthContextValue = {
   session: Session | null;
@@ -20,6 +22,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const lastWorkshopCodeProcessUserIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -35,6 +38,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(data.session ?? null);
       setUser(data.session?.user ?? null);
       setIsLoading(false);
+
+      const currentUserId = data.session?.user?.id ?? null;
+      if (
+        currentUserId &&
+        lastWorkshopCodeProcessUserIdRef.current !== currentUserId
+      ) {
+        lastWorkshopCodeProcessUserIdRef.current = currentUserId;
+        void processPendingWorkshopCode().catch((workshopCodeError) => {
+          console.error(
+            "Failed to process pending workshop code after session restore:",
+            workshopCodeError,
+          );
+        });
+      }
     };
 
     initialize();
@@ -42,6 +59,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession ?? null);
       setUser(nextSession?.user ?? null);
+
+      const currentUserId = nextSession?.user?.id ?? null;
+      if (!currentUserId) {
+        lastWorkshopCodeProcessUserIdRef.current = null;
+        return;
+      }
+
+      if (lastWorkshopCodeProcessUserIdRef.current === currentUserId) {
+        return;
+      }
+
+      lastWorkshopCodeProcessUserIdRef.current = currentUserId;
+      void processPendingWorkshopCode().catch((workshopCodeError) => {
+        console.error(
+          "Failed to process pending workshop code after auth state change:",
+          workshopCodeError,
+        );
+      });
     });
 
     return () => {

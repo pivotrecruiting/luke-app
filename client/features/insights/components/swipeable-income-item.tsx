@@ -91,10 +91,7 @@ export const SwipeableIncomeItem = React.forwardRef<
 
   const renderRightActions = useCallback(
     () => (
-      <RectButton
-        style={styles.swipeableDeleteAction}
-        onPress={handleDelete}
-      >
+      <RectButton style={styles.swipeableDeleteAction} onPress={handleDelete}>
         <Feather name="trash-2" size={20} color="#FFFFFF" />
       </RectButton>
     ),
@@ -113,27 +110,27 @@ export const SwipeableIncomeItem = React.forwardRef<
       >
         <Pressable
           style={styles.incomeItem}
-        onPress={handleRowPress}
-        onLongPress={() => internalRef.current?.openRight()}
-      >
-        <View style={styles.incomeLeft}>
-          <View style={styles.incomeIconContainer}>
-            <Feather
-              name={getIconForIncomeType(entry.type) as any}
-              size={20}
-              color="#10B981"
-            />
+          onPress={handleRowPress}
+          onLongPress={() => internalRef.current?.openRight()}
+        >
+          <View style={styles.incomeLeft}>
+            <View style={styles.incomeIconContainer}>
+              <Feather
+                name={getIconForIncomeType(entry.type) as any}
+                size={20}
+                color="#10B981"
+              />
+            </View>
+            <View>
+              <Text style={styles.incomeType}>{entry.type}</Text>
+              <Text style={styles.incomeFrequency}>Monatlich</Text>
+            </View>
           </View>
-          <View>
-            <Text style={styles.incomeType}>{entry.type}</Text>
-            <Text style={styles.incomeFrequency}>Monatlich</Text>
-          </View>
-        </View>
-        <Text style={styles.incomeAmount}>
-          {currencySymbol} {formatCurrency(entry.amount, currency)}
-        </Text>
-      </Pressable>
-    </Swipeable>
+          <Text style={styles.incomeAmount}>
+            {currencySymbol} {formatCurrency(entry.amount, currency)}
+          </Text>
+        </Pressable>
+      </Swipeable>
     </View>
   );
 });

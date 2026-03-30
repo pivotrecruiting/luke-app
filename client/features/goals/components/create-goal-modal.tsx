@@ -3,6 +3,7 @@ import CurrencyInput from "@/components/CurrencyInput";
 import { styles } from "@/screens/styles/goals-screen.styles";
 import { EMOJI_LIST } from "../constants/goals-constants";
 import { AppModal } from "@/components/ui/app-modal";
+import { PurpleGradientButton } from "@/components/ui/purple-gradient-button";
 
 type CreateGoalModalPropsT = {
   visible: boolean;
@@ -107,9 +108,9 @@ export const CreateGoalModal = ({
         <Pressable style={styles.cancelButton} onPress={onCancel}>
           <Text style={styles.cancelButtonText}>abbrechen</Text>
         </Pressable>
-        <Pressable style={styles.createButton} onPress={onCreate}>
+        <PurpleGradientButton style={styles.createButton} onPress={onCreate}>
           <Text style={styles.createButtonText}>Hinzufügen</Text>
-        </Pressable>
+        </PurpleGradientButton>
       </View>
     </AppModal>
   );

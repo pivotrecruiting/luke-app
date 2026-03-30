@@ -1,4 +1,4 @@
-import { BorderRadius, Spacing } from "@/constants/theme";
+import { BorderRadius, Colors, Spacing } from "@/constants/theme";
 import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
@@ -87,7 +87,6 @@ export const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
   },
   emptyButton: {
-    backgroundColor: "#7340fd",
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.md,
@@ -193,7 +192,7 @@ export const styles = StyleSheet.create({
   tipTitle: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#7340fd",
+    color: Colors.light.primary,
   },
   tipText: {
     fontSize: 13,
@@ -249,15 +248,15 @@ export const styles = StyleSheet.create({
     borderColor: "transparent",
   },
   typeButtonSelected: {
-    backgroundColor: "#F3F0FF",
-    borderColor: "#7340fd",
+    backgroundColor: Colors.light.chipBackground,
+    borderColor: Colors.light.primary,
   },
   typeButtonText: {
     fontSize: 13,
     color: "#6B7280",
   },
   typeButtonTextSelected: {
-    color: "#7340fd",
+    color: Colors.light.primary,
     fontWeight: "500",
   },
   customTypeContainer: {
@@ -295,7 +294,6 @@ export const styles = StyleSheet.create({
     outlineStyle: "none",
   } as any,
   saveButton: {
-    backgroundColor: "#7340fd",
     paddingVertical: Spacing.md,
     borderRadius: BorderRadius.md,
     alignItems: "center",
