@@ -1,5 +1,7 @@
+import * as AppleAuthentication from "expo-apple-authentication";
 import * as WebBrowser from "expo-web-browser";
 import { makeRedirectUri } from "expo-auth-session";
+import { Platform } from "react-native";
 import { supabase } from "@/lib/supabase";
 
 export type OAuthProviderT = "google" | "apple";
@@ -37,6 +39,8 @@ type AuthErrorLikeT = {
   name?: string;
 };
 
+type UserMetadataT = Record<string, unknown>;
+
 const isUserAlreadyRegisteredError = (error: AuthErrorLikeT) => {
   const message = error.message?.toLowerCase() ?? "";
   const code = error.code?.toLowerCase() ?? "";
@@ -64,6 +68,69 @@ const getAuthRedirectUrl = () =>
   makeRedirectUri({
     path: "auth/callback",
   });
+
+const getSafeUserMetadata = (metadata: unknown): UserMetadataT =>
+  metadata && typeof metadata === "object" && !Array.isArray(metadata)
+    ? (metadata as UserMetadataT)
+    : {};
+
+const createAppleNonce = (): string | null => {
+  const cryptoApi = globalThis.crypto;
+
+  if (!cryptoApi?.getRandomValues) {
+    return null;
+  }
+
+  const randomBytes = new Uint8Array(32);
+  cryptoApi.getRandomValues(randomBytes);
+
+  return Array.from(randomBytes, (value) =>
+    value.toString(16).padStart(2, "0"),
+  ).join("");
+};
+
+const buildAppleNameMetadata = (
+  fullName: AppleAuthentication.AppleAuthenticationFullName | null,
+): UserMetadataT | null => {
+  if (!fullName) {
+    return null;
+  }
+
+  const givenName = fullName.givenName?.trim() ?? "";
+  const familyName = fullName.familyName?.trim() ?? "";
+  const fullNameValue = [givenName, familyName]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+
+  if (!fullNameValue && !givenName && !familyName) {
+    return null;
+  }
+
+  return {
+    ...(fullNameValue ? { full_name: fullNameValue } : {}),
+    ...(givenName ? { given_name: givenName } : {}),
+    ...(familyName ? { family_name: familyName } : {}),
+  };
+};
+
+const persistAppleNameIfAvailable = async (
+  fullName: AppleAuthentication.AppleAuthenticationFullName | null,
+  currentMetadata?: unknown,
+) => {
+  const appleNameMetadata = buildAppleNameMetadata(fullName);
+
+  if (!appleNameMetadata) {
+    return;
+  }
+
+  await supabase.auth.updateUser({
+    data: {
+      ...getSafeUserMetadata(currentMetadata),
+      ...appleNameMetadata,
+    },
+  });
+};
 
 type OAuthCallbackParamsT = {
   accessToken: string | null;
@@ -209,6 +276,67 @@ const createSessionFromOAuthCallback = async (
   return { status: "signed-in" };
 };
 
+const signInWithNativeApple = async (): Promise<OAuthSignInResultT> => {
+  try {
+    const isAvailable = await AppleAuthentication.isAvailableAsync();
+
+    if (!isAvailable) {
+      return {
+        status: "error",
+        message: "Apple Sign-In is not available on this device.",
+      };
+    }
+
+    const nonce = createAppleNonce();
+    const credential = await AppleAuthentication.signInAsync({
+      requestedScopes: [
+        AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+        AppleAuthentication.AppleAuthenticationScope.EMAIL,
+      ],
+      ...(nonce ? { nonce } : {}),
+    });
+
+    if (!credential.identityToken) {
+      return {
+        status: "error",
+        message: "Missing Apple identity token.",
+      };
+    }
+
+    const { data, error } = await supabase.auth.signInWithIdToken({
+      provider: "apple",
+      token: credential.identityToken,
+      access_token: credential.authorizationCode ?? undefined,
+      nonce: nonce ?? undefined,
+    });
+
+    if (error) {
+      return { status: "error", message: error.message };
+    }
+
+    await persistAppleNameIfAvailable(
+      credential.fullName,
+      data.user?.user_metadata,
+    ).catch(() => {});
+
+    return { status: "signed-in" };
+  } catch (error) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "code" in error &&
+      error.code === "ERR_REQUEST_CANCELED"
+    ) {
+      return { status: "cancelled" };
+    }
+
+    return {
+      status: "error",
+      message: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+};
+
 export const completeAuthSessionIfNeeded = () => {
   WebBrowser.maybeCompleteAuthSession();
 };
@@ -284,6 +412,10 @@ export const signUpWithEmailPassword = async (
 export const signInWithOAuth = async (
   provider: OAuthProviderT,
 ): Promise<OAuthSignInResultT> => {
+  if (provider === "apple" && Platform.OS === "ios") {
+    return signInWithNativeApple();
+  }
+
   try {
     const redirectTo = getAuthRedirectUrl();
     const { data, error } = await supabase.auth.signInWithOAuth({
@@ -321,16 +453,9 @@ export const updateUserFullName = async (
   currentMetadata?: unknown,
 ): Promise<UpdateUserResultT> => {
   try {
-    const safeMetadata =
-      currentMetadata &&
-      typeof currentMetadata === "object" &&
-      !Array.isArray(currentMetadata)
-        ? currentMetadata
-        : {};
-
     const { error } = await supabase.auth.updateUser({
       data: {
-        ...safeMetadata,
+        ...getSafeUserMetadata(currentMetadata),
         full_name: fullName.trim(),
       },
     });

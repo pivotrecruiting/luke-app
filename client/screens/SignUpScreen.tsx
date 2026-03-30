@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import * as AppleAuthentication from "expo-apple-authentication";
+import React, { useEffect, useState } from "react";
 import {
   Alert,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -63,7 +65,34 @@ export default function SignUpScreen() {
     "neutral",
   );
   const [isAuthLoading, setIsAuthLoading] = useState(false);
+  const [isAppleAuthAvailable, setIsAppleAuthAvailable] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    if (Platform.OS !== "ios") {
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    AppleAuthentication.isAvailableAsync()
+      .then((isAvailable) => {
+        if (isMounted) {
+          setIsAppleAuthAvailable(isAvailable);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setIsAppleAuthAvailable(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleOpenRequestPassword = () => {
     navigation.navigate("RequestPassword", {
@@ -251,20 +280,45 @@ export default function SignUpScreen() {
         </Text>
       </Pressable>
 
-      <Pressable
-        onPress={() => handleOAuthSignIn("apple")}
-        style={({ pressed }) => [
-          authScreenStyles.socialButton,
-          isAuthLoading && authScreenStyles.buttonDisabled,
-          pressed && authScreenStyles.buttonPressed,
-        ]}
-        disabled={isAuthLoading}
-      >
-        <AntDesign name="apple" size={20} color="#000000" />
-        <Text style={authScreenStyles.socialButtonText}>
-          Anmelden über Apple
-        </Text>
-      </Pressable>
+      {Platform.OS === "ios" ? (
+        isAppleAuthAvailable ? (
+          <View
+            style={[
+              signUpScreenStyles.appleButtonContainer,
+              isAuthLoading && authScreenStyles.buttonDisabled,
+            ]}
+          >
+            <AppleAuthentication.AppleAuthenticationButton
+              buttonType={
+                AppleAuthentication.AppleAuthenticationButtonType.SIGN_UP
+              }
+              buttonStyle={
+                AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
+              }
+              cornerRadius={12}
+              style={signUpScreenStyles.appleButton}
+              onPress={() => {
+                void handleOAuthSignIn("apple");
+              }}
+            />
+          </View>
+        ) : null
+      ) : (
+        <Pressable
+          onPress={() => handleOAuthSignIn("apple")}
+          style={({ pressed }) => [
+            authScreenStyles.socialButton,
+            isAuthLoading && authScreenStyles.buttonDisabled,
+            pressed && authScreenStyles.buttonPressed,
+          ]}
+          disabled={isAuthLoading}
+        >
+          <AntDesign name="apple" size={20} color="#000000" />
+          <Text style={authScreenStyles.socialButtonText}>
+            Anmelden über Apple
+          </Text>
+        </Pressable>
+      )}
 
       <AppModal
         visible={showWorkshopModal}
@@ -323,6 +377,17 @@ export default function SignUpScreen() {
     </AuthScreenLayout>
   );
 }
+
+const signUpScreenStyles = StyleSheet.create({
+  appleButtonContainer: {
+    width: "100%",
+    marginTop: Spacing.md,
+  },
+  appleButton: {
+    width: "100%",
+    height: 48,
+  },
+});
 
 const modalStyles = StyleSheet.create({
   modalContent: {
