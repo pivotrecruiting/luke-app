@@ -13,7 +13,6 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withTiming,
-  interpolateColor,
 } from "react-native-reanimated";
 
 import ProgressDots from "@/components/ProgressDots";
@@ -27,43 +26,6 @@ import {
 } from "@/stores/onboarding-store";
 
 type NavigationProp = NativeStackNavigationProp<OnboardingStackParamList>;
-
-/**
- * Animated text component that transitions color to black when selected
- */
-const AnimatedGoalLabel = ({
-  label,
-  isSelected,
-}: {
-  label: string;
-  isSelected: boolean;
-}) => {
-  const progress = useSharedValue(isSelected ? 1 : 0);
-
-  useEffect(() => {
-    progress.value = withTiming(isSelected ? 1 : 0, {
-      duration: 200,
-    });
-  }, [isSelected, progress]);
-
-  const animatedStyle = useAnimatedStyle(() => {
-    const color = interpolateColor(
-      progress.value,
-      [0, 1],
-      ["#FFFFFF", "#000000"],
-    );
-
-    return {
-      color,
-    };
-  });
-
-  return (
-    <Animated.Text style={[styles.goalLabel, animatedStyle]}>
-      {label}
-    </Animated.Text>
-  );
-};
 
 type GoalT = {
   id: string;
@@ -133,10 +95,19 @@ const GoalCard = ({
   flexValue,
   onToggle,
 }: GoalCardPropsT) => {
-  const opacity = useSharedValue(isSelected ? 1 : 0.7);
+  const opacity = useSharedValue(isSelected ? 1 : 0.6);
+  const selectedCardShadowStyle = isSelected
+    ? {
+        shadowColor: goal.color,
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.74,
+        shadowRadius: 18,
+        elevation: 14,
+      }
+    : null;
 
   useEffect(() => {
-    opacity.value = withTiming(isSelected ? 1 : 0.7, {
+    opacity.value = withTiming(isSelected ? 1 : 0.45, {
       duration: 200,
     });
   }, [isSelected, opacity]);
@@ -147,46 +118,53 @@ const GoalCard = ({
 
   return (
     <Animated.View
-      style={[animatedOpacityStyle, styles.cardWrapper, { flex: flexValue }]}
+      style={[
+        animatedOpacityStyle,
+        styles.cardWrapper,
+        { flex: flexValue },
+        selectedCardShadowStyle,
+      ]}
     >
       <Pressable
         onPress={() => onToggle(goal.id)}
         style={[styles.goalCard, { backgroundColor: goal.color }]}
       >
-        {goal.id === "klarna" && goal.overlayImage ? (
-          <View style={styles.layeredImageContainer}>
+        <View style={styles.goalBackground}>
+          {goal.id === "klarna" && goal.overlayImage ? (
+            <View style={styles.layeredImageContainer}>
+              <Image
+                source={goal.image}
+                style={styles.goalImageCloud}
+                contentFit="contain"
+              />
+              <Image
+                source={goal.overlayImage}
+                style={styles.goalImageOverlay}
+                contentFit="contain"
+              />
+            </View>
+          ) : goal.id === "subscriptions" && goal.overlayImage ? (
+            <View style={styles.layeredImageContainer}>
+              <Image
+                source={goal.image}
+                style={styles.subscriptionBlob}
+                contentFit="contain"
+              />
+              <Image
+                source={goal.overlayImage}
+                style={styles.subscriptionFigure}
+                contentFit="contain"
+              />
+            </View>
+          ) : (
             <Image
               source={goal.image}
-              style={styles.goalImageCloud}
+              style={styles.goalImage}
               contentFit="contain"
             />
-            <Image
-              source={goal.overlayImage}
-              style={styles.goalImageOverlay}
-              contentFit="contain"
-            />
-          </View>
-        ) : goal.id === "subscriptions" && goal.overlayImage ? (
-          <View style={styles.layeredImageContainer}>
-            <Image
-              source={goal.image}
-              style={styles.subscriptionBlob}
-              contentFit="contain"
-            />
-            <Image
-              source={goal.overlayImage}
-              style={styles.subscriptionFigure}
-              contentFit="contain"
-            />
-          </View>
-        ) : (
-          <Image
-            source={goal.image}
-            style={styles.goalImage}
-            contentFit="contain"
-          />
-        )}
-        <AnimatedGoalLabel label={goal.label} isSelected={isSelected} />
+          )}
+        </View>
+        <Text style={styles.goalLabel}>{goal.label}</Text>
       </Pressable>
     </Animated.View>
   );
@@ -355,8 +333,10 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
     justifyContent: "space-between",
     overflow: "hidden",
-    borderWidth: 4,
-    borderColor: "transparent",
+  },
+  goalBackground: {
+    flex: 1,
+    width: "100%",
   },
   goalImage: {
     flex: 1,
@@ -394,6 +374,7 @@ const styles = StyleSheet.create({
   goalLabel: {
     ...Typography.h4,
     fontWeight: "700",
+    color: Colors.light.buttonText,
   },
   buttonContainer: {
     marginTop: "auto",
