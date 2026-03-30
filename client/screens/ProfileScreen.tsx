@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Alert, View, ScrollView, Pressable, TextInput } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -24,6 +24,7 @@ import { PurpleGradientButton } from "@/components/ui/purple-gradient-button";
 import { ReviewModal } from "@/features/review/components/review-modal";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+type EditableProfileFieldT = "name" | "email";
 
 const profileNameSchema = z
   .string()
@@ -72,12 +73,16 @@ export default function ProfileScreen() {
   const [reviewModalVisible, setReviewModalVisible] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [activeEditField, setActiveEditField] =
+    useState<EditableProfileFieldT | null>(null);
   const [profileNameInput, setProfileNameInput] = useState("");
   const [profileEmailInput, setProfileEmailInput] = useState("");
   const [profileNameError, setProfileNameError] = useState<string | null>(null);
   const [profileEmailError, setProfileEmailError] = useState<string | null>(
     null,
   );
+  const profileNameInputRef = useRef<TextInput | null>(null);
+  const profileEmailInputRef = useRef<TextInput | null>(null);
 
   const profileCardOverlap = Spacing["4xl"];
   const appVersion = "1.0.0";
@@ -154,13 +159,41 @@ export default function ProfileScreen() {
   }`;
 
   useEffect(() => {
-    if (!manageModalVisible) return;
+    setProfileNameInput(currentFullName);
+    setProfileEmailInput(profileEmail ?? "");
+  }, [currentFullName, profileEmail]);
+
+  useEffect(() => {
+    if (activeEditField === "name") {
+      profileNameInputRef.current?.focus();
+    }
+
+    if (activeEditField === "email") {
+      profileEmailInputRef.current?.focus();
+    }
+  }, [activeEditField]);
+
+  const startEditingField = (field: EditableProfileFieldT) => {
+    if (isSavingProfile || isLoggingOut) return;
+
+    if (field === "email" && !canEditEmail) {
+      return;
+    }
 
     setProfileNameInput(currentFullName);
     setProfileEmailInput(profileEmail ?? "");
     setProfileNameError(null);
     setProfileEmailError(null);
-  }, [currentFullName, manageModalVisible, profileEmail]);
+    setActiveEditField(field);
+  };
+
+  const stopEditingField = () => {
+    setProfileNameInput(currentFullName);
+    setProfileEmailInput(profileEmail ?? "");
+    setProfileNameError(null);
+    setProfileEmailError(null);
+    setActiveEditField(null);
+  };
 
   const handleLogout = async () => {
     if (isLoggingOut || isSavingProfile) return;
@@ -189,19 +222,30 @@ export default function ProfileScreen() {
     navigation.navigate("RequestPassword", { email: profileEmail });
   };
 
-  const handleSaveProfile = async () => {
+  const handleSaveProfile = async (field: EditableProfileFieldT) => {
     if (!user?.id || isSavingProfile || isLoggingOut) return;
 
-    const parsedName = profileNameSchema.safeParse(profileNameInput);
-    const nextName = parsedName.success ? parsedName.data : null;
+    const currentEmail = profileEmail?.trim().toLowerCase() ?? "";
+    let nextName = currentFullName;
+    let nextEmail = currentEmail;
 
-    setProfileNameError(
-      parsedName.success ? null : (parsedName.error.issues[0]?.message ?? null),
-    );
+    if (field === "name") {
+      const parsedName = profileNameSchema.safeParse(profileNameInput);
+      nextName = parsedName.success ? parsedName.data : "";
+      setProfileNameError(
+        parsedName.success
+          ? null
+          : (parsedName.error.issues[0]?.message ?? null),
+      );
+      setProfileEmailError(null);
+    }
 
-    let nextEmail = profileEmail?.trim().toLowerCase() ?? "";
+    if (field === "email") {
+      if (!canEditEmail) {
+        return;
+      }
 
-    if (canEditEmail) {
+      setProfileNameError(null);
       const parsedEmail = profileEmailSchema.safeParse(profileEmailInput);
       setProfileEmailError(
         parsedEmail.success
@@ -215,16 +259,16 @@ export default function ProfileScreen() {
       setProfileEmailError(null);
     }
 
-    if (!nextName || (canEditEmail && !nextEmail)) {
+    if ((field === "name" && !nextName) || (field === "email" && !nextEmail)) {
       return;
     }
 
-    const currentEmail = profileEmail?.trim().toLowerCase() ?? "";
-    const shouldUpdateName = nextName !== currentFullName;
-    const shouldUpdateEmail = canEditEmail && nextEmail !== currentEmail;
+    const shouldUpdateName = field === "name" && nextName !== currentFullName;
+    const shouldUpdateEmail =
+      field === "email" && canEditEmail && nextEmail !== currentEmail;
 
     if (!shouldUpdateName && !shouldUpdateEmail) {
-      setManageModalVisible(false);
+      setActiveEditField(null);
       return;
     }
 
@@ -258,7 +302,7 @@ export default function ProfileScreen() {
         }
       }
 
-      setManageModalVisible(false);
+      setActiveEditField(null);
 
       Alert.alert(
         "Profil aktualisiert",
@@ -408,38 +452,224 @@ export default function ProfileScreen() {
                 styles.loginMethodButton,
                 { opacity: pressed ? 0.7 : 1 },
               ]}
-              onPress={() => setManageModalVisible(true)}
+              onPress={() => {
+                stopEditingField();
+                setManageModalVisible(true);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Accountoptionen öffnen"
             >
               <ThemedText type="small" style={styles.loginMethodButtonText}>
-                Bearbeiten
+                Mehr
               </ThemedText>
             </Pressable>
           </View>
-          <View style={styles.accountInfoRow}>
-            <View style={styles.accountInfoContent}>
-              <ThemedText type="body" style={styles.accountInfoLabel}>
-                Name
-              </ThemedText>
-              <ThemedText type="small" style={styles.accountInfoValue}>
-                {currentFullName || "Nicht hinterlegt"}
-              </ThemedText>
+          {activeEditField === "name" ? (
+            <View style={styles.accountInfoRow}>
+              <View style={styles.accountInfoEditContainer}>
+                <ThemedText type="body" style={styles.accountInfoLabel}>
+                  Name
+                </ThemedText>
+                <TextInput
+                  ref={profileNameInputRef}
+                  style={[
+                    styles.accountInfoInput,
+                    profileNameError ? styles.accountInfoInputError : null,
+                  ]}
+                  value={profileNameInput}
+                  onChangeText={(text) => {
+                    setProfileNameInput(text);
+                    if (profileNameError) {
+                      setProfileNameError(null);
+                    }
+                  }}
+                  placeholder="Dein Name"
+                  placeholderTextColor="#9CA3AF"
+                  autoCapitalize="words"
+                  autoCorrect={false}
+                  editable={!isSavingProfile}
+                  accessibilityLabel="Name bearbeiten"
+                  returnKeyType="done"
+                  onSubmitEditing={() => void handleSaveProfile("name")}
+                />
+                {profileNameError ? (
+                  <ThemedText type="small" style={styles.profileFormErrorText}>
+                    {profileNameError}
+                  </ThemedText>
+                ) : null}
+                <View style={styles.accountInfoEditActions}>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.accountInfoActionButton,
+                      styles.accountInfoSecondaryButton,
+                      { opacity: pressed || isSavingProfile ? 0.7 : 1 },
+                    ]}
+                    onPress={stopEditingField}
+                    disabled={isSavingProfile}
+                  >
+                    <ThemedText
+                      type="small"
+                      style={styles.accountInfoSecondaryButtonText}
+                    >
+                      Abbrechen
+                    </ThemedText>
+                  </Pressable>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.accountInfoActionButton,
+                      styles.accountInfoPrimaryButton,
+                      { opacity: pressed || isSavingProfile ? 0.7 : 1 },
+                    ]}
+                    onPress={() => void handleSaveProfile("name")}
+                    disabled={isSavingProfile}
+                  >
+                    <ThemedText
+                      type="small"
+                      style={styles.accountInfoPrimaryButtonText}
+                    >
+                      {isSavingProfile ? "Speichern..." : "Speichern"}
+                    </ThemedText>
+                  </Pressable>
+                </View>
+              </View>
             </View>
-          </View>
-          <View style={styles.accountInfoRow}>
-            <View style={styles.accountInfoContent}>
-              <ThemedText type="body" style={styles.accountInfoLabel}>
-                E-Mail
-              </ThemedText>
-              <ThemedText type="small" style={styles.accountInfoValue}>
-                {profileEmail ?? "Nicht hinterlegt"}
-              </ThemedText>
+          ) : (
+            <Pressable
+              style={({ pressed }) => [
+                styles.accountInfoRow,
+                styles.accountInfoRowPressable,
+                { opacity: pressed ? 0.75 : 1 },
+              ]}
+              onPress={() => startEditingField("name")}
+              accessibilityRole="button"
+              accessibilityLabel="Name bearbeiten"
+            >
+              <View style={styles.accountInfoContent}>
+                <ThemedText type="body" style={styles.accountInfoLabel}>
+                  Name
+                </ThemedText>
+                <ThemedText type="small" style={styles.accountInfoValue}>
+                  {currentFullName || "Nicht hinterlegt"}
+                </ThemedText>
+              </View>
+              <Feather name="edit-2" size={16} color="#6B7280" />
+            </Pressable>
+          )}
+          {activeEditField === "email" ? (
+            <View style={styles.accountInfoRow}>
+              <View style={styles.accountInfoEditContainer}>
+                <ThemedText type="body" style={styles.accountInfoLabel}>
+                  E-Mail
+                </ThemedText>
+                <TextInput
+                  ref={profileEmailInputRef}
+                  style={[
+                    styles.accountInfoInput,
+                    !canEditEmail ? styles.profileFormInputDisabled : null,
+                    profileEmailError ? styles.accountInfoInputError : null,
+                  ]}
+                  value={profileEmailInput}
+                  onChangeText={(text) => {
+                    setProfileEmailInput(text);
+                    if (profileEmailError) {
+                      setProfileEmailError(null);
+                    }
+                  }}
+                  placeholder="name@beispiel.de"
+                  placeholderTextColor="#9CA3AF"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  keyboardType="email-address"
+                  editable={canEditEmail && !isSavingProfile}
+                  accessibilityLabel="E-Mail bearbeiten"
+                  returnKeyType="done"
+                  onSubmitEditing={() => void handleSaveProfile("email")}
+                />
+                {profileEmailError ? (
+                  <ThemedText type="small" style={styles.profileFormErrorText}>
+                    {profileEmailError}
+                  </ThemedText>
+                ) : null}
+                <View style={styles.accountInfoEditActions}>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.accountInfoActionButton,
+                      styles.accountInfoSecondaryButton,
+                      { opacity: pressed || isSavingProfile ? 0.7 : 1 },
+                    ]}
+                    onPress={stopEditingField}
+                    disabled={isSavingProfile}
+                  >
+                    <ThemedText
+                      type="small"
+                      style={styles.accountInfoSecondaryButtonText}
+                    >
+                      Abbrechen
+                    </ThemedText>
+                  </Pressable>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.accountInfoActionButton,
+                      styles.accountInfoPrimaryButton,
+                      { opacity: pressed || isSavingProfile ? 0.7 : 1 },
+                    ]}
+                    onPress={() => void handleSaveProfile("email")}
+                    disabled={isSavingProfile}
+                  >
+                    <ThemedText
+                      type="small"
+                      style={styles.accountInfoPrimaryButtonText}
+                    >
+                      {isSavingProfile ? "Speichern..." : "Speichern"}
+                    </ThemedText>
+                  </Pressable>
+                </View>
+              </View>
             </View>
-          </View>
-          <ThemedText type="small" style={styles.accountInfoHint}>
-            {canEditEmail
-              ? "Name und E-Mail kannst du über Bearbeiten ändern."
-              : "Name kannst du über Bearbeiten ändern. Die E-Mail ist bei OAuth-Accounts gesperrt."}
-          </ThemedText>
+          ) : (
+            <View style={styles.accountInfoRow}>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.accountInfoRowPressable,
+                  !canEditEmail ? styles.accountInfoRowDisabled : null,
+                  { opacity: pressed && canEditEmail ? 0.75 : 1 },
+                ]}
+                onPress={() => startEditingField("email")}
+                disabled={!canEditEmail}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  canEditEmail
+                    ? "E-Mail bearbeiten"
+                    : "E-Mail kann bei OAuth nicht bearbeitet werden"
+                }
+              >
+                <View style={styles.accountInfoContent}>
+                  <ThemedText type="body" style={styles.accountInfoLabel}>
+                    E-Mail
+                  </ThemedText>
+                  <ThemedText
+                    type="small"
+                    style={[
+                      styles.accountInfoValue,
+                      !canEditEmail ? styles.accountInfoValueDisabled : null,
+                    ]}
+                  >
+                    {profileEmail ?? "Nicht hinterlegt"}
+                  </ThemedText>
+                </View>
+                <Feather
+                  name={canEditEmail ? "edit-2" : "lock"}
+                  size={16}
+                  color="#6B7280"
+                />
+              </Pressable>
+              {!canEditEmail ? (
+                <ThemedText type="small" style={styles.accountInfoHint}>
+                  Die E-Mail ist bei OAuth-Accounts gesperrt.
+                </ThemedText>
+              ) : null}
+            </View>
+          )}
           <View style={styles.bankConnectRow}>
             <View style={styles.bankConnectContent}>
               <ThemedText
@@ -677,6 +907,21 @@ export default function ProfileScreen() {
                   Paywall Screen öffnen
                 </ThemedText>
               </PurpleGradientButton>
+              <ThemedText style={styles.devToolsTitle}>
+                Test Cat Screen
+              </ThemedText>
+              <PurpleGradientButton
+                style={styles.devToolsButton}
+                onPress={() => navigation.navigate("Cat")}
+              >
+                <ThemedText
+                  type="small"
+                  style={styles.devToolsButtonText}
+                  lightColor="#FFFFFF"
+                >
+                  Cat Screen öffnen
+                </ThemedText>
+              </PurpleGradientButton>
             </View>
           </>
         )}
@@ -694,89 +939,15 @@ export default function ProfileScreen() {
         ]}
       >
         <View style={styles.modalHeader}>
-          <ThemedText style={styles.modalTitle}>Account verwalten</ThemedText>
+          <ThemedText style={styles.modalTitle}>Accountoptionen</ThemedText>
           <Pressable onPress={() => setManageModalVisible(false)}>
             <Feather name="x" size={24} color="#6B7280" />
           </Pressable>
         </View>
-
-        <View style={styles.profileFormField}>
-          <ThemedText type="small" style={styles.profileFormLabel}>
-            Name
-          </ThemedText>
-          <TextInput
-            style={[
-              styles.profileFormInput,
-              profileNameError ? styles.profileFormInputError : null,
-            ]}
-            value={profileNameInput}
-            onChangeText={(text) => {
-              setProfileNameInput(text);
-              if (profileNameError) {
-                setProfileNameError(null);
-              }
-            }}
-            placeholder="Dein Name"
-            placeholderTextColor="#9CA3AF"
-            autoCapitalize="words"
-            autoCorrect={false}
-            editable={!isSavingProfile}
-            accessibilityLabel="Name bearbeiten"
-          />
-          {profileNameError ? (
-            <ThemedText type="small" style={styles.profileFormErrorText}>
-              {profileNameError}
-            </ThemedText>
-          ) : null}
-        </View>
-
-        <View style={styles.profileFormField}>
-          <ThemedText type="small" style={styles.profileFormLabel}>
-            E-Mail
-          </ThemedText>
-          <TextInput
-            style={[
-              styles.profileFormInput,
-              !canEditEmail ? styles.profileFormInputDisabled : null,
-              profileEmailError ? styles.profileFormInputError : null,
-            ]}
-            value={profileEmailInput}
-            onChangeText={(text) => {
-              setProfileEmailInput(text);
-              if (profileEmailError) {
-                setProfileEmailError(null);
-              }
-            }}
-            placeholder="name@beispiel.de"
-            placeholderTextColor="#9CA3AF"
-            autoCapitalize="none"
-            autoCorrect={false}
-            keyboardType="email-address"
-            editable={canEditEmail && !isSavingProfile}
-            accessibilityLabel="E-Mail bearbeiten"
-          />
-          {profileEmailError ? (
-            <ThemedText type="small" style={styles.profileFormErrorText}>
-              {profileEmailError}
-            </ThemedText>
-          ) : null}
-          {!canEditEmail ? (
-            <ThemedText type="small" style={styles.profileFormHint}>
-              Die E-Mail kann nur bei Accounts mit E-Mail-Passwort-Login
-              geändert werden.
-            </ThemedText>
-          ) : null}
-        </View>
-
-        <PurpleGradientButton
-          style={styles.saveProfileButton}
-          onPress={handleSaveProfile}
-          disabled={isSavingProfile || isLoggingOut}
-        >
-          <ThemedText style={styles.saveProfileButtonText} lightColor="#FFFFFF">
-            {isSavingProfile ? "Speichern..." : "Änderungen speichern"}
-          </ThemedText>
-        </PurpleGradientButton>
+        <ThemedText type="small" style={styles.profileFormHint}>
+          Passwort-Reset ist nur bei Accounts mit E-Mail-Passwort-Login
+          verfügbar.
+        </ThemedText>
 
         <Pressable
           style={({ pressed }) => [

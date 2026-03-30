@@ -192,9 +192,24 @@ export const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#E5E7EB",
   },
+  accountInfoRowPressable: {
+    // Used for: Pressable account info rows
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: Spacing.md,
+  },
+  accountInfoRowDisabled: {
+    // Used for: Disabled account info row
+    opacity: 0.7,
+  },
   accountInfoContent: {
     // Used for: Account info text content container
     flex: 1,
+  },
+  accountInfoEditContainer: {
+    // Used for: Inline edit content wrapper
+    gap: Spacing.sm,
   },
   accountInfoLabel: {
     // Used for: Account info row label
@@ -204,6 +219,57 @@ export const styles = StyleSheet.create({
     // Used for: Account info row value
     marginTop: Spacing.xs,
     color: "#000000",
+  },
+  accountInfoValueDisabled: {
+    // Used for: Disabled account info value
+    color: "#6B7280",
+  },
+  accountInfoInput: {
+    // Used for: Inline editable account input
+    height: Spacing.inputHeight,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: BorderRadius.sm,
+    paddingHorizontal: Spacing.md,
+    color: "#000000",
+    backgroundColor: "#FFFFFF",
+  },
+  accountInfoInputError: {
+    // Used for: Inline account input error state
+    borderColor: "#EF4444",
+  },
+  accountInfoEditActions: {
+    // Used for: Inline account edit button row
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: Spacing.sm,
+  },
+  accountInfoActionButton: {
+    // Used for: Inline account action buttons
+    minWidth: 96,
+    borderRadius: BorderRadius.sm,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  accountInfoSecondaryButton: {
+    // Used for: Secondary inline action button
+    backgroundColor: "#F3F4F6",
+  },
+  accountInfoSecondaryButtonText: {
+    // Used for: Secondary inline action button text
+    fontWeight: "500",
+    color: "#111827",
+  },
+  accountInfoPrimaryButton: {
+    // Used for: Primary inline action button
+    backgroundColor: "#111827",
+  },
+  accountInfoPrimaryButtonText: {
+    // Used for: Primary inline action button text
+    fontWeight: "600",
+    color: "#FFFFFF",
   },
   accountInfoHint: {
     // Used for: Account section helper text
