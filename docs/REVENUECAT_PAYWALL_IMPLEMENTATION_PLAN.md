@@ -115,8 +115,7 @@ Dieser Plan beschreibt die saubere Implementierung einer RevenueCat-basierten Pa
 
 - [x] Jeder User erhaelt einen Standard-Testzeitraum von 7 Tagen.
 - [x] Das Paywall-Modal erscheint erst 3 Tage vor Trial-Ende.
-- [ ] Entscheiden, ob zusaetzlich spaeter noch Store-seitige Intro Offers in RevenueCat/App Store/Play Store genutzt werden sollen oder bewusst nicht.
-- [ ] Entscheiden, ob die Lifetime-Option auf beiden Plattformen gleichzeitig live gehen soll.
+- [ ] Entscheiden, ob zusaetzlich spaeter noch Store-seitige Intro Offers in RevenueCat/App Store genutzt werden sollen oder bewusst nicht.
 - [ ] Entscheiden, ob die Paywall waehrend Onboarding zwingend nach Login erscheint oder auch fuer nicht eingeloggte Nutzer sichtbar sein darf.
 - [ ] Entscheiden, ob Workshop-Code-Nutzer die Paywall komplett ueberspringen sollen, sobald `get_my_access_state().has_access = true` liefert.
 
@@ -145,9 +144,9 @@ Dieser Plan beschreibt die saubere Implementierung einer RevenueCat-basierten Pa
 
 ### Phase 1: RevenueCat Dashboard und Store-Produkte sauber aufsetzen
 
-- [ ] Apple App Store Connect und Google Play Console Produkte final anlegen oder verifizieren.
+- [ ] Apple App Store Connect Produkte final anlegen oder verifizieren.
 - [ ] Store-Produkt-IDs nach stabilem Schema definieren.
-- [ ] RevenueCat-Projekt fuer iOS und Android verbinden.
+- [ ] RevenueCat-Projekt fuer iOS verbinden.
 - [ ] Entitlement `pro` in RevenueCat anlegen.
 - [ ] Offering `default` fuer Onboarding-Paywall anlegen.
 - [ ] Monthly als Default Package Type `monthly` zuordnen.
@@ -156,7 +155,7 @@ Dieser Plan beschreibt die saubere Implementierung einer RevenueCat-basierten Pa
 - [ ] Alle drei Produkte dem Entitlement `pro` zuordnen.
 - [ ] Keine verpflichtende Abhaengigkeit von Store-Trials fuer den Standard-7-Tage-Testzeitraum einbauen.
 - [ ] Offering-Metadata hinterlegen, falls die Paywall Badges oder Copy aus dem Dashboard beziehen soll.
-- [ ] RevenueCat Test Store / Sandbox-Nutzer fuer iOS und Android vorbereiten.
+- [ ] RevenueCat Test Store / Sandbox-Nutzer fuer iOS vorbereiten.
 - [ ] Sicherstellen, dass Preise im RevenueCat-Catalog exakt zu `billing_products` passen.
 
 ### Phase 2: Supabase als Access-Layer vorbereiten
@@ -218,7 +217,6 @@ Dieser Plan beschreibt die saubere Implementierung einer RevenueCat-basierten Pa
 - [ ] Falls fuer das aktuelle Setup erforderlich, Expo-Plugin oder Native-Konfiguration in [`app.config.js`](/Users/dennisschaible/Desktop/Coding/luke/app.config.js) ergaenzen.
 - [ ] Environment-Variablen definieren:
   - [ ] `EXPO_PUBLIC_REVENUECAT_IOS_API_KEY`
-  - [ ] `EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY`
 - [x] Neue Service-Schicht einfuehren, z. B. `client/services/revenuecat-service.ts`.
 - [x] SDK genau einmal initialisieren.
 - [x] Initialisierung erst starten, wenn Supabase-Session bekannt ist.
@@ -288,7 +286,7 @@ Dieser Plan beschreibt die saubere Implementierung einer RevenueCat-basierten Pa
 
 ### Phase 9: Tests und Qualitaetssicherung
 
-- [ ] Testmatrix fuer iOS und Android erstellen.
+- [ ] Testmatrix fuer iOS erstellen.
 - [ ] Folgende Faelle einzeln testen:
   - [ ] Monthly Kauf
   - [ ] Yearly Kauf
