@@ -65,9 +65,9 @@ const DEFAULT_ACCESS_STATE: AccessStateT = {
 };
 
 const ensureUserRow = async (userId: string): Promise<void> => {
-  const { error } = await supabase
-    .from("users")
-    .upsert({ id: userId }, { onConflict: "id", ignoreDuplicates: true });
+  void userId;
+
+  const { error } = await supabase.rpc("ensure_my_user_row");
 
   if (error) {
     throw error;

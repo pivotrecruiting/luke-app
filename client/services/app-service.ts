@@ -5,17 +5,11 @@ import type {
   Goal,
   IncomeEntry,
   MonthlyBalanceSnapshotT,
+  MonthlyTrendData,
   Transaction,
   TransactionSourceT,
   VaultTransactionT,
-  MonthlyTrendData,
 } from "@/context/app/types";
-import type {
-  UserProgressT,
-  XpEventRuleT,
-  XpEventTypeT,
-  XpLevelT,
-} from "@/types/xp-types";
 import {
   mapBudgetsAndTransactions,
   mapExpenseEntries,
@@ -36,17 +30,22 @@ import type {
   GoalRow,
   IncomeCategoryRow,
   IncomeSourceRow,
-  MonthlyBalanceSnapshotRow,
   LevelRow,
+  MonthlyBalanceSnapshotRow,
   TransactionRow,
-  VaultTransactionRow,
-  UserProgressRow,
   UserFinancialProfileRow,
   UserOnboardingRow,
-  UserRow,
+  UserProgressRow,
+  VaultTransactionRow,
   XpEventRuleRow,
   XpEventTypeRow,
 } from "@/services/types";
+import type {
+  UserProgressT,
+  XpEventRuleT,
+  XpEventTypeT,
+  XpLevelT,
+} from "@/types/xp-types";
 import { fromCents, toCents } from "@/utils/money";
 
 export type AppDataPayload = {
@@ -81,6 +80,28 @@ export type AppDataPayload = {
   balanceAnchorMonth?: string | null;
 };
 
+type RpcAppDataPayloadT = {
+  userName?: string | null;
+  onboarding?: UserOnboardingRow | null;
+  profile?: UserFinancialProfileRow | null;
+  incomeSources?: IncomeSourceRow[];
+  fixedExpenses?: FixedExpenseRow[];
+  goals?: GoalRow[];
+  goalContributions?: GoalContributionRow[];
+  budgetCategories?: BudgetCategoryRow[];
+  incomeCategories?: IncomeCategoryRow[];
+  budgets?: BudgetRow[];
+  transactions?: TransactionRow[];
+  vaultTransactions?: VaultTransactionRow[];
+  monthlyBalanceSnapshots?: MonthlyBalanceSnapshotRow[];
+};
+
+type RpcMonthlyBalanceStatePayloadT = {
+  vaultTransactions?: VaultTransactionRow[];
+  monthlyBalanceSnapshots?: MonthlyBalanceSnapshotRow[];
+  balanceAnchorMonth?: string | null;
+};
+
 const mapMonthlyBalanceSnapshots = (
   rows: MonthlyBalanceSnapshotRow[],
 ): MonthlyBalanceSnapshotT[] =>
@@ -111,188 +132,30 @@ export type MonthlyBalanceStatePayloadT = {
   balanceAnchorMonth: string | null;
 };
 
-const ensureUserRow = async (userId: string): Promise<void> => {
-  const { error } = await supabase
-    .from("users")
-    .upsert({ id: userId }, { onConflict: "id", ignoreDuplicates: true });
+const ensureMyUserRow = async (): Promise<void> => {
+  const { error } = await supabase.rpc("ensure_my_user_row");
   if (error) {
     throw error;
   }
 };
 
-const getMonthBounds = (date: Date): { start: Date; end: Date } => {
-  const start = new Date(date.getFullYear(), date.getMonth(), 1, 0, 0, 0, 0);
-  const end = new Date(
-    date.getFullYear(),
-    date.getMonth() + 1,
-    0,
-    23,
-    59,
-    59,
-    999,
-  );
-  return { start, end };
-};
-
-const clampDayOfMonth = (year: number, month: number, day: number): number => {
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  return Math.min(day, daysInMonth);
-};
-
-const buildRecurringTransactionDate = (
-  monthStart: Date,
-  startDate?: string | null,
-): Date => {
-  const targetDay = startDate ? new Date(startDate).getDate() : 1;
-  const day = clampDayOfMonth(
-    monthStart.getFullYear(),
-    monthStart.getMonth(),
-    targetDay,
-  );
-  const date = new Date(
-    monthStart.getFullYear(),
-    monthStart.getMonth(),
-    day,
-    12,
-    0,
-    0,
-    0,
-  );
-  return date;
-};
-
-const isActiveInMonth = (
-  monthStart: Date,
-  monthEnd: Date,
-  startDate?: string | null,
-  endDate?: string | null,
-): boolean => {
-  if (startDate) {
-    const start = new Date(startDate);
-    if (start > monthEnd) return false;
-  }
-  if (endDate) {
-    const end = new Date(endDate);
-    if (end < monthStart) return false;
-  }
-  return true;
-};
-
-const ensureRecurringTransactionsForMonth = async ({
-  userId,
-  incomeSources,
-  fixedExpenses,
-  incomeCategories,
-  existingTransactions,
-  defaultCurrency,
-}: {
-  userId: string;
-  incomeSources: IncomeSourceRow[];
-  fixedExpenses: FixedExpenseRow[];
-  incomeCategories: IncomeCategoryRow[];
-  existingTransactions: TransactionRow[];
-  defaultCurrency: CurrencyCode;
-}): Promise<TransactionRow[]> => {
-  const now = new Date();
-  const { start: monthStart, end: monthEnd } = getMonthBounds(now);
-  const normalizeName = (value: string) => value.trim().toLowerCase();
-
-  const recurringKeys = new Set(
-    existingTransactions
-      .filter((tx) => {
-        if (tx.source !== "recurring") return false;
-        const txDate = new Date(tx.transaction_at);
-        return txDate >= monthStart && txDate <= monthEnd;
-      })
-      .map((tx) => `${tx.type}:${normalizeName(tx.name)}`),
-  );
-
-  const incomeCategoryMap = new Map<string, string>();
-  incomeCategories.forEach((category) => {
-    incomeCategoryMap.set(normalizeName(category.name), category.id);
-  });
-
-  const payloads: {
-    user_id: string;
-    type: "income" | "expense";
-    amount_cents: number;
-    currency: CurrencyCode;
-    name: string;
-    category_name: string | null;
-    income_category_id?: string | null;
-    transaction_at: string;
-    source: "recurring";
-  }[] = [];
-
-  incomeSources.forEach((source) => {
-    if (source.amount_cents <= 0) return;
-    if (
-      !isActiveInMonth(monthStart, monthEnd, source.start_date, source.end_date)
-    )
-      return;
-    const key = `income:${normalizeName(source.name)}`;
-    if (recurringKeys.has(key)) return;
-    const transactionDate = buildRecurringTransactionDate(
-      monthStart,
-      source.start_date,
-    );
-    const incomeCategoryId =
-      incomeCategoryMap.get(normalizeName(source.name)) ?? null;
-    payloads.push({
-      user_id: userId,
-      type: "income",
-      amount_cents: source.amount_cents,
-      currency: (source.currency as CurrencyCode | null) ?? defaultCurrency,
-      name: source.name,
-      category_name: source.name,
-      income_category_id: incomeCategoryId,
-      transaction_at: transactionDate.toISOString(),
-      source: "recurring",
-    });
-  });
-
-  fixedExpenses.forEach((expense) => {
-    if (expense.amount_cents <= 0) return;
-    if (
-      !isActiveInMonth(
-        monthStart,
-        monthEnd,
-        expense.start_date,
-        expense.end_date,
-      )
-    )
-      return;
-    const key = `expense:${normalizeName(expense.name)}`;
-    if (recurringKeys.has(key)) return;
-    const transactionDate = buildRecurringTransactionDate(
-      monthStart,
-      expense.start_date,
-    );
-    payloads.push({
-      user_id: userId,
-      type: "expense",
-      amount_cents: expense.amount_cents,
-      currency: (expense.currency as CurrencyCode | null) ?? defaultCurrency,
-      name: expense.name,
-      category_name: expense.name,
-      transaction_at: transactionDate.toISOString(),
-      source: "recurring",
-    });
-  });
-
-  if (payloads.length === 0) return [];
-
-  const { data, error } = await supabase
-    .from("transactions")
-    .insert(payloads)
-    .select(
-      "id, type, amount_cents, name, category_name, budget_id, budget_category_id, transaction_at, source",
-    );
-  if (error || !data) {
-    throw error ?? new Error("No recurring transactions returned");
+const getRpcObject = <T extends object>(data: unknown, rpcName: string): T => {
+  if (!data || typeof data !== "object" || Array.isArray(data)) {
+    throw new Error(`Unexpected RPC payload from ${rpcName}.`);
   }
 
-  return data as TransactionRow[];
+  return data as T;
+};
+
+const getRpcArray = <T>(value: unknown): T[] =>
+  Array.isArray(value) ? (value as T[]) : [];
+
+const getRpcId = (data: unknown, rpcName: string): string => {
+  if (typeof data !== "string" || data.length === 0) {
+    throw new Error(`Unexpected RPC id payload from ${rpcName}.`);
+  }
+
+  return data;
 };
 
 export const syncMonthlyBalanceState = async (): Promise<void> => {
@@ -305,45 +168,28 @@ export const syncMonthlyBalanceState = async (): Promise<void> => {
 export const fetchMonthlyBalanceState = async (
   userId: string,
 ): Promise<MonthlyBalanceStatePayloadT> => {
-  const [profileRes, vaultTransactionsRes, monthlyBalanceSnapshotsRes] =
-    await Promise.all([
-      supabase
-        .from("user_financial_profiles")
-        .select("balance_anchor_month")
-        .eq("user_id", userId)
-        .maybeSingle(),
-      supabase
-        .from("vault_transactions")
-        .select(
-          "id, user_id, amount_cents, currency, entry_type, note, goal_id, rollover_month, transaction_at",
-        )
-        .eq("user_id", userId)
-        .order("transaction_at", { ascending: false }),
-      supabase
-        .from("monthly_balance_snapshots")
-        .select("id, user_id, month_start, amount_cents, currency, snapshot_at")
-        .eq("user_id", userId)
-        .order("month_start", { ascending: true }),
-    ]);
+  void userId;
 
-  const firstError =
-    profileRes.error ||
-    vaultTransactionsRes.error ||
-    monthlyBalanceSnapshotsRes.error;
-  if (firstError) {
-    throw firstError;
+  await ensureMyUserRow();
+
+  const { data, error } = await supabase.rpc("get_my_monthly_balance_state");
+  if (error) {
+    throw error;
   }
 
-  const profile = profileRes.data as UserFinancialProfileRow | null;
+  const payload = getRpcObject<RpcMonthlyBalanceStatePayloadT>(
+    data,
+    "get_my_monthly_balance_state",
+  );
 
   return {
     vaultTransactions: mapVaultTransactions(
-      (vaultTransactionsRes.data ?? []) as VaultTransactionRow[],
+      getRpcArray<VaultTransactionRow>(payload.vaultTransactions),
     ),
     monthlyBalanceSnapshots: mapMonthlyBalanceSnapshots(
-      (monthlyBalanceSnapshotsRes.data ?? []) as MonthlyBalanceSnapshotRow[],
+      getRpcArray<MonthlyBalanceSnapshotRow>(payload.monthlyBalanceSnapshots),
     ),
-    balanceAnchorMonth: profile?.balance_anchor_month ?? null,
+    balanceAnchorMonth: payload.balanceAnchorMonth ?? null,
   };
 };
 
@@ -351,173 +197,59 @@ export const fetchAppData = async (
   userId: string,
   onboardingVersion: string,
 ): Promise<AppDataPayload> => {
-  await ensureUserRow(userId);
-  await syncMonthlyBalanceState();
-  const [
-    onboardingRes,
-    profileRes,
-    userRes,
-    incomeRes,
-    expenseRes,
-    goalsRes,
-    contributionsRes,
-    budgetCategoriesRes,
-    incomeCategoriesRes,
-    budgetsRes,
-    transactionsRes,
-    vaultTransactionsRes,
-    monthlyBalanceSnapshotsRes,
-  ] = await Promise.all([
-    supabase
-      .from("user_onboarding")
-      .select("completed_at, onboarding_version, started_at, skipped_steps")
-      .eq("user_id", userId)
-      .maybeSingle(),
-    supabase
-      .from("user_financial_profiles")
-      .select("currency, initial_savings_cents, balance_anchor_month")
-      .eq("user_id", userId)
-      .maybeSingle(),
-    supabase.from("users").select("name").eq("id", userId).maybeSingle(),
-    supabase
-      .from("income_sources")
-      .select("id, name, amount_cents, currency, start_date, end_date")
-      .eq("user_id", userId),
-    supabase
-      .from("fixed_expenses")
-      .select("id, name, amount_cents, currency, start_date, end_date")
-      .eq("user_id", userId),
-    supabase
-      .from("goals")
-      .select("id, name, icon, target_amount_cents, monthly_contribution_cents")
-      .eq("user_id", userId),
-    supabase
-      .from("goal_contributions")
-      .select(
-        "id, goal_id, amount_cents, contribution_type, contribution_at, transaction_id",
-      )
-      .eq("user_id", userId),
-    supabase
-      .from("budget_categories")
-      .select("id, key, name, icon, color")
-      .eq("active", true),
-    supabase
-      .from("income_categories")
-      .select("id, key, name, icon")
-      .eq("active", true),
-    supabase
-      .from("budgets")
-      .select("id, name, category_id, limit_amount_cents")
-      .eq("user_id", userId),
-    supabase
-      .from("transactions")
-      .select(
-        "id, type, amount_cents, name, category_name, budget_id, budget_category_id, transaction_at, source",
-      )
-      .eq("user_id", userId)
-      .order("transaction_at", { ascending: false }),
-    supabase
-      .from("vault_transactions")
-      .select(
-        "id, user_id, amount_cents, currency, entry_type, note, goal_id, rollover_month, transaction_at",
-      )
-      .eq("user_id", userId)
-      .order("transaction_at", { ascending: false }),
-    supabase
-      .from("monthly_balance_snapshots")
-      .select("id, user_id, month_start, amount_cents, currency, snapshot_at")
-      .eq("user_id", userId)
-      .order("month_start", { ascending: true }),
-  ]);
+  void userId;
 
-  const firstError =
-    onboardingRes.error ||
-    profileRes.error ||
-    userRes.error ||
-    incomeRes.error ||
-    expenseRes.error ||
-    goalsRes.error ||
-    contributionsRes.error ||
-    budgetCategoriesRes.error ||
-    incomeCategoriesRes.error ||
-    budgetsRes.error ||
-    transactionsRes.error ||
-    vaultTransactionsRes.error ||
-    monthlyBalanceSnapshotsRes.error;
-  if (firstError) {
-    throw firstError;
+  const { data, error } = await supabase.rpc("get_my_app_data", {
+    input_onboarding_version: onboardingVersion,
+  });
+
+  if (error) {
+    throw error;
   }
 
-  let onboarding = onboardingRes.data as UserOnboardingRow | null;
-  if (!onboarding) {
-    const { data, error } = await supabase
-      .from("user_onboarding")
-      .insert({ user_id: userId, onboarding_version: onboardingVersion })
-      .select()
-      .single();
-    if (error || !data) {
-      throw error ?? new Error("No onboarding returned");
-    }
-    onboarding = data as UserOnboardingRow;
-  }
+  const payload = getRpcObject<RpcAppDataPayloadT>(data, "get_my_app_data");
+  const onboarding = payload.onboarding ?? null;
+  const profile = payload.profile ?? null;
+  const budgetCategories = getRpcArray<BudgetCategoryRow>(
+    payload.budgetCategories,
+  );
+  const incomeCategories = getRpcArray<IncomeCategoryRow>(
+    payload.incomeCategories,
+  );
+  const incomeSources = getRpcArray<IncomeSourceRow>(payload.incomeSources);
+  const fixedExpenses = getRpcArray<FixedExpenseRow>(payload.fixedExpenses);
+  const goalsRows = getRpcArray<GoalRow>(payload.goals);
+  const goalContributionRows = getRpcArray<GoalContributionRow>(
+    payload.goalContributions,
+  );
+  const budgetsRows = getRpcArray<BudgetRow>(payload.budgets);
+  const transactionRows = getRpcArray<TransactionRow>(payload.transactions);
+  const vaultTransactionRows = getRpcArray<VaultTransactionRow>(
+    payload.vaultTransactions,
+  );
+  const monthlySnapshotRows = getRpcArray<MonthlyBalanceSnapshotRow>(
+    payload.monthlyBalanceSnapshots,
+  );
 
-  const profile = profileRes.data as UserFinancialProfileRow | null;
-  const user = userRes.data as UserRow | null;
-  const budgetCategories = (budgetCategoriesRes.data ??
-    []) as BudgetCategoryRow[];
-  const incomeCategories = (incomeCategoriesRes.data ??
-    []) as IncomeCategoryRow[];
-
-  const incomeSources = (incomeRes.data ?? []) as IncomeSourceRow[];
-  const fixedExpenses = (expenseRes.data ?? []) as FixedExpenseRow[];
   const incomeEntries = mapIncomeEntries(incomeSources);
   const expenseEntries = mapExpenseEntries(fixedExpenses);
-  const goals = mapGoals(
-    (goalsRes.data ?? []) as GoalRow[],
-    (contributionsRes.data ?? []) as GoalContributionRow[],
-  );
-  let recurringTransactions: TransactionRow[] = [];
-  try {
-    recurringTransactions = await ensureRecurringTransactionsForMonth({
-      userId,
-      incomeSources,
-      fixedExpenses,
-      incomeCategories,
-      existingTransactions: (transactionsRes.data ?? []) as TransactionRow[],
-      defaultCurrency: (profile?.currency as CurrencyCode | null) ?? "EUR",
-    });
-  } catch (error) {
-    console.warn("Failed to ensure recurring transactions:", error);
-  }
-
-  const combinedTransactions = [
-    ...((transactionsRes.data ?? []) as TransactionRow[]),
-    ...recurringTransactions,
-  ].sort(
-    (a, b) =>
-      new Date(b.transaction_at).getTime() -
-      new Date(a.transaction_at).getTime(),
-  );
-
+  const goals = mapGoals(goalsRows, goalContributionRows);
   const { budgets, transactions } = mapBudgetsAndTransactions(
-    (budgetsRes.data ?? []) as BudgetRow[],
+    budgetsRows,
     budgetCategories,
-    combinedTransactions,
+    transactionRows,
   );
-  const monthlyBalanceSnapshots = mapMonthlyBalanceSnapshots(
-    (monthlyBalanceSnapshotsRes.data ?? []) as MonthlyBalanceSnapshotRow[],
-  );
-  const vaultTransactions = mapVaultTransactions(
-    (vaultTransactionsRes.data ?? []) as VaultTransactionRow[],
-  );
-
-  const userName =
-    typeof user?.name === "string" ? user.name.trim() || null : null;
+  const monthlyBalanceSnapshots =
+    mapMonthlyBalanceSnapshots(monthlySnapshotRows);
+  const vaultTransactions = mapVaultTransactions(vaultTransactionRows);
 
   return {
     isOnboardingComplete: Boolean(onboarding?.completed_at),
     currency: (profile?.currency as CurrencyCode | undefined) ?? undefined,
-    userName,
+    userName:
+      typeof payload.userName === "string"
+        ? payload.userName.trim() || null
+        : null,
     incomeEntries,
     expenseEntries,
     goals,
@@ -537,9 +269,11 @@ export const upsertUserCurrency = async (
   userId: string,
   currency: CurrencyCode,
 ): Promise<void> => {
-  const { error } = await supabase
-    .from("user_financial_profiles")
-    .upsert({ user_id: userId, currency }, { onConflict: "user_id" });
+  void userId;
+
+  const { error } = await supabase.rpc("upsert_my_user_currency", {
+    input_currency: currency,
+  });
   if (error) {
     throw error;
   }
@@ -549,16 +283,11 @@ export const upsertUserName = async (
   userId: string,
   name: string,
 ): Promise<void> => {
-  const trimmedName = name.trim();
-  await ensureUserRow(userId);
+  void userId;
 
-  const { error } = await supabase
-    .from("users")
-    .update({
-      name: trimmedName,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", userId);
+  const { error } = await supabase.rpc("update_my_user_name", {
+    input_name: name.trim(),
+  });
 
   if (error) {
     throw error;
@@ -570,14 +299,12 @@ export const upsertInitialSavings = async (
   amount: number,
   currency: CurrencyCode,
 ): Promise<void> => {
-  const { error } = await supabase.from("user_financial_profiles").upsert(
-    {
-      user_id: userId,
-      initial_savings_cents: toCents(amount),
-      currency,
-    },
-    { onConflict: "user_id" },
-  );
+  void userId;
+
+  const { error } = await supabase.rpc("upsert_my_initial_savings", {
+    input_amount_cents: toCents(amount),
+    input_currency: currency,
+  });
   if (error) {
     throw error;
   }
@@ -587,13 +314,11 @@ export const upsertBalanceAnchorMonth = async (
   userId: string,
   balanceAnchorMonth: string,
 ): Promise<void> => {
-  const { error } = await supabase.from("user_financial_profiles").upsert(
-    {
-      user_id: userId,
-      balance_anchor_month: balanceAnchorMonth,
-    },
-    { onConflict: "user_id" },
-  );
+  void userId;
+
+  const { error } = await supabase.rpc("upsert_my_balance_anchor_month", {
+    input_balance_anchor_month: balanceAnchorMonth,
+  });
   if (error) {
     throw error;
   }
@@ -605,11 +330,13 @@ export const createIncomeEntry = async (
   amount: number,
   currency: CurrencyCode,
 ): Promise<IncomeEntry> => {
-  const { data, error } = await supabase
-    .from("income_sources")
-    .insert({ user_id: userId, name, amount_cents: toCents(amount), currency })
-    .select("id, name, amount_cents")
-    .single();
+  void userId;
+
+  const { data, error } = await supabase.rpc("create_my_income_source", {
+    input_name: name,
+    input_amount_cents: toCents(amount),
+    input_currency: currency,
+  });
   if (error || !data) {
     throw error ?? new Error("No data returned");
   }
@@ -621,31 +348,19 @@ export const replaceIncomeEntries = async (
   entries: { type: string; amount: number }[],
   currency: CurrencyCode,
 ): Promise<IncomeEntry[]> => {
-  const { error: deleteError } = await supabase
-    .from("income_sources")
-    .delete()
-    .eq("user_id", userId);
-  if (deleteError) {
-    throw deleteError;
+  void userId;
+
+  const { data, error } = await supabase.rpc("replace_my_income_sources", {
+    input_entries: entries.map((entry) => ({
+      name: entry.type,
+      amount_cents: toCents(entry.amount),
+    })),
+    input_currency: currency,
+  });
+  if (error) {
+    throw error;
   }
-  if (entries.length === 0) {
-    return [];
-  }
-  const { data, error } = await supabase
-    .from("income_sources")
-    .insert(
-      entries.map((entry) => ({
-        user_id: userId,
-        name: entry.type,
-        amount_cents: toCents(entry.amount),
-        currency,
-      })),
-    )
-    .select("id, name, amount_cents");
-  if (error || !data) {
-    throw error ?? new Error("No data returned");
-  }
-  return mapIncomeEntries(data as IncomeSourceRow[]);
+  return mapIncomeEntries(getRpcArray<IncomeSourceRow>(data));
 };
 
 export const updateIncomeEntry = async (
@@ -653,17 +368,20 @@ export const updateIncomeEntry = async (
   name: string,
   amount: number,
 ): Promise<void> => {
-  const { error } = await supabase
-    .from("income_sources")
-    .update({ name, amount_cents: toCents(amount) })
-    .eq("id", id);
+  const { error } = await supabase.rpc("update_my_income_source", {
+    input_id: id,
+    input_name: name,
+    input_amount_cents: toCents(amount),
+  });
   if (error) {
     throw error;
   }
 };
 
 export const deleteIncomeEntry = async (id: string): Promise<void> => {
-  const { error } = await supabase.from("income_sources").delete().eq("id", id);
+  const { error } = await supabase.rpc("delete_my_income_source", {
+    input_id: id,
+  });
   if (error) {
     throw error;
   }
@@ -675,11 +393,13 @@ export const createExpenseEntry = async (
   amount: number,
   currency: CurrencyCode,
 ): Promise<ExpenseEntry> => {
-  const { data, error } = await supabase
-    .from("fixed_expenses")
-    .insert({ user_id: userId, name, amount_cents: toCents(amount), currency })
-    .select("id, name, amount_cents")
-    .single();
+  void userId;
+
+  const { data, error } = await supabase.rpc("create_my_fixed_expense", {
+    input_name: name,
+    input_amount_cents: toCents(amount),
+    input_currency: currency,
+  });
   if (error || !data) {
     throw error ?? new Error("No data returned");
   }
@@ -691,31 +411,19 @@ export const replaceExpenseEntries = async (
   entries: { type: string; amount: number }[],
   currency: CurrencyCode,
 ): Promise<ExpenseEntry[]> => {
-  const { error: deleteError } = await supabase
-    .from("fixed_expenses")
-    .delete()
-    .eq("user_id", userId);
-  if (deleteError) {
-    throw deleteError;
+  void userId;
+
+  const { data, error } = await supabase.rpc("replace_my_fixed_expenses", {
+    input_entries: entries.map((entry) => ({
+      name: entry.type,
+      amount_cents: toCents(entry.amount),
+    })),
+    input_currency: currency,
+  });
+  if (error) {
+    throw error;
   }
-  if (entries.length === 0) {
-    return [];
-  }
-  const { data, error } = await supabase
-    .from("fixed_expenses")
-    .insert(
-      entries.map((entry) => ({
-        user_id: userId,
-        name: entry.type,
-        amount_cents: toCents(entry.amount),
-        currency,
-      })),
-    )
-    .select("id, name, amount_cents");
-  if (error || !data) {
-    throw error ?? new Error("No data returned");
-  }
-  return mapExpenseEntries(data as FixedExpenseRow[]);
+  return mapExpenseEntries(getRpcArray<FixedExpenseRow>(data));
 };
 
 export const updateExpenseEntry = async (
@@ -723,17 +431,20 @@ export const updateExpenseEntry = async (
   name: string,
   amount: number,
 ): Promise<void> => {
-  const { error } = await supabase
-    .from("fixed_expenses")
-    .update({ name, amount_cents: toCents(amount) })
-    .eq("id", id);
+  const { error } = await supabase.rpc("update_my_fixed_expense", {
+    input_id: id,
+    input_name: name,
+    input_amount_cents: toCents(amount),
+  });
   if (error) {
     throw error;
   }
 };
 
 export const deleteExpenseEntry = async (id: string): Promise<void> => {
-  const { error } = await supabase.from("fixed_expenses").delete().eq("id", id);
+  const { error } = await supabase.rpc("delete_my_fixed_expense", {
+    input_id: id,
+  });
   if (error) {
     throw error;
   }
@@ -747,54 +458,75 @@ export const createGoal = async (
   monthlyContribution: number | null,
   createdInOnboarding: boolean,
 ): Promise<string> => {
-  const { data, error } = await supabase
-    .from("goals")
-    .insert({
-      user_id: userId,
-      name,
-      icon,
-      target_amount_cents: toCents(target),
-      monthly_contribution_cents:
-        typeof monthlyContribution === "number"
-          ? toCents(monthlyContribution)
-          : null,
-      created_in_onboarding: createdInOnboarding,
-    })
-    .select("id")
-    .single();
+  void userId;
+
+  const { data, error } = await supabase.rpc("create_my_goal", {
+    input_name: name,
+    input_icon: icon,
+    input_target_amount_cents: toCents(target),
+    input_monthly_contribution_cents:
+      typeof monthlyContribution === "number"
+        ? toCents(monthlyContribution)
+        : null,
+    input_created_in_onboarding: createdInOnboarding,
+  });
   if (error || !data) {
     throw error ?? new Error("No goal returned");
   }
-  return data.id as string;
+  return getRpcId(data, "create_my_goal");
 };
 
 export const updateGoal = async (
   goalId: string,
   updates: Partial<Goal>,
 ): Promise<void> => {
-  const payload: Record<string, unknown> = {};
-  if (typeof updates.name === "string") payload.name = updates.name;
-  if (typeof updates.icon === "string") payload.icon = updates.icon;
-  if (typeof updates.target === "number")
-    payload.target_amount_cents = toCents(updates.target);
+  const params: Record<string, unknown> = {
+    input_goal_id: goalId,
+    input_clear_monthly_contribution: updates.monthlyContribution === null,
+  };
+
+  let hasChanges = false;
+
+  if (typeof updates.name === "string") {
+    params.input_name = updates.name;
+    hasChanges = true;
+  }
+
+  if (typeof updates.icon === "string") {
+    params.input_icon = updates.icon;
+    hasChanges = true;
+  }
+
+  if (typeof updates.target === "number") {
+    params.input_target_amount_cents = toCents(updates.target);
+    hasChanges = true;
+  }
+
   if (typeof updates.monthlyContribution === "number") {
-    payload.monthly_contribution_cents = toCents(updates.monthlyContribution);
+    params.input_monthly_contribution_cents = toCents(
+      updates.monthlyContribution,
+    );
+    hasChanges = true;
   }
+
   if (updates.monthlyContribution === null) {
-    payload.monthly_contribution_cents = null;
+    hasChanges = true;
   }
-  if (Object.keys(payload).length === 0) return;
-  const { error } = await supabase
-    .from("goals")
-    .update(payload)
-    .eq("id", goalId);
+
+  if (!hasChanges) {
+    return;
+  }
+
+  const { error } = await supabase.rpc("update_my_goal", params);
   if (error) {
     throw error;
   }
 };
 
 export const deleteGoal = async (goalId: string): Promise<void> => {
-  const { error } = await supabase.from("goals").delete().eq("id", goalId);
+  const { error } = await supabase.rpc("delete_my_goal", {
+    input_goal_id: goalId,
+  });
   if (error) {
     throw error;
   }
@@ -809,35 +541,40 @@ export const createGoalContribution = async (payload: {
   contribution_at: string;
   transaction_id?: string | null;
 }): Promise<string> => {
-  const { data, error } = await supabase
-    .from("goal_contributions")
-    .insert(payload)
-    .select("id")
-    .single();
+  void payload.user_id;
+
+  const { data, error } = await supabase.rpc("create_my_goal_contribution", {
+    input_goal_id: payload.goal_id,
+    input_amount_cents: payload.amount_cents,
+    input_currency: payload.currency,
+    input_contribution_type: payload.contribution_type,
+    input_contribution_at: payload.contribution_at,
+    input_transaction_id: payload.transaction_id ?? null,
+  });
   if (error || !data) {
     throw error ?? new Error("No contribution returned");
   }
-  return data.id as string;
+  return getRpcId(data, "create_my_goal_contribution");
 };
 
 export const updateGoalContribution = async (
   id: string,
   payload: { amount_cents: number; contribution_at: string },
 ): Promise<void> => {
-  const { error } = await supabase
-    .from("goal_contributions")
-    .update(payload)
-    .eq("id", id);
+  const { error } = await supabase.rpc("update_my_goal_contribution", {
+    input_id: id,
+    input_amount_cents: payload.amount_cents,
+    input_contribution_at: payload.contribution_at,
+  });
   if (error) {
     throw error;
   }
 };
 
 export const deleteGoalContribution = async (id: string): Promise<void> => {
-  const { error } = await supabase
-    .from("goal_contributions")
-    .delete()
-    .eq("id", id);
+  const { error } = await supabase.rpc("delete_my_goal_contribution", {
+    input_id: id,
+  });
   if (error) {
     throw error;
   }
@@ -852,37 +589,56 @@ export const createBudget = async (payload: {
   currency: CurrencyCode;
   is_active: boolean;
 }): Promise<string> => {
-  const { data, error } = await supabase
-    .from("budgets")
-    .insert(payload)
-    .select("id")
-    .single();
+  void payload.user_id;
+
+  const { data, error } = await supabase.rpc("create_my_budget", {
+    input_category_id: payload.category_id ?? null,
+    input_name: payload.name,
+    input_limit_amount_cents: payload.limit_amount_cents,
+    input_period: payload.period,
+    input_currency: payload.currency,
+    input_is_active: payload.is_active,
+  });
   if (error || !data) {
     throw error ?? new Error("No budget returned");
   }
-  return data.id as string;
+  return getRpcId(data, "create_my_budget");
 };
 
 export const updateBudget = async (
   budgetId: string,
   updates: { name?: string; limit?: number },
 ): Promise<void> => {
-  const payload: Record<string, unknown> = {};
-  if (typeof updates.name === "string") payload.name = updates.name;
-  if (typeof updates.limit === "number")
-    payload.limit_amount_cents = toCents(updates.limit);
-  if (Object.keys(payload).length === 0) return;
-  const { error } = await supabase
-    .from("budgets")
-    .update(payload)
-    .eq("id", budgetId);
+  const params: Record<string, unknown> = {
+    input_budget_id: budgetId,
+  };
+
+  let hasChanges = false;
+
+  if (typeof updates.name === "string") {
+    params.input_name = updates.name;
+    hasChanges = true;
+  }
+
+  if (typeof updates.limit === "number") {
+    params.input_limit_amount_cents = toCents(updates.limit);
+    hasChanges = true;
+  }
+
+  if (!hasChanges) {
+    return;
+  }
+
+  const { error } = await supabase.rpc("update_my_budget", params);
   if (error) {
     throw error;
   }
 };
 
 export const deleteBudget = async (budgetId: string): Promise<void> => {
-  const { error } = await supabase.from("budgets").delete().eq("id", budgetId);
+  const { error } = await supabase.rpc("delete_my_budget", {
+    input_budget_id: budgetId,
+  });
   if (error) {
     throw error;
   }
@@ -901,15 +657,24 @@ export const createTransaction = async (payload: {
   transaction_at: string;
   source: TransactionSourceT;
 }): Promise<string> => {
-  const { data, error } = await supabase
-    .from("transactions")
-    .insert(payload)
-    .select("id")
-    .single();
+  void payload.user_id;
+
+  const { data, error } = await supabase.rpc("create_my_transaction", {
+    input_type: payload.type,
+    input_amount_cents: payload.amount_cents,
+    input_currency: payload.currency,
+    input_name: payload.name,
+    input_category_name: payload.category_name ?? null,
+    input_budget_id: payload.budget_id ?? null,
+    input_budget_category_id: payload.budget_category_id ?? null,
+    input_income_category_id: payload.income_category_id ?? null,
+    input_transaction_at: payload.transaction_at,
+    input_source: payload.source,
+  });
   if (error || !data) {
     throw error ?? new Error("No transaction returned");
   }
-  return data.id as string;
+  return getRpcId(data, "create_my_transaction");
 };
 
 export const createVaultTransaction = async (payload: {
@@ -922,15 +687,21 @@ export const createVaultTransaction = async (payload: {
   rollover_month?: string | null;
   transaction_at: string;
 }): Promise<string> => {
-  const { data, error } = await supabase
-    .from("vault_transactions")
-    .insert(payload)
-    .select("id")
-    .single();
+  void payload.user_id;
+
+  const { data, error } = await supabase.rpc("create_my_vault_transaction", {
+    input_amount_cents: payload.amount_cents,
+    input_currency: payload.currency,
+    input_entry_type: payload.entry_type,
+    input_note: payload.note ?? null,
+    input_goal_id: payload.goal_id ?? null,
+    input_rollover_month: payload.rollover_month ?? null,
+    input_transaction_at: payload.transaction_at,
+  });
   if (error || !data) {
     throw error ?? new Error("No vault transaction returned");
   }
-  return data.id as string;
+  return getRpcId(data, "create_my_vault_transaction");
 };
 
 export const updateTransaction = async (
@@ -945,10 +716,54 @@ export const updateTransaction = async (
     type?: "income" | "expense";
   },
 ): Promise<void> => {
-  const { error } = await supabase
-    .from("transactions")
-    .update(payload)
-    .eq("id", transactionId);
+  const params: Record<string, unknown> = {
+    input_transaction_id: transactionId,
+  };
+
+  let hasChanges = false;
+
+  if (typeof payload.amount_cents === "number") {
+    params.input_amount_cents = payload.amount_cents;
+    hasChanges = true;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(payload, "category_name")) {
+    params.input_category_name = payload.category_name ?? null;
+    hasChanges = true;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(payload, "income_category_id")) {
+    params.input_income_category_id = payload.income_category_id ?? null;
+    params.input_clear_income_category_id = payload.income_category_id === null;
+    hasChanges = true;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(payload, "budget_category_id")) {
+    params.input_budget_category_id = payload.budget_category_id ?? null;
+    params.input_clear_budget_category_id = payload.budget_category_id === null;
+    hasChanges = true;
+  }
+
+  if (typeof payload.name === "string") {
+    params.input_name = payload.name;
+    hasChanges = true;
+  }
+
+  if (typeof payload.transaction_at === "string") {
+    params.input_transaction_at = payload.transaction_at;
+    hasChanges = true;
+  }
+
+  if (typeof payload.type === "string") {
+    params.input_type = payload.type;
+    hasChanges = true;
+  }
+
+  if (!hasChanges) {
+    return;
+  }
+
+  const { error } = await supabase.rpc("update_my_transaction", params);
   if (error) {
     throw error;
   }
@@ -957,10 +772,9 @@ export const updateTransaction = async (
 export const deleteTransaction = async (
   transactionId: string,
 ): Promise<void> => {
-  const { error } = await supabase
-    .from("transactions")
-    .delete()
-    .eq("id", transactionId);
+  const { error } = await supabase.rpc("delete_my_transaction", {
+    input_transaction_id: transactionId,
+  });
   if (error) {
     throw error;
   }
@@ -969,82 +783,32 @@ export const deleteTransaction = async (
 export const deleteTransactionsByBudget = async (
   budgetId: string,
 ): Promise<void> => {
-  const { error } = await supabase
-    .from("transactions")
-    .delete()
-    .eq("budget_id", budgetId);
+  const { error } = await supabase.rpc("delete_my_transactions_by_budget", {
+    input_budget_id: budgetId,
+  });
   if (error) {
     throw error;
   }
 };
 
 export const resetUserData = async (userId: string): Promise<void> => {
-  const { error: vaultTransactionsError } = await supabase
-    .from("vault_transactions")
-    .delete()
-    .eq("user_id", userId);
-  if (vaultTransactionsError) throw vaultTransactionsError;
+  void userId;
 
-  const { error: contributionsError } = await supabase
-    .from("goal_contributions")
-    .delete()
-    .eq("user_id", userId);
-  if (contributionsError) throw contributionsError;
-
-  const { error: transactionsError } = await supabase
-    .from("transactions")
-    .delete()
-    .eq("user_id", userId);
-  if (transactionsError) throw transactionsError;
-
-  const { error: goalsError } = await supabase
-    .from("goals")
-    .delete()
-    .eq("user_id", userId);
-  if (goalsError) throw goalsError;
-
-  const { error: budgetsError } = await supabase
-    .from("budgets")
-    .delete()
-    .eq("user_id", userId);
-  if (budgetsError) throw budgetsError;
-
-  const { error: incomeError } = await supabase
-    .from("income_sources")
-    .delete()
-    .eq("user_id", userId);
-  if (incomeError) throw incomeError;
-
-  const { error: expenseError } = await supabase
-    .from("fixed_expenses")
-    .delete()
-    .eq("user_id", userId);
-  if (expenseError) throw expenseError;
-
-  const { error: profileError } = await supabase
-    .from("user_financial_profiles")
-    .delete()
-    .eq("user_id", userId);
-  if (profileError) throw profileError;
-
-  const { error: onboardingError } = await supabase
-    .from("user_onboarding")
-    .update({ completed_at: null })
-    .eq("user_id", userId);
-  if (onboardingError) throw onboardingError;
+  const { error } = await supabase.rpc("reset_my_user_data");
+  if (error) {
+    throw error;
+  }
 };
 
 export const updateOnboardingComplete = async (
   userId: string,
   onboardingVersion: string,
 ): Promise<void> => {
-  const { error } = await supabase
-    .from("user_onboarding")
-    .update({
-      onboarding_version: onboardingVersion,
-      completed_at: new Date().toISOString(),
-    })
-    .eq("user_id", userId);
+  void userId;
+
+  const { error } = await supabase.rpc("update_my_onboarding_complete", {
+    input_onboarding_version: onboardingVersion,
+  });
   if (error) {
     throw error;
   }
@@ -1111,7 +875,10 @@ export const getOrCreateUserProgress = async (
   userId: string,
   initialLevelId: string | null,
 ): Promise<UserProgressT> => {
-  await ensureUserRow(userId);
+  void userId;
+
+  await ensureMyUserRow();
+
   const { data, error } = await supabase
     .from("user_progress")
     .select(
