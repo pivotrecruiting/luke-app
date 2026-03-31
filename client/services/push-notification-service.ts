@@ -33,12 +33,16 @@ export type PushPermissionSnapshotT = {
   granted: boolean;
 };
 
+let hasWarnedAboutMissingExpoProjectId = false;
+
 const getExpoProjectId = (): string | null => {
   const projectIdFromExpoConfig =
     Constants.expoConfig?.extra?.eas?.projectId ?? null;
   const projectIdFromEasConfig = Constants.easConfig?.projectId ?? null;
+  const projectIdFromEnv =
+    process.env.EXPO_PUBLIC_EAS_PROJECT_ID?.trim() ?? null;
 
-  return projectIdFromExpoConfig || projectIdFromEasConfig || null;
+  return projectIdFromExpoConfig || projectIdFromEasConfig || projectIdFromEnv;
 };
 
 const ensureAndroidNotificationChannel = async (): Promise<void> => {
@@ -242,6 +246,16 @@ export const syncPushTokenForCurrentUser = async (): Promise<void> => {
   const permissionSnapshot = await getPushPermissionSnapshot();
 
   if (!permissionSnapshot.granted) {
+    return;
+  }
+
+  if (!getExpoProjectId()) {
+    if (!hasWarnedAboutMissingExpoProjectId) {
+      hasWarnedAboutMissingExpoProjectId = true;
+      console.warn(
+        "Skipping push token sync because EXPO_PUBLIC_EAS_PROJECT_ID is missing.",
+      );
+    }
     return;
   }
 
