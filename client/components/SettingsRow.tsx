@@ -1,5 +1,11 @@
 import React from "react";
-import { View, StyleSheet, Pressable, ViewStyle } from "react-native";
+import {
+  View,
+  StyleSheet,
+  Pressable,
+  type TextStyle,
+  type ViewStyle,
+} from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { ThemedText } from "@/components/ThemedText";
 import { Toggle } from "@/components/Toggle";
@@ -8,7 +14,15 @@ import { Spacing, BorderRadius } from "@/constants/theme";
 
 type SettingsRowAction =
   | { type: "text"; value: string }
-  | { type: "button"; label: string; onPress?: () => void }
+  | {
+      type: "button";
+      label: string;
+      onPress?: () => void;
+      buttonStyle?: ViewStyle;
+      textStyle?: TextStyle;
+      textLightColor?: string;
+      textDarkColor?: string;
+    }
   | {
       type: "icon";
       iconName: keyof typeof Feather.glyphMap;
@@ -64,10 +78,16 @@ export function SettingsRow({
                 backgroundColor: theme.backgroundSecondary,
                 opacity: pressed ? 0.7 : 1,
               },
+              action.buttonStyle,
             ]}
             onPress={action.onPress}
           >
-            <ThemedText type="small" style={styles.actionButtonText}>
+            <ThemedText
+              type="small"
+              style={[styles.actionButtonText, action.textStyle]}
+              lightColor={action.textLightColor}
+              darkColor={action.textDarkColor}
+            >
               {action.label}
             </ThemedText>
           </Pressable>

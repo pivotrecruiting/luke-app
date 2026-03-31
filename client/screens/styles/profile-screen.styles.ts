@@ -156,6 +156,17 @@ export const styles = StyleSheet.create({
     marginBottom: Spacing["2xl"],
     lineHeight: 20,
   },
+  notificationPermissionButton: {
+    // Used for: System notification permission status chip
+    backgroundColor: "#F3F4F6",
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+  },
+  notificationPermissionButtonText: {
+    // Used for: System notification permission status chip text
+    color: "#111827",
+    fontWeight: "600",
+  },
 
   // ============================================
   // Account Section Styles

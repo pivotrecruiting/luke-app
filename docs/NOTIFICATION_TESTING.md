@@ -2,6 +2,31 @@
 
 Diese Anleitung beschreibt den manuellen End-to-End-Test fuer Push-Benachrichtigungen in der App.
 
+## Aktueller DB-Stand
+
+Die Notification-Kampagnen sind in der DB vorhanden und aktiv:
+
+- `daily_habit`
+- `weekly_wrap_up`
+- `monthly_check`
+- `trial_ending`
+
+Wichtig:
+
+- `notification_campaigns` sind die statischen Kampagnen-Definitionen.
+- `notification_jobs` sind die konkreten Versand-Jobs.
+- `notification_jobs` werden nicht dauerhaft vorab angelegt, sondern erst:
+  - durch `queue_due_notification_jobs(now())`
+  - oder durch einen manuellen Test-Insert
+
+Zum Pruefen der Kampagnen:
+
+```sql
+select id, key, channel, is_enabled
+from public.notification_campaigns
+order by key asc;
+```
+
 ## Voraussetzungen
 
 - Die App laeuft auf einem echten iPhone oder Android-Geraet.
@@ -64,6 +89,114 @@ where key = 'daily_habit'
 limit 1;
 ```
 
+## 3a. Daily Reminder separat testen
+
+```sql
+insert into public.notification_jobs (
+  user_id,
+  campaign_id,
+  scheduled_for,
+  status,
+  dedupe_key,
+  payload
+)
+select
+  'DEINE_USER_ID'::uuid,
+  id,
+  now(),
+  'pending',
+  'manual-daily-test-' || gen_random_uuid()::text,
+  jsonb_build_object(
+    'title', 'Daily Reminder Test',
+    'body', 'Teste den taeglichen Reminder.',
+    'deeplink', 'luke://add'
+  )
+from public.notification_campaigns
+where key = 'daily_habit'
+limit 1;
+```
+
+## 3b. Weekly Reminder separat testen
+
+```sql
+insert into public.notification_jobs (
+  user_id,
+  campaign_id,
+  scheduled_for,
+  status,
+  dedupe_key,
+  payload
+)
+select
+  'DEINE_USER_ID'::uuid,
+  id,
+  now(),
+  'pending',
+  'manual-weekly-test-' || gen_random_uuid()::text,
+  jsonb_build_object(
+    'title', 'Weekly Reminder Test',
+    'body', 'Teste den Weekly Recap.',
+    'deeplink', 'luke://insights'
+  )
+from public.notification_campaigns
+where key = 'weekly_wrap_up'
+limit 1;
+```
+
+## 3c. Monthly Reminder separat testen
+
+```sql
+insert into public.notification_jobs (
+  user_id,
+  campaign_id,
+  scheduled_for,
+  status,
+  dedupe_key,
+  payload
+)
+select
+  'DEINE_USER_ID'::uuid,
+  id,
+  now(),
+  'pending',
+  'manual-monthly-test-' || gen_random_uuid()::text,
+  jsonb_build_object(
+    'title', 'Monthly Reminder Test',
+    'body', 'Teste den monatlichen Reminder.',
+    'deeplink', 'luke://home'
+  )
+from public.notification_campaigns
+where key = 'monthly_check'
+limit 1;
+```
+
+## 3d. Trial-Ende Erinnerung separat testen
+
+```sql
+insert into public.notification_jobs (
+  user_id,
+  campaign_id,
+  scheduled_for,
+  status,
+  dedupe_key,
+  payload
+)
+select
+  'DEINE_USER_ID'::uuid,
+  id,
+  now(),
+  'pending',
+  'manual-trial-test-' || gen_random_uuid()::text,
+  jsonb_build_object(
+    'title', 'Trial Ending Test',
+    'body', 'Teste die Trial-Ende Erinnerung.',
+    'deeplink', 'luke://paywall'
+  )
+from public.notification_campaigns
+where key = 'trial_ending'
+limit 1;
+```
+
 ## 4. Dispatcher manuell triggern
 
 ```bash
@@ -115,6 +248,24 @@ Wenn nicht der manuelle Insert, sondern die echte Queue-Logik getestet werden so
 select public.queue_due_notification_jobs(now());
 ```
 
+### Hinweise zur echten Queue-Logik
+
+- `daily_habit` wird nur erzeugt, wenn `daily_reminder_enabled = true` und das lokale Reminder-Zeitfenster getroffen ist.
+- `weekly_wrap_up` wird nur erzeugt, wenn:
+  - `weekly_report_enabled = true`
+  - der konfigurierte Wochentag erreicht ist
+  - im vorherigen Wochenzeitraum Ausgaben vorhanden sind
+- `monthly_check` wird nur erzeugt, wenn:
+  - `monthly_reminder_enabled = true`
+  - der konfigurierte Monatstag erreicht ist
+- `trial_ending` wird nur erzeugt, wenn:
+  - `trial_ending_push_enabled = true`
+  - ein aktiver Trial-Access-Grant vorhanden ist
+  - kein bezahlter aktiver Access existiert
+  - das Trial-Ende im konfigurierten Fenster liegt
+
+Fuer isolierte Funktionstests ist daher der manuelle Insert pro Kampagne meist der schnellere und eindeutigere Weg.
+
 Danach erneut den Dispatcher triggern:
 
 ```bash
@@ -142,7 +293,7 @@ Reihenfolge:
 
 1. Push im `ProfileScreen` aktivieren
 2. Token in `public.push_tokens` pruefen
-3. Test-Job einfuegen
+3. Test-Job fuer die gewuenschte Kampagne einfuegen
 4. Dispatcher per `curl` triggern
 5. `notification_jobs` und `notification_deliveries` pruefen
 6. Push auf dem Geraet bestaetigen

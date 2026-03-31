@@ -1011,6 +1011,10 @@ export default function ProfileScreen() {
             action={{
               type: "button",
               label: notificationPermissionLabel,
+              buttonStyle: styles.notificationPermissionButton,
+              textStyle: styles.notificationPermissionButtonText,
+              textLightColor: "#111827",
+              textDarkColor: "#111827",
               onPress: () => {
                 if (
                   pushPermission.status === "undetermined" &&
