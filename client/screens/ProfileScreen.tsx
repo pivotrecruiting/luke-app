@@ -42,9 +42,24 @@ import { styles } from "./styles/profile-screen.styles";
 import { AppModal } from "@/components/ui/app-modal";
 import { PurpleGradientButton } from "@/components/ui/purple-gradient-button";
 import { ReviewModal } from "@/features/review/components/review-modal";
+import type { CurrencyCode } from "@/context/AppContext";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type EditableProfileFieldT = "name" | "email";
+
+const CURRENCY_OPTIONS: {
+  code: CurrencyCode;
+  label: string;
+  description: string;
+}[] = [
+  { code: "EUR", label: "Euro", description: "Euro (EUR)" },
+  { code: "USD", label: "US Dollar", description: "US Dollar (USD)" },
+  {
+    code: "CHF",
+    label: "Schweizer Franken",
+    description: "Schweizer Franken (CHF)",
+  },
+];
 
 const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettingsT = {
   pushNotificationsEnabled: false,
@@ -101,6 +116,7 @@ export default function ProfileScreen() {
     userProgress,
     transactionBalance,
     currency,
+    setCurrency,
     userName,
     setUserName,
   } = useApp();
@@ -108,6 +124,7 @@ export default function ProfileScreen() {
   const [manageModalVisible, setManageModalVisible] = useState(false);
   const [deleteAccountModalVisible, setDeleteAccountModalVisible] =
     useState(false);
+  const [currencyModalVisible, setCurrencyModalVisible] = useState(false);
   const [reviewModalVisible, setReviewModalVisible] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
@@ -128,6 +145,8 @@ export default function ProfileScreen() {
   const [profileEmailError, setProfileEmailError] = useState<string | null>(
     null,
   );
+  const [selectedCurrency, setSelectedCurrency] =
+    useState<CurrencyCode>(currency);
   const profileNameInputRef = useRef<TextInput | null>(null);
   const profileEmailInputRef = useRef<TextInput | null>(null);
 
@@ -205,10 +224,31 @@ export default function ProfileScreen() {
     highestStreakValue === 1 ? "Tag" : "Tage"
   }`;
 
+  const handleOpenCurrencyModal = () => {
+    setSelectedCurrency(currency);
+    setCurrencyModalVisible(true);
+  };
+
+  const handleCloseCurrencyModal = () => {
+    setSelectedCurrency(currency);
+    setCurrencyModalVisible(false);
+  };
+
+  const handleSaveCurrency = () => {
+    setCurrency(selectedCurrency);
+    setCurrencyModalVisible(false);
+  };
+
   useEffect(() => {
     setProfileNameInput(currentFullName);
     setProfileEmailInput(profileEmail ?? "");
   }, [currentFullName, profileEmail]);
+
+  useEffect(() => {
+    if (!currencyModalVisible) {
+      setSelectedCurrency(currency);
+    }
+  }, [currency, currencyModalVisible]);
 
   useEffect(() => {
     if (activeEditField === "name") {
@@ -1075,9 +1115,24 @@ export default function ProfileScreen() {
         {/* Präferenzen Section */}
         <ThemedText style={styles.sectionTitle}>Präferenzen</ThemedText>
         <View style={styles.sectionCard}>
-          <SettingsRow label="Theme" showDivider={true} />
-          <SettingsRow label="Währung" showDivider={true} />
-          <SettingsRow label="Sprache" showDivider={false} />
+          <SettingsRow
+            label="Theme"
+            action={{ type: "text", value: "Bald" }}
+            showDivider={true}
+            style={styles.preferenceRowDisabled}
+          />
+          <SettingsRow
+            label="Währung"
+            action={{ type: "text", value: currency }}
+            onPress={handleOpenCurrencyModal}
+            showDivider={true}
+          />
+          <SettingsRow
+            label="Sprache"
+            action={{ type: "text", value: "Bald" }}
+            showDivider={false}
+            style={styles.preferenceRowDisabled}
+          />
         </View>
 
         {/* Über Luke Section */}
@@ -1337,6 +1392,87 @@ export default function ProfileScreen() {
               Löschen
             </ThemedText>
           </Pressable>
+        </View>
+      </AppModal>
+
+      <AppModal
+        visible={currencyModalVisible}
+        onClose={handleCloseCurrencyModal}
+        maxHeightPercent={70}
+        contentStyle={[
+          styles.modalContent,
+          { paddingBottom: insets.bottom + Spacing.lg },
+        ]}
+      >
+        <View style={styles.modalHeader}>
+          <ThemedText style={styles.modalTitle}>Währung ändern</ThemedText>
+          <Pressable onPress={handleCloseCurrencyModal}>
+            <Feather name="x" size={24} color="#6B7280" />
+          </Pressable>
+        </View>
+
+        <ThemedText type="small" style={styles.profileFormHint}>
+          Wähle die Standardwährung für Beträge, Budgets und Auswertungen.
+        </ThemedText>
+
+        <View style={styles.currencyOptionsList}>
+          {CURRENCY_OPTIONS.map((option) => {
+            const isSelected = selectedCurrency === option.code;
+
+            return (
+              <Pressable
+                key={option.code}
+                onPress={() => setSelectedCurrency(option.code)}
+                style={({ pressed }) => [
+                  styles.currencyOptionCard,
+                  isSelected ? styles.currencyOptionCardSelected : null,
+                  pressed ? styles.currencyOptionCardPressed : null,
+                ]}
+              >
+                <View style={styles.currencyOptionTextContainer}>
+                  <ThemedText style={styles.currencyOptionLabel}>
+                    {option.label}
+                  </ThemedText>
+                  <ThemedText
+                    type="small"
+                    style={styles.currencyOptionDescription}
+                  >
+                    {option.description}
+                  </ThemedText>
+                </View>
+                <View
+                  style={[
+                    styles.currencyOptionIndicator,
+                    isSelected ? styles.currencyOptionIndicatorSelected : null,
+                  ]}
+                />
+              </Pressable>
+            );
+          })}
+        </View>
+
+        <View style={styles.currencyModalActions}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.currencyModalSecondaryButton,
+              { opacity: pressed ? 0.7 : 1 },
+            ]}
+            onPress={handleCloseCurrencyModal}
+          >
+            <ThemedText style={styles.currencyModalSecondaryButtonText}>
+              Abbrechen
+            </ThemedText>
+          </Pressable>
+
+          <PurpleGradientButton
+            style={styles.currencyModalPrimaryButton}
+            onPress={handleSaveCurrency}
+            disabled={selectedCurrency === currency}
+          >
+            <ThemedText style={styles.currencyModalPrimaryButtonText}>
+              Speichern
+            </ThemedText>
+          </PurpleGradientButton>
         </View>
       </AppModal>
 
