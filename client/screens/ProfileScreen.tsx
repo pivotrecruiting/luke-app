@@ -1126,7 +1126,12 @@ export default function ProfileScreen() {
           </ThemedText>
         </View>
         <View style={styles.sectionCard}>
-          <SettingsRow label="Hilfecenter" showDivider={true} />
+          <SettingsRow
+            label="Hilfecenter"
+            action={{ type: "text", value: "Bald" }}
+            showDivider={true}
+            style={styles.preferenceRowDisabled}
+          />
           <SettingsRow
             label="Datenschutz"
             onPress={() => void handleOpenExternalUrl(PRIVACY_URL)}
