@@ -99,11 +99,6 @@ export const useOnboardingStore = create<OnboardingStoreT>()(
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state: OnboardingStoreT) => ({
         motivations: state.motivations,
-        initialSavingsAmount: state.initialSavingsAmount,
-        goalDraft: state.goalDraft,
-        incomeEntries: state.incomeEntries,
-        expenseEntries: state.expenseEntries,
-        budgetEntries: state.budgetEntries,
       }),
     },
   ),

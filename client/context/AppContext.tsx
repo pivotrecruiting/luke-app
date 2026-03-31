@@ -295,29 +295,10 @@ export function AppProvider({ children }: AppProviderProps) {
     () => ({
       isOnboardingComplete,
       currency,
-      incomeEntries,
-      expenseEntries,
-      goals,
-      budgets,
-      transactions,
-      vaultTransactions,
-      monthlyBalanceSnapshots,
       lastBudgetResetMonth,
       balanceAnchorMonth,
     }),
-    [
-      budgets,
-      currency,
-      expenseEntries,
-      goals,
-      incomeEntries,
-      isOnboardingComplete,
-      lastBudgetResetMonth,
-      monthlyBalanceSnapshots,
-      transactions,
-      vaultTransactions,
-      balanceAnchorMonth,
-    ],
+    [currency, isOnboardingComplete, lastBudgetResetMonth, balanceAnchorMonth],
   );
 
   useAppPersistence({

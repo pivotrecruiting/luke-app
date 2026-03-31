@@ -41,10 +41,12 @@ import type {
   XpEventTypeRow,
 } from "@/services/types";
 import type {
-  UserProgressT,
+  XpAwardResultT,
+  XpDailyLoginResultT,
   XpEventRuleT,
   XpEventTypeT,
   XpLevelT,
+  XpStateT,
 } from "@/types/xp-types";
 import { fromCents, toCents } from "@/utils/money";
 
@@ -820,194 +822,109 @@ export type XpConfigPayloadT = {
   eventRules: XpEventRuleT[];
 };
 
-export type UserProgressUpdatePayloadT = {
-  xp_total?: number;
-  current_level_id?: string | null;
-  current_streak?: number;
-  longest_streak?: number;
-  last_login_at?: string | null;
-  last_streak_date?: string | null;
+type RpcXpStatePayloadT = {
+  levels?: LevelRow[];
+  eventTypes?: XpEventTypeRow[];
+  eventRules?: XpEventRuleRow[];
+  userProgress?: UserProgressRow | null;
 };
 
-export type CreateXpEventPayloadT = {
-  userId: string;
-  eventTypeId: string;
-  eventTypeKey: string;
-  baseXp: number;
-  appliedMultiplier: number;
-  xpDelta: number;
+type RpcXpAwardPayloadT = {
+  awarded?: boolean;
+  xpDelta?: number;
+  appliedMultiplier?: number;
+  baseXp?: number;
+  nextTotal?: number;
+  nextLevelId?: string | null;
+  userProgress?: UserProgressRow | null;
+};
+
+type RpcXpDailyLoginPayloadT = {
+  awarded?: boolean;
+  xpDelta?: number;
+  streakCount?: number;
+  streakVariant?: "ongoing" | "completed" | null;
+  userProgress?: UserProgressRow | null;
+};
+
+export type AwardXpEventPayloadT = {
+  eventKey: string;
   sourceType?: string | null;
   sourceId?: string | null;
   meta?: Record<string, unknown> | null;
 };
 
-export const fetchXpConfig = async (): Promise<XpConfigPayloadT> => {
-  const [levelsRes, typesRes, rulesRes] = await Promise.all([
-    supabase
-      .from("levels")
-      .select("id, level_number, name, description, emoji, xp_required")
-      .order("xp_required", { ascending: true }),
-    supabase
-      .from("xp_event_types")
-      .select("id, key, label, base_xp, active, max_per_user, cooldown_hours")
-      .eq("active", true),
-    supabase
-      .from("xp_event_rules")
-      .select(
-        "id, event_type_id, rule_key, multiplier, conditions, active, starts_at, ends_at",
-      )
-      .eq("active", true),
-  ]);
+const mapXpStatePayload = (payload: RpcXpStatePayloadT): XpStateT => ({
+  levels: mapLevels(getRpcArray<LevelRow>(payload.levels)),
+  eventTypes: mapXpEventTypes(getRpcArray<XpEventTypeRow>(payload.eventTypes)),
+  eventRules: mapXpEventRules(getRpcArray<XpEventRuleRow>(payload.eventRules)),
+  userProgress: payload.userProgress
+    ? mapUserProgress(payload.userProgress as UserProgressRow)
+    : null,
+});
 
-  const firstError = levelsRes.error || typesRes.error || rulesRes.error;
-  if (firstError) {
-    throw firstError;
-  }
-
-  const levels = mapLevels((levelsRes.data ?? []) as LevelRow[]);
-  const eventTypes = mapXpEventTypes((typesRes.data ?? []) as XpEventTypeRow[]);
-  const eventRules = mapXpEventRules((rulesRes.data ?? []) as XpEventRuleRow[]);
-
-  return { levels, eventTypes, eventRules };
+const toRpcNumber = (value: unknown): number => {
+  const parsed = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
 };
 
-export const getOrCreateUserProgress = async (
-  userId: string,
-  initialLevelId: string | null,
-): Promise<UserProgressT> => {
-  void userId;
-
-  await ensureMyUserRow();
-
-  const { data, error } = await supabase
-    .from("user_progress")
-    .select(
-      "id, user_id, xp_total, current_level_id, current_streak, longest_streak, last_login_at, last_streak_date, created_at, updated_at",
-    )
-    .eq("user_id", userId)
-    .maybeSingle();
+export const fetchXpState = async (): Promise<XpStateT> => {
+  const { data, error } = await supabase.rpc("get_my_xp_state");
   if (error) {
     throw error;
   }
-  if (data) {
-    return mapUserProgress(data as UserProgressRow);
-  }
 
-  const { error: upsertError } = await supabase.from("user_progress").upsert(
-    {
-      user_id: userId,
-      xp_total: 0,
-      current_level_id: initialLevelId,
-      current_streak: 0,
-      longest_streak: 0,
-      last_login_at: null,
-      last_streak_date: null,
-    },
-    { onConflict: "user_id", ignoreDuplicates: true },
-  );
-  if (upsertError) {
-    throw upsertError;
-  }
-
-  const { data: ensured, error: ensuredError } = await supabase
-    .from("user_progress")
-    .select(
-      "id, user_id, xp_total, current_level_id, current_streak, longest_streak, last_login_at, last_streak_date, created_at, updated_at",
-    )
-    .eq("user_id", userId)
-    .maybeSingle();
-  if (ensuredError || !ensured) {
-    throw ensuredError ?? new Error("No user progress created");
-  }
-  return mapUserProgress(ensured as UserProgressRow);
+  const payload = getRpcObject<RpcXpStatePayloadT>(data, "get_my_xp_state");
+  return mapXpStatePayload(payload);
 };
 
-export const updateUserProgress = async (
-  userId: string,
-  updates: UserProgressUpdatePayloadT,
-): Promise<UserProgressT> => {
-  const { data, error } = await supabase
-    .from("user_progress")
-    .update(updates)
-    .eq("user_id", userId)
-    .select(
-      "id, user_id, xp_total, current_level_id, current_streak, longest_streak, last_login_at, last_streak_date, created_at, updated_at",
-    )
-    .single();
-  if (error || !data) {
-    throw error ?? new Error("No user progress returned");
-  }
-  return mapUserProgress(data as UserProgressRow);
-};
-
-export const createXpEvent = async (
-  payload: CreateXpEventPayloadT,
-): Promise<void> => {
-  const { error } = await supabase.from("xp_events").insert({
-    user_id: payload.userId,
-    event_type: payload.eventTypeKey,
-    event_type_id: payload.eventTypeId,
-    base_xp: payload.baseXp,
-    applied_multiplier: payload.appliedMultiplier,
-    xp_delta: payload.xpDelta,
-    source_type: payload.sourceType ?? null,
-    source_id: payload.sourceId ?? null,
-    meta: payload.meta ?? null,
+export const awardXpEvent = async (
+  payload: AwardXpEventPayloadT,
+): Promise<XpAwardResultT> => {
+  const { data, error } = await supabase.rpc("award_my_xp_event", {
+    input_event_key: payload.eventKey,
+    input_source_type: payload.sourceType ?? null,
+    input_source_id: payload.sourceId ?? null,
+    input_meta: payload.meta ?? null,
   });
   if (error) {
     throw error;
   }
+
+  const result = getRpcObject<RpcXpAwardPayloadT>(data, "award_my_xp_event");
+
+  return {
+    awarded: Boolean(result.awarded),
+    xpDelta: toRpcNumber(result.xpDelta),
+    appliedMultiplier: toRpcNumber(result.appliedMultiplier),
+    baseXp: toRpcNumber(result.baseXp),
+    nextTotal: toRpcNumber(result.nextTotal),
+    nextLevelId:
+      typeof result.nextLevelId === "string" ? result.nextLevelId : null,
+    userProgress: result.userProgress
+      ? mapUserProgress(result.userProgress as UserProgressRow)
+      : null,
+  };
 };
 
-export const fetchXpEventCount = async (
-  userId: string,
-  eventTypeId: string,
-  eventTypeKey?: string,
-): Promise<number> => {
-  let query = supabase
-    .from("xp_events")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", userId);
-
-  if (eventTypeKey) {
-    query = query.or(
-      `event_type_id.eq.${eventTypeId},event_type.eq.${eventTypeKey}`,
-    );
-  } else {
-    query = query.eq("event_type_id", eventTypeId);
-  }
-
-  const { count, error } = await query;
+export const applyDailyLoginXp = async (): Promise<XpDailyLoginResultT> => {
+  const { data, error } = await supabase.rpc("apply_my_daily_login_xp");
   if (error) {
     throw error;
   }
-  return count ?? 0;
-};
 
-export const fetchLatestXpEventAt = async (
-  userId: string,
-  eventTypeId: string,
-  eventTypeKey?: string,
-): Promise<string | null> => {
-  let query = supabase
-    .from("xp_events")
-    .select("created_at")
-    .eq("user_id", userId);
+  const result = getRpcObject<RpcXpDailyLoginPayloadT>(
+    data,
+    "apply_my_daily_login_xp",
+  );
 
-  if (eventTypeKey) {
-    query = query.or(
-      `event_type_id.eq.${eventTypeId},event_type.eq.${eventTypeKey}`,
-    );
-  } else {
-    query = query.eq("event_type_id", eventTypeId);
-  }
-
-  const { data, error } = await query
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (error) {
-    throw error;
-  }
-  return data?.created_at ?? null;
+  return {
+    awarded: Boolean(result.awarded),
+    xpDelta: toRpcNumber(result.xpDelta),
+    streakCount: toRpcNumber(result.streakCount),
+    streakVariant: result.streakVariant ?? null,
+    userProgress: result.userProgress
+      ? mapUserProgress(result.userProgress as UserProgressRow)
+      : null,
+  };
 };

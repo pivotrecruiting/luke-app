@@ -247,13 +247,13 @@ export type AppContextType = AppState & {
 export type PersistedData = {
   isOnboardingComplete: boolean;
   currency: CurrencyCode;
-  incomeEntries: IncomeEntry[];
-  expenseEntries: ExpenseEntry[];
-  goals: Goal[];
-  budgets: Budget[];
-  transactions: Transaction[];
-  vaultTransactions: VaultTransactionT[];
-  monthlyBalanceSnapshots: MonthlyBalanceSnapshotT[];
+  incomeEntries?: IncomeEntry[];
+  expenseEntries?: ExpenseEntry[];
+  goals?: Goal[];
+  budgets?: Budget[];
+  transactions?: Transaction[];
+  vaultTransactions?: VaultTransactionT[];
+  monthlyBalanceSnapshots?: MonthlyBalanceSnapshotT[];
   lastBudgetResetMonth: number;
   balanceAnchorMonth: string | null;
 };
