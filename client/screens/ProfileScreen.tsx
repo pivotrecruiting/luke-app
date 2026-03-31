@@ -23,6 +23,7 @@ import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { updateUserEmail, updateUserFullName } from "@/services/auth-service";
 import { upsertUserName } from "@/services/app-service";
+import { deleteMyAccount } from "@/services/account-service";
 import {
   fetchMyNotificationSettings,
   type NotificationSettingsT,
@@ -134,6 +135,7 @@ export default function ProfileScreen() {
   const [currencyModalVisible, setCurrencyModalVisible] = useState(false);
   const [reviewModalVisible, setReviewModalVisible] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isLoadingNotificationSettings, setIsLoadingNotificationSettings] =
     useState(true);
@@ -496,9 +498,46 @@ export default function ProfileScreen() {
     }
   };
 
-  const handleDeleteAccount = () => {
-    // TODO: Implement delete account functionality
-    setDeleteAccountModalVisible(false);
+  const handleDeleteAccount = async () => {
+    if (isDeletingAccount || isLoggingOut || isSavingProfile) {
+      return;
+    }
+
+    setIsDeletingAccount(true);
+
+    try {
+      try {
+        await deactivateStoredPushToken();
+      } catch (error) {
+        console.error(
+          "Failed to deactivate stored push token before account deletion:",
+          error,
+        );
+      }
+
+      await deleteMyAccount();
+
+      const { error: signOutError } = await supabase.auth.signOut();
+
+      if (signOutError) {
+        console.error(
+          "Sign out after account deletion returned an error:",
+          signOutError,
+        );
+      }
+
+      setDeleteAccountModalVisible(false);
+
+      Alert.alert("Account gelöscht", "Dein Account wurde dauerhaft gelöscht.");
+    } catch (error) {
+      console.error("Account deletion failed:", error);
+      Alert.alert(
+        "Account konnte nicht gelöscht werden",
+        error instanceof Error ? error.message : "Bitte versuche es erneut.",
+      );
+    } finally {
+      setIsDeletingAccount(false);
+    }
   };
 
   const handleOpenNotificationSettings = async () => {
@@ -548,6 +587,7 @@ export default function ProfileScreen() {
     isLoadingNotificationSettings || isSavingNotificationSettings;
   const reminderTogglesDisabled =
     notificationsDisabled || !notificationSettings.pushNotificationsEnabled;
+  const isNotificationPermissionGranted = pushPermission.granted;
   const notificationPermissionLabel = pushPermission.granted
     ? "Erlaubt"
     : pushPermission.status === "denied"
@@ -1061,8 +1101,12 @@ export default function ProfileScreen() {
             action={{
               type: "button",
               label: notificationPermissionLabel,
-              buttonStyle: styles.notificationPermissionButton,
-              textStyle: styles.notificationPermissionButtonText,
+              buttonStyle: isNotificationPermissionGranted
+                ? styles.loginMethodButton
+                : styles.notificationPermissionButton,
+              textStyle: isNotificationPermissionGranted
+                ? styles.loginMethodButtonText
+                : styles.notificationPermissionButtonText,
               textLightColor: "#111827",
               textDarkColor: "#111827",
               onPress: () => {
@@ -1402,9 +1446,12 @@ export default function ProfileScreen() {
           <Pressable
             style={({ pressed }) => [
               styles.deleteModalCancelButton,
-              { opacity: pressed ? 0.7 : 1 },
+              {
+                opacity: pressed || isDeletingAccount ? 0.7 : 1,
+              },
             ]}
             onPress={() => setDeleteAccountModalVisible(false)}
+            disabled={isDeletingAccount}
           >
             <ThemedText style={styles.deleteModalCancelText}>
               Abbrechen
@@ -1413,12 +1460,15 @@ export default function ProfileScreen() {
           <Pressable
             style={({ pressed }) => [
               styles.deleteModalConfirmButton,
-              { opacity: pressed ? 0.7 : 1 },
+              {
+                opacity: pressed || isDeletingAccount ? 0.7 : 1,
+              },
             ]}
-            onPress={handleDeleteAccount}
+            onPress={() => void handleDeleteAccount()}
+            disabled={isDeletingAccount}
           >
             <ThemedText style={styles.deleteModalConfirmText}>
-              Löschen
+              {isDeletingAccount ? "Wird gelöscht..." : "Löschen"}
             </ThemedText>
           </Pressable>
         </View>
