@@ -1,7 +1,10 @@
-import { Keyboard, Pressable, ScrollView, Text, View } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { useApp } from "@/context/AppContext";
 import CurrencyInput from "@/components/CurrencyInput";
+import {
+  CategoryPickerGrid,
+  type CategoryPickerOptionT,
+} from "@/components/ui/category-picker-grid";
 import { styles } from "@/screens/styles/goals-screen.styles";
 import { AppModal } from "@/components/ui/app-modal";
 import { PurpleGradientButton } from "@/components/ui/purple-gradient-button";
@@ -31,6 +34,14 @@ export const CreateBudgetModal = ({
   onCreate,
 }: CreateBudgetModalPropsT) => {
   const { budgetCategories } = useApp();
+  const categoryOptions: CategoryPickerOptionT[] = budgetCategories.map(
+    (category) => ({
+      id: category.key ?? category.id,
+      name: category.name,
+      icon: category.icon ?? "circle",
+    }),
+  );
+
   return (
     <AppModal
       visible={visible}
@@ -51,37 +62,11 @@ export const CreateBudgetModal = ({
 
         <Text style={styles.categoryLabel}>Kategorie auswählen</Text>
         <View style={styles.categoryGrid}>
-          {budgetCategories.map((category) => {
-            const categoryKey = category.key ?? category.id;
-            const isSelected = selectedCategory === categoryKey;
-            return (
-              <Pressable
-                key={category.id}
-                style={[
-                  styles.categoryItem,
-                  isSelected && styles.categoryItemSelected,
-                ]}
-                onPress={() => {
-                  Keyboard.dismiss();
-                  onSelectCategory(categoryKey);
-                }}
-              >
-                <View
-                  style={[
-                    styles.categoryIconContainer,
-                    { backgroundColor: "#FFFFFF" },
-                  ]}
-                >
-                  <Feather
-                    name={(category.icon ?? "circle") as any}
-                    size={24}
-                    color={category.color ?? "#6B7280"}
-                  />
-                </View>
-                <Text style={styles.categoryName}>{category.name}</Text>
-              </Pressable>
-            );
-          })}
+          <CategoryPickerGrid
+            categories={categoryOptions}
+            selectedCategoryId={selectedCategory}
+            onSelectCategory={onSelectCategory}
+          />
         </View>
 
         <Text style={styles.modalLabel}>Limit</Text>
