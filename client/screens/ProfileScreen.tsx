@@ -506,7 +506,7 @@ export default function ProfileScreen() {
         ? "Nicht unterstützt"
         : "Berechtigung anfragen";
   const notificationPermissionHint = pushPermission.granted
-    ? "Push-Berechtigung ist aktiv. Der Token wird serverseitig synchronisiert."
+    ? "Push-Berechtigung ist aktiv."
     : pushPermission.status === "denied"
       ? "Push ist im Betriebssystem deaktiviert. Öffne die App-Einstellungen, um die Berechtigung zu aktivieren."
       : pushPermission.status === "unsupported"
