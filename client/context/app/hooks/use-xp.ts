@@ -50,6 +50,8 @@ export const useXp = ({
     ((payload: XpStreakPayloadT) => void) | null
   >(onStreakReached ?? null);
   const appStateRef = useRef(AppState.currentState);
+  const isDailyLoginInFlightRef = useRef(false);
+  const lastDailyLoginKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     userProgressRef.current = userProgress;
@@ -144,11 +146,23 @@ export const useXp = ({
   const handleDailyLogin = useCallback(async () => {
     if (!canUseDb || !userId) return;
 
+    const dailyLoginKey = `${userId}:${new Date().toISOString().slice(0, 10)}`;
+
+    if (
+      isDailyLoginInFlightRef.current ||
+      lastDailyLoginKeyRef.current === dailyLoginKey
+    ) {
+      return;
+    }
+
     const previousProgress = userProgressRef.current;
+    isDailyLoginInFlightRef.current = true;
 
     try {
       const result = await applyDailyLoginXp();
       const updatedProgress = result.userProgress;
+      lastDailyLoginKeyRef.current = dailyLoginKey;
+
       if (!updatedProgress) {
         return;
       }
@@ -174,13 +188,24 @@ export const useXp = ({
       }
     } catch (error) {
       handleXpError(error, "dailyLogin");
+    } finally {
+      isDailyLoginInFlightRef.current = false;
     }
   }, [canUseDb, userId, handleXpError]);
 
   useEffect(() => {
-    if (!canUseDb || !userProgress) return;
+    if (!canUseDb || !userId) return;
     void handleDailyLogin();
-  }, [canUseDb, handleDailyLogin, userProgress]);
+  }, [canUseDb, handleDailyLogin, userId]);
+
+  useEffect(() => {
+    if (userId) {
+      return;
+    }
+
+    isDailyLoginInFlightRef.current = false;
+    lastDailyLoginKeyRef.current = null;
+  }, [userId]);
 
   useEffect(() => {
     if (!canUseDb) return;
