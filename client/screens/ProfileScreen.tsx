@@ -105,6 +105,9 @@ const getProviderLabel = (provider: string) => {
   }
 };
 
+const PRIVACY_URL = "https://www.thelukeapp.com/privacy";
+const TERMS_URL = "https://www.thelukeapp.com/terms";
+
 /**
  * Profile screen displaying user information, settings, and account options.
  */
@@ -237,6 +240,25 @@ export default function ProfileScreen() {
   const handleSaveCurrency = () => {
     setCurrency(selectedCurrency);
     setCurrencyModalVisible(false);
+  };
+
+  const handleOpenExternalUrl = async (url: string) => {
+    try {
+      const supported = await Linking.canOpenURL(url);
+
+      if (!supported) {
+        Alert.alert("Link konnte nicht geöffnet werden");
+        return;
+      }
+
+      await Linking.openURL(url);
+    } catch (error) {
+      console.error("Failed to open external URL:", error);
+      Alert.alert(
+        "Link konnte nicht geöffnet werden",
+        "Bitte versuche es erneut.",
+      );
+    }
   };
 
   useEffect(() => {
@@ -1105,9 +1127,14 @@ export default function ProfileScreen() {
         </View>
         <View style={styles.sectionCard}>
           <SettingsRow label="Hilfecenter" showDivider={true} />
-          <SettingsRow label="Datenschutz" showDivider={true} />
+          <SettingsRow
+            label="Datenschutz"
+            onPress={() => void handleOpenExternalUrl(PRIVACY_URL)}
+            showDivider={true}
+          />
           <SettingsRow
             label="Allgemeine Geschäftsbedingungen"
+            onPress={() => void handleOpenExternalUrl(TERMS_URL)}
             showDivider={false}
           />
         </View>
