@@ -1,119 +1,191 @@
-# Billing Schema (Stripe, MVP)
+# Billing Schema (RevenueCat + Supabase Access)
 
 Hinweis: Basis-Tabellen `public.users`, `public.roles`, `public.user_roles` sind vorgegeben.
 
-## Tabellen (SQL Draft)
+## Ziel
+
+Luke nutzt kein Stripe-zentriertes Billing-Schema mehr. Die Architektur basiert auf:
+
+- RevenueCat als Billing- und Store-Lifecycle-Quelle
+- Supabase als serverseitige Access-Quelle
+- `user_access_grants` als einheitliches Zugriffsmodell
+- `billing_config` fuer DB-gesteuerte Trial- und Paywall-Regeln
+- `billing_products` und `billing_product_store_mappings` als store-neutrales Produktmodell
+
+## Kernprinzipien
+
+- Der Client ist nicht vertrauenswuerdig fuer finale Access-Freischaltung.
+- RevenueCat-Webhooks schreiben serverseitig in Supabase.
+- Der Standard-Testzeitraum kommt aus der DB, nicht aus Store-Trials.
+- Die Paywall-Sichtbarkeit wird serverseitig berechnet.
+- Alte Stripe-Tabellen sind Legacy und werden entfernt.
+
+## Aktives Zielschema
+
+### 1) `billing_config`
+
+Globale Billing- und Paywall-Konfiguration.
 
 ```sql
--- Stripe customer mapping
-create table public.billing_customers (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null unique references public.users (id) on delete cascade,
-  stripe_customer_id text not null unique,
-  livemode boolean not null default false,
-  created_at timestamptz not null default now()
-);
-
--- Plans (Lookup)
-create table public.subscription_plans (
-  id uuid primary key default gen_random_uuid(),
-  code text not null unique, -- monthly, yearly, lifetime
-  name text not null,
-  stripe_product_id text not null,
-  stripe_price_id text not null unique,
-  price_amount_cents integer not null check (price_amount_cents >= 0),
-  currency public.currency_code not null,
-  billing_interval text not null, -- monthly/yearly/one_time
-  active boolean not null default true,
-  created_at timestamptz not null default now()
-);
-
--- Subscriptions
-create table public.subscriptions (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references public.users (id) on delete cascade,
-  stripe_subscription_id text not null unique,
-  stripe_price_id text not null,
-  status text not null,
-  current_period_start timestamptz null,
-  current_period_end timestamptz null,
-  cancel_at_period_end boolean not null default false,
-  canceled_at timestamptz null,
-  trial_start timestamptz null,
-  trial_end timestamptz null,
-  trial_code_id uuid null references public.trial_codes (id) on delete set null,
-  livemode boolean not null default false,
+create table public.billing_config (
+  config_key text primary key default 'default',
+  pro_access_key text not null default 'pro',
+  default_trial_days integer not null default 7,
+  paywall_show_days_before_expiry integer not null default 3,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+```
 
-create index subscriptions_user_idx on public.subscriptions (user_id);
+Verwendung:
 
--- One-time purchases (lifetime)
-create table public.purchases (
+- `default_trial_days`: Standard-Testzeitraum fuer jeden User
+- `paywall_show_days_before_expiry`: Ab wann die Paywall vor Trial-Ende erscheinen darf
+- `pro_access_key`: gemeinsamer Access-Key fuer Trial, RevenueCat-Kauf und Workshop-Code
+
+### 2) `billing_products`
+
+Interner, store-neutraler Produktkatalog.
+
+```sql
+create table public.billing_products (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references public.users (id) on delete cascade,
-  stripe_payment_intent_id text not null unique,
-  stripe_price_id text not null,
-  amount_cents integer not null check (amount_cents >= 0),
+  product_key text not null unique,
+  display_name text not null,
+  entitlement_key text not null default 'pro',
+  product_type text not null,
+  billing_interval text not null,
+  price_amount_cents integer not null,
   currency public.currency_code not null,
-  status text not null, -- succeeded/failed/refunded
-  livemode boolean not null default false,
-  created_at timestamptz not null default now()
-);
-
-create index purchases_user_idx on public.purchases (user_id);
-
--- Entitlements (feature access)
-create table public.entitlements (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references public.users (id) on delete cascade,
-  source_type text not null, -- subscription|lifetime
-  source_id uuid not null,
-  entitlement_key text not null, -- pro
-  status text not null, -- active|revoked
-  starts_at timestamptz not null default now(),
-  ends_at timestamptz null,
-  created_at timestamptz not null default now()
-);
-
-create index entitlements_user_idx on public.entitlements (user_id);
-
--- Stripe event log
-create table public.payment_events (
-  id uuid primary key default gen_random_uuid(),
-  stripe_event_id text not null unique,
-  event_type text not null,
-  payload jsonb not null,
-  livemode boolean not null default false,
-  created_at timestamptz not null default now()
-);
-
--- Trial codes
-create table public.trial_codes (
-  id uuid primary key default gen_random_uuid(),
-  code text not null unique,
-  trial_days integer not null check (trial_days > 0),
-  max_redemptions integer null,
+  sort_order integer not null default 100,
   active boolean not null default true,
-  starts_at timestamptz null,
-  ends_at timestamptz null,
-  created_at timestamptz not null default now()
-);
-
-create table public.trial_redemptions (
-  id uuid primary key default gen_random_uuid(),
-  trial_code_id uuid not null references public.trial_codes (id) on delete cascade,
-  user_id uuid not null references public.users (id) on delete cascade,
-  stripe_subscription_id text null,
-  redeemed_at timestamptz not null default now(),
-  unique (trial_code_id, user_id)
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
 ```
 
-## Notes
+Beispiele:
 
-- Status-Felder sollten spaeter auf Enums/Check-Constraints eingeschraenkt werden.
-- `entitlements.source_id` referenziert je nach `source_type` entweder `subscriptions.id` oder `purchases.id` (polymorphic).
-- VAT (20% AT) wird in Stripe berechnet; keine lokale Steuerlogik im MVP.
+- `monthly`
+- `yearly`
+- `lifetime`
 
+### 3) `billing_product_store_mappings`
+
+Store- und RevenueCat-spezifische Zuordnung pro Plattform.
+
+```sql
+create table public.billing_product_store_mappings (
+  id uuid primary key default gen_random_uuid(),
+  billing_product_id uuid not null references public.billing_products (id) on delete cascade,
+  platform text not null,
+  store_product_id text not null,
+  revenuecat_entitlement_id text not null default 'pro',
+  revenuecat_offering_id text not null default 'default',
+  revenuecat_package_identifier text not null,
+  active boolean not null default true,
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+```
+
+Zweck:
+
+- iOS- und Android-Produkt-IDs sauber trennen
+- RevenueCat-Offering und Package explizit dokumentieren
+- App-Logik nicht an alte Stripe-Felder koppeln
+
+### 4) `user_access_grants`
+
+Einheitliche Access-Schicht fuer Luke.
+
+Diese Tabelle ist die entscheidende App-seitige Zugriffsquelle. Sie deckt ab:
+
+- `app_trial`
+- `revenuecat`
+- `workshop_code`
+- `admin`
+- `legacy_trial`
+
+Beispiele:
+
+- Standard-Trial mit `source_type = 'app_trial'`
+- Kauf ueber RevenueCat mit `source_type = 'revenuecat'`
+- Workshop-Code-Zugang mit `source_type = 'workshop_code'`
+
+### 5) `revenuecat_customers`
+
+Zuordnung von Luke-User zu RevenueCat `app_user_id`.
+
+Wichtig:
+
+- `app_user_id` soll dem Supabase-`users.id` entsprechen
+- Alias- und Transfer-Faelle werden hier dokumentiert
+
+### 6) `revenuecat_events`
+
+Event-Log fuer Webhooks und Idempotenz.
+
+Zweck:
+
+- Audit
+- Debugging
+- Schutz vor Doppelverarbeitung
+- Nachvollziehbarkeit von `INITIAL_PURCHASE`, `RENEWAL`, `EXPIRATION` usw.
+
+### 7) `workshop_codes` und `workshop_code_redemptions`
+
+Bleiben bestehen, weil sie bereits auf `user_access_grants` aufsetzen und damit mit der neuen Access-Architektur kompatibel sind.
+
+## Wichtige RPCs / Serverlogik
+
+### `ensure_default_app_trial()`
+
+Vergibt den DB-gesteuerten Standard-Testzeitraum genau einmal pro User.
+
+Ergebnis:
+
+- erzeugt bei Bedarf einen `app_trial`-Grant
+- berechnet `paywall_visible_from`
+- verhindert doppelte Trial-Vergabe
+
+### `get_my_access_state()`
+
+Liefert den serverseitig massgeblichen Access- und Paywall-Status.
+
+Wichtige Felder:
+
+- `has_access`
+- `access_key`
+- `source_type`
+- `active_until`
+- `paywall_required`
+- `trial_ends_at`
+- `paywall_visible_from`
+- `paywall_visible`
+- `days_until_expiry`
+
+## Entfernte Legacy-Struktur
+
+Die folgende Stripe-MVP-Struktur ist nicht mehr Teil des Zielbilds:
+
+- `billing_customers`
+- `subscription_plans`
+- `subscriptions`
+- `purchases`
+- `entitlements`
+- `payment_events`
+- `trial_codes`
+- `trial_redemptions`
+
+Diese Tabellen waren fuer Stripe sinnvoll, sind fuer RevenueCat in Luke aber fachlich und semantisch die falsche Ebene.
+
+## Warum das bessere Modell
+
+- Access und Billing-Lifecycle sind sauber getrennt.
+- Trial-Regeln lassen sich ohne App-Release ueber die DB steuern.
+- RevenueCat-Store-Details sind modelliert, ohne den Rest der App zu verschmutzen.
+- Das Schema bleibt fuer iOS und Android gemeinsam nutzbar.
+- Alte Stripe-Begriffe erzeugen keine semantische Verwirrung mehr.

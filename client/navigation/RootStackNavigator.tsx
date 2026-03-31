@@ -67,7 +67,8 @@ function AuthLoadingScreen() {
 }
 
 export default function RootStackNavigator() {
-  const { isOnboardingComplete, isAppLoading } = useApp();
+  const { isOnboardingComplete, isAppLoading, isBillingStateLoading } =
+    useApp();
   const { session, isLoading } = useAuth();
   const isAuthenticated = Boolean(session);
   const showOnboarding = !isAuthenticated || !isOnboardingComplete;
@@ -86,7 +87,10 @@ export default function RootStackNavigator() {
   // Otherwise, screens will use their custom headers
   const useNativeHeader = liquidGlassAvailable && Platform.OS === "ios";
 
-  if (isLoading || (isAuthenticated && isAppLoading)) {
+  if (
+    isLoading ||
+    (isAuthenticated && (isAppLoading || isBillingStateLoading))
+  ) {
     return <AuthLoadingScreen />;
   }
 

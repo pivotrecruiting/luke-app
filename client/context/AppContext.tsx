@@ -4,6 +4,7 @@ import React, {
   useState,
   useMemo,
   useCallback,
+  useEffect,
   ReactNode,
 } from "react";
 import { useAuth } from "@/context/AuthContext";
@@ -58,6 +59,11 @@ import { useCurrentReferenceDate } from "@/context/app/hooks/use-current-referen
 import { useMonthlyBalanceStateSync } from "@/context/app/hooks/use-monthly-balance-state-sync";
 import { generateId } from "@/utils/ids";
 import { toCents } from "@/utils/money";
+import {
+  getDefaultAccessState,
+  initializeAccessStateForUser,
+  subscribeToAccessStateChanges,
+} from "@/services/access-service";
 
 export type {
   AppContextType,
@@ -84,6 +90,22 @@ type AppProviderProps = {
 export function AppProvider({ children }: AppProviderProps) {
   const [isAppLoading, setIsAppLoading] = useState(true);
   const [isOnboardingComplete, setIsOnboardingComplete] = useState(false);
+  const [isBillingStateLoading, setIsBillingStateLoading] = useState(true);
+  const [hasAccess, setHasAccess] = useState(false);
+  const [accessKey, setAccessKey] = useState<string | null>(null);
+  const [accessSourceType, setAccessSourceType] = useState<string | null>(null);
+  const [accessActiveUntil, setAccessActiveUntil] = useState<string | null>(
+    null,
+  );
+  const [paywallRequired, setPaywallRequired] = useState(false);
+  const [paywallVisible, setPaywallVisible] = useState(false);
+  const [trialEndsAt, setTrialEndsAt] = useState<string | null>(null);
+  const [paywallVisibleFrom, setPaywallVisibleFrom] = useState<string | null>(
+    null,
+  );
+  const [daysUntilTrialExpiry, setDaysUntilTrialExpiry] = useState<
+    number | null
+  >(null);
   const [userName, setUserNameState] = useState<string | null>(null);
   const [currency, setCurrencyState] = useState<CurrencyCode>("EUR");
   const [incomeEntries, setIncomeEntries] = useState<IncomeEntry[]>(
@@ -124,6 +146,48 @@ export function AppProvider({ children }: AppProviderProps) {
 
   const { user } = useAuth();
   const userId = user?.id ?? null;
+  const applyAccessState = useCallback(
+    (nextState: ReturnType<typeof getDefaultAccessState>) => {
+      setHasAccess(nextState.hasAccess);
+      setAccessKey(nextState.accessKey);
+      setAccessSourceType(nextState.sourceType);
+      setAccessActiveUntil(nextState.activeUntil);
+      setPaywallRequired(nextState.paywallRequired);
+      setPaywallVisible(nextState.paywallVisible);
+      setTrialEndsAt(nextState.trialEndsAt);
+      setPaywallVisibleFrom(nextState.paywallVisibleFrom);
+      setDaysUntilTrialExpiry(nextState.daysUntilExpiry);
+    },
+    [],
+  );
+
+  const refreshAccessState = useCallback(async () => {
+    if (!userId) {
+      const defaultAccessState = getDefaultAccessState();
+      applyAccessState(defaultAccessState);
+      setIsBillingStateLoading(false);
+      return defaultAccessState;
+    }
+
+    setIsBillingStateLoading(true);
+
+    try {
+      const nextState = await initializeAccessStateForUser(userId);
+      applyAccessState(nextState);
+      return nextState;
+    } catch (error) {
+      console.error("Failed to refresh access state:", error);
+      const fallbackState = {
+        ...getDefaultAccessState(),
+        hasAccess: true,
+      };
+      applyAccessState(fallbackState);
+      return fallbackState;
+    } finally {
+      setIsBillingStateLoading(false);
+    }
+  }, [applyAccessState, userId]);
+
   const { useLocalFallback, setUseLocalFallback } = useAppDataLoader({
     userId,
     onboardingVersion: ONBOARDING_VERSION,
@@ -144,6 +208,16 @@ export function AppProvider({ children }: AppProviderProps) {
     setLastBudgetResetMonth,
     setBalanceAnchorMonth,
   });
+
+  useEffect(() => {
+    void refreshAccessState();
+  }, [refreshAccessState]);
+
+  useEffect(
+    () => subscribeToAccessStateChanges(() => void refreshAccessState()),
+    [refreshAccessState],
+  );
+
   const canUseDb = Boolean(userId) && !useLocalFallback;
 
   const enqueueLevelUp = useCallback((payload: XpLevelUpPayloadT) => {
@@ -514,6 +588,16 @@ export function AppProvider({ children }: AppProviderProps) {
   const value: AppContextType = {
     isOnboardingComplete,
     isAppLoading,
+    isBillingStateLoading,
+    hasAccess,
+    accessKey,
+    accessSourceType,
+    accessActiveUntil,
+    paywallRequired,
+    paywallVisible,
+    trialEndsAt,
+    paywallVisibleFrom,
+    daysUntilTrialExpiry,
     userName,
     setUserName: setUserNameState,
     currency,
@@ -586,6 +670,7 @@ export function AppProvider({ children }: AppProviderProps) {
     consumeNextLevelUp,
     enqueueStreak,
     consumeNextStreak,
+    refreshAccessState,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

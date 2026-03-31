@@ -259,11 +259,17 @@ left join public.levels l on up.current_level_id = l.id
 where up.user_id = :user_id;
 ```
 
-## 9) Entitlements
+## 9) Access / Billing
 
 ```sql
-select entitlement_key, status, starts_at, ends_at
-from public.entitlements
-where user_id = :user_id and status = 'active';
+select has_access,
+       access_key,
+       source_type,
+       active_until,
+       paywall_required,
+       trial_ends_at,
+       paywall_visible_from,
+       paywall_visible,
+       days_until_expiry
+from public.get_my_access_state();
 ```
-
