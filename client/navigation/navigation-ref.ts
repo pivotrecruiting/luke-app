@@ -3,7 +3,7 @@ import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 
 export const navigationRef = createNavigationContainerRef<RootStackParamList>();
 
-export const getActiveRouteName = (): keyof RootStackParamList | null => {
+export const getActiveRouteName = (): string | null => {
   if (!navigationRef.isReady()) return null;
   return navigationRef.getCurrentRoute()?.name ?? null;
 };

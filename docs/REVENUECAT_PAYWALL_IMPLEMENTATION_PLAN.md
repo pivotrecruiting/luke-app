@@ -18,10 +18,10 @@ Dieser Plan beschreibt die saubere Implementierung einer RevenueCat-basierten Pa
 - `react-native-purchases` und `react-native-purchases-ui` sind in `package.json` installiert.
 - [`client/screens/PaywallScreen.tsx`](/Users/dennisschaible/Desktop/Coding/luke/client/screens/PaywallScreen.tsx) ist aktuell statisch.
 - Der CTA in der Paywall fuehrt aktuell nur `completeOnboarding()` aus und umgeht den Kauf-Flow.
-- In Supabase existieren bereits vorbereitete Tabellen fuer `subscription_plans`, `revenuecat_customers`, `revenuecat_events`, `user_access_grants` und Workshop-Code-Zugriffe.
+- In Supabase existieren bereits vorbereitete RevenueCat- und Access-Tabellen wie `revenuecat_customers`, `revenuecat_events`, `user_access_grants` sowie Workshop-Code-Zugriffe; das alte Stripe-Schema wird abgeloest.
 - In der Luke-Produktionsdatenbank gibt es aktuell noch keine RevenueCat-Customer und keine RevenueCat-Events.
 - Es existieren aktuell keine Supabase Edge Functions fuer RevenueCat-Webhooks.
-- In `subscription_plans` sind bereits drei aktive Produkte hinterlegt:
+- Im Legacy-Schema sind bereits drei Produktpreise hinterlegt, die in den neuen Produktkatalog ueberfuehrt werden:
   - `monthly` fuer `2.99 EUR`
   - `yearly` fuer `29.99 EUR`
   - `lifetime` fuer `89.99 EUR`
@@ -97,7 +97,7 @@ Dieser Plan beschreibt die saubere Implementierung einer RevenueCat-basierten Pa
 
 ### Was ich fuer RevenueCat anpassen wuerde
 
-- Die bisherigen Tabellen `billing_customers`, `subscriptions`, `purchases`, `entitlements` und Teile von `subscription_plans` sind noch stark Stripe-gepraegt und sollten fuer RevenueCat nicht ungeprueft weiterverwendet werden.
+- Die bisherigen Tabellen `billing_customers`, `subscriptions`, `purchases`, `entitlements`, `payment_events`, `trial_codes`, `trial_redemptions` und Teile von `subscription_plans` sind stark Stripe-gepraegt und sollten fuer RevenueCat entfernt oder ersetzt werden.
 - Fuer den DB-gesteuerten Testzeitraum fehlt aktuell eine globale Billing-/Paywall-Konfiguration.
 - Fuer den Standard-Trial fehlt aktuell ein eigener sauberer `source_type`.
 - Fuer das Paywall-Fenster fehlt aktuell ein serverseitiger, berechneter Sichtbarkeitszustand.
@@ -106,7 +106,7 @@ Dieser Plan beschreibt die saubere Implementierung einer RevenueCat-basierten Pa
 ### Empfohlene Zielanpassungen
 
 - Eine globale Konfigurationstabelle fuer Trial und Paywall einfuehren.
-- `subscription_plans` auf revenuecat-/store-neutrale Spalten umstellen oder durch eine neue Mapping-Tabelle ersetzen.
+- `billing_products` und `billing_product_store_mappings` als store-neutrales Produktmodell nutzen.
 - Einen klaren Trial-Grant-Typ ergaenzen.
 - Den Access-State-RPC um Trial- und Paywall-Sichtbarkeit erweitern.
 - Optional eine dedizierte RevenueCat-Subscription-State-Tabelle einfuehren, wenn spaeter Support-, Reporting- oder Backoffice-Anforderungen steigen.
@@ -124,13 +124,13 @@ Dieser Plan beschreibt die saubere Implementierung einer RevenueCat-basierten Pa
 
 ### Phase 0: Billing- und Access-Contract festziehen
 
-- [ ] Finalen Business-Contract fuer `monthly`, `yearly`, `lifetime` und den app-seitigen Trial-Regeln dokumentieren.
-- [ ] Entitlement `pro` als einziges Zugriffs-Entitlement definieren.
-- [ ] RevenueCat `app_user_id = public.users.id` als feste Regel dokumentieren.
-- [ ] Festlegen, dass Supabase `user_access_grants` die App-seitige Access-Quelle bleibt.
-- [ ] Festlegen, dass der Standard-Testzeitraum nicht aus RevenueCat kommt, sondern aus Supabase-Konfiguration und `user_access_grants`.
-- [ ] Festlegen, dass das Paywall-Modal nicht direkt bei Trial-Start, sondern erst ab `trial_end - 3 Tage` erscheinen darf.
-- [ ] Bestehenden Stripe-MVP-Plan in [`docs/SUBSCRIPTIONS_PAYMENTS_PLAN.md`](/Users/dennisschaible/Desktop/Coding/luke/docs/SUBSCRIPTIONS_PAYMENTS_PLAN.md) als historisch betrachten und fuer RevenueCat nicht weiterverwenden.
+- [x] Finalen Business-Contract fuer `monthly`, `yearly`, `lifetime` und den app-seitigen Trial-Regeln dokumentieren.
+- [x] Entitlement `pro` als einziges Zugriffs-Entitlement definieren.
+- [x] RevenueCat `app_user_id = public.users.id` als feste Regel dokumentieren.
+- [x] Festlegen, dass Supabase `user_access_grants` die App-seitige Access-Quelle bleibt.
+- [x] Festlegen, dass der Standard-Testzeitraum nicht aus RevenueCat kommt, sondern aus Supabase-Konfiguration und `user_access_grants`.
+- [x] Festlegen, dass das Paywall-Modal nicht direkt bei Trial-Start, sondern erst ab `trial_end - 3 Tage` erscheinen darf.
+- [x] Sicherstellen, dass [`docs/SUBSCRIPTIONS_PAYMENTS_PLAN.md`](/Users/dennisschaible/Desktop/Coding/luke/docs/SUBSCRIPTIONS_PAYMENTS_PLAN.md) und [`docs/DB_SCHEMA_BILLING.md`](/Users/dennisschaible/Desktop/Coding/luke/docs/DB_SCHEMA_BILLING.md) nur noch die RevenueCat-Architektur dokumentieren.
 - [ ] Ereignismapping definieren:
   - [ ] `INITIAL_PURCHASE`
   - [ ] `NON_RENEWING_PURCHASE`
@@ -141,7 +141,7 @@ Dieser Plan beschreibt die saubere Implementierung einer RevenueCat-basierten Pa
   - [ ] `BILLING_ISSUE`
   - [ ] `TRANSFER`
   - [ ] `EXPIRATION`
-- [ ] Entscheidung festhalten, wie Transfers zwischen RevenueCat-User-IDs behandelt werden sollen.
+- [x] Entscheidung festhalten, wie Transfers zwischen RevenueCat-User-IDs behandelt werden sollen.
 
 ### Phase 1: RevenueCat Dashboard und Store-Produkte sauber aufsetzen
 
@@ -157,18 +157,18 @@ Dieser Plan beschreibt die saubere Implementierung einer RevenueCat-basierten Pa
 - [ ] Keine verpflichtende Abhaengigkeit von Store-Trials fuer den Standard-7-Tage-Testzeitraum einbauen.
 - [ ] Offering-Metadata hinterlegen, falls die Paywall Badges oder Copy aus dem Dashboard beziehen soll.
 - [ ] RevenueCat Test Store / Sandbox-Nutzer fuer iOS und Android vorbereiten.
-- [ ] Sicherstellen, dass Preise im RevenueCat-Catalog exakt zu `subscription_plans` passen.
+- [ ] Sicherstellen, dass Preise im RevenueCat-Catalog exakt zu `billing_products` passen.
 
 ### Phase 2: Supabase als Access-Layer vorbereiten
 
-- [ ] Bestehende Tabellenstruktur auf RevenueCat-Produktionsfluss ausrichten.
-- [ ] Globale Billing-Konfiguration einfuehren, z. B. `billing_config` oder `paywall_config`, mit mindestens:
-  - [ ] `default_trial_days`
-  - [ ] `paywall_show_days_before_expiry`
-  - [ ] `pro_entitlement_key`
-- [ ] Sicherstellen, dass diese Konfiguration serverseitig geladen wird und nicht aus hartem Client-Code kommt.
-- [ ] Eigenen `source_type` fuer Standard-Trial ergaenzen, z. B. `app_trial` oder `system_trial`.
-- [ ] Regeln definieren, dass jeder User den Standard-Trial genau einmal bekommt.
+- [x] Bestehende Tabellenstruktur auf RevenueCat-Produktionsfluss ausrichten.
+- [x] Globale Billing-Konfiguration einfuehren, z. B. `billing_config` oder `paywall_config`, mit mindestens:
+  - [x] `default_trial_days`
+  - [x] `paywall_show_days_before_expiry`
+  - [x] `pro_entitlement_key`
+- [x] Sicherstellen, dass diese Konfiguration serverseitig geladen wird und nicht aus hartem Client-Code kommt.
+- [x] Eigenen `source_type` fuer Standard-Trial ergaenzen, z. B. `app_trial` oder `system_trial`.
+- [x] Regeln definieren, dass jeder User den Standard-Trial genau einmal bekommt.
 - [ ] Pruefen, ob dafuer ein eigenes `user_trial_state`-Modell sinnvoll ist oder ob `user_access_grants` + Metadata reicht.
 - [ ] Pruefen, ob `revenuecat_customers` zusaetzliche Felder braucht:
   - [ ] Plattform
@@ -176,30 +176,30 @@ Dieser Plan beschreibt die saubere Implementierung einer RevenueCat-basierten Pa
   - [ ] letzter Entitlement-Status
   - [ ] Sandbox/Production-Markierung
 - [ ] Pruefen, ob `user_access_grants.metadata` fuer RevenueCat standardisiert werden soll.
-- [ ] `user_access_grants.metadata` fuer app-seitige Trials standardisieren, z. B.:
-  - [ ] `trial_days`
-  - [ ] `paywall_visible_from`
-  - [ ] `granted_by`
+- [x] `user_access_grants.metadata` fuer app-seitige Trials standardisieren, z. B.:
+  - [x] `trial_days`
+  - [x] `paywall_visible_from`
+  - [x] `granted_by`
 - [ ] Pruefen, ob ein eindeutiger Constraint gegen doppelte aktive RevenueCat-Grants sinnvoll ist.
 - [ ] Dokumentieren, wie RevenueCat-Lifetime-Grants in `user_access_grants` aussehen.
 - [ ] Dokumentieren, wie Standard-Trial-Grants in `user_access_grants` aussehen.
 - [ ] Dokumentieren, wie Subscription-Upgrades und Product Changes in bestehende Grants ueberfuehrt werden.
-- [ ] Sicherstellen, dass `get_my_access_state()` fuer RevenueCat-Grants unveraendert korrekt funktioniert.
-- [ ] `get_my_access_state()` oder eine neue RPC erweitern, damit neben `has_access` auch gesteuerte Paywall-Sichtbarkeit geliefert wird:
-  - [ ] `trial_ends_at`
-  - [ ] `paywall_visible`
-  - [ ] `paywall_visible_from`
-  - [ ] `days_until_expiry`
+- [x] Sicherstellen, dass `get_my_access_state()` fuer RevenueCat-Grants unveraendert korrekt funktioniert.
+- [x] `get_my_access_state()` oder eine neue RPC erweitern, damit neben `has_access` auch gesteuerte Paywall-Sichtbarkeit geliefert wird:
+  - [x] `trial_ends_at`
+  - [x] `paywall_visible`
+  - [x] `paywall_visible_from`
+  - [x] `days_until_expiry`
 - [ ] Falls noetig, SQL-Helferfunktion fuer RevenueCat-Upserts definieren, damit die Webhook-Funktion schlank bleibt.
 
 ### Phase 3: RevenueCat Webhook in Supabase implementieren
 
-- [ ] Neue Edge Function `revenuecat-webhook` planen.
-- [ ] Function als oeffentlichen Webhook-Endpunkt bereitstellen.
-- [ ] RevenueCat-Webhook-Signatur bzw. Request-Authentifizierung gemaess RevenueCat-Setup validieren.
-- [ ] Raw Payload unveraendert in `public.revenuecat_events` speichern.
-- [ ] Idempotenz ueber `event_id` erzwingen.
-- [ ] `revenuecat_customers` per `app_user_id` upserten.
+- [x] Neue Edge Function `revenuecat-webhook` planen.
+- [x] Function als oeffentlichen Webhook-Endpunkt bereitstellen.
+- [x] RevenueCat-Webhook-Signatur bzw. Request-Authentifizierung gemaess RevenueCat-Setup validieren.
+- [x] Raw Payload unveraendert in `public.revenuecat_events` speichern.
+- [x] Idempotenz ueber `event_id` erzwingen.
+- [x] `revenuecat_customers` per `app_user_id` upserten.
 - [ ] Event-Mapping zu `user_access_grants` implementieren:
   - [ ] `INITIAL_PURCHASE` erzeugt oder aktualisiert aktiven Grant.
   - [ ] `RENEWAL` verlaengert bestehenden Grant.
@@ -209,74 +209,74 @@ Dieser Plan beschreibt die saubere Implementierung einer RevenueCat-basierten Pa
   - [ ] `BILLING_ISSUE` erzeugt keinen sofortigen Access-Verlust.
   - [ ] `EXPIRATION` entzieht den Zugriff.
   - [ ] `TRANSFER` wird auditiert und auf Alias-/Identity-Konflikte geprueft.
-- [ ] Fehlerfaelle in `processing_error` speichern.
-- [ ] Test-Event aus RevenueCat Dashboard gegen Supabase verifizieren.
+- [x] Fehlerfaelle in `processing_error` speichern.
+- [x] Test-Event aus RevenueCat Dashboard gegen Supabase verifizieren.
 
 ### Phase 4: Client-SDK-Grundlage in React Native aufbauen
 
-- [ ] RevenueCat-Konfiguration fuer Expo-Setup pruefen.
+- [x] RevenueCat-Konfiguration fuer Expo-Setup pruefen.
 - [ ] Falls fuer das aktuelle Setup erforderlich, Expo-Plugin oder Native-Konfiguration in [`app.config.js`](/Users/dennisschaible/Desktop/Coding/luke/app.config.js) ergaenzen.
 - [ ] Environment-Variablen definieren:
   - [ ] `EXPO_PUBLIC_REVENUECAT_IOS_API_KEY`
   - [ ] `EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY`
-- [ ] Neue Service-Schicht einfuehren, z. B. `client/services/revenuecat-service.ts`.
-- [ ] SDK genau einmal initialisieren.
-- [ ] Initialisierung erst starten, wenn Supabase-Session bekannt ist.
-- [ ] SDK mit Supabase-`user.id` als `app_user_id` konfigurieren oder einloggen.
-- [ ] Debug-Logs nur in Development aktivieren.
-- [ ] `CustomerInfo`-Refresh und `Offerings`-Fetch kapseln.
-- [ ] Listener fuer CustomerInfo-Updates registrieren.
+- [x] Neue Service-Schicht einfuehren, z. B. `client/services/revenuecat-service.ts`.
+- [x] SDK genau einmal initialisieren.
+- [x] Initialisierung erst starten, wenn Supabase-Session bekannt ist.
+- [x] SDK mit Supabase-`user.id` als `app_user_id` konfigurieren oder einloggen.
+- [x] Debug-Logs nur in Development aktivieren.
+- [x] `CustomerInfo`-Refresh und `Offerings`-Fetch kapseln.
+- [x] Listener fuer CustomerInfo-Updates registrieren.
 - [ ] Fehler- und Timeout-Verhalten definieren.
 - [ ] Kein Pricing aus lokalem Code mehr anzeigen, wenn Offering-Daten fehlen.
-- [ ] Client-Flow klar trennen:
-  - [ ] Trial-/Paywall-Sichtbarkeit aus Supabase
-  - [ ] Kauf-/Restore-Flow aus RevenueCat
+- [x] Client-Flow klar trennen:
+  - [x] Trial-/Paywall-Sichtbarkeit aus Supabase
+  - [x] Kauf-/Restore-Flow aus RevenueCat
 
 ### Phase 5: Auth- und Identity-Sync sauber machen
 
-- [ ] Login-Flow mit RevenueCat-Identity verbinden.
-- [ ] Session-Restore mit RevenueCat-Identity verbinden.
+- [x] Login-Flow mit RevenueCat-Identity verbinden.
+- [x] Session-Restore mit RevenueCat-Identity verbinden.
 - [ ] Logout-Flow sauber behandeln.
-- [ ] Bei erstem qualifizierten App-Start oder nach Signup den Standard-Trial serverseitig vergeben.
+- [x] Bei erstem qualifizierten App-Start oder nach Signup den Standard-Trial serverseitig vergeben.
 - [ ] Sicherstellen, dass ein User nach Reinstall oder Login auf anderem Geraet dieselben Entitlements sieht.
 - [ ] Sicherstellen, dass kein Kauf unter falscher oder alter `app_user_id` passiert.
 - [ ] Klar festlegen, ob `syncPurchases` / Restore nur manuell oder auch nach Login genutzt wird.
-- [ ] Workshop-Code-Flow und RevenueCat-Identity zusammendenken, damit kein Access-Konflikt entsteht.
+- [x] Workshop-Code-Flow und RevenueCat-Identity zusammendenken, damit kein Access-Konflikt entsteht.
 
 ### Phase 6: `PaywallScreen` auf echte RevenueCat-Daten umstellen
 
-- [ ] [`client/screens/PaywallScreen.tsx`](/Users/dennisschaible/Desktop/Coding/luke/client/screens/PaywallScreen.tsx) von statisch auf Offering-basiert umbauen.
-- [ ] Auswahlkarten nicht mehr aus fixen Preisen, sondern aus `availablePackages` rendern.
-- [ ] Package-Mapping robust machen:
-  - [ ] monthly
-  - [ ] annual
-  - [ ] lifetime
-- [ ] Reihenfolge kontrolliert halten, aber nicht auf harte Produkt-IDs vertrauen.
+- [x] [`client/screens/PaywallScreen.tsx`](/Users/dennisschaible/Desktop/Coding/luke/client/screens/PaywallScreen.tsx) von statisch auf Offering-basiert umbauen.
+- [x] Auswahlkarten nicht mehr aus fixen Preisen, sondern aus `availablePackages` rendern.
+- [x] Package-Mapping robust machen:
+  - [x] monthly
+  - [x] annual
+  - [x] lifetime
+- [x] Reihenfolge kontrolliert halten, aber nicht auf harte Produkt-IDs vertrauen.
 - [ ] Badge-Logik fuer `best value` oder Trial aus Offering/Product-Daten ableiten.
-- [ ] CTA-Text dynamisch machen.
-- [ ] Trial-Copy aus DB-gesteuerter Testlogik ableiten, nicht aus RevenueCat-Store-Trials.
-- [ ] Copy fuer das 3-Tage-Fenster sauber abbilden, z. B. verbleibende Testtage bis Ablauf.
-- [ ] Wenn kein DB-State geladen werden kann, neutrale Copy verwenden statt falscher Versprechen.
+- [x] CTA-Text dynamisch machen.
+- [x] Trial-Copy aus DB-gesteuerter Testlogik ableiten, nicht aus RevenueCat-Store-Trials.
+- [x] Copy fuer das 3-Tage-Fenster sauber abbilden, z. B. verbleibende Testtage bis Ablauf.
+- [x] Wenn kein DB-State geladen werden kann, neutrale Copy verwenden statt falscher Versprechen.
 - [ ] Kauf-Button gegen Doppelklick schuetzen.
-- [ ] Loading-, Error- und Empty-State fuer Offerings implementieren.
-- [ ] Cancelled Purchase, Pending Purchase und Purchase Error sauber behandeln.
-- [ ] `Restore purchases` mit echtem RevenueCat-Flow verbinden.
+- [x] Loading-, Error- und Empty-State fuer Offerings implementieren.
+- [x] Cancelled Purchase, Pending Purchase und Purchase Error sauber behandeln.
+- [x] `Restore purchases` mit echtem RevenueCat-Flow verbinden.
 - [ ] AGB- und Datenschutz-Links auf echte URLs legen.
 - [ ] `completeOnboarding()` erst nach bestaetigtem Zugriff ausfuehren.
 - [ ] Accessibility und `testID`s fuer alle Kaufoptionen ergaenzen.
 
 ### Phase 7: Access-Gating in die App integrieren
 
-- [ ] App-Start auf serverseitigen Access- und Paywall-State stuetzen.
-- [ ] Solange aktiver Trial besteht und `paywall_visible = false`, keine Paywall anzeigen.
-- [ ] Sobald Trial aktiv ist und das 3-Tage-Fenster erreicht ist, Paywall modal anzeigen.
-- [ ] Wenn `has_access = false` und kein aktiver Trial mehr besteht, Paywall anzeigen.
-- [ ] Wenn `has_access = true` und kein Paywall-Fenster aktiv ist, Paywall ueberspringen.
-- [ ] Workshop-Code-Grant, Subscription und Lifetime exakt gleich behandeln.
-- [ ] Nach erfolgreichem Kauf nicht nur auf Client-Callback vertrauen.
-- [ ] Nach Kauf aktiv auf serverseitige Access-Bestaetigung warten.
-- [ ] Timeout-Strategie fuer den Fall definieren, dass Webhook oder Sync verzoegert ist.
-- [ ] Falls gewuenscht, CustomerInfo als kurzfristige Optimierung nutzen, aber nicht als finale Freischaltung.
+- [x] App-Start auf serverseitigen Access- und Paywall-State stuetzen.
+- [x] Solange aktiver Trial besteht und `paywall_visible = false`, keine Paywall anzeigen.
+- [x] Sobald Trial aktiv ist und das 3-Tage-Fenster erreicht ist, Paywall modal anzeigen.
+- [x] Wenn `has_access = false` und kein aktiver Trial mehr besteht, Paywall anzeigen.
+- [x] Wenn `has_access = true` und kein Paywall-Fenster aktiv ist, Paywall ueberspringen.
+- [x] Workshop-Code-Grant, Subscription und Lifetime exakt gleich behandeln.
+- [x] Nach erfolgreichem Kauf nicht nur auf Client-Callback vertrauen.
+- [x] Nach Kauf aktiv auf serverseitige Access-Bestaetigung warten.
+- [x] Timeout-Strategie fuer den Fall definieren, dass Webhook oder Sync verzoegert ist.
+- [x] Falls gewuenscht, CustomerInfo als kurzfristige Optimierung nutzen, aber nicht als finale Freischaltung.
 
 ### Phase 8: Customer Self-Service ergaenzen
 
@@ -313,7 +313,7 @@ Dieser Plan beschreibt die saubere Implementierung einer RevenueCat-basierten Pa
 
 ### Phase 10: Rollout und Monitoring
 
-- [ ] Zuerst nur in Sandbox / Internal Testing ausrollen.
+- [x] Zuerst nur in Sandbox / Internal Testing ausrollen.
 - [ ] RevenueCat Dashboard, Supabase Logs und DB-Zustaende parallel beobachten.
 - [ ] Vor Production-Go-Live Test-Events und echte Sandbox-Kaeufe erneut durchspielen.
 - [ ] Monitoring fuer Webhook-Fehler definieren.
@@ -323,16 +323,16 @@ Dieser Plan beschreibt die saubere Implementierung einer RevenueCat-basierten Pa
 
 ## Konkrete Code-Touchpoints
 
-- [ ] [`client/screens/PaywallScreen.tsx`](/Users/dennisschaible/Desktop/Coding/luke/client/screens/PaywallScreen.tsx)
+- [x] [`client/screens/PaywallScreen.tsx`](/Users/dennisschaible/Desktop/Coding/luke/client/screens/PaywallScreen.tsx)
 - [ ] [`client/screens/styles/paywall-screen.styles.ts`](/Users/dennisschaible/Desktop/Coding/luke/client/screens/styles/paywall-screen.styles.ts)
-- [ ] [`client/context/AuthContext.tsx`](/Users/dennisschaible/Desktop/Coding/luke/client/context/AuthContext.tsx)
-- [ ] [`client/context/AppContext.tsx`](/Users/dennisschaible/Desktop/Coding/luke/client/context/AppContext.tsx)
-- [ ] [`client/navigation/RootStackNavigator.tsx`](/Users/dennisschaible/Desktop/Coding/luke/client/navigation/RootStackNavigator.tsx)
+- [x] [`client/context/AuthContext.tsx`](/Users/dennisschaible/Desktop/Coding/luke/client/context/AuthContext.tsx)
+- [x] [`client/context/AppContext.tsx`](/Users/dennisschaible/Desktop/Coding/luke/client/context/AppContext.tsx)
+- [x] [`client/navigation/RootStackNavigator.tsx`](/Users/dennisschaible/Desktop/Coding/luke/client/navigation/RootStackNavigator.tsx)
 - [ ] [`client/lib/supabase.ts`](/Users/dennisschaible/Desktop/Coding/luke/client/lib/supabase.ts)
 - [ ] [`app.config.js`](/Users/dennisschaible/Desktop/Coding/luke/app.config.js)
-- [ ] neue Datei `client/services/revenuecat-service.ts`
-- [ ] neue Datei `supabase/functions/revenuecat-webhook/index.ts` oder aequivalente Function-Struktur
-- [ ] neue SQL-Migration(en) fuer RevenueCat-spezifische Constraints/Helper
+- [x] neue Datei `client/services/revenuecat-service.ts`
+- [x] neue Datei `supabase/functions/revenuecat-webhook/index.ts` oder aequivalente Function-Struktur
+- [x] neue SQL-Migration(en) fuer RevenueCat-spezifische Constraints/Helper
 
 ## Explizite Anti-Patterns
 

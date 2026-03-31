@@ -11,8 +11,8 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/query-client";
 
 import RootStackNavigator from "@/navigation/RootStackNavigator";
-import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { LevelUpGate } from "@/navigation/level-up-gate";
+import { PaywallGate } from "@/navigation/paywall-gate";
 import { StreakGate } from "@/navigation/streak-gate";
 import { getActiveRouteName, navigationRef } from "@/navigation/navigation-ref";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -28,12 +28,11 @@ const AUTH_CALLBACK_PATH = "auth/callback";
  */
 function AppNavigator() {
   const { session, isLoading: isAuthLoading } = useAuth();
-  const { isOnboardingComplete, isAppLoading } = useApp();
+  const { isOnboardingComplete, isAppLoading, isBillingStateLoading } =
+    useApp();
   const isAuthenticated = Boolean(session);
   const showOnboarding = !isAuthenticated || !isOnboardingComplete;
-  const [currentRouteName, setCurrentRouteName] = useState<
-    keyof RootStackParamList | null
-  >(null);
+  const [currentRouteName, setCurrentRouteName] = useState<string | null>(null);
   const [isNavReady, setIsNavReady] = useState(false);
   const hasHandledInitialUrl = useRef(false);
 
@@ -73,7 +72,9 @@ function AppNavigator() {
   );
 
   useEffect(() => {
-    if (!isNavReady || isAuthLoading || isAppLoading) return;
+    if (!isNavReady || isAuthLoading || isAppLoading || isBillingStateLoading) {
+      return;
+    }
 
     if (!hasHandledInitialUrl.current) {
       hasHandledInitialUrl.current = true;
@@ -89,7 +90,13 @@ function AppNavigator() {
     return () => {
       subscription.remove();
     };
-  }, [handleDeepLink, isAuthLoading, isAppLoading, isNavReady]);
+  }, [
+    handleDeepLink,
+    isAuthLoading,
+    isAppLoading,
+    isBillingStateLoading,
+    isNavReady,
+  ]);
 
   return (
     <SafeAreaProvider>
@@ -102,6 +109,7 @@ function AppNavigator() {
           >
             <RootStackNavigator />
           </NavigationContainer>
+          <PaywallGate currentRouteName={currentRouteName} />
           <LevelUpGate currentRouteName={currentRouteName} />
           <StreakGate currentRouteName={currentRouteName} />
           <StatusBar style="auto" />

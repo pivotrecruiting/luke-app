@@ -1,10 +1,9 @@
 import { useEffect, useRef } from "react";
 import { useApp } from "@/context/AppContext";
 import { navigationRef } from "@/navigation/navigation-ref";
-import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 
 type StreakGateProps = {
-  currentRouteName: keyof RootStackParamList | null;
+  currentRouteName: string | null;
 };
 
 /**
@@ -16,6 +15,8 @@ export const StreakGate = ({ currentRouteName }: StreakGateProps) => {
     consumeNextStreak,
     isOnboardingComplete,
     isAppLoading,
+    isBillingStateLoading,
+    paywallRequired,
   } = useApp();
   const isNavigatingRef = useRef(false);
 
@@ -25,7 +26,8 @@ export const StreakGate = ({ currentRouteName }: StreakGateProps) => {
       return;
     }
     if (isNavigatingRef.current) return;
-    if (isAppLoading || !isOnboardingComplete) return;
+    if (isAppLoading || isBillingStateLoading || !isOnboardingComplete) return;
+    if (paywallRequired) return;
     if (!navigationRef.isReady()) return;
     if (currentRouteName === "LevelUp") return;
 
@@ -39,8 +41,10 @@ export const StreakGate = ({ currentRouteName }: StreakGateProps) => {
     consumeNextStreak,
     currentRouteName,
     isAppLoading,
+    isBillingStateLoading,
     isOnboardingComplete,
     pendingStreaks,
+    paywallRequired,
   ]);
 
   return null;

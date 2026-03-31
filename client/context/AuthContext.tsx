@@ -8,6 +8,7 @@ import React, {
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
+import { initializeRevenueCatForUser } from "@/services/revenuecat-service";
 import { processPendingWorkshopCode } from "@/services/workshop-code-service";
 
 type AuthContextValue = {
@@ -45,6 +46,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         lastWorkshopCodeProcessUserIdRef.current !== currentUserId
       ) {
         lastWorkshopCodeProcessUserIdRef.current = currentUserId;
+        void initializeRevenueCatForUser(currentUserId).catch(
+          (revenueCatError) => {
+            console.error(
+              "Failed to initialize RevenueCat after session restore:",
+              revenueCatError,
+            );
+          },
+        );
         void processPendingWorkshopCode().catch((workshopCodeError) => {
           console.error(
             "Failed to process pending workshop code after session restore:",
@@ -71,6 +80,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       lastWorkshopCodeProcessUserIdRef.current = currentUserId;
+      void initializeRevenueCatForUser(currentUserId).catch(
+        (revenueCatError) => {
+          console.error(
+            "Failed to initialize RevenueCat after auth state change:",
+            revenueCatError,
+          );
+        },
+      );
       void processPendingWorkshopCode().catch((workshopCodeError) => {
         console.error(
           "Failed to process pending workshop code after auth state change:",
