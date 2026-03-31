@@ -63,6 +63,8 @@
     "react-native-gifted-charts": "^1.4.76",
     "react-native-keyboard-controller": "1.18.5",
     "react-native-pager-view": "6.9.1",
+    "react-native-purchases": "^9.15.0",
+    "react-native-purchases-ui": "^9.15.0",
     "react-native-reanimated": "~4.1.1",
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "^4.24.0",
