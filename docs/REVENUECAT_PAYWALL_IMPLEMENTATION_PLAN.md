@@ -337,18 +337,18 @@ Dieser Plan beschreibt die saubere Implementierung einer RevenueCat-basierten Pa
 ## Explizite Anti-Patterns
 
 - [ ] Keine Hardcodes wie `€ 29,99/Jahr` als produktive UI-Quelle behalten.
-- [ ] Keine Freischaltung allein aufgrund eines erfolgreichen Client-Purchase-Callbacks.
-- [ ] Keine Entitlement-Pruefung nur aus lokalem React-State.
-- [ ] Kein anonymer RevenueCat-Kauf-Flow fuer authentifizierte Luke-User.
-- [ ] Kein sofortiger Access-Entzug bei `CANCELLATION`, solange die laufende Periode aktiv ist.
-- [ ] Keine zweite parallele Access-Logik neben `user_access_grants`.
-- [ ] Den DB-gesteuerten Standard-Trial nicht gleichzeitig als Store-Trial nachbauen.
+- [x] Keine Freischaltung allein aufgrund eines erfolgreichen Client-Purchase-Callbacks.
+- [x] Keine Entitlement-Pruefung nur aus lokalem React-State.
+- [x] Kein anonymer RevenueCat-Kauf-Flow fuer authentifizierte Luke-User.
+- [x] Kein sofortiger Access-Entzug bei `CANCELLATION`, solange die laufende Periode aktiv ist.
+- [x] Keine zweite parallele Access-Logik neben `user_access_grants`.
+- [x] Den DB-gesteuerten Standard-Trial nicht gleichzeitig als Store-Trial nachbauen.
 
 ## Definition of Done
 
 - [ ] Ein Nutzer kann Monthly, Yearly oder Lifetime ueber RevenueCat kaufen.
-- [ ] Jeder Nutzer erhaelt genau einen DB-gesteuerten Standard-Testzeitraum von 7 Tagen.
-- [ ] Das Paywall-Modal erscheint erst 3 Tage vor Trial-Ende.
+- [x] Jeder Nutzer erhaelt genau einen DB-gesteuerten Standard-Testzeitraum von 7 Tagen.
+- [x] Das Paywall-Modal erscheint erst 3 Tage vor Trial-Ende.
 - [ ] Die Paywall zeigt Preise und Kaufoptionen dynamisch aus RevenueCat.
 - [ ] Nach erfolgreichem Kauf wird Zugriff serverseitig in Supabase synchronisiert.
 - [ ] `get_my_access_state()` entscheidet korrekt ueber Paywall vs. App-Zugriff.
