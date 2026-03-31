@@ -1,10 +1,9 @@
 import { useEffect, useRef } from "react";
 import { useApp } from "@/context/AppContext";
 import { navigationRef } from "@/navigation/navigation-ref";
-import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 
 type LevelUpGateProps = {
-  currentRouteName: keyof RootStackParamList | null;
+  currentRouteName: string | null;
 };
 
 /**
@@ -17,6 +16,8 @@ export const LevelUpGate = ({ currentRouteName }: LevelUpGateProps) => {
     consumeNextLevelUp,
     isOnboardingComplete,
     isAppLoading,
+    isBillingStateLoading,
+    paywallRequired,
   } = useApp();
   const isNavigatingRef = useRef(false);
 
@@ -26,7 +27,8 @@ export const LevelUpGate = ({ currentRouteName }: LevelUpGateProps) => {
       return;
     }
     if (isNavigatingRef.current) return;
-    if (isAppLoading || !isOnboardingComplete) return;
+    if (isAppLoading || isBillingStateLoading || !isOnboardingComplete) return;
+    if (paywallRequired) return;
     if (!navigationRef.isReady()) return;
     if (pendingStreaks.length > 0) return;
 
@@ -40,9 +42,11 @@ export const LevelUpGate = ({ currentRouteName }: LevelUpGateProps) => {
     consumeNextLevelUp,
     currentRouteName,
     isAppLoading,
+    isBillingStateLoading,
     isOnboardingComplete,
     pendingLevelUps,
     pendingStreaks.length,
+    paywallRequired,
   ]);
 
   return null;

@@ -49,7 +49,7 @@ export function ThemedText({
       case "small":
         return Typography.small;
       case "link":
-        return Typography.link;
+        return Typography.body;
       default:
         return Typography.body;
     }

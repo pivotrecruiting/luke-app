@@ -1,157 +1,116 @@
-# Subscriptions & Payments Plan (Stripe, MVP + skalierbar)
+# Subscriptions & Payments Plan (RevenueCat + Supabase)
 
-Ziel: Saubere, auditierbare Payment-Architektur mit Stripe als Source of Truth.
+Ziel: Saubere, auditierbare Mobile-Billing-Architektur mit RevenueCat als Billing-Layer und Supabase als Access-Layer.
 
-## Anforderungen (MVP)
+## Produktregeln
 
-- Drei Produkte/Preise:
-  - 2.99 EUR monatlich (Subscription)
-  - 29.99 EUR jaehrlich (Subscription)
-  - 89.99 EUR lifetime (One-time purchase)
-- Abwicklung via Stripe
-- Zukunftssicher fuer Upgrades, Preiswechsel, Kuendigung, Entitlements
-- Trial Codes mit variabler Laufzeit (trial days pro Code)
-- Kuendigung und Planwechsel zum Periodenende (keine Proration/Refunds)
-- 20% VAT (Oesterreich)
+- Jeder User erhaelt einen Standard-Testzeitraum von 7 Tagen.
+- Die Trial-Konfiguration wird aus der DB geladen.
+- Das Paywall-Modal wird erst 3 Tage vor Trial-Ende angezeigt.
+- Drei kaufbare Produkte:
+  - `monthly`
+  - `yearly`
+  - `lifetime`
+- `lifetime` gewaehrt dauerhaften Zugriff.
+- Alle Zugriffswege muessen denselben `pro`-Access aktivieren.
 
-## Best Practices (Industrie-Standard)
+## Best Practices
 
-- Stripe ist **Source of Truth** fuer Zahlungen/Subscriptions.
-- Client ist **niemals** vertrauenswuerdig; Status nur via Webhooks aktualisieren.
-- Idempotency Keys fuer alle Stripe-Calls.
-- Event-Log speichern (raw Webhook Payload) fuer Audit/Debugging.
-- Entitlements getrennt halten (Feature-Zugriff nicht direkt an Subscription-Status koppeln).
-- Keine Kreditkartendaten speichern; nur Stripe-IDs.
-- Environment-Trennung (test/live) + `livemode` Flag speichern.
+- RevenueCat ist Source of Truth fuer Store-Kaeufe und Subscription-Lifecycle.
+- Supabase ist Source of Truth fuer Luke-Feature-Access.
+- Der Client schaltet Features nie final selbst frei.
+- Alle RevenueCat-Webhooks werden serverseitig verarbeitet und auditiert.
+- Der Standard-Trial ist ein App-Grant aus der DB und kein Store-Intro-Offer.
+- Preise und Produktdarstellung kommen nicht aus Hardcodes, sondern aus dem Produktkatalog bzw. RevenueCat.
+- Alte Stripe-Strukturen werden entfernt, nicht parallel weitergefuehrt.
 
-## Architektur (High-Level)
+## Zielarchitektur
 
-1) **Checkout Session** (backend)
-   - Monthly/Yearly: Stripe Checkout Session mit `mode=subscription`
-   - Lifetime: Stripe Checkout Session mit `mode=payment`
-   - `client_reference_id`/`metadata.user_id` setzen
-   - Trial: `subscription_data.trial_period_days` aus Trial-Code setzen
-   - Planwechsel: `proration_behavior=none`, `billing_cycle_anchor` auf Periodenende
+1. **DB-gesteuerter Standard-Trial**
+   - User bekommt serverseitig genau einen `app_trial`
+   - Trial-Laufzeit und Paywall-Vorlauf kommen aus `billing_config`
+   - `get_my_access_state()` steuert, ob die Paywall sichtbar sein darf
 
-2) **Webhook Listener** (backend)
-   - Validiert Stripe Signatur
-   - Verarbeitet Events:
-     - `checkout.session.completed`
-     - `customer.subscription.created|updated|deleted`
-     - `invoice.paid|payment_failed`
-     - `payment_intent.succeeded` (lifetime)
-   - Aktualisiert lokale Tabellen (Subscriptions, Purchases, Entitlements)
+2. **RevenueCat fuer Kaeufe**
+   - Monthly und Yearly als Auto-Renewable Subscriptions
+   - Lifetime als One-Time Purchase
+   - RevenueCat `app_user_id` entspricht `public.users.id`
 
-3) **Entitlements**
-   - Einheitliche Tabelle fuer Zugriffsrechte
-   - Subscription und Lifetime schreiben in dieselbe Access-Logik
-   - Entitlement-Key vorerst: `pro`
+3. **Supabase fuer Access**
+   - RevenueCat-Webhooks schreiben in `user_access_grants`
+   - Trial, RevenueCat, Workshop-Code und Admin-Zugriffe laufen in dieselbe Access-Schicht
 
-## MVP Data Model (Vorschlag)
+4. **Store-neutrales Produktmodell**
+   - `billing_products` als interne Produktquelle
+   - `billing_product_store_mappings` fuer iOS-/Android-Produkt-IDs und RevenueCat-Zuordnung
 
-### 1) billing_customers
-- user_id (FK -> users.id, unique)
-- stripe_customer_id (unique)
-- livemode (bool)
-- created_at
+## Server-Flows
 
-### 2) subscription_plans (Lookup)
-- id (uuid)
-- code (e.g. monthly, yearly, lifetime)
-- name
-- stripe_product_id
-- stripe_price_id
-- price_amount_cents
-- currency
-- billing_interval (monthly/yearly/one_time)
-- active
+### Trial-Vergabe
 
-### 3) subscriptions
-- id
-- user_id
-- stripe_subscription_id (unique)
-- stripe_price_id
-- status (trialing/active/past_due/canceled/unpaid)
-- current_period_start
-- current_period_end
-- cancel_at_period_end
-- canceled_at
-- trial_start
-- trial_end
-- trial_code_id (nullable)
-- livemode
-- created_at, updated_at
+- Signup oder erster qualifizierter Session-Start
+- `ensure_default_app_trial()`
+- Falls noch kein Trial vergeben wurde:
+  - `user_access_grants.source_type = 'app_trial'`
+  - `ends_at = now() + default_trial_days`
+  - `paywall_visible_from = ends_at - paywall_show_days_before_expiry`
 
-### 4) purchases (one-time)
-- id
-- user_id
-- stripe_payment_intent_id (unique)
-- stripe_price_id
-- amount_cents
-- currency
-- status (succeeded/failed/refunded)
-- livemode
-- created_at
+### Access-State
 
-### 5) entitlements
-- id
-- user_id
-- source_type (subscription|lifetime)
-- source_id (subscription_id or purchase_id)
-- entitlement_key (e.g. "pro")
-- status (active/revoked)
-- starts_at
-- ends_at (nullable for lifetime)
-- created_at
+- App fragt `get_my_access_state()` ab
+- Rueckgabe steuert:
+  - Zugriff ja/nein
+  - Trial-Ende
+  - Paywall-Sichtbarkeit
+  - verbleibende Tage
 
-### 6) payment_events (Audit)
-- id
-- stripe_event_id (unique)
-- event_type
-- payload (jsonb)
-- livemode
-- created_at
+### Kauf ueber RevenueCat
 
-### 7) trial_codes
-- id
-- code (unique)
-- trial_days
-- max_redemptions (nullable)
-- active
-- starts_at (nullable)
-- ends_at (nullable)
-- created_at
+- App laedt Offering
+- User kauft Monthly, Yearly oder Lifetime
+- RevenueCat sendet Webhook
+- Supabase verarbeitet Webhook idempotent
+- `user_access_grants` wird erzeugt oder aktualisiert
+- App bestaetigt Access ueber `get_my_access_state()`
 
-### 8) trial_redemptions
-- id
-- trial_code_id (FK)
-- user_id (FK)
-- stripe_subscription_id (nullable)
-- redeemed_at
-- unique (trial_code_id, user_id)
+## Datenmodell
 
-## Flow Mapping (MVP)
+### Aktiv
 
-- Checkout -> `checkout.session.completed`
-  - Wenn `mode=subscription`: create/update `subscriptions` + `entitlements`
-  - Wenn `mode=payment`: create `purchases` + `entitlements`
-- `customer.subscription.updated|deleted`
-  - Update `subscriptions.status` und `entitlements` entsprechend
-- `invoice.paid` / `payment_intent.succeeded`
-  - Confirm success
-- Refunds -> `charge.refunded`
-  - Update `purchases.status=refunded`, revoke entitlement
+- `billing_config`
+- `billing_products`
+- `billing_product_store_mappings`
+- `user_access_grants`
+- `revenuecat_customers`
+- `revenuecat_events`
+- `workshop_codes`
+- `workshop_code_redemptions`
 
-## Tax/VAT (AT, 20%)
+### Legacy und zu entfernen
 
-- Best Practice: Stripe Tax nutzen oder feste Tax Rate in Stripe anlegen (20% AT).
-- Steuerberechnung erfolgt auf Stripe; lokale DB speichert nur IDs/Events.
-- Optional spaeter: eigene Invoice-Tabelle fuer Reporting (tax_amount_cents, subtotal, total).
+- `billing_customers`
+- `subscription_plans`
+- `subscriptions`
+- `purchases`
+- `entitlements`
+- `payment_events`
+- `trial_codes`
+- `trial_redemptions`
 
-## TODOs fuer Start
+## Webhook-Grundsaetze
 
-- Stripe Produkte + Preise anlegen, IDs liefern
-- Webhook Endpunkt implementieren
-- RLS Policies fuer alle Billing-Tabellen
-- Trial Codes definieren (Codes, Tage, Limits)
-- Tax/VAT im Stripe Dashboard konfigurieren (20% AT)
+- Raw Payload immer speichern
+- Idempotenz ueber `event_id`
+- Keine Access-Aenderung nur auf Client-Callback
+- `CANCELLATION` entzieht nicht sofort den Zugriff
+- `BILLING_ISSUE` entzieht nicht sofort den Zugriff
+- `EXPIRATION` entzieht den Zugriff
+- `NON_RENEWING_PURCHASE` erzeugt Lifetime-Access ohne `ends_at`
+
+## Offene Implementierungspunkte
+
+- RevenueCat Edge Function implementieren
+- Client-Service fuer RevenueCat initialisieren
+- Paywall-Screen auf echtes Offering-Mapping umstellen
+- Access-State nach Signup, Session-Restore und Kauf sauber konsumieren
+- Produktkatalog mit echten iOS-/Android-Store-IDs und RevenueCat-Packages fuellen

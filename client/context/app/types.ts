@@ -7,6 +7,7 @@ import type {
   XpLevelUpPayloadT,
 } from "@/types/xp-types";
 import type { BudgetCategoryRow, IncomeCategoryRow } from "@/services/types";
+import type { AccessStateT } from "@/services/access-service";
 
 export type CurrencyCode = "EUR" | "USD" | "CHF";
 
@@ -120,6 +121,16 @@ export type MonthlyTrendData = {
 export type AppState = {
   isOnboardingComplete: boolean;
   isAppLoading: boolean;
+  isBillingStateLoading: boolean;
+  hasAccess: boolean;
+  accessKey: string | null;
+  accessSourceType: string | null;
+  accessActiveUntil: string | null;
+  paywallRequired: boolean;
+  paywallVisible: boolean;
+  trialEndsAt: string | null;
+  paywallVisibleFrom: string | null;
+  daysUntilTrialExpiry: number | null;
   userName: string | null;
   currency: CurrencyCode;
   incomeEntries: IncomeEntry[];
@@ -230,6 +241,7 @@ export type AppContextType = AppState & {
   enqueueStreak: (payload: XpStreakPayloadT) => void;
   consumeNextStreak: () => void;
   submitOnboarding: () => void;
+  refreshAccessState: () => Promise<AccessStateT>;
 };
 
 export type PersistedData = {

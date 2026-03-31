@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { notifyAccessStateChanged } from "@/services/access-service";
 import {
   clearPendingWorkshopCode,
   loadPendingWorkshopCode,
@@ -177,7 +178,13 @@ export const redeemWorkshopCode = async (
     ? ((data[0] ?? null) as WorkshopCodeRpcRowT | null)
     : (data as WorkshopCodeRpcRowT | null);
 
-  return normalizeResult(row);
+  const result = normalizeResult(row);
+
+  if (result.status === "redeemed" || result.status === "already_redeemed") {
+    notifyAccessStateChanged();
+  }
+
+  return result;
 };
 
 export const validateWorkshopCode = async (
