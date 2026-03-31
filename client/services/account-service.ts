@@ -5,58 +5,60 @@ import { supabase } from "@/lib/supabase";
  */
 export const deleteMyAccount = async (): Promise<void> => {
   const {
-    data: { session },
-    error: sessionError,
+    data: { session: initialSession },
+    error: initialSessionError,
   } = await supabase.auth.getSession();
 
-  if (sessionError) {
-    throw sessionError;
+  if (initialSessionError) {
+    throw initialSessionError;
   }
 
-  if (!session?.access_token) {
+  if (!initialSession) {
     throw new Error("Keine aktive Session gefunden.");
   }
 
-  const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL?.trim();
-  const publishableKey =
-    process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim() ||
-    process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY?.trim();
+  const { data: userData, error: userError } = await supabase.auth.getUser();
 
-  if (!supabaseUrl || !publishableKey) {
-    throw new Error("Supabase-Konfiguration fehlt.");
+  if (userError || !userData.user) {
+    throw userError ?? new Error("Kein authentifizierter User gefunden.");
   }
 
-  const response = await fetch(
-    `${supabaseUrl}/functions/v1/delete-my-account`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        apikey: publishableKey,
-        Authorization: `Bearer ${session.access_token}`,
-      },
-      body: JSON.stringify({}),
-    },
-  );
+  const { data: refreshData, error: refreshError } =
+    await supabase.auth.refreshSession();
 
-  if (response.ok) {
+  if (refreshError) {
+    throw refreshError;
+  }
+
+  const nextSession = refreshData.session ?? initialSession;
+
+  if (!nextSession?.access_token) {
+    throw new Error("Session konnte nicht aktualisiert werden.");
+  }
+
+  console.log("deleteMyAccount: invoking function", {
+    userId: userData.user.id,
+    refreshedSession: Boolean(refreshData.session),
+    accessTokenLength: nextSession.access_token.length,
+  });
+
+  const { data, error } = await supabase.functions.invoke("delete-my-account", {
+    body: {},
+    headers: {
+      Authorization: `Bearer ${nextSession.access_token}`,
+    },
+  });
+
+  if (!error) {
+    console.log("deleteMyAccount: function succeeded", { data });
     return;
   }
 
-  let errorMessage = `Account konnte nicht gelöscht werden (HTTP ${response.status}).`;
-  const responseText = await response.text();
+  console.error("deleteMyAccount: function failed", {
+    name: error.name,
+    message: error.message,
+    context: "delete-my-account",
+  });
 
-  try {
-    const errorPayload = JSON.parse(responseText) as { error?: string };
-
-    if (typeof errorPayload.error === "string" && errorPayload.error.trim()) {
-      errorMessage = errorPayload.error;
-    }
-  } catch {
-    if (responseText.trim()) {
-      errorMessage = responseText.trim();
-    }
-  }
-
-  throw new Error(errorMessage);
+  throw error;
 };

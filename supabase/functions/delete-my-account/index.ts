@@ -117,6 +117,12 @@ const deleteSpendRelatedRows = async (
 };
 
 Deno.serve(async (request: Request) => {
+  console.log("delete-my-account: incoming request", {
+    method: request.method,
+    hasAuthorizationHeader: Boolean(request.headers.get("Authorization")),
+    hasApiKeyHeader: Boolean(request.headers.get("apikey")),
+  });
+
   if (request.method !== "POST") {
     return jsonResponse({ error: "Method not allowed." }, 405);
   }
@@ -125,30 +131,54 @@ Deno.serve(async (request: Request) => {
     const authorizationHeader = request.headers.get("Authorization");
 
     if (!authorizationHeader) {
+      console.error("delete-my-account: missing authorization header");
       return jsonResponse({ error: "Missing authorization header." }, 401);
     }
 
     const userClient = createUserClient(authorizationHeader);
     const adminClient = createAdminClient();
     const token = authorizationHeader.replace(/^Bearer\s+/i, "").trim();
+    console.log("delete-my-account: validating user", {
+      tokenLength: token.length,
+      authorizationPrefix: authorizationHeader.slice(0, 12),
+    });
     const {
       data: { user },
       error: getUserError,
     } = await userClient.auth.getUser(token);
 
     if (getUserError || !user) {
+      console.error("delete-my-account: user validation failed", {
+        errorMessage: getUserError?.message ?? null,
+        hasUser: Boolean(user),
+      });
       return jsonResponse({ error: "Unauthorized." }, 401);
     }
 
+    console.log("delete-my-account: user validated", {
+      userId: user.id,
+    });
+
     await deleteSpendRelatedRows(adminClient, user.id);
+    console.log("delete-my-account: spend rows deleted", {
+      userId: user.id,
+    });
 
     const { error: deleteUserError } = await adminClient.auth.admin.deleteUser(
       user.id,
     );
 
     if (deleteUserError) {
+      console.error("delete-my-account: auth admin delete failed", {
+        userId: user.id,
+        errorMessage: deleteUserError.message,
+      });
       throw deleteUserError;
     }
+
+    console.log("delete-my-account: user deleted", {
+      userId: user.id,
+    });
 
     return jsonResponse({ success: true });
   } catch (error) {
