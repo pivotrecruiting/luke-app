@@ -606,8 +606,15 @@ export const styles = StyleSheet.create({
     // Used for: Delete account modal description text
     ...Typography.body,
     color: "#000000",
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.md,
     lineHeight: 22,
+  },
+  deleteModalHint: {
+    // Used for: Subscription warning text inside delete account modal
+    ...Typography.small,
+    color: "#6B7280",
+    lineHeight: 20,
+    marginBottom: Spacing.xl,
   },
   deleteModalButtons: {
     // Used for: Delete modal buttons container

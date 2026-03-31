@@ -39,6 +39,7 @@ import { resolveLevelByXp } from "@/features/xp/utils/levels";
 import { formatDaysSince } from "@/utils/dates";
 import {
   openExternalUrl,
+  openSubscriptionManagement,
   PRIVACY_URL,
   TERMS_URL,
 } from "@/utils/external-links";
@@ -117,6 +118,7 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
   const {
+    hasAccess,
     levels,
     userProgress,
     transactionBalance,
@@ -228,6 +230,9 @@ export default function ProfileScreen() {
   const highestStreak = `${highestStreakValue} ${
     highestStreakValue === 1 ? "Tag" : "Tage"
   }`;
+  const accountDeletionSubscriptionHint = hasAccess
+    ? "Dein aktives Abonnement wird durch das Löschen deines Accounts nicht automatisch beendet. Bitte kündige es zusätzlich im App Store oder bei Google Play."
+    : "Falls du ein aktives Abonnement über den App Store oder Google Play hast, wird es durch das Löschen deines Accounts nicht automatisch beendet. Bitte kündige es dort zusätzlich.";
 
   const handleOpenCurrencyModal = () => {
     setSelectedCurrency(currency);
@@ -1111,9 +1116,14 @@ export default function ProfileScreen() {
         <View style={styles.sectionCard}>
           <SettingsRow
             label="Hilfecenter"
-            action={{ type: "text", value: "Bald" }}
+            action={{ type: "text", value: "" }}
             showDivider={true}
             style={styles.preferenceRowDisabled}
+          />
+          <SettingsRow
+            label="Abo verwalten"
+            onPress={() => void openSubscriptionManagement()}
+            showDivider={true}
           />
           <SettingsRow
             label="Datenschutz"
@@ -1132,7 +1142,7 @@ export default function ProfileScreen() {
         <View style={styles.sectionCard}>
           <SettingsRow
             label="Theme"
-            action={{ type: "text", value: "Bald" }}
+            action={{ type: "text", value: "" }}
             showDivider={true}
             style={styles.preferenceRowDisabled}
           />
@@ -1144,7 +1154,7 @@ export default function ProfileScreen() {
           />
           <SettingsRow
             label="Sprache"
-            action={{ type: "text", value: "Bald" }}
+            action={{ type: "text", value: "" }}
             showDivider={false}
             style={styles.preferenceRowDisabled}
           />
@@ -1382,6 +1392,10 @@ export default function ProfileScreen() {
         <ThemedText style={styles.deleteModalDescription}>
           Möchtest du wirklich deinen Account löschen? Diese Aktion kann nicht
           rückgängig gemacht werden.
+        </ThemedText>
+
+        <ThemedText type="small" style={styles.deleteModalHint}>
+          {accountDeletionSubscriptionHint}
         </ThemedText>
 
         <View style={styles.deleteModalButtons}>
