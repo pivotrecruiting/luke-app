@@ -10,7 +10,7 @@ import {
   updateMyNotificationSettings,
 } from "@/services/notification-settings-service";
 
-const PUSH_TOKEN_STORAGE_KEY = "luke:push_notification_token";
+const PUSH_TOKEN_STORAGE_KEY = "luke_push_notification_token";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -57,7 +57,12 @@ const getStoredPushToken = async (): Promise<string | null> => {
     return null;
   }
 
-  return SecureStore.getItemAsync(PUSH_TOKEN_STORAGE_KEY);
+  try {
+    return await SecureStore.getItemAsync(PUSH_TOKEN_STORAGE_KEY);
+  } catch (error) {
+    console.error("Failed to read stored push token:", error);
+    return null;
+  }
 };
 
 const saveStoredPushToken = async (token: string): Promise<void> => {
@@ -65,7 +70,11 @@ const saveStoredPushToken = async (token: string): Promise<void> => {
     return;
   }
 
-  await SecureStore.setItemAsync(PUSH_TOKEN_STORAGE_KEY, token);
+  try {
+    await SecureStore.setItemAsync(PUSH_TOKEN_STORAGE_KEY, token);
+  } catch (error) {
+    console.error("Failed to store push token:", error);
+  }
 };
 
 const clearStoredPushToken = async (): Promise<void> => {
@@ -73,7 +82,11 @@ const clearStoredPushToken = async (): Promise<void> => {
     return;
   }
 
-  await SecureStore.deleteItemAsync(PUSH_TOKEN_STORAGE_KEY);
+  try {
+    await SecureStore.deleteItemAsync(PUSH_TOKEN_STORAGE_KEY);
+  } catch (error) {
+    console.error("Failed to clear stored push token:", error);
+  }
 };
 
 export const getDeviceTimezone = (): string | null => {

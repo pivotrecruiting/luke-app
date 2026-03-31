@@ -4,7 +4,7 @@ import { Platform } from "react-native";
 import { STORAGE_KEY } from "@/context/app/constants";
 import type { PersistedData } from "@/context/app/types";
 
-const PENDING_WORKSHOP_CODE_STORAGE_KEY = `${STORAGE_KEY}:pending_workshop_code`;
+const PENDING_WORKSHOP_CODE_STORAGE_KEY = "luke_pending_workshop_code";
 
 const secureStoreAvailablePromise =
   Platform.OS === "web" || typeof SecureStore.isAvailableAsync !== "function"
@@ -33,12 +33,16 @@ export const clearPersistedData = async (): Promise<void> => {
 export const loadPendingWorkshopCode =
   async (): Promise<PendingWorkshopCodeT | null> => {
     if (await secureStoreAvailablePromise) {
-      const secureValue = await SecureStore.getItemAsync(
-        PENDING_WORKSHOP_CODE_STORAGE_KEY,
-      );
+      try {
+        const secureValue = await SecureStore.getItemAsync(
+          PENDING_WORKSHOP_CODE_STORAGE_KEY,
+        );
 
-      if (secureValue) {
-        return JSON.parse(secureValue) as PendingWorkshopCodeT;
+        if (secureValue) {
+          return JSON.parse(secureValue) as PendingWorkshopCodeT;
+        }
+      } catch (error) {
+        console.error("Failed to read pending workshop code:", error);
       }
     }
 
@@ -55,10 +59,20 @@ export const savePendingWorkshopCode = async (
   const serializedValue = JSON.stringify(pendingWorkshopCode);
 
   if (await secureStoreAvailablePromise) {
-    await SecureStore.setItemAsync(
-      PENDING_WORKSHOP_CODE_STORAGE_KEY,
-      serializedValue,
-    );
+    try {
+      await SecureStore.setItemAsync(
+        PENDING_WORKSHOP_CODE_STORAGE_KEY,
+        serializedValue,
+      );
+    } catch (error) {
+      console.error("Failed to store pending workshop code:", error);
+      await AsyncStorage.setItem(
+        PENDING_WORKSHOP_CODE_STORAGE_KEY,
+        serializedValue,
+      );
+      return;
+    }
+
     await AsyncStorage.removeItem(PENDING_WORKSHOP_CODE_STORAGE_KEY);
     return;
   }
@@ -71,7 +85,11 @@ export const savePendingWorkshopCode = async (
 
 export const clearPendingWorkshopCode = async (): Promise<void> => {
   if (await secureStoreAvailablePromise) {
-    await SecureStore.deleteItemAsync(PENDING_WORKSHOP_CODE_STORAGE_KEY);
+    try {
+      await SecureStore.deleteItemAsync(PENDING_WORKSHOP_CODE_STORAGE_KEY);
+    } catch (error) {
+      console.error("Failed to clear pending workshop code:", error);
+    }
   }
 
   await AsyncStorage.removeItem(PENDING_WORKSHOP_CODE_STORAGE_KEY);
