@@ -148,6 +148,14 @@ export const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
+  sectionHint: {
+    // Used for: Helper text below section cards
+    ...Typography.small,
+    color: "#6B7280",
+    marginTop: -Spacing.lg,
+    marginBottom: Spacing["2xl"],
+    lineHeight: 20,
+  },
 
   // ============================================
   // Account Section Styles

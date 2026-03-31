@@ -14,7 +14,12 @@ type SettingsRowAction =
       iconName: keyof typeof Feather.glyphMap;
       onPress?: () => void;
     }
-  | { type: "toggle"; value: boolean; onValueChange?: (value: boolean) => void }
+  | {
+      type: "toggle";
+      value: boolean;
+      onValueChange?: (value: boolean) => void;
+      disabled?: boolean;
+    }
   | { type: "none" };
 
 type SettingsRowProps = {
@@ -89,7 +94,11 @@ export function SettingsRow({
 
       case "toggle":
         return (
-          <Toggle value={action.value} onValueChange={action.onValueChange} />
+          <Toggle
+            value={action.value}
+            onValueChange={action.onValueChange}
+            disabled={action.disabled}
+          />
         );
 
       default:

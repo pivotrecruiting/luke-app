@@ -1,5 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Alert, View, ScrollView, Pressable, TextInput } from "react-native";
+import {
+  Alert,
+  AppState,
+  Linking,
+  Pressable,
+  ScrollView,
+  TextInput,
+  View,
+} from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -15,6 +23,18 @@ import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { updateUserEmail, updateUserFullName } from "@/services/auth-service";
 import { upsertUserName } from "@/services/app-service";
+import {
+  fetchMyNotificationSettings,
+  type NotificationSettingsT,
+  updateMyNotificationSettings,
+} from "@/services/notification-settings-service";
+import {
+  deactivateStoredPushToken,
+  getDeviceTimezone,
+  getPushPermissionSnapshot,
+  requestPushPermissionsAndRegisterToken,
+  type PushPermissionSnapshotT,
+} from "@/services/push-notification-service";
 import { resolveLevelByXp } from "@/features/xp/utils/levels";
 import { formatDaysSince } from "@/utils/dates";
 import { getUserFirstName } from "@/utils/user";
@@ -25,6 +45,24 @@ import { ReviewModal } from "@/features/review/components/review-modal";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type EditableProfileFieldT = "name" | "email";
+
+const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettingsT = {
+  pushNotificationsEnabled: false,
+  dailyReminderEnabled: false,
+  weeklyReportEnabled: false,
+  monthlyReminderEnabled: false,
+  trialEndingPushEnabled: true,
+  timezone: null,
+  reminderTime: null,
+  weeklyReportDay: 1,
+  monthlyReminderDay: 1,
+};
+
+const DEFAULT_PUSH_PERMISSION: PushPermissionSnapshotT = {
+  status: "undetermined",
+  canAskAgain: true,
+  granted: false,
+};
 
 const profileNameSchema = z
   .string()
@@ -73,6 +111,15 @@ export default function ProfileScreen() {
   const [reviewModalVisible, setReviewModalVisible] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [isLoadingNotificationSettings, setIsLoadingNotificationSettings] =
+    useState(true);
+  const [isSavingNotificationSettings, setIsSavingNotificationSettings] =
+    useState(false);
+  const [pushPermission, setPushPermission] = useState<PushPermissionSnapshotT>(
+    DEFAULT_PUSH_PERMISSION,
+  );
+  const [notificationSettings, setNotificationSettings] =
+    useState<NotificationSettingsT>(DEFAULT_NOTIFICATION_SETTINGS);
   const [activeEditField, setActiveEditField] =
     useState<EditableProfileFieldT | null>(null);
   const [profileNameInput, setProfileNameInput] = useState("");
@@ -173,6 +220,69 @@ export default function ProfileScreen() {
     }
   }, [activeEditField]);
 
+  useEffect(() => {
+    let isCancelled = false;
+
+    const loadNotificationSettings = async () => {
+      try {
+        const [nextSettings, permissionSnapshot] = await Promise.all([
+          fetchMyNotificationSettings(),
+          getPushPermissionSnapshot(),
+        ]);
+
+        if (isCancelled) {
+          return;
+        }
+
+        setPushPermission(permissionSnapshot);
+        setNotificationSettings({
+          ...nextSettings,
+          timezone: nextSettings.timezone ?? getDeviceTimezone(),
+        });
+      } catch (error) {
+        if (isCancelled) {
+          return;
+        }
+
+        console.error("Failed to load notification settings:", error);
+        Alert.alert(
+          "Benachrichtigungen konnten nicht geladen werden",
+          "Bitte versuche es erneut.",
+        );
+      } finally {
+        if (!isCancelled) {
+          setIsLoadingNotificationSettings(false);
+        }
+      }
+    };
+
+    void loadNotificationSettings();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (nextState) => {
+      if (nextState !== "active") {
+        return;
+      }
+
+      void getPushPermissionSnapshot()
+        .then((nextSnapshot) => {
+          setPushPermission(nextSnapshot);
+        })
+        .catch((error) => {
+          console.error("Failed to refresh push permission snapshot:", error);
+        });
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
   const startEditingField = (field: EditableProfileFieldT) => {
     if (isSavingProfile || isLoggingOut) return;
 
@@ -199,6 +309,15 @@ export default function ProfileScreen() {
     if (isLoggingOut || isSavingProfile) return;
     setIsLoggingOut(true);
     try {
+      try {
+        await deactivateStoredPushToken();
+      } catch (error) {
+        console.error(
+          "Failed to deactivate stored push token on logout:",
+          error,
+        );
+      }
+
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error("Logout failed:", error);
@@ -331,6 +450,68 @@ export default function ProfileScreen() {
     // TODO: Implement delete account functionality
     setDeleteAccountModalVisible(false);
   };
+
+  const handleOpenNotificationSettings = async () => {
+    try {
+      await Linking.openSettings();
+    } catch (error) {
+      console.error("Failed to open system settings:", error);
+      Alert.alert(
+        "Einstellungen konnten nicht geöffnet werden",
+        "Bitte öffne die App-Einstellungen manuell.",
+      );
+    }
+  };
+
+  const updateNotificationSettingsValue = async (
+    updater: (current: NotificationSettingsT) => NotificationSettingsT,
+  ) => {
+    if (isLoadingNotificationSettings || isSavingNotificationSettings) {
+      return;
+    }
+
+    const previousSettings = notificationSettings;
+    const nextSettings = {
+      ...updater(previousSettings),
+      timezone: getDeviceTimezone() ?? previousSettings.timezone,
+    };
+
+    setNotificationSettings(nextSettings);
+    setIsSavingNotificationSettings(true);
+
+    try {
+      const savedSettings = await updateMyNotificationSettings(nextSettings);
+      setNotificationSettings(savedSettings);
+    } catch (error) {
+      setNotificationSettings(previousSettings);
+      console.error("Failed to update notification settings:", error);
+      Alert.alert(
+        "Benachrichtigungen konnten nicht gespeichert werden",
+        "Bitte versuche es erneut.",
+      );
+    } finally {
+      setIsSavingNotificationSettings(false);
+    }
+  };
+
+  const notificationsDisabled =
+    isLoadingNotificationSettings || isSavingNotificationSettings;
+  const reminderTogglesDisabled =
+    notificationsDisabled || !notificationSettings.pushNotificationsEnabled;
+  const notificationPermissionLabel = pushPermission.granted
+    ? "Erlaubt"
+    : pushPermission.status === "denied"
+      ? "In Einstellungen aktivieren"
+      : pushPermission.status === "unsupported"
+        ? "Nicht unterstützt"
+        : "Berechtigung anfragen";
+  const notificationPermissionHint = pushPermission.granted
+    ? "Push-Berechtigung ist aktiv. Der Token wird serverseitig synchronisiert."
+    : pushPermission.status === "denied"
+      ? "Push ist im Betriebssystem deaktiviert. Öffne die App-Einstellungen, um die Berechtigung zu aktivieren."
+      : pushPermission.status === "unsupported"
+        ? "Push-Benachrichtigungen werden auf dieser Plattform nicht unterstützt."
+        : "Beim Aktivieren von Push wird die Betriebssystem-Berechtigung angefragt.";
 
   return (
     <View style={styles.container}>
@@ -713,10 +894,70 @@ export default function ProfileScreen() {
         </View>
         <View style={styles.sectionCard}>
           <SettingsRow
+            label="Push-Benachrichtigungen"
+            action={{
+              type: "toggle",
+              value: notificationSettings.pushNotificationsEnabled,
+              disabled: notificationsDisabled,
+              onValueChange: (value) => {
+                void (async () => {
+                  await updateNotificationSettingsValue((current) => ({
+                    ...current,
+                    pushNotificationsEnabled: value,
+                  }));
+
+                  if (value) {
+                    try {
+                      const permissionSnapshot =
+                        await requestPushPermissionsAndRegisterToken();
+                      setPushPermission(permissionSnapshot);
+
+                      if (!permissionSnapshot.granted) {
+                        Alert.alert(
+                          "Push-Berechtigung fehlt",
+                          permissionSnapshot.status === "denied"
+                            ? "Bitte aktiviere Mitteilungen in den App-Einstellungen."
+                            : "Bitte erteile die Push-Berechtigung, damit Erinnerungen zugestellt werden können.",
+                        );
+                      }
+                    } catch (error) {
+                      console.error(
+                        "Failed to request push permission and register token:",
+                        error,
+                      );
+                      Alert.alert(
+                        "Push konnte nicht aktiviert werden",
+                        "Die Berechtigung oder Token-Registrierung ist fehlgeschlagen. Bitte versuche es erneut.",
+                      );
+                    }
+                    return;
+                  }
+
+                  try {
+                    await deactivateStoredPushToken();
+                  } catch (error) {
+                    console.error(
+                      "Failed to deactivate stored push token:",
+                      error,
+                    );
+                  }
+                })();
+              },
+            }}
+            showDivider={true}
+          />
+          <SettingsRow
             label="Täglicher Reminder"
             action={{
               type: "toggle",
-              value: false,
+              value: notificationSettings.dailyReminderEnabled,
+              disabled: reminderTogglesDisabled,
+              onValueChange: (value) => {
+                void updateNotificationSettingsValue((current) => ({
+                  ...current,
+                  dailyReminderEnabled: value,
+                }));
+              },
             }}
             showDivider={true}
           />
@@ -724,7 +965,14 @@ export default function ProfileScreen() {
             label="Wochen Report"
             action={{
               type: "toggle",
-              value: false,
+              value: notificationSettings.weeklyReportEnabled,
+              disabled: reminderTogglesDisabled,
+              onValueChange: (value) => {
+                void updateNotificationSettingsValue((current) => ({
+                  ...current,
+                  weeklyReportEnabled: value,
+                }));
+              },
             }}
             showDivider={true}
           />
@@ -732,11 +980,72 @@ export default function ProfileScreen() {
             label="Monatlicher Reminder"
             action={{
               type: "toggle",
-              value: false,
+              value: notificationSettings.monthlyReminderEnabled,
+              disabled: reminderTogglesDisabled,
+              onValueChange: (value) => {
+                void updateNotificationSettingsValue((current) => ({
+                  ...current,
+                  monthlyReminderEnabled: value,
+                }));
+              },
+            }}
+            showDivider={true}
+          />
+          <SettingsRow
+            label="Trial-Ende Erinnerung"
+            action={{
+              type: "toggle",
+              value: notificationSettings.trialEndingPushEnabled,
+              disabled: reminderTogglesDisabled,
+              onValueChange: (value) => {
+                void updateNotificationSettingsValue((current) => ({
+                  ...current,
+                  trialEndingPushEnabled: value,
+                }));
+              },
+            }}
+            showDivider={true}
+          />
+          <SettingsRow
+            label="Mitteilungen im Betriebssystem"
+            action={{
+              type: "button",
+              label: notificationPermissionLabel,
+              onPress: () => {
+                if (
+                  pushPermission.status === "undetermined" &&
+                  notificationSettings.pushNotificationsEnabled
+                ) {
+                  void requestPushPermissionsAndRegisterToken()
+                    .then((permissionSnapshot) => {
+                      setPushPermission(permissionSnapshot);
+                    })
+                    .catch((error) => {
+                      console.error(
+                        "Failed to request push permission from profile screen:",
+                        error,
+                      );
+                      Alert.alert(
+                        "Push-Berechtigung fehlgeschlagen",
+                        "Bitte versuche es erneut.",
+                      );
+                    });
+                  return;
+                }
+
+                void handleOpenNotificationSettings();
+              },
             }}
             showDivider={false}
           />
         </View>
+        <ThemedText type="small" style={styles.sectionHint}>
+          {isLoadingNotificationSettings
+            ? "Benachrichtigungen werden geladen."
+            : isSavingNotificationSettings
+              ? "Benachrichtigungen werden gespeichert."
+              : notificationPermissionHint}
+        </ThemedText>
 
         {/* Support & Rechtliches Section */}
         <View style={styles.sectionTitleWithIcon}>
@@ -764,7 +1073,7 @@ export default function ProfileScreen() {
         <View style={styles.sectionCard}>
           <SettingsRow label="Theme" showDivider={true} />
           <SettingsRow label="Währung" showDivider={true} />
-          <SettingsRow label="Monatlicher Reminder" showDivider={false} />
+          <SettingsRow label="Sprache" showDivider={false} />
         </View>
 
         {/* Über Luke Section */}
