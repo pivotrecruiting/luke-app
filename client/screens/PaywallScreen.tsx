@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import {
+  Alert,
   View,
   Text,
   Pressable,
   ScrollView,
   useWindowDimensions,
-  Alert,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -27,6 +27,11 @@ import {
   restoreRevenueCatPurchases,
   type RevenueCatPackageOptionT,
 } from "@/services/revenuecat-service";
+import {
+  openExternalUrl,
+  PRIVACY_URL,
+  TERMS_URL,
+} from "@/utils/external-links";
 import { styles } from "./styles/paywall-screen.styles";
 
 type PlanT = "monthly" | "yearly" | "lifetime";
@@ -251,13 +256,6 @@ export default function PaywallScreen() {
     } finally {
       setIsActionLoading(false);
     }
-  };
-
-  const handleTermsAndPrivacy = () => {
-    Alert.alert(
-      "Nutzungsbedingungen & Datenschutz",
-      "Funktion wird noch implementiert.",
-    );
   };
 
   const headerSubtitle = !hasAccess
@@ -490,10 +488,12 @@ export default function PaywallScreen() {
               <Text style={styles.footerLink}>Käufe wiederherstellen</Text>
             </Pressable>
             <Text style={styles.footerSeparator}>•</Text>
-            <Pressable onPress={handleTermsAndPrivacy}>
-              <Text style={styles.footerLink}>
-                Nutzungsbedingungen & Datenschutz
-              </Text>
+            <Pressable onPress={() => void openExternalUrl(TERMS_URL)}>
+              <Text style={styles.footerLink}>AGB</Text>
+            </Pressable>
+            <Text style={styles.footerSeparator}>•</Text>
+            <Pressable onPress={() => void openExternalUrl(PRIVACY_URL)}>
+              <Text style={styles.footerLink}>Datenschutz</Text>
             </Pressable>
           </View>
         </View>

@@ -37,6 +37,11 @@ import {
 } from "@/services/push-notification-service";
 import { resolveLevelByXp } from "@/features/xp/utils/levels";
 import { formatDaysSince } from "@/utils/dates";
+import {
+  openExternalUrl,
+  PRIVACY_URL,
+  TERMS_URL,
+} from "@/utils/external-links";
 import { getUserFirstName } from "@/utils/user";
 import { styles } from "./styles/profile-screen.styles";
 import { AppModal } from "@/components/ui/app-modal";
@@ -104,9 +109,6 @@ const getProviderLabel = (provider: string) => {
       return provider;
   }
 };
-
-const PRIVACY_URL = "https://www.thelukeapp.com/privacy";
-const TERMS_URL = "https://www.thelukeapp.com/terms";
 
 /**
  * Profile screen displaying user information, settings, and account options.
@@ -240,25 +242,6 @@ export default function ProfileScreen() {
   const handleSaveCurrency = () => {
     setCurrency(selectedCurrency);
     setCurrencyModalVisible(false);
-  };
-
-  const handleOpenExternalUrl = async (url: string) => {
-    try {
-      const supported = await Linking.canOpenURL(url);
-
-      if (!supported) {
-        Alert.alert("Link konnte nicht geöffnet werden");
-        return;
-      }
-
-      await Linking.openURL(url);
-    } catch (error) {
-      console.error("Failed to open external URL:", error);
-      Alert.alert(
-        "Link konnte nicht geöffnet werden",
-        "Bitte versuche es erneut.",
-      );
-    }
   };
 
   useEffect(() => {
@@ -1134,12 +1117,12 @@ export default function ProfileScreen() {
           />
           <SettingsRow
             label="Datenschutz"
-            onPress={() => void handleOpenExternalUrl(PRIVACY_URL)}
+            onPress={() => void openExternalUrl(PRIVACY_URL)}
             showDivider={true}
           />
           <SettingsRow
             label="Allgemeine Geschäftsbedingungen"
-            onPress={() => void handleOpenExternalUrl(TERMS_URL)}
+            onPress={() => void openExternalUrl(TERMS_URL)}
             showDivider={false}
           />
         </View>

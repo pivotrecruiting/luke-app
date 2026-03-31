@@ -26,6 +26,11 @@ import {
 } from "@/services/auth-service";
 import { AppModal } from "@/components/ui/app-modal";
 import { authScreenStyles } from "@/screens/styles/auth-screen.styles";
+import {
+  openExternalUrl,
+  PRIVACY_URL,
+  TERMS_URL,
+} from "@/utils/external-links";
 import { isValidEmail } from "@/utils/validation";
 import {
   clearPendingWorkshopCode,
@@ -223,8 +228,20 @@ export default function SignUpScreen() {
         <>
           <Text style={authScreenStyles.termsText}>
             Durch das Fortfahren stimmst du unseren{" "}
-            <Text style={authScreenStyles.termsLink}>AGB</Text> und dem{" "}
-            <Text style={authScreenStyles.termsLink}>Datenschutz</Text> zu.
+            <Text
+              style={authScreenStyles.termsLink}
+              onPress={() => void openExternalUrl(TERMS_URL)}
+            >
+              AGB
+            </Text>{" "}
+            und dem{" "}
+            <Text
+              style={authScreenStyles.termsLink}
+              onPress={() => void openExternalUrl(PRIVACY_URL)}
+            >
+              Datenschutz
+            </Text>{" "}
+            zu.
           </Text>
 
           <Pressable
