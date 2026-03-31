@@ -1,11 +1,15 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useRef } from "react";
 import {
-  View,
-  TextInput,
-  Text,
-  StyleSheet,
+  InputAccessoryView,
+  Keyboard,
+  Platform,
+  Pressable,
   type StyleProp,
   type ViewStyle,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import { Colors, Spacing, BorderRadius, Typography } from "@/constants/theme";
 import { useApp, type CurrencyCode } from "@/context/AppContext";
@@ -40,6 +44,9 @@ export default function CurrencyInput({
   autoFocus = false,
 }: CurrencyInputProps) {
   const { currency: appCurrency } = useApp();
+  const inputAccessoryViewId = useRef(
+    `currency-input-accessory-${Math.random().toString(36).slice(2, 10)}`,
+  ).current;
   const displayCurrency = currency ?? appCurrency;
   const currencySymbol = getCurrencySymbol(displayCurrency);
   const { decimalSeparator, thousandSeparator } = useMemo(
@@ -93,34 +100,51 @@ export default function CurrencyInput({
   );
 
   return (
-    <View
-      style={[
-        styles.container,
-        variant === "modal"
-          ? styles.modal
-          : highlighted
-            ? styles.highlighted
-            : styles.normal,
-        containerStyle,
-      ]}
-    >
-      <Text style={styles.currency}>{currencySymbol}</Text>
-      <TextInput
-        style={styles.input}
-        value={formattedValue}
-        onChangeText={handleChange}
-        placeholder={resolvedPlaceholder}
-        placeholderTextColor="#9CA3AF"
-        keyboardType="numeric"
-        autoFocus={autoFocus}
-        hitSlop={{
-          top: Spacing.sm,
-          bottom: Spacing.sm,
-          left: Spacing["3xl"],
-          right: Spacing.sm,
-        }}
-      />
-    </View>
+    <>
+      <View
+        style={[
+          styles.container,
+          variant === "modal"
+            ? styles.modal
+            : highlighted
+              ? styles.highlighted
+              : styles.normal,
+          containerStyle,
+        ]}
+      >
+        <Text style={styles.currency}>{currencySymbol}</Text>
+        <TextInput
+          style={styles.input}
+          value={formattedValue}
+          onChangeText={handleChange}
+          placeholder={resolvedPlaceholder}
+          placeholderTextColor="#9CA3AF"
+          keyboardType="numeric"
+          autoFocus={autoFocus}
+          inputAccessoryViewID={
+            Platform.OS === "ios" ? inputAccessoryViewId : undefined
+          }
+          hitSlop={{
+            top: Spacing.sm,
+            bottom: Spacing.sm,
+            left: Spacing["3xl"],
+            right: Spacing.sm,
+          }}
+        />
+      </View>
+      {Platform.OS === "ios" ? (
+        <InputAccessoryView nativeID={inputAccessoryViewId}>
+          <View style={styles.accessoryContainer}>
+            <Pressable
+              style={styles.accessoryButton}
+              onPress={() => Keyboard.dismiss()}
+            >
+              <Text style={styles.accessoryButtonText}>Fertig</Text>
+            </Pressable>
+          </View>
+        </InputAccessoryView>
+      ) : null}
+    </>
   );
 }
 
@@ -159,4 +183,22 @@ const styles = StyleSheet.create({
     textAlignVertical: "center",
     outlineStyle: "none",
   } as any,
+  accessoryContainer: {
+    alignItems: "flex-end",
+    backgroundColor: "#F9FAFB",
+    borderTopWidth: 1,
+    borderTopColor: "#E5E7EB",
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+  },
+  accessoryButton: {
+    minHeight: 44,
+    justifyContent: "center",
+    paddingHorizontal: Spacing.sm,
+  },
+  accessoryButtonText: {
+    ...Typography.body,
+    color: Colors.light.primary,
+    fontWeight: "600",
+  },
 });
