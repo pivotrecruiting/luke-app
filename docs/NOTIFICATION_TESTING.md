@@ -1,5 +1,53 @@
 # Notification Testing
 
+insert into public.notification_jobs (
+user_id,
+campaign_id,
+scheduled_for,
+status,
+dedupe_key,
+payload
+)
+select
+'22b99a25-2ae9-4e1c-b50d-31343d9c6a70'::uuid,
+c.id,
+now(),
+'pending',
+'manual-' || c.key || '-' || gen_random_uuid()::text,
+case c.key
+when 'daily_habit' then jsonb_build_object(
+'title', 'Daily Reminder Test',
+'body', 'Teste den taeglichen Reminder.',
+'deeplink', 'luke://add'
+)
+when 'weekly_wrap_up' then jsonb_build_object(
+'title', 'Weekly Reminder Test',
+'body', 'Teste den Weekly Recap.',
+'deeplink', 'luke://insights'
+)
+when 'monthly_check' then jsonb_build_object(
+'title', 'Monthly Reminder Test',
+'body', 'Teste den monatlichen Reminder.',
+'deeplink', 'luke://home'
+)
+when 'trial_ending' then jsonb_build_object(
+'title', 'Trial Ending Test',
+'body', 'Teste die Trial-Ende Erinnerung.',
+'deeplink', 'luke://paywall'
+)
+end
+from public.notification_campaigns c
+where c.key in ('daily_habit', 'weekly_wrap_up', 'monthly_check', 'trial_ending')
+and c.is_enabled = true
+returning id, dedupe_key, payload->>'title' as title;
+
+    curl -i \
+    -X POST \
+    "https://urbgiubqunvsqlmodhyb.supabase.co/functions/v1/notification-job-dispatcher" \
+    -H "Authorization: Bearer D9E9E881-9D09-4056-814E-8285D9588CF0" \
+    -H "Content-Type: application/json" \
+    -d '{"limit":10}'
+
 Diese Anleitung beschreibt den manuellen End-to-End-Test fuer Push-Benachrichtigungen in der App.
 
 ## Aktueller DB-Stand
