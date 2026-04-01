@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useApp } from "@/context/AppContext";
 import { navigationRef } from "@/navigation/navigation-ref";
+import { getHasPresentedExpiredWorkshopCat } from "@/navigation/workshop-retention-state";
 
 type PaywallGateProps = {
   currentRouteName: string | null;
@@ -29,7 +30,11 @@ export const PaywallGate = ({ currentRouteName }: PaywallGateProps) => {
       return null;
     }
 
-    if (!hasAccess && hadWorkshopAccess) {
+    if (
+      !hasAccess &&
+      hadWorkshopAccess &&
+      !getHasPresentedExpiredWorkshopCat()
+    ) {
       return null;
     }
 
@@ -50,6 +55,7 @@ export const PaywallGate = ({ currentRouteName }: PaywallGateProps) => {
     paywallVisibleFrom,
     trialEndsAt,
   ]);
+  const shouldForceReopenPaywall = Boolean(presentationKey) && !hasAccess;
 
   useEffect(() => {
     if (currentRouteName === "Paywall") {
@@ -61,7 +67,12 @@ export const PaywallGate = ({ currentRouteName }: PaywallGateProps) => {
     if (isAppLoading || isBillingStateLoading || !isOnboardingComplete) return;
     if (!navigationRef.isReady()) return;
     if (!presentationKey) return;
-    if (lastPresentedKeyRef.current === presentationKey) return;
+    if (
+      !shouldForceReopenPaywall &&
+      lastPresentedKeyRef.current === presentationKey
+    ) {
+      return;
+    }
 
     isNavigatingRef.current = true;
     lastPresentedKeyRef.current = presentationKey;
@@ -72,6 +83,7 @@ export const PaywallGate = ({ currentRouteName }: PaywallGateProps) => {
     isBillingStateLoading,
     isOnboardingComplete,
     presentationKey,
+    shouldForceReopenPaywall,
   ]);
 
   return null;

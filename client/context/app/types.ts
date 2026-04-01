@@ -242,7 +242,7 @@ export type AppContextType = AppState & {
   enqueueStreak: (payload: XpStreakPayloadT) => void;
   consumeNextStreak: () => void;
   submitOnboarding: () => void;
-  refreshAccessState: () => Promise<AccessStateT>;
+  refreshAccessState: (options?: { silent?: boolean }) => Promise<AccessStateT>;
 };
 
 export type PersistedData = {

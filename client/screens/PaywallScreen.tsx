@@ -24,6 +24,7 @@ import {
 import {
   getRevenueCatAvailability,
   getRevenueCatPackageOptions,
+  hasActiveRevenueCatAccess,
   purchaseRevenueCatPackage,
   restoreRevenueCatPurchases,
   type RevenueCatPackageOptionT,
@@ -180,7 +181,7 @@ export default function PaywallScreen() {
 
   const waitForServerAccessSync = async (): Promise<boolean> => {
     for (let attempt = 0; attempt < 8; attempt += 1) {
-      const nextAccessState = await refreshAccessState();
+      const nextAccessState = await refreshAccessState({ silent: true });
 
       if (!nextAccessState.paywallRequired) {
         return true;
@@ -191,7 +192,7 @@ export default function PaywallScreen() {
       });
     }
 
-    const finalAccessState = await refreshAccessState();
+    const finalAccessState = await refreshAccessState({ silent: true });
     return !finalAccessState.paywallRequired;
   };
 
@@ -260,7 +261,15 @@ export default function PaywallScreen() {
         );
       }
 
-      await restoreRevenueCatPurchases();
+      const restoreResult = await restoreRevenueCatPurchases();
+
+      if (!hasActiveRevenueCatAccess(restoreResult.customerInfo)) {
+        Alert.alert(
+          "Keine aktiven Käufe gefunden",
+          "Für dieses Konto konnten keine aktiven Käufe wiederhergestellt werden.",
+        );
+        return;
+      }
 
       const syncedAccess = await waitForServerAccessSync();
 

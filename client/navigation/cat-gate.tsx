@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useApp } from "@/context/AppContext";
 import { navigationRef } from "@/navigation/navigation-ref";
+import {
+  markExpiredWorkshopCatPresented,
+  resetExpiredWorkshopCatPresented,
+} from "@/navigation/workshop-retention-state";
 
 type CatGateProps = {
   currentRouteName: string | null;
@@ -30,6 +34,12 @@ export const CatGate = ({ currentRouteName }: CatGateProps) => {
   }, [hadWorkshopAccess, hasAccess, paywallRequired]);
 
   useEffect(() => {
+    if (!presentationKey) {
+      resetExpiredWorkshopCatPresented();
+    }
+  }, [presentationKey]);
+
+  useEffect(() => {
     if (currentRouteName === "Cat") {
       isNavigatingRef.current = false;
       return;
@@ -47,6 +57,7 @@ export const CatGate = ({ currentRouteName }: CatGateProps) => {
 
     isNavigatingRef.current = true;
     lastPresentedKeyRef.current = presentationKey;
+    markExpiredWorkshopCatPresented();
     navigationRef.navigate("Cat");
   }, [
     currentRouteName,

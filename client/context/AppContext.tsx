@@ -152,11 +152,13 @@ export function AppProvider({ children }: AppProviderProps) {
   const accessStateRefreshTimeoutRef = useRef<ReturnType<
     typeof setTimeout
   > | null>(null);
+  const accessStateRef = useRef(getDefaultAccessState());
 
   const { user } = useAuth();
   const userId = user?.id ?? null;
   const applyAccessState = useCallback(
     (nextState: ReturnType<typeof getDefaultAccessState>) => {
+      accessStateRef.current = nextState;
       setHasAccess(nextState.hasAccess);
       setAccessKey(nextState.accessKey);
       setAccessSourceType(nextState.sourceType);
@@ -171,32 +173,34 @@ export function AppProvider({ children }: AppProviderProps) {
     [],
   );
 
-  const refreshAccessState = useCallback(async () => {
-    if (!userId) {
-      const defaultAccessState = getDefaultAccessState();
-      applyAccessState(defaultAccessState);
-      setIsBillingStateLoading(false);
-      return defaultAccessState;
-    }
+  const refreshAccessState = useCallback(
+    async (options?: { silent?: boolean }) => {
+      if (!userId) {
+        const defaultAccessState = getDefaultAccessState();
+        applyAccessState(defaultAccessState);
+        setIsBillingStateLoading(false);
+        return defaultAccessState;
+      }
 
-    setIsBillingStateLoading(true);
+      if (!options?.silent) {
+        setIsBillingStateLoading(true);
+      }
 
-    try {
-      const nextState = await initializeAccessStateForUser(userId);
-      applyAccessState(nextState);
-      return nextState;
-    } catch (error) {
-      console.error("Failed to refresh access state:", error);
-      const fallbackState = {
-        ...getDefaultAccessState(),
-        hasAccess: true,
-      };
-      applyAccessState(fallbackState);
-      return fallbackState;
-    } finally {
-      setIsBillingStateLoading(false);
-    }
-  }, [applyAccessState, userId]);
+      try {
+        const nextState = await initializeAccessStateForUser(userId);
+        applyAccessState(nextState);
+        return nextState;
+      } catch (error) {
+        console.error("Failed to refresh access state:", error);
+        return accessStateRef.current;
+      } finally {
+        if (!options?.silent) {
+          setIsBillingStateLoading(false);
+        }
+      }
+    },
+    [applyAccessState, userId],
+  );
 
   const { useLocalFallback, setUseLocalFallback } = useAppDataLoader({
     userId,

@@ -171,6 +171,12 @@ const isPurchaseCancelledError = (error: PurchasesError): boolean =>
 const isPendingPurchaseError = (error: PurchasesError): boolean =>
   error.code === PURCHASES_ERROR_CODE.PAYMENT_PENDING_ERROR;
 
+export const hasActiveRevenueCatAccess = (
+  customerInfo: CustomerInfo,
+): boolean =>
+  Object.keys(customerInfo.entitlements.active).length > 0 ||
+  customerInfo.activeSubscriptions.length > 0;
+
 export const getRevenueCatAvailability =
   (): RevenueCatInitializationResultT => {
     if (!isSupportedPlatform()) {
