@@ -78,15 +78,23 @@ export default function PaywallScreen() {
 
   const headerMinHeight = Math.max(height * 0.27, 140);
   const studyCardOverlap = Spacing["5xl"];
+  const shouldLockPaywall = paywallRequired && !hasAccess;
 
-  usePreventRemove(paywallRequired, () => {
-    if (!paywallRequired) {
+  useEffect(() => {
+    navigation.setOptions({
+      gestureEnabled: !shouldLockPaywall,
+      fullScreenGestureEnabled: !shouldLockPaywall,
+    });
+  }, [navigation, shouldLockPaywall]);
+
+  usePreventRemove(shouldLockPaywall, () => {
+    if (!shouldLockPaywall) {
       return;
     }
   });
 
   useEffect(() => {
-    if (!paywallRequired) {
+    if (!shouldLockPaywall) {
       return;
     }
 
@@ -98,7 +106,7 @@ export default function PaywallScreen() {
     return () => {
       subscription.remove();
     };
-  }, [paywallRequired]);
+  }, [shouldLockPaywall]);
 
   useEffect(() => {
     let active = true;

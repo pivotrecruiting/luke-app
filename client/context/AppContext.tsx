@@ -110,6 +110,7 @@ export function AppProvider({ children }: AppProviderProps) {
   const [daysUntilTrialExpiry, setDaysUntilTrialExpiry] = useState<
     number | null
   >(null);
+  const [hadWorkshopAccess, setHadWorkshopAccess] = useState(false);
   const [userName, setUserNameState] = useState<string | null>(null);
   const [currency, setCurrencyState] = useState<CurrencyCode>("EUR");
   const [incomeEntries, setIncomeEntries] = useState<IncomeEntry[]>(
@@ -165,6 +166,7 @@ export function AppProvider({ children }: AppProviderProps) {
       setTrialEndsAt(nextState.trialEndsAt);
       setPaywallVisibleFrom(nextState.paywallVisibleFrom);
       setDaysUntilTrialExpiry(nextState.daysUntilExpiry);
+      setHadWorkshopAccess(nextState.hadWorkshopAccess);
     },
     [],
   );
@@ -652,6 +654,7 @@ export function AppProvider({ children }: AppProviderProps) {
     trialEndsAt,
     paywallVisibleFrom,
     daysUntilTrialExpiry,
+    hadWorkshopAccess,
     userName,
     setUserName: setUserNameState,
     currency,

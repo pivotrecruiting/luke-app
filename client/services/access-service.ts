@@ -10,6 +10,7 @@ type AccessStateRpcRowT = {
   paywall_visible_from: string | null;
   paywall_visible: boolean | null;
   days_until_expiry: number | null;
+  had_workshop_access: boolean | null;
 };
 
 type EnsureDefaultAppTrialRpcRowT = {
@@ -31,6 +32,7 @@ export type AccessStateT = {
   paywallVisibleFrom: string | null;
   paywallVisible: boolean;
   daysUntilExpiry: number | null;
+  hadWorkshopAccess: boolean;
 };
 
 export type EnsureDefaultAppTrialResultT = {
@@ -62,6 +64,7 @@ const DEFAULT_ACCESS_STATE: AccessStateT = {
   paywallVisibleFrom: null,
   paywallVisible: false,
   daysUntilExpiry: null,
+  hadWorkshopAccess: false,
 };
 
 const ensureUserRow = async (userId: string): Promise<void> => {
@@ -87,6 +90,7 @@ const normalizeAccessState = (
   paywallVisible: row?.paywall_visible ?? false,
   daysUntilExpiry:
     typeof row?.days_until_expiry === "number" ? row.days_until_expiry : null,
+  hadWorkshopAccess: row?.had_workshop_access ?? false,
 });
 
 const normalizeDefaultAppTrialResult = (

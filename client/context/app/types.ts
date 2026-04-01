@@ -131,6 +131,7 @@ export type AppState = {
   trialEndsAt: string | null;
   paywallVisibleFrom: string | null;
   daysUntilTrialExpiry: number | null;
+  hadWorkshopAccess: boolean;
   userName: string | null;
   currency: CurrencyCode;
   incomeEntries: IncomeEntry[];

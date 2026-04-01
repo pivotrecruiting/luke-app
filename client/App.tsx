@@ -11,6 +11,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/query-client";
 
 import RootStackNavigator from "@/navigation/RootStackNavigator";
+import { CatGate } from "@/navigation/cat-gate";
 import { LevelUpGate } from "@/navigation/level-up-gate";
 import { PaywallGate } from "@/navigation/paywall-gate";
 import { StreakGate } from "@/navigation/streak-gate";
@@ -204,6 +205,7 @@ function AppNavigator() {
           >
             <RootStackNavigator />
           </NavigationContainer>
+          <CatGate currentRouteName={currentRouteName} />
           <PaywallGate currentRouteName={currentRouteName} />
           <LevelUpGate currentRouteName={currentRouteName} />
           <StreakGate currentRouteName={currentRouteName} />

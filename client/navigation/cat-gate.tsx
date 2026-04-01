@@ -2,57 +2,35 @@ import { useEffect, useMemo, useRef } from "react";
 import { useApp } from "@/context/AppContext";
 import { navigationRef } from "@/navigation/navigation-ref";
 
-type PaywallGateProps = {
+type CatGateProps = {
   currentRouteName: string | null;
 };
 
 /**
- * Opens the paywall modal when the server-driven paywall state becomes visible.
+ * Presents the cat retention screen for workshop participants after their access expired.
  */
-export const PaywallGate = ({ currentRouteName }: PaywallGateProps) => {
+export const CatGate = ({ currentRouteName }: CatGateProps) => {
   const {
+    hasAccess,
+    paywallRequired,
+    hadWorkshopAccess,
     isOnboardingComplete,
     isAppLoading,
     isBillingStateLoading,
-    hasAccess,
-    hadWorkshopAccess,
-    paywallRequired,
-    paywallVisible,
-    trialEndsAt,
-    paywallVisibleFrom,
   } = useApp();
   const isNavigatingRef = useRef(false);
   const lastPresentedKeyRef = useRef<string | null>(null);
 
   const presentationKey = useMemo(() => {
-    if (!paywallRequired) {
+    if (hasAccess || !paywallRequired || !hadWorkshopAccess) {
       return null;
     }
 
-    if (!hasAccess && hadWorkshopAccess) {
-      return null;
-    }
-
-    if (hasAccess && paywallVisible) {
-      return null;
-    }
-
-    if (!hasAccess) {
-      return "no-access";
-    }
-
-    return `trial:${paywallVisibleFrom ?? trialEndsAt ?? "visible"}`;
-  }, [
-    hasAccess,
-    hadWorkshopAccess,
-    paywallRequired,
-    paywallVisible,
-    paywallVisibleFrom,
-    trialEndsAt,
-  ]);
+    return "workshop-expired";
+  }, [hadWorkshopAccess, hasAccess, paywallRequired]);
 
   useEffect(() => {
-    if (currentRouteName === "Paywall") {
+    if (currentRouteName === "Cat") {
       isNavigatingRef.current = false;
       return;
     }
@@ -61,11 +39,15 @@ export const PaywallGate = ({ currentRouteName }: PaywallGateProps) => {
     if (isAppLoading || isBillingStateLoading || !isOnboardingComplete) return;
     if (!navigationRef.isReady()) return;
     if (!presentationKey) return;
+    if (currentRouteName === "Paywall") return;
+    if (currentRouteName === "LevelUp" || currentRouteName === "Streak") {
+      return;
+    }
     if (lastPresentedKeyRef.current === presentationKey) return;
 
     isNavigatingRef.current = true;
     lastPresentedKeyRef.current = presentationKey;
-    navigationRef.navigate("Paywall");
+    navigationRef.navigate("Cat");
   }, [
     currentRouteName,
     isAppLoading,
