@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
 import {
   Alert,
+  BackHandler,
   View,
   Text,
   Pressable,
   ScrollView,
   useWindowDimensions,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, usePreventRemove } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -56,6 +57,7 @@ export default function PaywallScreen() {
   const { height } = useWindowDimensions();
   const {
     hasAccess,
+    paywallRequired,
     paywallVisible,
     trialEndsAt,
     daysUntilTrialExpiry,
@@ -76,6 +78,27 @@ export default function PaywallScreen() {
 
   const headerMinHeight = Math.max(height * 0.27, 140);
   const studyCardOverlap = Spacing["5xl"];
+
+  usePreventRemove(paywallRequired, () => {
+    if (!paywallRequired) {
+      return;
+    }
+  });
+
+  useEffect(() => {
+    if (!paywallRequired) {
+      return;
+    }
+
+    const subscription = BackHandler.addEventListener(
+      "hardwareBackPress",
+      () => true,
+    );
+
+    return () => {
+      subscription.remove();
+    };
+  }, [paywallRequired]);
 
   useEffect(() => {
     let active = true;

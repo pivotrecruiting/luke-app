@@ -208,6 +208,8 @@ export default function RootStackNavigator() {
               presentation: "modal",
               animation: "fade_from_bottom",
               animationDuration: 300,
+              gestureEnabled: false,
+              fullScreenGestureEnabled: false,
             }}
           />
           <Stack.Screen
