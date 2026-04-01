@@ -1,21 +1,24 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
+  Alert,
+  BackHandler,
   View,
   Text,
   Pressable,
   ScrollView,
   useWindowDimensions,
-  Alert,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, usePreventRemove } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useApp } from "@/context/AppContext";
+import { useAuth } from "@/context/AuthContext";
 import { Colors, HeaderGradient, Spacing } from "@/constants/theme";
 import { PurpleGradientButton } from "@/components/ui/purple-gradient-button";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
+import { allowProfileAccessFromPaywall } from "@/navigation/paywall-navigation-state";
 import {
   listActiveBillingProducts,
   type BillingProductT,
@@ -23,10 +26,17 @@ import {
 import {
   getRevenueCatAvailability,
   getRevenueCatPackageOptions,
+  hasActiveRevenueCatAccess,
+  initializeRevenueCatForUser,
   purchaseRevenueCatPackage,
   restoreRevenueCatPurchases,
   type RevenueCatPackageOptionT,
 } from "@/services/revenuecat-service";
+import {
+  openExternalUrl,
+  PRIVACY_URL,
+  TERMS_URL,
+} from "@/utils/external-links";
 import { styles } from "./styles/paywall-screen.styles";
 
 type PlanT = "monthly" | "yearly" | "lifetime";
@@ -41,6 +51,14 @@ const FEATURES: {
   { icon: "chart-bar", text: "Einfacher als jede Excel-Liste" },
 ];
 
+const getReadableRevenueCatErrorMessage = (error: unknown): string => {
+  if (error instanceof Error && error.message.trim().length > 0) {
+    return error.message;
+  }
+
+  return "RevenueCat konnte keine kaufbaren Pakete laden.";
+};
+
 /**
  * Paywall screen that surfaces server-driven trial urgency and billing products.
  */
@@ -51,11 +69,13 @@ export default function PaywallScreen() {
   const { height } = useWindowDimensions();
   const {
     hasAccess,
+    paywallRequired,
     paywallVisible,
     trialEndsAt,
     daysUntilTrialExpiry,
     refreshAccessState,
   } = useApp();
+  const { user } = useAuth();
   const [selectedPlan, setSelectedPlan] = useState<PlanT>("yearly");
   const [fallbackProducts, setFallbackProducts] = useState<BillingProductT[]>(
     [],
@@ -65,12 +85,73 @@ export default function PaywallScreen() {
   >([]);
   const [isProductsLoading, setIsProductsLoading] = useState(true);
   const [isActionLoading, setIsActionLoading] = useState(false);
+  const [isNavigatingToSettings, setIsNavigatingToSettings] = useState(false);
   const [revenueCatErrorMessage, setRevenueCatErrorMessage] = useState<
     string | null
   >(null);
 
   const headerMinHeight = Math.max(height * 0.27, 140);
   const studyCardOverlap = Spacing["5xl"];
+  const shouldLockPaywall = paywallRequired && !hasAccess;
+  const shouldPreventPaywallRemoval =
+    shouldLockPaywall && !isNavigatingToSettings;
+
+  const ensureRevenueCatReady = useCallback(async (): Promise<boolean> => {
+    const revenueCatAvailability = getRevenueCatAvailability();
+
+    if (revenueCatAvailability.status !== "ready") {
+      setRevenueCatErrorMessage(
+        revenueCatAvailability.status === "missing_api_key"
+          ? "RevenueCat API-Keys fehlen noch in den `EXPO_PUBLIC_REVENUECAT_*` Variablen."
+          : "RevenueCat ist auf dieser Plattform nicht verfuegbar.",
+      );
+      return false;
+    }
+
+    if (!user?.id) {
+      setRevenueCatErrorMessage(
+        "RevenueCat konnte ohne angemeldeten Nutzer nicht initialisiert werden.",
+      );
+      return false;
+    }
+
+    try {
+      await initializeRevenueCatForUser(user.id);
+      return true;
+    } catch (error) {
+      console.error("Failed to initialize RevenueCat for paywall:", error);
+      setRevenueCatErrorMessage(getReadableRevenueCatErrorMessage(error));
+      return false;
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    navigation.setOptions({
+      gestureEnabled: !shouldPreventPaywallRemoval,
+      fullScreenGestureEnabled: !shouldPreventPaywallRemoval,
+    });
+  }, [navigation, shouldPreventPaywallRemoval]);
+
+  usePreventRemove(shouldPreventPaywallRemoval, () => {
+    if (!shouldPreventPaywallRemoval) {
+      return;
+    }
+  });
+
+  useEffect(() => {
+    if (!shouldPreventPaywallRemoval) {
+      return;
+    }
+
+    const subscription = BackHandler.addEventListener(
+      "hardwareBackPress",
+      () => true,
+    );
+
+    return () => {
+      subscription.remove();
+    };
+  }, [shouldPreventPaywallRemoval]);
 
   useEffect(() => {
     let active = true;
@@ -79,7 +160,6 @@ export default function PaywallScreen() {
       setIsProductsLoading(true);
 
       try {
-        const revenueCatAvailability = getRevenueCatAvailability();
         const nextProducts = await listActiveBillingProducts();
         if (!active) {
           return;
@@ -87,7 +167,13 @@ export default function PaywallScreen() {
 
         setFallbackProducts(nextProducts);
 
-        if (revenueCatAvailability.status === "ready") {
+        const revenueCatIsReady = await ensureRevenueCatReady();
+
+        if (!active) {
+          return;
+        }
+
+        if (revenueCatIsReady) {
           const nextPackages = await getRevenueCatPackageOptions();
 
           if (!active) {
@@ -110,12 +196,6 @@ export default function PaywallScreen() {
             setSelectedPlan(nextPackages[0].plan);
             return;
           }
-        } else {
-          setRevenueCatErrorMessage(
-            revenueCatAvailability.status === "missing_api_key"
-              ? "RevenueCat API-Keys fehlen noch in den `EXPO_PUBLIC_REVENUECAT_*` Variablen."
-              : "RevenueCat ist auf dieser Plattform nicht verfuegbar.",
-          );
         }
 
         if (nextProducts.some((product) => product.productKey === "yearly")) {
@@ -127,7 +207,10 @@ export default function PaywallScreen() {
           setSelectedPlan(nextProducts[0].productKey);
         }
       } catch (error) {
-        console.error("Failed to load billing products:", error);
+        console.error("Failed to load billing products or RevenueCat:", error);
+        if (active) {
+          setRevenueCatErrorMessage(getReadableRevenueCatErrorMessage(error));
+        }
       } finally {
         if (active) {
           setIsProductsLoading(false);
@@ -140,11 +223,11 @@ export default function PaywallScreen() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [ensureRevenueCatReady, user?.id]);
 
   const waitForServerAccessSync = async (): Promise<boolean> => {
     for (let attempt = 0; attempt < 8; attempt += 1) {
-      const nextAccessState = await refreshAccessState();
+      const nextAccessState = await refreshAccessState({ silent: true });
 
       if (!nextAccessState.paywallRequired) {
         return true;
@@ -155,28 +238,51 @@ export default function PaywallScreen() {
       });
     }
 
-    const finalAccessState = await refreshAccessState();
+    const finalAccessState = await refreshAccessState({ silent: true });
     return !finalAccessState.paywallRequired;
   };
 
   const handleCtaPress = () => {
-    const selectedPackage = revenueCatPackages.find(
-      (pkg) => pkg.plan === selectedPlan,
-    );
-
-    if (!selectedPackage) {
-      Alert.alert(
-        "Kauf derzeit nicht verfuegbar",
-        revenueCatErrorMessage ??
-          "Es konnte kein kaufbares RevenueCat-Paket geladen werden.",
-      );
-      return;
-    }
-
     void (async () => {
       setIsActionLoading(true);
 
       try {
+        const revenueCatIsReady = await ensureRevenueCatReady();
+
+        if (!revenueCatIsReady) {
+          Alert.alert(
+            "Kauf derzeit nicht verfuegbar",
+            revenueCatErrorMessage ??
+              "Es konnte kein kaufbares RevenueCat-Paket geladen werden.",
+          );
+          return;
+        }
+
+        let availablePackages = revenueCatPackages;
+
+        if (availablePackages.length === 0) {
+          availablePackages = await getRevenueCatPackageOptions();
+          setRevenueCatPackages(availablePackages);
+          setRevenueCatErrorMessage(
+            availablePackages.length === 0
+              ? "In RevenueCat ist aktuell kein aktives Offering verfuegbar."
+              : null,
+          );
+        }
+
+        const selectedPackage = availablePackages.find(
+          (pkg) => pkg.plan === selectedPlan,
+        );
+
+        if (!selectedPackage) {
+          Alert.alert(
+            "Kauf derzeit nicht verfuegbar",
+            revenueCatErrorMessage ??
+              "Es konnte kein kaufbares RevenueCat-Paket geladen werden.",
+          );
+          return;
+        }
+
         const purchaseResult = await purchaseRevenueCatPackage(
           selectedPackage.packageToPurchase,
         );
@@ -205,9 +311,10 @@ export default function PaywallScreen() {
         );
       } catch (error) {
         console.error("RevenueCat purchase failed:", error);
+        setRevenueCatErrorMessage(getReadableRevenueCatErrorMessage(error));
         Alert.alert(
           "Kauf fehlgeschlagen",
-          "Der Kauf konnte nicht abgeschlossen werden.",
+          getReadableRevenueCatErrorMessage(error),
         );
       } finally {
         setIsActionLoading(false);
@@ -218,13 +325,23 @@ export default function PaywallScreen() {
   const handleRestorePurchases = async () => {
     try {
       setIsActionLoading(true);
-      if (getRevenueCatAvailability().status !== "ready") {
+
+      const revenueCatIsReady = await ensureRevenueCatReady();
+      if (!revenueCatIsReady) {
         throw new Error(
           revenueCatErrorMessage ?? "RevenueCat ist nicht bereit.",
         );
       }
 
-      await restoreRevenueCatPurchases();
+      const restoreResult = await restoreRevenueCatPurchases();
+
+      if (!hasActiveRevenueCatAccess(restoreResult.customerInfo)) {
+        Alert.alert(
+          "Keine aktiven Käufe gefunden",
+          "Für dieses Konto konnten keine aktiven Käufe wiederhergestellt werden.",
+        );
+        return;
+      }
 
       const syncedAccess = await waitForServerAccessSync();
 
@@ -243,21 +360,21 @@ export default function PaywallScreen() {
         "Restore verarbeitet",
         "Die Wiederherstellung wurde gestartet. Der Zugriff wird serverseitig noch synchronisiert.",
       );
-    } catch {
+    } catch (error) {
+      setRevenueCatErrorMessage(getReadableRevenueCatErrorMessage(error));
       Alert.alert(
         "Wiederherstellung fehlgeschlagen",
-        "Die Kaeufe konnten nicht wiederhergestellt werden.",
+        getReadableRevenueCatErrorMessage(error),
       );
     } finally {
       setIsActionLoading(false);
     }
   };
 
-  const handleTermsAndPrivacy = () => {
-    Alert.alert(
-      "Nutzungsbedingungen & Datenschutz",
-      "Funktion wird noch implementiert.",
-    );
+  const handleOpenSettings = () => {
+    setIsNavigatingToSettings(true);
+    allowProfileAccessFromPaywall();
+    navigation.replace("Main", { screen: "Profile" });
   };
 
   const headerSubtitle = !hasAccess
@@ -486,14 +603,20 @@ export default function PaywallScreen() {
           </PurpleGradientButton>
 
           <View style={styles.footerLinks}>
+            <Pressable onPress={handleOpenSettings}>
+              <Text style={styles.footerLink}>Einstellungen</Text>
+            </Pressable>
+            <Text style={styles.footerSeparator}>•</Text>
             <Pressable onPress={handleRestorePurchases}>
               <Text style={styles.footerLink}>Käufe wiederherstellen</Text>
             </Pressable>
             <Text style={styles.footerSeparator}>•</Text>
-            <Pressable onPress={handleTermsAndPrivacy}>
-              <Text style={styles.footerLink}>
-                Nutzungsbedingungen & Datenschutz
-              </Text>
+            <Pressable onPress={() => void openExternalUrl(TERMS_URL)}>
+              <Text style={styles.footerLink}>AGB</Text>
+            </Pressable>
+            <Text style={styles.footerSeparator}>•</Text>
+            <Pressable onPress={() => void openExternalUrl(PRIVACY_URL)}>
+              <Text style={styles.footerLink}>Datenschutz</Text>
             </Pressable>
           </View>
         </View>

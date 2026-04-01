@@ -1,5 +1,11 @@
 import React from "react";
-import { View, StyleSheet, Pressable, ViewStyle } from "react-native";
+import {
+  View,
+  StyleSheet,
+  Pressable,
+  type TextStyle,
+  type ViewStyle,
+} from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { ThemedText } from "@/components/ThemedText";
 import { Toggle } from "@/components/Toggle";
@@ -8,13 +14,26 @@ import { Spacing, BorderRadius } from "@/constants/theme";
 
 type SettingsRowAction =
   | { type: "text"; value: string }
-  | { type: "button"; label: string; onPress?: () => void }
+  | {
+      type: "button";
+      label: string;
+      onPress?: () => void;
+      buttonStyle?: ViewStyle;
+      textStyle?: TextStyle;
+      textLightColor?: string;
+      textDarkColor?: string;
+    }
   | {
       type: "icon";
       iconName: keyof typeof Feather.glyphMap;
       onPress?: () => void;
     }
-  | { type: "toggle"; value: boolean; onValueChange?: (value: boolean) => void }
+  | {
+      type: "toggle";
+      value: boolean;
+      onValueChange?: (value: boolean) => void;
+      disabled?: boolean;
+    }
   | { type: "none" };
 
 type SettingsRowProps = {
@@ -59,10 +78,16 @@ export function SettingsRow({
                 backgroundColor: theme.backgroundSecondary,
                 opacity: pressed ? 0.7 : 1,
               },
+              action.buttonStyle,
             ]}
             onPress={action.onPress}
           >
-            <ThemedText type="small" style={styles.actionButtonText}>
+            <ThemedText
+              type="small"
+              style={[styles.actionButtonText, action.textStyle]}
+              lightColor={action.textLightColor}
+              darkColor={action.textDarkColor}
+            >
               {action.label}
             </ThemedText>
           </Pressable>
@@ -89,7 +114,11 @@ export function SettingsRow({
 
       case "toggle":
         return (
-          <Toggle value={action.value} onValueChange={action.onValueChange} />
+          <Toggle
+            value={action.value}
+            onValueChange={action.onValueChange}
+            disabled={action.disabled}
+          />
         );
 
       default:

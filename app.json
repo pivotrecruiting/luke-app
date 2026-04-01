@@ -1,20 +1,25 @@
 {
   "expo": {
-    "name": "my-app",
-    "slug": "my-app",
-    "version": "1.0.0",
+    "name": "Luke",
+    "slug": "Luke",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "Luke",
+    "scheme": "luke",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "usesAppleSignIn": true,
-      "bundleIdentifier": "com.deni.luke"
+      "bundleIdentifier": "com.deni.luke",
+      "buildNumber": "1",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.deni.luke",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -42,12 +47,18 @@
         }
       ],
       "expo-web-browser",
+      "expo-notifications",
       "expo-secure-store",
       "expo-font",
       "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "reactCompiler": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "144fac01-6ecd-41e8-a8d7-3b3b01df244c"
+      }
     }
   }
 }

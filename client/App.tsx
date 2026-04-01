@@ -11,6 +11,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/query-client";
 
 import RootStackNavigator from "@/navigation/RootStackNavigator";
+import { CatGate } from "@/navigation/cat-gate";
 import { LevelUpGate } from "@/navigation/level-up-gate";
 import { PaywallGate } from "@/navigation/paywall-gate";
 import { StreakGate } from "@/navigation/streak-gate";
@@ -19,6 +20,12 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AppProvider, useApp } from "@/context/AppContext";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { completeAuthCallbackFromUrl } from "@/services/auth-service";
+import {
+  deactivateStoredPushToken,
+  getLastNotificationResponseDeepLink,
+  subscribeToNotificationResponses,
+  syncPushTokenForCurrentUser,
+} from "@/services/push-notification-service";
 
 const ADD_DEEPLINK_PATH = "add";
 const AUTH_CALLBACK_PATH = "auth/callback";
@@ -35,6 +42,7 @@ function AppNavigator() {
   const [currentRouteName, setCurrentRouteName] = useState<string | null>(null);
   const [isNavReady, setIsNavReady] = useState(false);
   const hasHandledInitialUrl = useRef(false);
+  const hasHandledInitialNotificationResponse = useRef(false);
 
   const handleNavStateChange = useCallback(() => {
     setCurrentRouteName(getActiveRouteName());
@@ -71,6 +79,43 @@ function AppNavigator() {
     [showOnboarding],
   );
 
+  const handleNotificationDeepLink = useCallback(
+    async (url: string | null) => {
+      if (!url) {
+        return;
+      }
+
+      const { path } = Linking.parse(url);
+      const normalizedPath = (path ?? "").replace(/\/+$/, "");
+
+      if (showOnboarding) {
+        return;
+      }
+
+      if (!navigationRef.isReady()) {
+        return;
+      }
+
+      switch (normalizedPath) {
+        case "home":
+          navigationRef.navigate("Main", { screen: "Home" });
+          return;
+        case "insights":
+          navigationRef.navigate("Main", { screen: "Insights" });
+          return;
+        case "add":
+          navigationRef.navigate("Main", { screen: "Add" });
+          return;
+        case "paywall":
+          navigationRef.navigate("Paywall");
+          return;
+        default:
+          await handleDeepLink(url);
+      }
+    },
+    [handleDeepLink, showOnboarding],
+  );
+
   useEffect(() => {
     if (!isNavReady || isAuthLoading || isAppLoading || isBillingStateLoading) {
       return;
@@ -98,6 +143,57 @@ function AppNavigator() {
     isNavReady,
   ]);
 
+  useEffect(() => {
+    if (!isNavReady || isAuthLoading || isAppLoading || isBillingStateLoading) {
+      return;
+    }
+
+    if (!hasHandledInitialNotificationResponse.current) {
+      hasHandledInitialNotificationResponse.current = true;
+
+      getLastNotificationResponseDeepLink()
+        .then((deepLink) => handleNotificationDeepLink(deepLink))
+        .catch(() => {});
+    }
+
+    const unsubscribe = subscribeToNotificationResponses((deepLink) => {
+      void handleNotificationDeepLink(deepLink);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [
+    handleNotificationDeepLink,
+    isAuthLoading,
+    isAppLoading,
+    isBillingStateLoading,
+    isNavReady,
+  ]);
+
+  useEffect(() => {
+    if (isAuthLoading || isAppLoading || isBillingStateLoading) {
+      return;
+    }
+
+    if (!isAuthenticated) {
+      void deactivateStoredPushToken().catch((error) => {
+        console.error("Failed to deactivate stored push token:", error);
+      });
+      return;
+    }
+
+    void syncPushTokenForCurrentUser().catch((error) => {
+      console.error("Failed to sync push token for current user:", error);
+    });
+  }, [
+    isAppLoading,
+    isAuthLoading,
+    isAuthenticated,
+    isBillingStateLoading,
+    session?.user?.id,
+  ]);
+
   return (
     <SafeAreaProvider>
       <GestureHandlerRootView style={styles.root}>
@@ -109,6 +205,7 @@ function AppNavigator() {
           >
             <RootStackNavigator />
           </NavigationContainer>
+          <CatGate currentRouteName={currentRouteName} />
           <PaywallGate currentRouteName={currentRouteName} />
           <LevelUpGate currentRouteName={currentRouteName} />
           <StreakGate currentRouteName={currentRouteName} />

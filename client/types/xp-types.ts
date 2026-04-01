@@ -62,9 +62,26 @@ export type UserProgressT = {
 };
 
 export type XpAwardResultT = {
+  awarded: boolean;
   xpDelta: number;
   appliedMultiplier: number;
   baseXp: number;
   nextTotal: number;
   nextLevelId: string | null;
+  userProgress: UserProgressT | null;
+};
+
+export type XpDailyLoginResultT = {
+  awarded: boolean;
+  xpDelta: number;
+  streakCount: number;
+  streakVariant: "ongoing" | "completed" | null;
+  userProgress: UserProgressT | null;
+};
+
+export type XpStateT = {
+  levels: XpLevelT[];
+  eventTypes: XpEventTypeT[];
+  eventRules: XpEventRuleT[];
+  userProgress: UserProgressT | null;
 };

@@ -17,6 +17,7 @@ import { HeaderTabToggle } from "@/components/ui/header-tab-toggle";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Colors, HeaderGradient, Spacing } from "@/constants/theme";
 import { PurpleGradientButton } from "@/components/ui/purple-gradient-button";
+import { CategoryPickerGrid } from "@/components/ui/category-picker-grid";
 import { useApp } from "@/context/AppContext";
 import {
   formatCurrencyAmount,
@@ -249,63 +250,27 @@ export default function AddScreen() {
 
         <View style={styles.inputCard}>
           <Text style={styles.inputLabel}>Kategorie</Text>
-          <View style={styles.categoriesGrid}>
-            {categories.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Feather name="inbox" size={20} color="#9CA3AF" />
-                <Text style={styles.emptyStateTitle}>
-                  {isAppLoading
-                    ? "Kategorien werden geladen"
-                    : "Keine Kategorien verfügbar"}
-                </Text>
-                <Text style={styles.emptyStateSubtitle}>
-                  {isAppLoading
-                    ? "Bitte kurz warten."
-                    : "Bitte prüfe deine Datenbank."}
-                </Text>
-              </View>
-            ) : (
-              categories.map((category) => (
-                <Pressable
-                  key={category.id}
-                  style={[
-                    styles.categoryItem,
-                    selectedCategory === category.id &&
-                      styles.categoryItemActive,
-                  ]}
-                  onPress={() => {
-                    Keyboard.dismiss();
-                    setSelectedCategory(category.id);
-                  }}
-                >
-                  <View
-                    style={[
-                      styles.categoryIcon,
-                      selectedCategory === category.id &&
-                        styles.categoryIconActive,
-                    ]}
-                  >
-                    <Feather
-                      name={category.icon as any}
-                      size={20}
-                      color={
-                        selectedCategory === category.id ? "#FFFFFF" : "#6B7280"
-                      }
-                    />
-                  </View>
-                  <Text
-                    style={[
-                      styles.categoryName,
-                      selectedCategory === category.id &&
-                        styles.categoryNameActive,
-                    ]}
-                  >
-                    {category.name}
-                  </Text>
-                </Pressable>
-              ))
-            )}
-          </View>
+          {categories.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Feather name="inbox" size={20} color="#9CA3AF" />
+              <Text style={styles.emptyStateTitle}>
+                {isAppLoading
+                  ? "Kategorien werden geladen"
+                  : "Keine Kategorien verfügbar"}
+              </Text>
+              <Text style={styles.emptyStateSubtitle}>
+                {isAppLoading
+                  ? "Bitte kurz warten."
+                  : "Bitte prüfe deine Datenbank."}
+              </Text>
+            </View>
+          ) : (
+            <CategoryPickerGrid
+              categories={categories}
+              selectedCategoryId={selectedCategory}
+              onSelectCategory={setSelectedCategory}
+            />
+          )}
         </View>
 
         <PurpleGradientButton
@@ -428,38 +393,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#F9FAFB",
     borderRadius: 12,
     overflow: "hidden",
-  },
-  categoriesGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-  },
-  categoryItem: {
-    alignItems: "center",
-    width: "25%",
-    marginBottom: 12,
-  },
-  categoryItemActive: {},
-  categoryIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "#F3F4F6",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  categoryIconActive: {
-    backgroundColor: Colors.light.primary,
-  },
-  categoryName: {
-    fontSize: 12,
-    fontWeight: "500",
-    color: "#6B7280",
-    textAlign: "center",
-  },
-  categoryNameActive: {
-    color: Colors.light.primary,
-    fontWeight: "600",
   },
   emptyState: {
     width: "100%",

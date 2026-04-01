@@ -34,7 +34,6 @@ import { AppModal } from "@/components/ui/app-modal";
 import Chip from "@/components/Chip";
 import { SwipeableTransactionListByMonth } from "@/features/home/components/swipeable-transaction-list-by-month";
 import { EditTransactionModal } from "@/features/home/components/edit-transaction-modal";
-// const businessmanFigure = require("../../assets/images/businessman-figure.png");
 
 type ModalTypeFilterT = "all" | "income" | "expense";
 

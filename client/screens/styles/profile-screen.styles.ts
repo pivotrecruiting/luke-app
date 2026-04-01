@@ -1,5 +1,5 @@
 import { StyleSheet } from "react-native";
-import { Spacing, BorderRadius, Typography } from "@/constants/theme";
+import { Spacing, BorderRadius, Typography, Colors } from "@/constants/theme";
 
 export const styles = StyleSheet.create({
   // ============================================
@@ -147,6 +147,28 @@ export const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
+  },
+  preferenceRowDisabled: {
+    opacity: 0.45,
+  },
+  sectionHint: {
+    // Used for: Helper text below section cards
+    ...Typography.small,
+    color: "#6B7280",
+    marginTop: -Spacing.lg,
+    marginBottom: Spacing["2xl"],
+    lineHeight: 20,
+  },
+  notificationPermissionButton: {
+    // Used for: System notification permission status chip
+    backgroundColor: "#F3F4F6",
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+  },
+  notificationPermissionButtonText: {
+    // Used for: System notification permission status chip text
+    color: "#111827",
+    fontWeight: "600",
   },
 
   // ============================================
@@ -479,6 +501,84 @@ export const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#000000",
   },
+  currencyOptionsList: {
+    gap: Spacing.md,
+    marginTop: Spacing.xl,
+  },
+  currencyOptionCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#F3F4F6",
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    borderRadius: BorderRadius.md,
+    paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing.lg,
+  },
+  currencyOptionCardSelected: {
+    backgroundColor: Colors.light.chipBackground,
+    borderColor: Colors.light.primary,
+  },
+  currencyOptionCardPressed: {
+    opacity: 0.85,
+  },
+  currencyOptionTextContainer: {
+    flex: 1,
+    gap: Spacing.xs,
+    paddingRight: Spacing.md,
+  },
+  currencyOptionLabel: {
+    ...Typography.body,
+    fontWeight: "600",
+    color: "#111827",
+  },
+  currencyOptionDescription: {
+    color: "#6B7280",
+  },
+  currencyOptionIndicator: {
+    width: 20,
+    height: 20,
+    borderRadius: BorderRadius.full,
+    borderWidth: 2,
+    borderColor: "#9CA3AF",
+    backgroundColor: "#FFFFFF",
+  },
+  currencyOptionIndicatorSelected: {
+    borderColor: Colors.light.primary,
+    backgroundColor: Colors.light.primary,
+  },
+  currencyModalActions: {
+    flexDirection: "row",
+    gap: Spacing.md,
+    marginTop: Spacing.xl,
+  },
+  currencyModalSecondaryButton: {
+    flex: 1,
+    backgroundColor: "#F3F4F6",
+    borderRadius: BorderRadius.md,
+    paddingVertical: Spacing.lg,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  currencyModalSecondaryButtonText: {
+    ...Typography.body,
+    fontWeight: "600",
+    color: "#111827",
+  },
+  currencyModalPrimaryButton: {
+    flex: 1,
+    borderRadius: BorderRadius.md,
+    paddingVertical: Spacing.lg,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  currencyModalPrimaryButtonText: {
+    ...Typography.body,
+    fontWeight: "600",
+    color: "#FFFFFF",
+    paddingHorizontal: Spacing.xl,
+  },
   logoutButton: {
     // Used for: Logout button container
     flexDirection: "row",
@@ -506,8 +606,15 @@ export const styles = StyleSheet.create({
     // Used for: Delete account modal description text
     ...Typography.body,
     color: "#000000",
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.md,
     lineHeight: 22,
+  },
+  deleteModalHint: {
+    // Used for: Subscription warning text inside delete account modal
+    ...Typography.small,
+    color: "#6B7280",
+    lineHeight: 20,
+    marginBottom: Spacing.xl,
   },
   deleteModalButtons: {
     // Used for: Delete modal buttons container

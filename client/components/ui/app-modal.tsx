@@ -1,5 +1,5 @@
 import { LinearGradient } from "expo-linear-gradient";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   Animated,
   Easing,
@@ -42,10 +42,44 @@ export const AppModal = ({
 }: AppModalPropsT) => {
   const { height } = useWindowDimensions();
   const keyboardTranslateY = useRef(new Animated.Value(0)).current;
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const maxHeightValue = Math.min(Math.max(maxHeightPercent, 0), 100);
   const maxHeightStyle = {
     maxHeight: (height * maxHeightValue) / 100,
   };
+
+  useEffect(() => {
+    if (!visible) {
+      setIsKeyboardVisible(false);
+      keyboardTranslateY.setValue(0);
+      return;
+    }
+
+    const keyboardShowEvent =
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const keyboardHideEvent =
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+
+    const showVisibilitySubscription = Keyboard.addListener(
+      keyboardShowEvent,
+      () => {
+        setIsKeyboardVisible(true);
+      },
+    );
+
+    const hideVisibilitySubscription = Keyboard.addListener(
+      keyboardHideEvent,
+      () => {
+        setIsKeyboardVisible(false);
+      },
+    );
+
+    return () => {
+      showVisibilitySubscription.remove();
+      hideVisibilitySubscription.remove();
+      setIsKeyboardVisible(false);
+    };
+  }, [keyboardTranslateY, visible]);
 
   useEffect(() => {
     if (!keyboardAvoidingEnabled) {
@@ -99,6 +133,15 @@ export const AppModal = ({
     keyboardVerticalOffset,
   ]);
 
+  const handleBackdropPress = () => {
+    if (isKeyboardVisible) {
+      Keyboard.dismiss();
+      return;
+    }
+
+    onClose();
+  };
+
   const content = (
     <View style={[styles.content, maxHeightStyle, contentStyle]}>
       {children}
@@ -110,10 +153,10 @@ export const AppModal = ({
       visible={visible}
       transparent
       animationType={animation}
-      onRequestClose={onClose}
+      onRequestClose={handleBackdropPress}
     >
       <View style={styles.root}>
-        <Pressable style={styles.backdrop} onPress={onClose}>
+        <Pressable style={styles.backdrop} onPress={handleBackdropPress}>
           <LinearGradient
             colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.35)", "rgba(0,0,0,0.6)"]}
             locations={[0, 0.8, 1]}

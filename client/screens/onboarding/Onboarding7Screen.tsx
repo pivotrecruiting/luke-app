@@ -74,7 +74,12 @@ export default function Onboarding7Screen() {
           </View>
 
           <View style={styles.totalSection}>
-            <Text style={styles.totalValue}>
+            <Text
+              style={[
+                styles.totalValue,
+                verfuegbar < 0 ? styles.totalValueNegative : null,
+              ]}
+            >
               {formatCurrency(verfuegbar, true)}
             </Text>
             <Text style={styles.totalLabel}>Verfügbar</Text>
@@ -172,6 +177,9 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#2D9A8C",
     marginBottom: Spacing.xs,
+  },
+  totalValueNegative: {
+    color: "#EF4444",
   },
   totalLabel: {
     fontSize: 16,

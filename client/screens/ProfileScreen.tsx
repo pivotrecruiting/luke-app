@@ -1,5 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Alert, View, ScrollView, Pressable, TextInput } from "react-native";
+import {
+  Alert,
+  AppState,
+  Linking,
+  Pressable,
+  ScrollView,
+  TextInput,
+  View,
+} from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -15,16 +23,68 @@ import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { updateUserEmail, updateUserFullName } from "@/services/auth-service";
 import { upsertUserName } from "@/services/app-service";
+import { deleteMyAccount } from "@/services/account-service";
+import {
+  fetchMyNotificationSettings,
+  type NotificationSettingsT,
+  updateMyNotificationSettings,
+} from "@/services/notification-settings-service";
+import {
+  deactivateStoredPushToken,
+  getDeviceTimezone,
+  getPushPermissionSnapshot,
+  requestPushPermissionsAndRegisterToken,
+  type PushPermissionSnapshotT,
+} from "@/services/push-notification-service";
 import { resolveLevelByXp } from "@/features/xp/utils/levels";
 import { formatDaysSince } from "@/utils/dates";
+import {
+  openExternalUrl,
+  openSubscriptionManagement,
+  PRIVACY_URL,
+  TERMS_URL,
+} from "@/utils/external-links";
 import { getUserFirstName } from "@/utils/user";
 import { styles } from "./styles/profile-screen.styles";
 import { AppModal } from "@/components/ui/app-modal";
 import { PurpleGradientButton } from "@/components/ui/purple-gradient-button";
 import { ReviewModal } from "@/features/review/components/review-modal";
+import type { CurrencyCode } from "@/context/AppContext";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type EditableProfileFieldT = "name" | "email";
+
+const CURRENCY_OPTIONS: {
+  code: CurrencyCode;
+  label: string;
+  description: string;
+}[] = [
+  { code: "EUR", label: "Euro", description: "Euro (EUR)" },
+  { code: "USD", label: "US Dollar", description: "US Dollar (USD)" },
+  {
+    code: "CHF",
+    label: "Schweizer Franken",
+    description: "Schweizer Franken (CHF)",
+  },
+];
+
+const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettingsT = {
+  pushNotificationsEnabled: false,
+  dailyReminderEnabled: false,
+  weeklyReportEnabled: false,
+  monthlyReminderEnabled: false,
+  trialEndingPushEnabled: true,
+  timezone: null,
+  reminderTime: null,
+  weeklyReportDay: 1,
+  monthlyReminderDay: 1,
+};
+
+const DEFAULT_PUSH_PERMISSION: PushPermissionSnapshotT = {
+  status: "undetermined",
+  canAskAgain: true,
+  granted: false,
+};
 
 const profileNameSchema = z
   .string()
@@ -59,10 +119,12 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
   const {
+    hasAccess,
     levels,
     userProgress,
     transactionBalance,
     currency,
+    setCurrency,
     userName,
     setUserName,
   } = useApp();
@@ -70,9 +132,20 @@ export default function ProfileScreen() {
   const [manageModalVisible, setManageModalVisible] = useState(false);
   const [deleteAccountModalVisible, setDeleteAccountModalVisible] =
     useState(false);
+  const [currencyModalVisible, setCurrencyModalVisible] = useState(false);
   const [reviewModalVisible, setReviewModalVisible] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [isLoadingNotificationSettings, setIsLoadingNotificationSettings] =
+    useState(true);
+  const [isSavingNotificationSettings, setIsSavingNotificationSettings] =
+    useState(false);
+  const [pushPermission, setPushPermission] = useState<PushPermissionSnapshotT>(
+    DEFAULT_PUSH_PERMISSION,
+  );
+  const [notificationSettings, setNotificationSettings] =
+    useState<NotificationSettingsT>(DEFAULT_NOTIFICATION_SETTINGS);
   const [activeEditField, setActiveEditField] =
     useState<EditableProfileFieldT | null>(null);
   const [profileNameInput, setProfileNameInput] = useState("");
@@ -81,6 +154,8 @@ export default function ProfileScreen() {
   const [profileEmailError, setProfileEmailError] = useState<string | null>(
     null,
   );
+  const [selectedCurrency, setSelectedCurrency] =
+    useState<CurrencyCode>(currency);
   const profileNameInputRef = useRef<TextInput | null>(null);
   const profileEmailInputRef = useRef<TextInput | null>(null);
 
@@ -157,11 +232,35 @@ export default function ProfileScreen() {
   const highestStreak = `${highestStreakValue} ${
     highestStreakValue === 1 ? "Tag" : "Tage"
   }`;
+  const accountDeletionSubscriptionHint = hasAccess
+    ? "Dein aktives Abonnement wird durch das Löschen deines Accounts nicht automatisch beendet. Bitte kündige es zusätzlich im App Store oder bei Google Play."
+    : "Falls du ein aktives Abonnement über den App Store oder Google Play hast, wird es durch das Löschen deines Accounts nicht automatisch beendet. Bitte kündige es dort zusätzlich.";
+
+  const handleOpenCurrencyModal = () => {
+    setSelectedCurrency(currency);
+    setCurrencyModalVisible(true);
+  };
+
+  const handleCloseCurrencyModal = () => {
+    setSelectedCurrency(currency);
+    setCurrencyModalVisible(false);
+  };
+
+  const handleSaveCurrency = () => {
+    setCurrency(selectedCurrency);
+    setCurrencyModalVisible(false);
+  };
 
   useEffect(() => {
     setProfileNameInput(currentFullName);
     setProfileEmailInput(profileEmail ?? "");
   }, [currentFullName, profileEmail]);
+
+  useEffect(() => {
+    if (!currencyModalVisible) {
+      setSelectedCurrency(currency);
+    }
+  }, [currency, currencyModalVisible]);
 
   useEffect(() => {
     if (activeEditField === "name") {
@@ -172,6 +271,69 @@ export default function ProfileScreen() {
       profileEmailInputRef.current?.focus();
     }
   }, [activeEditField]);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    const loadNotificationSettings = async () => {
+      try {
+        const [nextSettings, permissionSnapshot] = await Promise.all([
+          fetchMyNotificationSettings(),
+          getPushPermissionSnapshot(),
+        ]);
+
+        if (isCancelled) {
+          return;
+        }
+
+        setPushPermission(permissionSnapshot);
+        setNotificationSettings({
+          ...nextSettings,
+          timezone: nextSettings.timezone ?? getDeviceTimezone(),
+        });
+      } catch (error) {
+        if (isCancelled) {
+          return;
+        }
+
+        console.error("Failed to load notification settings:", error);
+        Alert.alert(
+          "Benachrichtigungen konnten nicht geladen werden",
+          "Bitte versuche es erneut.",
+        );
+      } finally {
+        if (!isCancelled) {
+          setIsLoadingNotificationSettings(false);
+        }
+      }
+    };
+
+    void loadNotificationSettings();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (nextState) => {
+      if (nextState !== "active") {
+        return;
+      }
+
+      void getPushPermissionSnapshot()
+        .then((nextSnapshot) => {
+          setPushPermission(nextSnapshot);
+        })
+        .catch((error) => {
+          console.error("Failed to refresh push permission snapshot:", error);
+        });
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
   const startEditingField = (field: EditableProfileFieldT) => {
     if (isSavingProfile || isLoggingOut) return;
@@ -199,6 +361,15 @@ export default function ProfileScreen() {
     if (isLoggingOut || isSavingProfile) return;
     setIsLoggingOut(true);
     try {
+      try {
+        await deactivateStoredPushToken();
+      } catch (error) {
+        console.error(
+          "Failed to deactivate stored push token on logout:",
+          error,
+        );
+      }
+
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error("Logout failed:", error);
@@ -327,10 +498,110 @@ export default function ProfileScreen() {
     }
   };
 
-  const handleDeleteAccount = () => {
-    // TODO: Implement delete account functionality
-    setDeleteAccountModalVisible(false);
+  const handleDeleteAccount = async () => {
+    if (isDeletingAccount || isLoggingOut || isSavingProfile) {
+      return;
+    }
+
+    setIsDeletingAccount(true);
+
+    try {
+      try {
+        await deactivateStoredPushToken();
+      } catch (error) {
+        console.error(
+          "Failed to deactivate stored push token before account deletion:",
+          error,
+        );
+      }
+
+      await deleteMyAccount();
+
+      const { error: signOutError } = await supabase.auth.signOut();
+
+      if (signOutError) {
+        console.error(
+          "Sign out after account deletion returned an error:",
+          signOutError,
+        );
+      }
+
+      setDeleteAccountModalVisible(false);
+
+      Alert.alert("Account gelöscht", "Dein Account wurde dauerhaft gelöscht.");
+    } catch (error) {
+      console.error("Account deletion failed:", error);
+      Alert.alert(
+        "Account konnte nicht gelöscht werden",
+        error instanceof Error ? error.message : "Bitte versuche es erneut.",
+      );
+    } finally {
+      setIsDeletingAccount(false);
+    }
   };
+
+  const handleOpenNotificationSettings = async () => {
+    try {
+      await Linking.openSettings();
+    } catch (error) {
+      console.error("Failed to open system settings:", error);
+      Alert.alert(
+        "Einstellungen konnten nicht geöffnet werden",
+        "Bitte öffne die App-Einstellungen manuell.",
+      );
+    }
+  };
+
+  const updateNotificationSettingsValue = async (
+    updater: (current: NotificationSettingsT) => NotificationSettingsT,
+  ) => {
+    if (isLoadingNotificationSettings || isSavingNotificationSettings) {
+      return;
+    }
+
+    const previousSettings = notificationSettings;
+    const nextSettings = {
+      ...updater(previousSettings),
+      timezone: getDeviceTimezone() ?? previousSettings.timezone,
+    };
+
+    setNotificationSettings(nextSettings);
+    setIsSavingNotificationSettings(true);
+
+    try {
+      const savedSettings = await updateMyNotificationSettings(nextSettings);
+      setNotificationSettings(savedSettings);
+    } catch (error) {
+      setNotificationSettings(previousSettings);
+      console.error("Failed to update notification settings:", error);
+      Alert.alert(
+        "Benachrichtigungen konnten nicht gespeichert werden",
+        "Bitte versuche es erneut.",
+      );
+    } finally {
+      setIsSavingNotificationSettings(false);
+    }
+  };
+
+  const notificationsDisabled =
+    isLoadingNotificationSettings || isSavingNotificationSettings;
+  const reminderTogglesDisabled =
+    notificationsDisabled || !notificationSettings.pushNotificationsEnabled;
+  const isNotificationPermissionGranted = pushPermission.granted;
+  const notificationPermissionLabel = pushPermission.granted
+    ? "Erlaubt"
+    : pushPermission.status === "denied"
+      ? "In Einstellungen aktivieren"
+      : pushPermission.status === "unsupported"
+        ? "Nicht unterstützt"
+        : "Berechtigung anfragen";
+  const notificationPermissionHint = pushPermission.granted
+    ? "Push-Berechtigung ist aktiv."
+    : pushPermission.status === "denied"
+      ? "Push ist im Betriebssystem deaktiviert. Öffne die App-Einstellungen, um die Berechtigung zu aktivieren."
+      : pushPermission.status === "unsupported"
+        ? "Push-Benachrichtigungen werden auf dieser Plattform nicht unterstützt."
+        : "Beim Aktivieren von Push wird die Betriebssystem-Berechtigung angefragt.";
 
   return (
     <View style={styles.container}>
@@ -713,10 +984,70 @@ export default function ProfileScreen() {
         </View>
         <View style={styles.sectionCard}>
           <SettingsRow
+            label="Push-Benachrichtigungen"
+            action={{
+              type: "toggle",
+              value: notificationSettings.pushNotificationsEnabled,
+              disabled: notificationsDisabled,
+              onValueChange: (value) => {
+                void (async () => {
+                  await updateNotificationSettingsValue((current) => ({
+                    ...current,
+                    pushNotificationsEnabled: value,
+                  }));
+
+                  if (value) {
+                    try {
+                      const permissionSnapshot =
+                        await requestPushPermissionsAndRegisterToken();
+                      setPushPermission(permissionSnapshot);
+
+                      if (!permissionSnapshot.granted) {
+                        Alert.alert(
+                          "Push-Berechtigung fehlt",
+                          permissionSnapshot.status === "denied"
+                            ? "Bitte aktiviere Mitteilungen in den App-Einstellungen."
+                            : "Bitte erteile die Push-Berechtigung, damit Erinnerungen zugestellt werden können.",
+                        );
+                      }
+                    } catch (error) {
+                      console.error(
+                        "Failed to request push permission and register token:",
+                        error,
+                      );
+                      Alert.alert(
+                        "Push konnte nicht aktiviert werden",
+                        "Die Berechtigung oder Token-Registrierung ist fehlgeschlagen. Bitte versuche es erneut.",
+                      );
+                    }
+                    return;
+                  }
+
+                  try {
+                    await deactivateStoredPushToken();
+                  } catch (error) {
+                    console.error(
+                      "Failed to deactivate stored push token:",
+                      error,
+                    );
+                  }
+                })();
+              },
+            }}
+            showDivider={true}
+          />
+          <SettingsRow
             label="Täglicher Reminder"
             action={{
               type: "toggle",
-              value: false,
+              value: notificationSettings.dailyReminderEnabled,
+              disabled: reminderTogglesDisabled,
+              onValueChange: (value) => {
+                void updateNotificationSettingsValue((current) => ({
+                  ...current,
+                  dailyReminderEnabled: value,
+                }));
+              },
             }}
             showDivider={true}
           />
@@ -724,7 +1055,14 @@ export default function ProfileScreen() {
             label="Wochen Report"
             action={{
               type: "toggle",
-              value: false,
+              value: notificationSettings.weeklyReportEnabled,
+              disabled: reminderTogglesDisabled,
+              onValueChange: (value) => {
+                void updateNotificationSettingsValue((current) => ({
+                  ...current,
+                  weeklyReportEnabled: value,
+                }));
+              },
             }}
             showDivider={true}
           />
@@ -732,11 +1070,80 @@ export default function ProfileScreen() {
             label="Monatlicher Reminder"
             action={{
               type: "toggle",
-              value: false,
+              value: notificationSettings.monthlyReminderEnabled,
+              disabled: reminderTogglesDisabled,
+              onValueChange: (value) => {
+                void updateNotificationSettingsValue((current) => ({
+                  ...current,
+                  monthlyReminderEnabled: value,
+                }));
+              },
+            }}
+            showDivider={true}
+          />
+          <SettingsRow
+            label="Trial-Ende Erinnerung"
+            action={{
+              type: "toggle",
+              value: notificationSettings.trialEndingPushEnabled,
+              disabled: reminderTogglesDisabled,
+              onValueChange: (value) => {
+                void updateNotificationSettingsValue((current) => ({
+                  ...current,
+                  trialEndingPushEnabled: value,
+                }));
+              },
+            }}
+            showDivider={true}
+          />
+          <SettingsRow
+            label="Mitteilungen im Betriebssystem"
+            action={{
+              type: "button",
+              label: notificationPermissionLabel,
+              buttonStyle: isNotificationPermissionGranted
+                ? styles.loginMethodButton
+                : styles.notificationPermissionButton,
+              textStyle: isNotificationPermissionGranted
+                ? styles.loginMethodButtonText
+                : styles.notificationPermissionButtonText,
+              textLightColor: "#111827",
+              textDarkColor: "#111827",
+              onPress: () => {
+                if (
+                  pushPermission.status === "undetermined" &&
+                  notificationSettings.pushNotificationsEnabled
+                ) {
+                  void requestPushPermissionsAndRegisterToken()
+                    .then((permissionSnapshot) => {
+                      setPushPermission(permissionSnapshot);
+                    })
+                    .catch((error) => {
+                      console.error(
+                        "Failed to request push permission from profile screen:",
+                        error,
+                      );
+                      Alert.alert(
+                        "Push-Berechtigung fehlgeschlagen",
+                        "Bitte versuche es erneut.",
+                      );
+                    });
+                  return;
+                }
+
+                void handleOpenNotificationSettings();
+              },
             }}
             showDivider={false}
           />
         </View>
+        <ThemedText type="small" style={styles.sectionHint}>
+          {isLoadingNotificationSettings
+            ? "Benachrichtigungen werden geladen."
+            : isSavingNotificationSettings
+              ? "Benachrichtigungen werden gespeichert."
+              : notificationPermissionHint}
+        </ThemedText>
 
         {/* Support & Rechtliches Section */}
         <View style={styles.sectionTitleWithIcon}>
@@ -751,10 +1158,25 @@ export default function ProfileScreen() {
           </ThemedText>
         </View>
         <View style={styles.sectionCard}>
-          <SettingsRow label="Hilfecenter" showDivider={true} />
-          <SettingsRow label="Datenschutz" showDivider={true} />
+          <SettingsRow
+            label="Hilfecenter"
+            action={{ type: "text", value: "" }}
+            showDivider={true}
+            style={styles.preferenceRowDisabled}
+          />
+          <SettingsRow
+            label="Abo verwalten"
+            onPress={() => void openSubscriptionManagement()}
+            showDivider={true}
+          />
+          <SettingsRow
+            label="Datenschutz"
+            onPress={() => void openExternalUrl(PRIVACY_URL)}
+            showDivider={true}
+          />
           <SettingsRow
             label="Allgemeine Geschäftsbedingungen"
+            onPress={() => void openExternalUrl(TERMS_URL)}
             showDivider={false}
           />
         </View>
@@ -762,9 +1184,24 @@ export default function ProfileScreen() {
         {/* Präferenzen Section */}
         <ThemedText style={styles.sectionTitle}>Präferenzen</ThemedText>
         <View style={styles.sectionCard}>
-          <SettingsRow label="Theme" showDivider={true} />
-          <SettingsRow label="Währung" showDivider={true} />
-          <SettingsRow label="Monatlicher Reminder" showDivider={false} />
+          <SettingsRow
+            label="Theme"
+            action={{ type: "text", value: "" }}
+            showDivider={true}
+            style={styles.preferenceRowDisabled}
+          />
+          <SettingsRow
+            label="Währung"
+            action={{ type: "text", value: currency }}
+            onPress={handleOpenCurrencyModal}
+            showDivider={true}
+          />
+          <SettingsRow
+            label="Sprache"
+            action={{ type: "text", value: "" }}
+            showDivider={false}
+            style={styles.preferenceRowDisabled}
+          />
         </View>
 
         {/* Über Luke Section */}
@@ -1001,13 +1438,20 @@ export default function ProfileScreen() {
           rückgängig gemacht werden.
         </ThemedText>
 
+        <ThemedText type="small" style={styles.deleteModalHint}>
+          {accountDeletionSubscriptionHint}
+        </ThemedText>
+
         <View style={styles.deleteModalButtons}>
           <Pressable
             style={({ pressed }) => [
               styles.deleteModalCancelButton,
-              { opacity: pressed ? 0.7 : 1 },
+              {
+                opacity: pressed || isDeletingAccount ? 0.7 : 1,
+              },
             ]}
             onPress={() => setDeleteAccountModalVisible(false)}
+            disabled={isDeletingAccount}
           >
             <ThemedText style={styles.deleteModalCancelText}>
               Abbrechen
@@ -1016,14 +1460,98 @@ export default function ProfileScreen() {
           <Pressable
             style={({ pressed }) => [
               styles.deleteModalConfirmButton,
-              { opacity: pressed ? 0.7 : 1 },
+              {
+                opacity: pressed || isDeletingAccount ? 0.7 : 1,
+              },
             ]}
-            onPress={handleDeleteAccount}
+            onPress={() => void handleDeleteAccount()}
+            disabled={isDeletingAccount}
           >
             <ThemedText style={styles.deleteModalConfirmText}>
-              Löschen
+              {isDeletingAccount ? "Wird gelöscht..." : "Löschen"}
             </ThemedText>
           </Pressable>
+        </View>
+      </AppModal>
+
+      <AppModal
+        visible={currencyModalVisible}
+        onClose={handleCloseCurrencyModal}
+        maxHeightPercent={70}
+        contentStyle={[
+          styles.modalContent,
+          { paddingBottom: insets.bottom + Spacing.lg },
+        ]}
+      >
+        <View style={styles.modalHeader}>
+          <ThemedText style={styles.modalTitle}>Währung ändern</ThemedText>
+          <Pressable onPress={handleCloseCurrencyModal}>
+            <Feather name="x" size={24} color="#6B7280" />
+          </Pressable>
+        </View>
+
+        <ThemedText type="small" style={styles.profileFormHint}>
+          Wähle die Standardwährung für Beträge, Budgets und Auswertungen.
+        </ThemedText>
+
+        <View style={styles.currencyOptionsList}>
+          {CURRENCY_OPTIONS.map((option) => {
+            const isSelected = selectedCurrency === option.code;
+
+            return (
+              <Pressable
+                key={option.code}
+                onPress={() => setSelectedCurrency(option.code)}
+                style={({ pressed }) => [
+                  styles.currencyOptionCard,
+                  isSelected ? styles.currencyOptionCardSelected : null,
+                  pressed ? styles.currencyOptionCardPressed : null,
+                ]}
+              >
+                <View style={styles.currencyOptionTextContainer}>
+                  <ThemedText style={styles.currencyOptionLabel}>
+                    {option.label}
+                  </ThemedText>
+                  <ThemedText
+                    type="small"
+                    style={styles.currencyOptionDescription}
+                  >
+                    {option.description}
+                  </ThemedText>
+                </View>
+                <View
+                  style={[
+                    styles.currencyOptionIndicator,
+                    isSelected ? styles.currencyOptionIndicatorSelected : null,
+                  ]}
+                />
+              </Pressable>
+            );
+          })}
+        </View>
+
+        <View style={styles.currencyModalActions}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.currencyModalSecondaryButton,
+              { opacity: pressed ? 0.7 : 1 },
+            ]}
+            onPress={handleCloseCurrencyModal}
+          >
+            <ThemedText style={styles.currencyModalSecondaryButtonText}>
+              Abbrechen
+            </ThemedText>
+          </Pressable>
+
+          <PurpleGradientButton
+            style={styles.currencyModalPrimaryButton}
+            onPress={handleSaveCurrency}
+            disabled={selectedCurrency === currency}
+          >
+            <ThemedText style={styles.currencyModalPrimaryButtonText}>
+              Speichern
+            </ThemedText>
+          </PurpleGradientButton>
         </View>
       </AppModal>
 

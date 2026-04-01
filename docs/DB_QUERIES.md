@@ -243,8 +243,10 @@ order by contribution_at desc;
 ### 8.1 Settings
 
 ```sql
-select language, theme, daily_reminder_enabled, weekly_report_enabled, monthly_reminder_enabled,
-       timezone, reminder_time
+select language, theme, push_notifications_enabled,
+       daily_reminder_enabled, weekly_report_enabled, monthly_reminder_enabled,
+       trial_ending_push_enabled, timezone, reminder_time,
+       weekly_report_day, monthly_reminder_day
 from public.user_settings
 where user_id = :user_id;
 ```
