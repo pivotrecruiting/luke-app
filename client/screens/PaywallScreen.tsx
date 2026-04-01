@@ -17,6 +17,7 @@ import { useApp } from "@/context/AppContext";
 import { Colors, HeaderGradient, Spacing } from "@/constants/theme";
 import { PurpleGradientButton } from "@/components/ui/purple-gradient-button";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
+import { allowProfileAccessFromPaywall } from "@/navigation/paywall-navigation-state";
 import {
   listActiveBillingProducts,
   type BillingProductT,
@@ -73,6 +74,7 @@ export default function PaywallScreen() {
   >([]);
   const [isProductsLoading, setIsProductsLoading] = useState(true);
   const [isActionLoading, setIsActionLoading] = useState(false);
+  const [isNavigatingToSettings, setIsNavigatingToSettings] = useState(false);
   const [revenueCatErrorMessage, setRevenueCatErrorMessage] = useState<
     string | null
   >(null);
@@ -80,22 +82,24 @@ export default function PaywallScreen() {
   const headerMinHeight = Math.max(height * 0.27, 140);
   const studyCardOverlap = Spacing["5xl"];
   const shouldLockPaywall = paywallRequired && !hasAccess;
+  const shouldPreventPaywallRemoval =
+    shouldLockPaywall && !isNavigatingToSettings;
 
   useEffect(() => {
     navigation.setOptions({
-      gestureEnabled: !shouldLockPaywall,
-      fullScreenGestureEnabled: !shouldLockPaywall,
+      gestureEnabled: !shouldPreventPaywallRemoval,
+      fullScreenGestureEnabled: !shouldPreventPaywallRemoval,
     });
-  }, [navigation, shouldLockPaywall]);
+  }, [navigation, shouldPreventPaywallRemoval]);
 
-  usePreventRemove(shouldLockPaywall, () => {
-    if (!shouldLockPaywall) {
+  usePreventRemove(shouldPreventPaywallRemoval, () => {
+    if (!shouldPreventPaywallRemoval) {
       return;
     }
   });
 
   useEffect(() => {
-    if (!shouldLockPaywall) {
+    if (!shouldPreventPaywallRemoval) {
       return;
     }
 
@@ -107,7 +111,7 @@ export default function PaywallScreen() {
     return () => {
       subscription.remove();
     };
-  }, [shouldLockPaywall]);
+  }, [shouldPreventPaywallRemoval]);
 
   useEffect(() => {
     let active = true;
@@ -296,6 +300,12 @@ export default function PaywallScreen() {
     } finally {
       setIsActionLoading(false);
     }
+  };
+
+  const handleOpenSettings = () => {
+    setIsNavigatingToSettings(true);
+    allowProfileAccessFromPaywall();
+    navigation.replace("Main", { screen: "Profile" });
   };
 
   const headerSubtitle = !hasAccess
@@ -524,6 +534,10 @@ export default function PaywallScreen() {
           </PurpleGradientButton>
 
           <View style={styles.footerLinks}>
+            <Pressable onPress={handleOpenSettings}>
+              <Text style={styles.footerLink}>Einstellungen</Text>
+            </Pressable>
+            <Text style={styles.footerSeparator}>•</Text>
             <Pressable onPress={handleRestorePurchases}>
               <Text style={styles.footerLink}>Käufe wiederherstellen</Text>
             </Pressable>

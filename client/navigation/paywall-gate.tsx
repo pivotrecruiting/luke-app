@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useApp } from "@/context/AppContext";
 import { navigationRef } from "@/navigation/navigation-ref";
+import {
+  getCanAccessProfileFromPaywall,
+  revokeProfileAccessFromPaywall,
+} from "@/navigation/paywall-navigation-state";
 import { getHasPresentedExpiredWorkshopCat } from "@/navigation/workshop-retention-state";
 
 type PaywallGateProps = {
@@ -58,6 +62,12 @@ export const PaywallGate = ({ currentRouteName }: PaywallGateProps) => {
   const shouldForceReopenPaywall = Boolean(presentationKey) && !hasAccess;
 
   useEffect(() => {
+    if (currentRouteName !== "Profile") {
+      revokeProfileAccessFromPaywall();
+    }
+  }, [currentRouteName]);
+
+  useEffect(() => {
     if (currentRouteName === "Paywall") {
       isNavigatingRef.current = false;
       return;
@@ -67,6 +77,9 @@ export const PaywallGate = ({ currentRouteName }: PaywallGateProps) => {
     if (isAppLoading || isBillingStateLoading || !isOnboardingComplete) return;
     if (!navigationRef.isReady()) return;
     if (!presentationKey) return;
+    if (currentRouteName === "Profile" && getCanAccessProfileFromPaywall()) {
+      return;
+    }
     if (
       !shouldForceReopenPaywall &&
       lastPresentedKeyRef.current === presentationKey
