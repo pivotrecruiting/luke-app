@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Alert,
   BackHandler,
@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useApp } from "@/context/AppContext";
+import { useAuth } from "@/context/AuthContext";
 import { Colors, HeaderGradient, Spacing } from "@/constants/theme";
 import { PurpleGradientButton } from "@/components/ui/purple-gradient-button";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
@@ -26,6 +27,7 @@ import {
   getRevenueCatAvailability,
   getRevenueCatPackageOptions,
   hasActiveRevenueCatAccess,
+  initializeRevenueCatForUser,
   purchaseRevenueCatPackage,
   restoreRevenueCatPurchases,
   type RevenueCatPackageOptionT,
@@ -49,6 +51,14 @@ const FEATURES: {
   { icon: "chart-bar", text: "Einfacher als jede Excel-Liste" },
 ];
 
+const getReadableRevenueCatErrorMessage = (error: unknown): string => {
+  if (error instanceof Error && error.message.trim().length > 0) {
+    return error.message;
+  }
+
+  return "RevenueCat konnte keine kaufbaren Pakete laden.";
+};
+
 /**
  * Paywall screen that surfaces server-driven trial urgency and billing products.
  */
@@ -65,6 +75,7 @@ export default function PaywallScreen() {
     daysUntilTrialExpiry,
     refreshAccessState,
   } = useApp();
+  const { user } = useAuth();
   const [selectedPlan, setSelectedPlan] = useState<PlanT>("yearly");
   const [fallbackProducts, setFallbackProducts] = useState<BillingProductT[]>(
     [],
@@ -84,6 +95,35 @@ export default function PaywallScreen() {
   const shouldLockPaywall = paywallRequired && !hasAccess;
   const shouldPreventPaywallRemoval =
     shouldLockPaywall && !isNavigatingToSettings;
+
+  const ensureRevenueCatReady = useCallback(async (): Promise<boolean> => {
+    const revenueCatAvailability = getRevenueCatAvailability();
+
+    if (revenueCatAvailability.status !== "ready") {
+      setRevenueCatErrorMessage(
+        revenueCatAvailability.status === "missing_api_key"
+          ? "RevenueCat API-Keys fehlen noch in den `EXPO_PUBLIC_REVENUECAT_*` Variablen."
+          : "RevenueCat ist auf dieser Plattform nicht verfuegbar.",
+      );
+      return false;
+    }
+
+    if (!user?.id) {
+      setRevenueCatErrorMessage(
+        "RevenueCat konnte ohne angemeldeten Nutzer nicht initialisiert werden.",
+      );
+      return false;
+    }
+
+    try {
+      await initializeRevenueCatForUser(user.id);
+      return true;
+    } catch (error) {
+      console.error("Failed to initialize RevenueCat for paywall:", error);
+      setRevenueCatErrorMessage(getReadableRevenueCatErrorMessage(error));
+      return false;
+    }
+  }, [user?.id]);
 
   useEffect(() => {
     navigation.setOptions({
@@ -120,7 +160,6 @@ export default function PaywallScreen() {
       setIsProductsLoading(true);
 
       try {
-        const revenueCatAvailability = getRevenueCatAvailability();
         const nextProducts = await listActiveBillingProducts();
         if (!active) {
           return;
@@ -128,7 +167,13 @@ export default function PaywallScreen() {
 
         setFallbackProducts(nextProducts);
 
-        if (revenueCatAvailability.status === "ready") {
+        const revenueCatIsReady = await ensureRevenueCatReady();
+
+        if (!active) {
+          return;
+        }
+
+        if (revenueCatIsReady) {
           const nextPackages = await getRevenueCatPackageOptions();
 
           if (!active) {
@@ -151,12 +196,6 @@ export default function PaywallScreen() {
             setSelectedPlan(nextPackages[0].plan);
             return;
           }
-        } else {
-          setRevenueCatErrorMessage(
-            revenueCatAvailability.status === "missing_api_key"
-              ? "RevenueCat API-Keys fehlen noch in den `EXPO_PUBLIC_REVENUECAT_*` Variablen."
-              : "RevenueCat ist auf dieser Plattform nicht verfuegbar.",
-          );
         }
 
         if (nextProducts.some((product) => product.productKey === "yearly")) {
@@ -168,7 +207,10 @@ export default function PaywallScreen() {
           setSelectedPlan(nextProducts[0].productKey);
         }
       } catch (error) {
-        console.error("Failed to load billing products:", error);
+        console.error("Failed to load billing products or RevenueCat:", error);
+        if (active) {
+          setRevenueCatErrorMessage(getReadableRevenueCatErrorMessage(error));
+        }
       } finally {
         if (active) {
           setIsProductsLoading(false);
@@ -181,7 +223,7 @@ export default function PaywallScreen() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [ensureRevenueCatReady, user?.id]);
 
   const waitForServerAccessSync = async (): Promise<boolean> => {
     for (let attempt = 0; attempt < 8; attempt += 1) {
@@ -201,23 +243,46 @@ export default function PaywallScreen() {
   };
 
   const handleCtaPress = () => {
-    const selectedPackage = revenueCatPackages.find(
-      (pkg) => pkg.plan === selectedPlan,
-    );
-
-    if (!selectedPackage) {
-      Alert.alert(
-        "Kauf derzeit nicht verfuegbar",
-        revenueCatErrorMessage ??
-          "Es konnte kein kaufbares RevenueCat-Paket geladen werden.",
-      );
-      return;
-    }
-
     void (async () => {
       setIsActionLoading(true);
 
       try {
+        const revenueCatIsReady = await ensureRevenueCatReady();
+
+        if (!revenueCatIsReady) {
+          Alert.alert(
+            "Kauf derzeit nicht verfuegbar",
+            revenueCatErrorMessage ??
+              "Es konnte kein kaufbares RevenueCat-Paket geladen werden.",
+          );
+          return;
+        }
+
+        let availablePackages = revenueCatPackages;
+
+        if (availablePackages.length === 0) {
+          availablePackages = await getRevenueCatPackageOptions();
+          setRevenueCatPackages(availablePackages);
+          setRevenueCatErrorMessage(
+            availablePackages.length === 0
+              ? "In RevenueCat ist aktuell kein aktives Offering verfuegbar."
+              : null,
+          );
+        }
+
+        const selectedPackage = availablePackages.find(
+          (pkg) => pkg.plan === selectedPlan,
+        );
+
+        if (!selectedPackage) {
+          Alert.alert(
+            "Kauf derzeit nicht verfuegbar",
+            revenueCatErrorMessage ??
+              "Es konnte kein kaufbares RevenueCat-Paket geladen werden.",
+          );
+          return;
+        }
+
         const purchaseResult = await purchaseRevenueCatPackage(
           selectedPackage.packageToPurchase,
         );
@@ -246,9 +311,10 @@ export default function PaywallScreen() {
         );
       } catch (error) {
         console.error("RevenueCat purchase failed:", error);
+        setRevenueCatErrorMessage(getReadableRevenueCatErrorMessage(error));
         Alert.alert(
           "Kauf fehlgeschlagen",
-          "Der Kauf konnte nicht abgeschlossen werden.",
+          getReadableRevenueCatErrorMessage(error),
         );
       } finally {
         setIsActionLoading(false);
@@ -259,7 +325,9 @@ export default function PaywallScreen() {
   const handleRestorePurchases = async () => {
     try {
       setIsActionLoading(true);
-      if (getRevenueCatAvailability().status !== "ready") {
+
+      const revenueCatIsReady = await ensureRevenueCatReady();
+      if (!revenueCatIsReady) {
         throw new Error(
           revenueCatErrorMessage ?? "RevenueCat ist nicht bereit.",
         );
@@ -292,10 +360,11 @@ export default function PaywallScreen() {
         "Restore verarbeitet",
         "Die Wiederherstellung wurde gestartet. Der Zugriff wird serverseitig noch synchronisiert.",
       );
-    } catch {
+    } catch (error) {
+      setRevenueCatErrorMessage(getReadableRevenueCatErrorMessage(error));
       Alert.alert(
         "Wiederherstellung fehlgeschlagen",
-        "Die Kaeufe konnten nicht wiederhergestellt werden.",
+        getReadableRevenueCatErrorMessage(error),
       );
     } finally {
       setIsActionLoading(false);
