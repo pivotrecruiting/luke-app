@@ -41,7 +41,8 @@ yarn-error.*
 app-example
 
 # generated native folders
-/ios
+# commented out for xcode cloud ios build
+# /ios
 /android
 
 .env*
