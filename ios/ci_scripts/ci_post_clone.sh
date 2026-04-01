@@ -1,5 +1,5 @@
 #!/bin/sh
-set -e
+set -ex
 
 cd "$CI_PRIMARY_REPOSITORY_PATH"
 
@@ -16,7 +16,8 @@ echo "Node version: $(node -v)"
 echo "npm version: $(npm -v)"
 
 echo "Installing JavaScript dependencies"
-npm ci
+export HUSKY=0
+npm ci --no-audit --no-fund
 
 cd ios
 
