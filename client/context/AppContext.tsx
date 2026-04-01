@@ -5,8 +5,10 @@ import React, {
   useMemo,
   useCallback,
   useEffect,
+  useRef,
   ReactNode,
 } from "react";
+import { AppState } from "react-native";
 import { useAuth } from "@/context/AuthContext";
 import {
   INITIAL_BUDGETS,
@@ -87,6 +89,8 @@ type AppProviderProps = {
   children: ReactNode;
 };
 
+const ACCESS_STATE_REFRESH_BUFFER_MS = 1_000;
+
 export function AppProvider({ children }: AppProviderProps) {
   const [isAppLoading, setIsAppLoading] = useState(true);
   const [isOnboardingComplete, setIsOnboardingComplete] = useState(false);
@@ -106,6 +110,7 @@ export function AppProvider({ children }: AppProviderProps) {
   const [daysUntilTrialExpiry, setDaysUntilTrialExpiry] = useState<
     number | null
   >(null);
+  const [hadWorkshopAccess, setHadWorkshopAccess] = useState(false);
   const [userName, setUserNameState] = useState<string | null>(null);
   const [currency, setCurrencyState] = useState<CurrencyCode>("EUR");
   const [incomeEntries, setIncomeEntries] = useState<IncomeEntry[]>(
@@ -143,11 +148,17 @@ export function AppProvider({ children }: AppProviderProps) {
     null,
   );
   const referenceDate = useCurrentReferenceDate();
+  const appStateRef = useRef(AppState.currentState);
+  const accessStateRefreshTimeoutRef = useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null);
+  const accessStateRef = useRef(getDefaultAccessState());
 
   const { user } = useAuth();
   const userId = user?.id ?? null;
   const applyAccessState = useCallback(
     (nextState: ReturnType<typeof getDefaultAccessState>) => {
+      accessStateRef.current = nextState;
       setHasAccess(nextState.hasAccess);
       setAccessKey(nextState.accessKey);
       setAccessSourceType(nextState.sourceType);
@@ -157,36 +168,39 @@ export function AppProvider({ children }: AppProviderProps) {
       setTrialEndsAt(nextState.trialEndsAt);
       setPaywallVisibleFrom(nextState.paywallVisibleFrom);
       setDaysUntilTrialExpiry(nextState.daysUntilExpiry);
+      setHadWorkshopAccess(nextState.hadWorkshopAccess);
     },
     [],
   );
 
-  const refreshAccessState = useCallback(async () => {
-    if (!userId) {
-      const defaultAccessState = getDefaultAccessState();
-      applyAccessState(defaultAccessState);
-      setIsBillingStateLoading(false);
-      return defaultAccessState;
-    }
+  const refreshAccessState = useCallback(
+    async (options?: { silent?: boolean }) => {
+      if (!userId) {
+        const defaultAccessState = getDefaultAccessState();
+        applyAccessState(defaultAccessState);
+        setIsBillingStateLoading(false);
+        return defaultAccessState;
+      }
 
-    setIsBillingStateLoading(true);
+      if (!options?.silent) {
+        setIsBillingStateLoading(true);
+      }
 
-    try {
-      const nextState = await initializeAccessStateForUser(userId);
-      applyAccessState(nextState);
-      return nextState;
-    } catch (error) {
-      console.error("Failed to refresh access state:", error);
-      const fallbackState = {
-        ...getDefaultAccessState(),
-        hasAccess: true,
-      };
-      applyAccessState(fallbackState);
-      return fallbackState;
-    } finally {
-      setIsBillingStateLoading(false);
-    }
-  }, [applyAccessState, userId]);
+      try {
+        const nextState = await initializeAccessStateForUser(userId);
+        applyAccessState(nextState);
+        return nextState;
+      } catch (error) {
+        console.error("Failed to refresh access state:", error);
+        return accessStateRef.current;
+      } finally {
+        if (!options?.silent) {
+          setIsBillingStateLoading(false);
+        }
+      }
+    },
+    [applyAccessState, userId],
+  );
 
   const { useLocalFallback, setUseLocalFallback } = useAppDataLoader({
     userId,
@@ -217,6 +231,71 @@ export function AppProvider({ children }: AppProviderProps) {
     () => subscribeToAccessStateChanges(() => void refreshAccessState()),
     [refreshAccessState],
   );
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (nextState) => {
+      const previousState = appStateRef.current;
+      appStateRef.current = nextState;
+
+      if (
+        previousState.match(/inactive|background/) &&
+        nextState === "active"
+      ) {
+        void refreshAccessState();
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [refreshAccessState]);
+
+  useEffect(() => {
+    if (accessStateRefreshTimeoutRef.current) {
+      clearTimeout(accessStateRefreshTimeoutRef.current);
+      accessStateRefreshTimeoutRef.current = null;
+    }
+
+    if (!userId) {
+      return;
+    }
+
+    const refreshTargets = [paywallVisibleFrom, accessActiveUntil]
+      .map((value) => {
+        if (!value) {
+          return null;
+        }
+
+        const timestamp = new Date(value).getTime();
+
+        return Number.isFinite(timestamp) ? timestamp : null;
+      })
+      .filter((value): value is number => value !== null)
+      .filter((value) => value > Date.now())
+      .sort((left, right) => left - right);
+
+    const nextRefreshAt = refreshTargets[0];
+
+    if (!nextRefreshAt) {
+      return;
+    }
+
+    const timeoutMs = Math.max(
+      nextRefreshAt - Date.now() + ACCESS_STATE_REFRESH_BUFFER_MS,
+      0,
+    );
+
+    accessStateRefreshTimeoutRef.current = setTimeout(() => {
+      void refreshAccessState();
+    }, timeoutMs);
+
+    return () => {
+      if (accessStateRefreshTimeoutRef.current) {
+        clearTimeout(accessStateRefreshTimeoutRef.current);
+        accessStateRefreshTimeoutRef.current = null;
+      }
+    };
+  }, [accessActiveUntil, paywallVisibleFrom, refreshAccessState, userId]);
 
   const canUseDb = Boolean(userId) && !useLocalFallback;
 
@@ -295,29 +374,10 @@ export function AppProvider({ children }: AppProviderProps) {
     () => ({
       isOnboardingComplete,
       currency,
-      incomeEntries,
-      expenseEntries,
-      goals,
-      budgets,
-      transactions,
-      vaultTransactions,
-      monthlyBalanceSnapshots,
       lastBudgetResetMonth,
       balanceAnchorMonth,
     }),
-    [
-      budgets,
-      currency,
-      expenseEntries,
-      goals,
-      incomeEntries,
-      isOnboardingComplete,
-      lastBudgetResetMonth,
-      monthlyBalanceSnapshots,
-      transactions,
-      vaultTransactions,
-      balanceAnchorMonth,
-    ],
+    [currency, isOnboardingComplete, lastBudgetResetMonth, balanceAnchorMonth],
   );
 
   useAppPersistence({
@@ -598,6 +658,7 @@ export function AppProvider({ children }: AppProviderProps) {
     trialEndsAt,
     paywallVisibleFrom,
     daysUntilTrialExpiry,
+    hadWorkshopAccess,
     userName,
     setUserName: setUserNameState,
     currency,

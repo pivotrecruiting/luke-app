@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useApp } from "@/context/AppContext";
 import { navigationRef } from "@/navigation/navigation-ref";
+import {
+  getCanAccessProfileFromPaywall,
+  revokeProfileAccessFromPaywall,
+} from "@/navigation/paywall-navigation-state";
+import { getHasPresentedExpiredWorkshopCat } from "@/navigation/workshop-retention-state";
 
 type PaywallGateProps = {
   currentRouteName: string | null;
@@ -15,6 +20,7 @@ export const PaywallGate = ({ currentRouteName }: PaywallGateProps) => {
     isAppLoading,
     isBillingStateLoading,
     hasAccess,
+    hadWorkshopAccess,
     paywallRequired,
     paywallVisible,
     trialEndsAt,
@@ -28,22 +34,38 @@ export const PaywallGate = ({ currentRouteName }: PaywallGateProps) => {
       return null;
     }
 
-    if (!hasAccess) {
-      return "no-access";
+    if (
+      !hasAccess &&
+      hadWorkshopAccess &&
+      !getHasPresentedExpiredWorkshopCat()
+    ) {
+      return null;
     }
 
-    if (!paywallVisible) {
+    if (hasAccess && paywallVisible) {
       return null;
+    }
+
+    if (!hasAccess) {
+      return "no-access";
     }
 
     return `trial:${paywallVisibleFrom ?? trialEndsAt ?? "visible"}`;
   }, [
     hasAccess,
+    hadWorkshopAccess,
     paywallRequired,
     paywallVisible,
     paywallVisibleFrom,
     trialEndsAt,
   ]);
+  const shouldForceReopenPaywall = Boolean(presentationKey) && !hasAccess;
+
+  useEffect(() => {
+    if (currentRouteName !== "Profile") {
+      revokeProfileAccessFromPaywall();
+    }
+  }, [currentRouteName]);
 
   useEffect(() => {
     if (currentRouteName === "Paywall") {
@@ -55,7 +77,15 @@ export const PaywallGate = ({ currentRouteName }: PaywallGateProps) => {
     if (isAppLoading || isBillingStateLoading || !isOnboardingComplete) return;
     if (!navigationRef.isReady()) return;
     if (!presentationKey) return;
-    if (lastPresentedKeyRef.current === presentationKey) return;
+    if (currentRouteName === "Profile" && getCanAccessProfileFromPaywall()) {
+      return;
+    }
+    if (
+      !shouldForceReopenPaywall &&
+      lastPresentedKeyRef.current === presentationKey
+    ) {
+      return;
+    }
 
     isNavigatingRef.current = true;
     lastPresentedKeyRef.current = presentationKey;
@@ -66,6 +96,7 @@ export const PaywallGate = ({ currentRouteName }: PaywallGateProps) => {
     isBillingStateLoading,
     isOnboardingComplete,
     presentationKey,
+    shouldForceReopenPaywall,
   ]);
 
   return null;

@@ -1,7 +1,10 @@
-import { Pressable, Text, View } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { useApp } from "@/context/AppContext";
 import CurrencyInput from "@/components/CurrencyInput";
+import {
+  CategoryPickerGrid,
+  type CategoryPickerOptionT,
+} from "@/components/ui/category-picker-grid";
 import { styles } from "@/screens/styles/goals-screen.styles";
 import { AppModal } from "@/components/ui/app-modal";
 import { PurpleGradientButton } from "@/components/ui/purple-gradient-button";
@@ -31,65 +34,59 @@ export const CreateBudgetModal = ({
   onCreate,
 }: CreateBudgetModalPropsT) => {
   const { budgetCategories } = useApp();
+  const categoryOptions: CategoryPickerOptionT[] = budgetCategories.map(
+    (category) => ({
+      id: category.key ?? category.id,
+      name: category.name,
+      icon: category.icon ?? "circle",
+    }),
+  );
+
   return (
     <AppModal
       visible={visible}
       onClose={onCancel}
-      contentStyle={[styles.modalContent, { paddingBottom: bottomInset + 24 }]}
+      maxHeightPercent={82}
+      contentStyle={styles.modalContent}
       keyboardAvoidingEnabled
+      keyboardShiftFactor={0.95}
     >
-      <View style={styles.modalHandle} />
-      <Text style={styles.modalTitle}>Budget erstellen</Text>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        contentContainerStyle={{ paddingBottom: bottomInset + 24 }}
+      >
+        <View style={styles.modalHandle} />
+        <Text style={styles.modalTitle}>Budget erstellen</Text>
 
-      <Text style={styles.categoryLabel}>Kategorie auswählen</Text>
-      <View style={styles.categoryGrid}>
-        {budgetCategories.map((category) => {
-          const categoryKey = category.key ?? category.id;
-          const isSelected = selectedCategory === categoryKey;
-          return (
-            <Pressable
-              key={category.id}
-              style={[
-                styles.categoryItem,
-                isSelected && styles.categoryItemSelected,
-              ]}
-              onPress={() => onSelectCategory(categoryKey)}
-            >
-              <View
-                style={[
-                  styles.categoryIconContainer,
-                  { backgroundColor: "#FFFFFF" },
-                ]}
-              >
-                <Feather
-                  name={(category.icon ?? "circle") as any}
-                  size={24}
-                  color={category.color ?? "#6B7280"}
-                />
-              </View>
-              <Text style={styles.categoryName}>{category.name}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
+        <Text style={styles.categoryLabel}>Kategorie auswählen</Text>
+        <View style={styles.categoryGrid}>
+          <CategoryPickerGrid
+            categories={categoryOptions}
+            selectedCategoryId={selectedCategory}
+            onSelectCategory={onSelectCategory}
+          />
+        </View>
 
-      <Text style={styles.modalLabel}>Limit</Text>
-      <CurrencyInput
-        value={budgetLimit}
-        onChangeText={onChangeBudgetLimit}
-        placeholder="200,00"
-        variant="modal"
-        containerStyle={styles.modalInput}
-      />
+        <Text style={styles.modalLabel}>Limit</Text>
+        <CurrencyInput
+          value={budgetLimit}
+          onChangeText={onChangeBudgetLimit}
+          placeholder="200,00"
+          variant="modal"
+          containerStyle={styles.modalInput}
+        />
 
-      <View style={styles.modalButtons}>
-        <Pressable style={styles.cancelButton} onPress={onCancel}>
-          <Text style={styles.cancelButtonText}>abbrechen</Text>
-        </Pressable>
-        <PurpleGradientButton style={styles.createButton} onPress={onCreate}>
-          <Text style={styles.createButtonText}>Hinzufügen</Text>
-        </PurpleGradientButton>
-      </View>
+        <View style={styles.modalButtons}>
+          <Pressable style={styles.cancelButton} onPress={onCancel}>
+            <Text style={styles.cancelButtonText}>abbrechen</Text>
+          </Pressable>
+          <PurpleGradientButton style={styles.createButton} onPress={onCreate}>
+            <Text style={styles.createButtonText}>Hinzufügen</Text>
+          </PurpleGradientButton>
+        </View>
+      </ScrollView>
     </AppModal>
   );
 };

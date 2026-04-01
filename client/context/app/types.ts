@@ -131,6 +131,7 @@ export type AppState = {
   trialEndsAt: string | null;
   paywallVisibleFrom: string | null;
   daysUntilTrialExpiry: number | null;
+  hadWorkshopAccess: boolean;
   userName: string | null;
   currency: CurrencyCode;
   incomeEntries: IncomeEntry[];
@@ -241,19 +242,19 @@ export type AppContextType = AppState & {
   enqueueStreak: (payload: XpStreakPayloadT) => void;
   consumeNextStreak: () => void;
   submitOnboarding: () => void;
-  refreshAccessState: () => Promise<AccessStateT>;
+  refreshAccessState: (options?: { silent?: boolean }) => Promise<AccessStateT>;
 };
 
 export type PersistedData = {
   isOnboardingComplete: boolean;
   currency: CurrencyCode;
-  incomeEntries: IncomeEntry[];
-  expenseEntries: ExpenseEntry[];
-  goals: Goal[];
-  budgets: Budget[];
-  transactions: Transaction[];
-  vaultTransactions: VaultTransactionT[];
-  monthlyBalanceSnapshots: MonthlyBalanceSnapshotT[];
+  incomeEntries?: IncomeEntry[];
+  expenseEntries?: ExpenseEntry[];
+  goals?: Goal[];
+  budgets?: Budget[];
+  transactions?: Transaction[];
+  vaultTransactions?: VaultTransactionT[];
+  monthlyBalanceSnapshots?: MonthlyBalanceSnapshotT[];
   lastBudgetResetMonth: number;
   balanceAnchorMonth: string | null;
 };

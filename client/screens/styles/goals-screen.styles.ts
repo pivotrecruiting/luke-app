@@ -492,38 +492,7 @@ export const styles = StyleSheet.create({
     marginBottom: 12,
   },
   categoryGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    borderRadius: 12,
-    padding: 8,
     marginBottom: 16,
-    gap: 8,
-  },
-  categoryItem: {
-    width: "22%",
-    alignItems: "center",
-    paddingVertical: 8,
-    borderRadius: 12,
-  },
-  categoryItemSelected: {
-    backgroundColor: "#E0C6FD",
-  },
-  categoryIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 4,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-  },
-  categoryName: {
-    fontSize: 10,
-    color: "#374151",
-    textAlign: "center",
   },
   budgetRight: {
     flexDirection: "row",
