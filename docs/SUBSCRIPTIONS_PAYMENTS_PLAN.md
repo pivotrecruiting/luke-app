@@ -113,4 +113,4 @@ Ziel: Saubere, auditierbare Mobile-Billing-Architektur mit RevenueCat als Billin
 - Client-Service fuer RevenueCat initialisieren
 - Paywall-Screen auf echtes Offering-Mapping umstellen
 - Access-State nach Signup, Session-Restore und Kauf sauber konsumieren
-- Produktkatalog mit echten iOS-/Android-Store-IDs und RevenueCat-Packages fuellen
+- Produktkatalog mit echten iOS-/Android-Store-IDs und RevenueCat-Packages füllen
